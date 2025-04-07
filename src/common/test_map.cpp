@@ -2,8 +2,9 @@
 #include "debug.hpp"
 #include <iostream>
 
-int main(int argc, char** argv) {
-    // Enable debug mode
+int main(int argc, char** argv)
+{
+    //rajouter arg chercker if -d alors setDebugMode(true)
     g_logger.setDebugMode(true);
 
     if (argc < 2) {
@@ -12,6 +13,7 @@ int main(int argc, char** argv) {
     }
 
     Map map;
+
     if (!map.loadFromFile(argv[1])) {
         std::cout << "Failed to load map!" << std::endl;
         return 1;

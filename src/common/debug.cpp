@@ -16,7 +16,7 @@ bool Logger::isDebugMode() const
 void Logger::log(const std::string& message)
 {
     if (!debug_mode)
-    return;
+        return;
 
     std::lock_guard<std::mutex> lock(log_mutex);
 

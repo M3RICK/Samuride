@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-// Message types
 enum MessageType : uint8_t {
     MSG_CONNECT = 1,      // Client connecting to server
     MSG_MAP_DATA = 2,     // Server sending map to client

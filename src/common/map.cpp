@@ -3,7 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-Map::Map() : width(0), height(0) {}
+Map::Map() : width(0), height(0)
+{}
 
 bool Map::loadFromFile(const std::string& filename)
 {
@@ -28,11 +29,11 @@ bool Map::loadFromFile(const std::string& filename)
         return false;
     }
 
-    // Set map dimensions
+    //map dimensions
     height = mapData.size();
     width = mapData[0].length();
 
-    // Validate map (ensure all lines have same length)
+    // Map is Valid ?
     for (const auto& line : mapData) {
         if (line.length() != width) {
             DEBUG_LOG("Error: Map has inconsistent line lengths");
@@ -43,6 +44,7 @@ bool Map::loadFromFile(const std::string& filename)
         for (char c : line) {
             if (c != '_' && c != 'c' && c != 'e') {
                 DEBUG_LOG("Warning: Map contains unknown character: " + std::string(1, c));
+                return false;
             }
         }
     }
@@ -52,7 +54,8 @@ bool Map::loadFromFile(const std::string& filename)
     return true;
 }
 
-std::vector<uint8_t> Map::serialize() const {
+std::vector<uint8_t> Map::serialize() const
+{
     std::vector<uint8_t> data;
 
     data.push_back((width >> 24) & 0xFF);
@@ -76,7 +79,8 @@ std::vector<uint8_t> Map::serialize() const {
     return data;
 }
 
-bool Map::loadFromData(const std::vector<uint8_t>& data) {
+bool Map::loadFromData(const std::vector<uint8_t>& data)
+{
     if (data.size() < 8) {
         DEBUG_LOG("Error: Insufficient data to deserialize map");
         return false;
@@ -111,7 +115,8 @@ bool Map::loadFromData(const std::vector<uint8_t>& data) {
     return true;
 }
 
-char Map::getTile(size_t x, size_t y) const {
+char Map::getTile(size_t x, size_t y) const
+{
     if (y >= mapData.size() || x >= mapData[y].length()) {
         return '_'; // Default to empty tile
     }

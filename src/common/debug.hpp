@@ -17,8 +17,8 @@ class Logger {
 
         void setDebugMode(bool mode);
         bool isDebugMode() const;
-        void log(const std::string& message);
-        void logPacket(const std::string& direction, const char* data, size_t size);
+        void log(const std::string &msg);
+        void logPacket(const std::string& direction, const char *data, size_t size);
 };
 
 extern Logger g_logger;
@@ -27,4 +27,4 @@ extern Logger g_logger;
 #define DEBUG_PACKET_SEND(data, size) g_logger.logPacket("SEND", data, size)
 #define DEBUG_PACKET_RECV(data, size) g_logger.logPacket("RECV", data, size)
 
-#endif // DEBUG_HPP
+#endif

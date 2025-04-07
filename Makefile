@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Wextra -g -std=c++17 -I./src
+CFLAGS = -Wall -Wextra -g -std=c++20 -I./src
 LDFLAGS = -pthread
 
 # Common sources
