@@ -18,14 +18,16 @@ Client::Client(const std::string& server_ip, int server_port, bool debug_mode)
     g_logger.setDebugMode(debug_mode);
 }
 
-Client::~Client() {
+Client::~Client()
+{
     stop();
     if (client_fd >= 0) {
         close(client_fd);
     }
 }
 
-bool Client::initialize() {
+bool Client::initialize()
+{
     // Create socket
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (client_fd < 0) {
@@ -37,7 +39,8 @@ bool Client::initialize() {
     return connectToServer();
 }
 
-bool Client::connectToServer() {
+bool Client::connectToServer()
+{
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -68,7 +71,8 @@ bool Client::connectToServer() {
     return true;
 }
 
-void Client::run(InputManager& input_manager, Renderer& renderer) {
+void Client::run(InputManager& input_manager, Renderer& renderer)
+{
     // Start network thread
     running = true;
     network_thread = std::thread(&Client::networkLoop, this);
@@ -106,7 +110,8 @@ void Client::stop() {
     }
 }
 
-void Client::networkLoop() {
+void Client::networkLoop()
+{
     while (running) {
         // Process outgoing messages
         {
@@ -151,7 +156,8 @@ void Client::networkLoop() {
     }
 }
 
-void Client::processMessage(const MessageHeader& header, const char* data, size_t data_size) {
+void Client::processMessage(const MessageHeader& header, const char* data, size_t data_size)
+{
     uint32_t payload_size = Protocol::getPayloadSize(header);
 
     // Verify we have the complete payload
@@ -263,7 +269,8 @@ void Client::processMessage(const MessageHeader& header, const char* data, size_
     }
 }
 
-void Client::sendToServer(const std::vector<uint8_t>& data) {
+void Client::sendToServer(const std::vector<uint8_t>& data)
+{
     if (!connected || data.empty()) {
         return;
     }
@@ -273,7 +280,8 @@ void Client::sendToServer(const std::vector<uint8_t>& data) {
     message_queue.push(data);
 }
 
-void Client::sendPlayerInput(bool jet_activated) {
+void Client::sendPlayerInput(bool jet_activated)
+{
     if (!connected || !game_started || game_over) {
         return;
     }

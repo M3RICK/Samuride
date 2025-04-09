@@ -6,7 +6,8 @@ InputManager::InputManager(Client* client, sf::Window* window)
     : client(client), window(window), jet_active(false), exit_requested(false) {
 }
 
-void InputManager::processInputs() {
+void InputManager::processInputs()
+{
     sf::Event event;
     while (window->pollEvent(event)) {
         // Close window event

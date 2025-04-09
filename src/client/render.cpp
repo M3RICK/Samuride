@@ -15,7 +15,8 @@ Renderer::~Renderer() {
     }
 }
 
-bool Renderer::initialize() {
+bool Renderer::initialize()
+{
     // Create window
     window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Jetpack Game");
     window.setFramerateLimit(60);
@@ -259,4 +260,121 @@ void Renderer::renderEffects(GameState* state)
 
     // Update effect lifetimes
     state->updateEffects();
+}
+
+void Renderer::renderHUD(GameState* state) {
+    auto players = state->getPlayers();
+    int my_player_number = client->getPlayerNumber();
+
+    if (players.find(my_player_number) == players.end()) {
+        return;
+    }
+
+    const PlayerState& my_player = players[my_player_number];
+
+    // Score display
+    sf::Text score_text;
+    score_text.setFont(font);
+    score_text.setString("Score: " + std::to_string(my_player.score));
+    score_text.setCharacterSize(24);
+    score_text.setFillColor(sf::Color::White);
+    score_text.setPosition(10, 10);
+    window.draw(score_text);
+
+    // Position display
+    sf::Text position_text;
+    position_text.setFont(font);
+    std::stringstream pos_ss;
+    pos_ss << "Position: " << my_player.x << ", " << my_player.y;
+    position_text.setString(pos_ss.str());
+    position_text.setCharacterSize(16);
+    position_text.setFillColor(sf::Color::White);
+    position_text.setPosition(10, 40);
+    window.draw(position_text);
+
+    // Jetpack status
+    sf::Text jetpack_text;
+    jetpack_text.setFont(font);
+    jetpack_text.setString("Jetpack: " + std::string(my_player.jet_active ? "ON" : "OFF"));
+    jetpack_text.setCharacterSize(16);
+    jetpack_text.setFillColor(my_player.jet_active ? sf::Color::Green : sf::Color(200, 200, 200));
+    jetpack_text.setPosition(10, 60);
+    window.draw(jetpack_text);
+
+    // Display other players' scores
+    int y_offset = 90;
+    for (const auto& player_pair : players) {
+        if (player_pair.first == my_player_number) continue;
+
+        sf::Text other_player_text;
+        other_player_text.setFont(font);
+        other_player_text.setString("Player " + std::to_string(player_pair.first) +
+                                    " Score: " + std::to_string(player_pair.second.score));
+        other_player_text.setCharacterSize(16);
+        other_player_text.setFillColor(sf::Color(200, 200, 200));
+        other_player_text.setPosition(10, y_offset);
+        window.draw(other_player_text);
+
+        y_offset += 20;
+    }
+}
+
+void Renderer::renderGameOver(GameState* state) {
+    int winner = state->getWinner();
+
+    // Semi-transparent overlay
+    sf::RectangleShape overlay(sf::Vector2f(SCREEN_WIDTH, SCREEN_HEIGHT));
+    overlay.setFillColor(sf::Color(0, 0, 0, 180));
+    window.draw(overlay);
+
+    // Game over text
+    sf::Text game_over_text;
+    game_over_text.setFont(font);
+    game_over_text.setString("GAME OVER");
+    game_over_text.setCharacterSize(50);
+    game_over_text.setFillColor(sf::Color::White);
+
+    // Center the text
+    sf::FloatRect textRect = game_over_text.getLocalBounds();
+    game_over_text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
+    game_over_text.setPosition(SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f - 50);
+
+    window.draw(game_over_text);
+
+    // Winner text
+    sf::Text winner_text;
+    winner_text.setFont(font);
+
+    if (winner == client->getPlayerNumber()) {
+        winner_text.setString("You Win!");
+        winner_text.setFillColor(sf::Color::Green);
+    } else if (winner >= 0) {
+        winner_text.setString("Player " + std::to_string(winner) + " Wins!");
+        winner_text.setFillColor(sf::Color::Red);
+    } else {
+        winner_text.setString("No Winner");
+        winner_text.setFillColor(sf::Color::Yellow);
+    }
+
+    winner_text.setCharacterSize(30);
+
+    // Center the text
+    textRect = winner_text.getLocalBounds();
+    winner_text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
+    winner_text.setPosition(SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f + 20);
+
+    window.draw(winner_text);
+
+    // Instructions to exit
+    sf::Text exit_text;
+    exit_text.setFont(font);
+    exit_text.setString("Press ESC to exit");
+    exit_text.setCharacterSize(20);
+    exit_text.setFillColor(sf::Color(200, 200, 200));
+
+    textRect = exit_text.getLocalBounds();
+    exit_text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
+    exit_text.setPosition(SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f + 80);
+
+    window.draw(exit_text);
 }
