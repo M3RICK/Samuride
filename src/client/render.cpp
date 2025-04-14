@@ -22,12 +22,12 @@ bool Renderer::initialize()
     window.setFramerateLimit(60);
 
     // Load assets
-    if (!background_texture.loadFromFile("assets/background.png")) {
+    if (!background_texture.loadFromFile("assets/background/background.png")) {
         // Fallback to a colored rectangle if texture is missing
         DEBUG_LOG("Failed to load background texture, using fallback");
     }
 
-    if (!player_texture.loadFromFile("assets/player.png")) {
+    if (!player_texture.loadFromFile("assets/johny/thierry.png")) {
         DEBUG_LOG("Failed to load player texture, using fallback");
     }
 
@@ -35,15 +35,15 @@ bool Renderer::initialize()
         DEBUG_LOG("Failed to load jetpack texture, using fallback");
     }
 
-    if (!coin_texture.loadFromFile("assets/coin.png")) {
+    if (!coin_texture.loadFromFile("assets/coins/coin.png")) {
         DEBUG_LOG("Failed to load coin texture, using fallback");
     }
 
-    if (!electric_texture.loadFromFile("assets/electric.png")) {
+    if (!electric_texture.loadFromFile("assets/electric/zap.png")) {
         DEBUG_LOG("Failed to load electric texture, using fallback");
     }
 
-    if (!font.loadFromFile("assets/font.ttf")) {
+    if (!font.loadFromFile("assets/font/jetpack_font.ttf")) {
         // Try system font as fallback
         if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
             DEBUG_LOG("Failed to load font, text may not be displayed properly");

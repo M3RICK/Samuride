@@ -6,11 +6,13 @@ Player::Player(int client_fd)
       score(0), jet_active(false) {
 }
 
-void Player::moveForward() {
+void Player::moveForward()
+{
     x += static_cast<int>(FORWARD_SPEED);
 }
 
-void Player::applyPhysics() {
+void Player::applyPhysics()
+{
     // Apply jetpack force if active
     if (jet_active) {
         y_velocity += JET_POWER;

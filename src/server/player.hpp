@@ -21,7 +21,7 @@ private:
     static constexpr float GRAVITY = 0.5f;
     static constexpr float JET_POWER = -0.8f;
     static constexpr float MAX_VELOCITY = 2.0f;
-    static constexpr float FORWARD_SPEED = 0.2f;
+    static constexpr float FORWARD_SPEED = 1.0f;
 
 public:
     Player(int client_fd);

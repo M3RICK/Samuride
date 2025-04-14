@@ -41,7 +41,8 @@ bool Server::initialize() {
     return initializeServer();
 }
 
-bool Server::initializeServer() {
+bool Server::initializeServer()
+{
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
         std::cerr << "Failed to create socket." << std::endl;
@@ -155,7 +156,7 @@ void Server::acceptNewClient() {
     // Create player
     players[client_fd] = new Player(client_fd);
 
-    std::cout << "New client connected: " << client_fd << std::endl;
+    std::cout << "New client connected: " << client_fd - 3 << std::endl;
     DEBUG_LOG("Client connected: fd=" + std::to_string(client_fd));
 
     // Send map data to client
@@ -242,7 +243,8 @@ void Server::sendToClient(int client_fd, const std::vector<uint8_t>& data) {
     DEBUG_PACKET_SEND(reinterpret_cast<const char*>(data.data()), bytes_sent);
 }
 
-void Server::broadcastToAllClients(const std::vector<uint8_t>& data) {
+void Server::broadcastToAllClients(const std::vector<uint8_t>& data)
+{
     for (auto& pair : players) {
         sendToClient(pair.first, data);
     }
@@ -379,7 +381,8 @@ void Server::checkGameState()
     }
 }
 
-void Server::handlePlayerInput(int client_fd, bool jet_activated) {
+void Server::handlePlayerInput(int client_fd, bool jet_activated)
+{
     auto it = players.find(client_fd);
     if (it == players.end()) {
         DEBUG_LOG("Player input from unknown client: " + std::to_string(client_fd));
@@ -389,7 +392,8 @@ void Server::handlePlayerInput(int client_fd, bool jet_activated) {
     it->second->setJetActive(jet_activated);
 }
 
-void Server::notifyCollision(int client_fd, char collision_type, int x, int y) {
+void Server::notifyCollision(int client_fd, char collision_type, int x, int y)
+{
     std::vector<uint8_t> collision_data;
 
     collision_data.push_back(collision_type);
@@ -405,7 +409,8 @@ void Server::notifyCollision(int client_fd, char collision_type, int x, int y) {
     broadcastToAllClients(collision_packet);
 }
 
-void Server::endGame(int winner_fd) {
+void Server::endGame(int winner_fd)
+{
     if (!game_started) {
         return;
     }
