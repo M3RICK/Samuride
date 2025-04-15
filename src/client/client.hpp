@@ -48,6 +48,9 @@ private:
     std::queue<std::vector<uint8_t>> message_queue;
     std::mutex queue_mutex;
 
+    // Pause at end of game
+    std::chrono::steady_clock::time_point game_end_time;
+
     // Game state reference
     GameState* game_state;
 

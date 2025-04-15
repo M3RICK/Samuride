@@ -27,7 +27,7 @@ bool Renderer::initialize()
         DEBUG_LOG("Failed to load background texture, using fallback");
     }
 
-    if (!player_texture.loadFromFile("assets/johny/thierry.png")) {
+    if (!player_texture.loadFromFile("assets/johny/johndy.png")) {
         DEBUG_LOG("Failed to load player texture, using fallback");
     }
 
@@ -53,7 +53,8 @@ bool Renderer::initialize()
     return true;
 }
 
-void Renderer::render() {
+void Renderer::render()
+{
     if (!client) return;
 
     window.clear(sf::Color(50, 50, 150));
@@ -83,9 +84,9 @@ void Renderer::render() {
         // Render waiting screen
         sf::Text waitText;
         waitText.setFont(font);
-        waitText.setString("Waiting for players...");
+        waitText.setString("Wake the fuck up...");
         waitText.setCharacterSize(40);
-        waitText.setFillColor(sf::Color::White);
+        waitText.setFillColor(sf::Color::Black);
         waitText.setPosition((SCREEN_WIDTH - waitText.getLocalBounds().width) / 2,
                            (SCREEN_HEIGHT - waitText.getLocalBounds().height) / 2);
         window.draw(waitText);
@@ -94,7 +95,8 @@ void Renderer::render() {
     window.display();
 }
 
-void Renderer::renderMap(const Map& map) {
+void Renderer::renderMap(const Map& map)
+{
     int start_x = static_cast<int>(camera_x);
     int end_x = start_x + SCREEN_WIDTH / TILE_SIZE + 1;
 
@@ -172,11 +174,25 @@ void Renderer::renderPlayers(GameState* state)
         float x = (player.x - camera_x) * TILE_SIZE;
         float y = player.y * TILE_SIZE;
 
-        // Draw player
+        // Draw player with animation
         if (player_texture.getSize().x > 0) {
             sf::Sprite playerSprite(player_texture);
+
+            // Determine animation frame
+            int frame = getCurrentAnimationFrame(player.jet_active);
+            int frame_width = player_texture.getSize().x / 4; // 4 frames per row
+
+            // Set texture rectangle based on animation
+            if (player.jet_active) {
+                // Jetpack animation (second row)
+                playerSprite.setTextureRect(sf::IntRect(frame * frame_width, TILE_SIZE, frame_width, TILE_SIZE));
+            } else {
+                // Walking animation (first row)
+                playerSprite.setTextureRect(sf::IntRect(frame * frame_width, 0, frame_width, TILE_SIZE));
+            }
+
             playerSprite.setPosition(x, y);
-            float scale = static_cast<float>(TILE_SIZE) / player_texture.getSize().x;
+            float scale = static_cast<float>(TILE_SIZE) / frame_width;
             playerSprite.setScale(scale, scale);
 
             // Highlight my player
@@ -185,20 +201,13 @@ void Renderer::renderPlayers(GameState* state)
             } else {
                 playerSprite.setColor(sf::Color(200, 200, 200));
             }
-
             window.draw(playerSprite);
         } else {
+            // Fallback to a rectangle if no texture is loaded
             sf::RectangleShape playerShape;
             playerShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
             playerShape.setPosition(x, y);
-
-            // Different color for each player
-            if (player_num == my_player_num) {
-                playerShape.setFillColor(sf::Color(0, 255, 0));
-            } else {
-                playerShape.setFillColor(sf::Color(255, 0, 0));
-            }
-
+            playerShape.setFillColor(player_num == my_player_num ? sf::Color(0, 255, 0) : sf::Color(255, 0, 0));
             window.draw(playerShape);
         }
 
@@ -218,17 +227,6 @@ void Renderer::renderPlayers(GameState* state)
                 window.draw(jetpackShape);
             }
         }
-
-        // Draw player number and score
-        sf::Text playerText;
-        playerText.setFont(font);
-        playerText.setString("P" + std::to_string(player_num + 1) + ": " + std::to_string(player.score));
-        playerText.setCharacterSize(20);
-        playerText.setFillColor(sf::Color::White);
-        playerText.setOutlineColor(sf::Color::Black);
-        playerText.setOutlineThickness(1);
-        playerText.setPosition(x, y - 20);
-        window.draw(playerText);
     }
 }
 
@@ -308,7 +306,7 @@ void Renderer::renderHUD(GameState* state) {
 
         sf::Text other_player_text;
         other_player_text.setFont(font);
-        other_player_text.setString("Player " + std::to_string(player_pair.first) +
+        other_player_text.setString("Ennemy Player " + std::to_string(player_pair.first) +
                                     " Score: " + std::to_string(player_pair.second.score));
         other_player_text.setCharacterSize(16);
         other_player_text.setFillColor(sf::Color(200, 200, 200));

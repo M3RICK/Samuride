@@ -94,6 +94,7 @@ void Client::run(InputManager& input_manager, Renderer& renderer)
             if (input_manager.shouldExit()) {
                 running = false;
             }
+            continue;
         }
     }
 
@@ -183,7 +184,7 @@ void Client::processMessage(const MessageHeader& header, const char* data, size_
         case MSG_GAME_START: {
             DEBUG_LOG("Game started");
             game_started = true;
-            game_over = false;
+            //game_over = false; Restart a chaque fois
             break;
         }
 
@@ -191,8 +192,8 @@ void Client::processMessage(const MessageHeader& header, const char* data, size_
             if (game_state) {
                 // Lock the game state for updating
                 std::lock_guard<std::mutex> lock(data_mutex);
-
                 size_t pos = 0;
+
                 while (pos + 8 <= payload_size) {
                     // Extract player data
                     int player_number = data[pos++];
@@ -274,8 +275,6 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
     if (!connected || data.empty()) {
         return;
     }
-
-    // Queue the message for sending in the network thread
     std::lock_guard<std::mutex> lock(queue_mutex);
     message_queue.push(data);
 }
