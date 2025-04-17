@@ -1,9 +1,6 @@
 #include "server.hpp"
 #include "player.hpp"
 #include "../common/debug.hpp"
-//=============================================================================
-// Game Logic
-//=============================================================================
 
 /**
  * Start the game
@@ -82,11 +79,7 @@ void Server::checkGameOverConditions()
     }
 }
 
-/**
- * Constrain a player to stay within map boundaries
- * @param player The player to constrain
- */
-void Server::constrainPlayerToMap(Player* player)
+void Server::constrainPlayerToMap(Player *player)
 {
     if (player->getY() < 0) {
         player->setY(0);
@@ -114,7 +107,7 @@ bool Server::checkPlayerCollisions(int client_fd, Player* player)
         notifyCollision(client_fd, 'e', player->getX(), player->getY());
 
         // Find other player to declare as winner
-        for (auto& other_pair : players) {
+        for (auto &other_pair : players) {
             if (other_pair.first != client_fd) {
                 endGame(other_pair.first);
                 return true;
@@ -125,15 +118,12 @@ bool Server::checkPlayerCollisions(int client_fd, Player* player)
     return false;
 }
 
-/**
- * Update game state and send to all clients
- */
 void Server::updateAndSendGameState()
 {
     std::vector<uint8_t> state_data;
 
     // Add all players' state to the packet
-    for (auto& pair : players) {
+    for (auto &pair : players) {
         Player* player = pair.second;
 
         addPlayerStateToPacket(state_data, player);
@@ -144,11 +134,6 @@ void Server::updateAndSendGameState()
     broadcastToAllClients(state_packet);
 }
 
-/**
- * Add a player's state to a packet
- * @param data The packet data vector to add to
- * @param player The player whose state to add
- */
 void Server::addPlayerStateToPacket(std::vector<uint8_t>& data, Player* player)
 {
     // Add player number (1 byte)
@@ -173,11 +158,6 @@ void Server::addPlayerStateToPacket(std::vector<uint8_t>& data, Player* player)
     data.push_back(player->isJetActive() ? 1 : 0);
 }
 
-/**
- * Handle player input (jetpack activation)
- * @param client_fd The client socket
- * @param jet_activated Whether the jetpack is activated
- */
 void Server::handlePlayerInput(int client_fd, bool jet_activated)
 {
     auto it = players.find(client_fd);
@@ -189,13 +169,6 @@ void Server::handlePlayerInput(int client_fd, bool jet_activated)
     it->second->setJetActive(jet_activated);
 }
 
-/**
- * Notify clients about a collision
- * @param client_fd The client that had the collision
- * @param collision_type The type of collision ('c' for coin, 'e' for electric)
- * @param x The X position of the collision
- * @param y The Y position of the collision
- */
 void Server::notifyCollision(int client_fd, char collision_type, int x, int y)
 {
     std::vector<uint8_t> collision_data;
@@ -216,10 +189,6 @@ void Server::notifyCollision(int client_fd, char collision_type, int x, int y)
     broadcastToAllClients(collision_packet);
 }
 
-/**
- * End the game with a specified winner
- * @param winner_fd The socket of the winning player, or -1 for no winner
- */
 void Server::endGame(int winner_fd)
 {
     if (!game_started)
