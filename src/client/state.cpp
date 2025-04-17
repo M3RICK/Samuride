@@ -54,7 +54,7 @@ void GameState::updateEffects()
         if (it->lifetime <= 0) {
             it = effects.erase(it);
         } else {
-            ++it;
+            it++;
         }
     }
 }
