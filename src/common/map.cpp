@@ -39,21 +39,15 @@ bool Map::loadFromFile(const std::string& filename)
 
     for (const auto& line : mapData) {
         if (line.length() != width) {
-            DEBUG_LOG("Error: Map has inconsistent line lengths");
+            DEBUG_LOG("Inconsistent line lengths");
             return false;
         }
 
-        // Check for valid characters
         for (char c : line) {
-            if (c != '_' && c != 'c' && c != 'e') {
-                DEBUG_LOG("Warning: Map contains unknown character: " + std::string(1, c));
+            if (c != '_' && c != 'c' && c != 'e')
                 return false;
-            }
         }
     }
-
-    DEBUG_LOG("Successfully loaded map: " + std::to_string(width) + "x" +
-              std::to_string(height));
     return true;
 }
 

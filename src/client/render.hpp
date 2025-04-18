@@ -17,7 +17,7 @@ class Client;
 
 class Renderer {
 private:
-    Client* client;
+    Client *client;
     sf::RenderWindow window;
 
     // Game assets
@@ -31,7 +31,9 @@ private:
     // Camera position
     float camera_x;
 
+    //===========================================================================
     // Render parameters
+    //===========================================================================
     static constexpr int TILE_SIZE = 64;
     static constexpr int SCREEN_WIDTH = 1920;
     static constexpr int SCREEN_HEIGHT = 1080;
@@ -51,16 +53,16 @@ private:
     //===========================================================================
     // Main Render Loop Helpers
     //===========================================================================
-    void updateCamera(GameState* state);
-    void renderGameScreen(GameState* state);
+    void updateCamera(GameState *state);
+    void renderGameScreen(GameState *state);
     void renderWaitingScreen();
 
     //===========================================================================
     // Map Rendering
     //===========================================================================
-    void renderMap(const Map& map);
+    void renderMap(const Map &map);
     void renderBackground();
-    void renderMapTiles(const Map& map);
+    void renderMapTiles(const Map &map);
     void renderTile(char tile, int x, int y);
     void renderCoin(float x, float y);
     void renderElectric(float x, float y);
@@ -68,7 +70,7 @@ private:
     //===========================================================================
     // Player Rendering
     //===========================================================================
-    void renderPlayers(GameState* state);
+    void renderPlayers(GameState *state);
     void renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num);
     void renderPlayerSprite(const PlayerState& player, int player_num, float x, float y, int my_player_num);
     void renderPlayerFallback(int player_num, float x, float y, int my_player_num);
@@ -77,7 +79,7 @@ private:
     //===========================================================================
     // Effects Rendering
     //===========================================================================
-    void renderEffects(GameState* state);
+    void renderEffects(GameState *state);
     void renderEffect(const GameState::CollisionEffect& effect, float x, float y);
 
     //===========================================================================
@@ -92,12 +94,12 @@ private:
     //===========================================================================
     // HUD and UI Rendering
     //===========================================================================
-    void renderHUD(GameState* state);
-    void renderGameOver(GameState* state);
+    void renderHUD(GameState *state);
+    void renderGameOver(GameState *state);
     void renderGameOverBackground();
     void renderGameOverTitle();
-    void renderWinnerText(GameState* state);
-    void renderFinalScores(GameState* state);
+    void renderWinnerText(GameState *state);
+    void renderFinalScores(GameState *state);
     void renderExitInstructions();
 
     //===========================================================================

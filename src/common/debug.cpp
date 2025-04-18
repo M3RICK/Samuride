@@ -44,7 +44,6 @@ void Logger::logPacket(const std::string &direction, const char *data, size_t si
     auto tm = *std::localtime(&now);
 
     std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] " << direction << " packet: ";
-    std::cout << "Size: " << size << " bytes, Data: ";
 
     for (size_t i = 0; i < std::min(size, static_cast<size_t>(16)); i++) {
         std::cout << std::hex << std::setw(2) << std::setfill('0')

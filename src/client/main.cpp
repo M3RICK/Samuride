@@ -15,14 +15,16 @@
 #include <cstdlib>
 #include <unistd.h>
 
-void printUsage(const char* programName) {
+void printUsage(const char *programName)
+{
     std::cerr << "Usage: " << programName << " -h <ip> -p <port> [-d]" << std::endl;
     std::cerr << "  -h <ip>     Server IP address" << std::endl;
     std::cerr << "  -p <port>   Server port" << std::endl;
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     // Parse command-line arguments
     int opt;
     std::string server_ip;

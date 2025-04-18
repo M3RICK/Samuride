@@ -235,8 +235,7 @@ void Client::handleGameStart()
     }).detach();
 }
 
-void Client::handleGameState(const char* data, size_t size)
-{
+void Client::handleGameState(const char* data, size_t size) {
     if (!game_state)
         return;
 
@@ -251,15 +250,22 @@ void Client::handleGameState(const char* data, size_t size)
         uint16_t score = (data[pos] << 8) | data[pos+1]; pos += 2;
         bool jet_active = data[pos++] != 0;
 
+        // Set my_player_number only once and only if it's not already set
         if (my_player_number == -1) {
             my_player_number = player_number;
-            DEBUG_LOG("I am player " + std::to_string(my_player_number));
+            DEBUG_LOG("Setting my player number to: " + std::to_string(my_player_number));
         }
 
+        // Update the correct player in the game state
         game_state->updatePlayer(player_number, x, y, score, jet_active);
+
+        // Log update for debugging
+        std::string isMe = (player_number == my_player_number) ? " (ME)" : "";
+        DEBUG_LOG("Updated player " + std::to_string(player_number) + isMe +
+                  ": pos=(" + std::to_string(x) + "," + std::to_string(y) +
+                  "), jet=" + (jet_active ? "ON" : "OFF"));
     }
 }
-
 void Client::handleCollision(const char* data, size_t size)
 {
     if (size < 5)

@@ -147,8 +147,16 @@ void Server::updateAndSendGameState()
     std::vector<uint8_t> state_data;
 
     // Add all players' state to the packet
-    for (auto &pair : players) {
+    DEBUG_LOG("Updating game state for " + std::to_string(players.size()) + " players");
+
+    for (auto& pair : players) {
         Player* player = pair.second;
+
+        // Log each player's state before sending
+        DEBUG_LOG("Player " + std::to_string(player->getPlayerNumber()) +
+                  " state: pos=(" + std::to_string(player->getX()) + "," +
+                  std::to_string(player->getY()) + "), jet=" +
+                  (player->isJetActive() ? "ON" : "OFF"));
 
         addPlayerStateToPacket(state_data, player);
     }
@@ -193,12 +201,17 @@ void Server::handlePlayerInput(int client_fd, bool jet_activated)
     Player* player = it->second;
     int player_number = player->getPlayerNumber();
 
-    DEBUG_LOG("Input from client_fd=" + std::to_string(client_fd) +
-              ", player=" + std::to_string(player_number) +
-              ", jetpack=" + (jet_activated ? "ON" : "OFF"));
+    DEBUG_LOG("INPUT: client_fd=" + std::to_string(client_fd) +
+              ", player_number=" + std::to_string(player_number) +
+              ", jet=" + (jet_activated ? "ON" : "OFF"));
 
-    // Only update this specific player's jetpack state
     player->setJetActive(jet_activated);
+
+    for (const auto& p : players) {
+        DEBUG_LOG("PLAYER STATE: client_fd=" + std::to_string(p.first) +
+                  ", player_number=" + std::to_string(p.second->getPlayerNumber()) +
+                  ", jet=" + (p.second->isJetActive() ? "ON" : "OFF"));
+    }
 }
 
 void Server::notifyCollision(int client_fd, char collision_type, int x, int y)
