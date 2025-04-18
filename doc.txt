@@ -1,0 +1,229 @@
+SAMURIDE, TONY THIERRY AYMERIC
+
+Introduction
+--------
+
+    The Samuride Protocol is a binary TCP-based protocol designed to
+facilitate communication between a server and multiple clients in a
+multiplayer Jetpack game. The game is basically Jetpack Joyride,
+but with two players.
+In this game, players move up through a 2D map.
+Players collect coins to increase their score and must avoid electric hazards.
+The game ends when a player reaches the end of the map or when a player collides with a
+hazard.
+
+This protocol handles all aspects of the game, including:
+
+ -> Client connection and authentication
+ -> Map data transmission
+ -> Game state synchronization
+ -> Player input
+ -> Collision detection and notification
+ -> Game outcome determination
+
+All communication between the server and clients uses a common packet structure consisting of a header followed by a payload.
+ -> The packet header is 4 bytes in length and has the following structure:
+    o Type (1 byte): The message type identifier.
+    o Payload Size (3 bytes): The size of the payload in bytes.
+
+
+Message Types
+--------
+
+The protocol defines the following message types:
+
+Type    Name                Direction           Description
+1       MSG_CONNECT         Client to Server    Initial connection request
+2       MSG_MAP_DATA        Server to Client    Map data
+3       MSG_GAME_START      Server to Client    Game is starting
+4       MSG_PLAYER_INPUT    Client to Server    Player input (jetpack)
+5       MSG_GAME_STATE      Server to Client    Game state update
+6       MSG_COLLISION       Server to Client    Collision notification
+7       MSG_GAME_END        Server to Client    Game over notification
+
+
+MSG_CONNECT
+--------
+
+Sent by the client to initiate a connection with the server. This is the first message a client sends after establishing a TCP connection.
+Payload: None (0 bytes)
+After receiving this message, the server assigns a player number to the client and sends the map data using MSG_MAP_DATA.
+
+
+MSG_MAP_DATA
+--------
+
+Sent by the server to the client to transmit the game map.
+Payload Format:
+|                         Map Width                             |
+|                         Map Height                            |
+|                         Map Data                              |
+
+Map Width (4 bytes)
+Map Height (4 bytes)
+Map Data (Width × Height bytes): One byte per tile, representing the tile type at each position. See Section 4 for tile types.
+
+The map is stored in row-major order, from top to bottom and left to right.
+
+
+MSG_GAME_START
+--------
+
+
+Sent by the server to all clients when the game is about to start.
+This occurs after at least two players have connected.
+Payload: None (0 bytes)
+Upon receiving this message, clients should transition from the waiting screen to the game screen and prepare to receive game state updates.
+
+
+MSG_PLAYER_INPUT
+--------
+
+
+Sent by the client to the server when the player activates ordeactivates their jetpack.
+Payload Format:
+
+Jetpack State (1 byte): 1 if jetpack is activated, 0 if deactivated
+
+The server uses this information to update the player's vertical velocity and position.
+
+
+MSG_GAME_STATE
+--------
+
+Sent by the server to all clients to update the game state. This message contains the positions, scores, and jetpack states of all players.
+
+Player Number (1 byte): The player's identifier
+X Position (2 bytes)
+Y Position (2 bytes)
+Score (2 bytes)
+Jet (1 byte) 1 if jetpack is active, 0 if inactive
+
+The payload contains a sequence of these 8-byte player records, one for each player in the game.
+
+
+MSG_COLLISION
+--------
+
+Sent by the server to all clients when a player collides with a game element (coin or hazard).
+Payload Format:
+
+Collision Type (1 byte): Character representing the collision type:
+'c' for coin, 'e' for electric hazard
+X Position (2 bytes)
+Y Position (2 bytes)
+
+This message is used to synchronize the game state when elements are collected or when collisions occur.
+
+
+MSG_GAME_END
+--------
+
+
+Sent by the server to all clients when the game ends.
+
+Payload Format:
+
+Winner Number (1 byte): The player number of the winner, or 0xFF if there is no winner.
+
+The game can end in the following scenarios:
+    o A player reaches the end of the map
+    o A player collides with an electric hazard
+    o All players disconnect
+
+If a player reaches the end of the map, the player with the highest score wins.
+If a player collides with a hazard, the other player wins.
+
+
+Map Format
+--------
+
+
+The map is a 2D grid of tiles.
+
+
+Map Binary Structure
+--------
+
+Each tile is represented by a single byte character. The map data is stored in row-major order (row by row from top to bottom).
+
+Example of a 5×3 map binary representation:
+Map width: 5
+Map height: 3
+Map data: "cc", "e", "c___"
+Where '_' represents empty space, 'c' represents a coin, and 'e' represents an electric hazard.
+
+
+Map Tile Types
+--------
+
+
+The following tile types are defined:
+Character           Description         Behavior
+'_'                 Empty space         No effect
+'c'                 Coin                Adds 1 to player's score
+'e'                 Electric hazard     Causes player death
+
+When a player collects a coin, the server does not modify the map data.
+Instead, it tracks which coins have been collected by which players.
+This allows multiple players to collect the same coin.
+
+
+
+Game
+--------
+
+This section describes the typical flow of messages during a game
+session.
+
+Connect (TCP)---><---Accept connection MSG_CONNECT ---><--- MSG_MAP_DATA
+
+Waiting for Players
+--------
+
+
+The server waits until at least 2 players have connected before starting the game.
+During this time, clients display a waiting screen.
+
+Game Start
+--------
+
+MSG_GAME_START--->(All clients)
+
+
+GAMEPLAY
+--------
+
+During gameplay, the following message exchanges occur continuously:
+
+MSG_PLAYER_INPUT--->(When input changes)<---MSG_GAME_STATE (Regular updates)<---MSG_COLLISION (When applicable)
+
+The server continuously updates the game state by:
+    o players forward automatically
+    o physics (gravity or jetpack thrust)
+    o checking for collisions with map elements
+    o sending updated positions to all clients
+
+
+Game End
+--------
+
+Server                              Clients
+MSG_GAME_END           --->         (All clients)
+
+
+
+--------
+Security Considerations
+--------
+
+The Jetpack Game Protocol is designed for a controlled environment and does not implement strong security measures because the animations broke me.
+
+The following security considerations should be noted:
+
+No authentication beyond the initial connection.
+The server should validate all client inputs to prevent cheating.
+The server must enforce game rules and physics, not trusting client calculations.
+Input validation should be performed on all incoming messages to prevent buffer overflows or other security issues.
+The server should implement rate limiting to prevent denial of service attacks from malicious clients.
+And surely others.

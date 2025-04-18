@@ -20,7 +20,7 @@ bool Logger::isDebugMode() const
     return debug_mode;
 }
 
-void Logger::log(const std::string& message)
+void Logger::log(const std::string &message)
 {
     if (!debug_mode)
         return;
@@ -33,7 +33,7 @@ void Logger::log(const std::string& message)
     std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] " << message << std::endl;
 }
 
-void Logger::logPacket(const std::string& direction, const char* data, size_t size)
+void Logger::logPacket(const std::string &direction, const char *data, size_t size)
 {
     if (!debug_mode)
         return;

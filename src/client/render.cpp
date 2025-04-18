@@ -12,9 +12,6 @@
 #include <sstream>
 #include <iomanip>
 
-//=============================================================================
-// Constructor & Destructor
-//=============================================================================
 
 Renderer::Renderer(Client* client)
     : client(client), camera_x(0) {
@@ -39,31 +36,33 @@ bool Renderer::initialize() {
     return true;
 }
 
-bool Renderer::createWindow() {
-    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Jetpack Game");
+bool Renderer::createWindow()
+{
+    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Jetpack Game"); // A MODIF DANS HPP
     window.setFramerateLimit(60);
     return window.isOpen();
 }
 
 void Renderer::loadAssets() {
     loadTexture(background_texture, "assets/background/background.png", "background");
-    loadTexture(player_texture, "assets/johny/johndy.png", "player");
-    loadTexture(jetpack_texture, "assets/jetpack.png", "jetpack");
-    loadTexture(coin_texture, "assets/coins/coin.png", "coin");
-    loadTexture(electric_texture, "assets/electric/zap.png", "electric");
+    loadTexture(player_texture, "assets/johny/Xjohny.png", "player");
+    loadTexture(jetpack_texture, "assets/Xjetpack.png", "jetpack");
+    loadTexture(coin_texture, "assets/coins/Xcoin.png", "coin");
+    loadTexture(electric_texture, "assets/electric/Xzap.png", "electric");
 
     loadFont();
 }
 
-void Renderer::loadTexture(sf::Texture& texture, const std::string& path, const std::string& name) {
+void Renderer::loadTexture(sf::Texture &texture, const std::string &path, const std::string &name)
+{
     if (!texture.loadFromFile(path)) {
         DEBUG_LOG("Failed to load " + name + " texture, using fallback");
     }
 }
 
-void Renderer::loadFont() {
+void Renderer::loadFont()
+{
     if (!font.loadFromFile("assets/font/jetpack_font.ttf")) {
-        // Try system font as fallback
         if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
             DEBUG_LOG("Failed to load font, text may not be displayed properly");
         }
@@ -74,13 +73,17 @@ void Renderer::loadFont() {
 // Main Render Loop
 //=============================================================================
 
-void Renderer::render() {
-    if (!client) return;
+void Renderer::render()
+{
+    if (!client)
+        return;
 
     window.clear(sf::Color(50, 50, 150));
 
     GameState* state = client->getGameState();
-    if (!state) return;
+
+    if (!state)
+        return;
 
     updateCamera(state);
 
@@ -93,7 +96,8 @@ void Renderer::render() {
     window.display();
 }
 
-void Renderer::updateCamera(GameState* state) {
+void Renderer::updateCamera(GameState *state)
+{
     auto players = state->getPlayers();
     int my_player_num = client->getPlayerNumber();
 
@@ -103,7 +107,8 @@ void Renderer::updateCamera(GameState* state) {
     }
 }
 
-void Renderer::renderGameScreen(GameState* state) {
+void Renderer::renderGameScreen(GameState *state)
+{
     renderMap(client->getMap());
     renderPlayers(state);
     renderEffects(state);
@@ -114,10 +119,13 @@ void Renderer::renderGameScreen(GameState* state) {
     }
 }
 
-void Renderer::renderWaitingScreen() {
+void Renderer::renderWaitingScreen()
+{
     sf::Text waitText;
+
     setupText(waitText, "Wake the fuck up...", 40, sf::Color::Black);
     centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
     window.draw(waitText);
 }
 
@@ -125,22 +133,27 @@ void Renderer::renderWaitingScreen() {
 // Map Rendering
 //=============================================================================
 
-void Renderer::renderMap(const Map& map) {
+void Renderer::renderMap(const Map& map)
+{
     renderBackground();
     renderMapTiles(map);
 }
 
-void Renderer::renderBackground() {
+void Renderer::renderBackground()
+{
     if (background_texture.getSize().x > 0) {
         sf::Sprite background(background_texture);
+
         float scale_x = static_cast<float>(SCREEN_WIDTH) / background_texture.getSize().x;
         float scale_y = static_cast<float>(SCREEN_HEIGHT) / background_texture.getSize().y;
+
         background.setScale(scale_x, scale_y);
         window.draw(background);
     }
 }
 
-void Renderer::renderMapTiles(const Map& map) {
+void Renderer::renderMapTiles(const Map &map)
+{
     int start_x = static_cast<int>(camera_x);
     int end_x = start_x + SCREEN_WIDTH / TILE_SIZE + 1;
 
@@ -159,7 +172,8 @@ void Renderer::renderMapTiles(const Map& map) {
     }
 }
 
-void Renderer::renderTile(char tile, int x, int y) {
+void Renderer::renderTile(char tile, int x, int y)
+{
     float screen_x = (x - camera_x) * TILE_SIZE;
     float screen_y = y * TILE_SIZE;
 
@@ -171,12 +185,12 @@ void Renderer::renderTile(char tile, int x, int y) {
             renderElectric(screen_x, screen_y);
             break;
         default:
-            // Empty space, don't draw anything
             break;
     }
 }
 
-void Renderer::renderCoin(float x, float y) {
+void Renderer::renderCoin(float x, float y)
+{
     if (coin_texture.getSize().x > 0) {
         sf::Sprite coin(coin_texture);
         coin.setPosition(x, y);
@@ -192,7 +206,8 @@ void Renderer::renderCoin(float x, float y) {
     }
 }
 
-void Renderer::renderElectric(float x, float y) {
+void Renderer::renderElectric(float x, float y)
+{
     if (electric_texture.getSize().x > 0) {
         sf::Sprite electric(electric_texture);
         electric.setPosition(x, y);
@@ -212,7 +227,8 @@ void Renderer::renderElectric(float x, float y) {
 // Player Rendering
 //=============================================================================
 
-void Renderer::renderPlayers(GameState* state) {
+void Renderer::renderPlayers(GameState *state)
+{
     auto players = state->getPlayers();
     int my_player_num = client->getPlayerNumber();
 
@@ -234,7 +250,6 @@ void Renderer::renderPlayers(GameState* state) {
 
 void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num)
 {
-    // Draw player with animation
     if (player_texture.getSize().x > 0) {
         renderPlayerSprite(player, player_num, x, y, my_player_num);
     } else {
@@ -242,11 +257,14 @@ void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, 
     }
 }
 
+//=============================================================================================
+// TENTATIVE D ANIMATION A CHANGER DUCP CA MARCHE PAS
+//=============================================================================================
+
 void Renderer::renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num)
 {
     sf::Sprite playerSprite(player_texture);
 
-    // Determine animation frame
     int frame = getCurrentAnimationFrame(player.jet_active);
     int frame_width = player_texture.getSize().x / 4; // 4 frames per row
 
@@ -276,6 +294,7 @@ void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_pla
 {
     // Fallback to a rectangle if no texture is loaded
     sf::RectangleShape playerShape;
+
     playerShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
     playerShape.setPosition(x, y);
     playerShape.setFillColor(player_num == my_player_num ? sf::Color(0, 255, 0) : sf::Color(255, 0, 0));
@@ -305,37 +324,35 @@ void Renderer::renderJetpack(float x, float y)
 
 void Renderer::renderEffects(GameState *state)
 {
-    auto effects = state->getEffects();
-
-    for (const auto& effect : effects) {
-        float x = (effect.x - camera_x) * TILE_SIZE;
-        float y = effect.y * TILE_SIZE;
-
-        renderEffect(effect, x, y);
-    }
-
-    // Update effect lifetimes
-    state->updateEffects();
+//    auto effects = state->getEffects();
+//
+//    for (const auto& effect : effects) {
+//        float x = (effect.x - camera_x) * TILE_SIZE;
+//        float y = effect.y * TILE_SIZE;
+//
+//        renderEffect(effect, x, y);
+//    }
+//    state->updateEffects();
 }
 
 void Renderer::renderEffect(const GameState::CollisionEffect& effect, float x, float y)
 {
-    sf::CircleShape effectShape;
-    effectShape.setRadius(TILE_SIZE / 2);
-    effectShape.setPosition(x, y);
-
-    // Fade out based on lifetime
-    int alpha = 255 * effect.lifetime / 20;
-
-    if (effect.type == 'c') {
-        // Coin effect
-        effectShape.setFillColor(sf::Color(255, 255, 0, alpha));
-    } else if (effect.type == 'e') {
-        // Electric hazard effect
-        effectShape.setFillColor(sf::Color(255, 0, 0, alpha));
-    }
-
-    window.draw(effectShape);
+//    sf::CircleShape effectShape;
+//    effectShape.setRadius(TILE_SIZE / 2);
+//    effectShape.setPosition(x, y);
+//
+//    // Fade out based on lifetime
+//    int alpha = 255 * effect.lifetime / 20;
+//
+//    if (effect.type == 'c') {
+//        // Coin effect
+//        effectShape.setFillColor(sf::Color(255, 255, 0, alpha));
+//    } else if (effect.type == 'e') {
+//        // Electric hazard effect
+//        effectShape.setFillColor(sf::Color(255, 0, 0, alpha));
+//    }
+//
+//    window.draw(effectShape);
 }
 
 //=============================================================================

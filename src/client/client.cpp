@@ -10,13 +10,6 @@
 #include "render.hpp"
 #include "inputs.hpp"
 #include "../common/debug.hpp"
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
 
 Client::Client(const std::string& server_ip, int server_port, bool debug_mode)
     : client_fd(-1), server_ip(server_ip), server_port(server_port), debug_mode(debug_mode),
