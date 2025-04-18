@@ -19,7 +19,8 @@ enum MessageType : uint8_t {
     MSG_PLAYER_INPUT = 4, // input (space pressed/released)
     MSG_GAME_STATE = 5,   // positions, scores, etc.
     MSG_COLLISION = 6,    // collision
-    MSG_GAME_END = 7      // game is over
+    MSG_GAME_END = 7,      // game is over
+    MSG_COUNTDOWN = 8     // countdown before game starts
 };
 
 struct MessageHeader {

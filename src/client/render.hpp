@@ -81,6 +81,15 @@ private:
     void renderEffect(const GameState::CollisionEffect& effect, float x, float y);
 
     //===========================================================================
+    // COUNTDOWN
+    //===========================================================================
+
+    bool show_countdown;
+    int countdown_value;
+    std::chrono::steady_clock::time_point countdown_time;
+    void setCountdown(int value);
+
+    //===========================================================================
     // HUD and UI Rendering
     //===========================================================================
     void renderHUD(GameState* state);

@@ -12,21 +12,38 @@
 /**
  * Start the game
  */
-void Server::startGame()
-{
+void Server::startGame() {
     if (players.size() < 2) {
         return; // Need at least 2 players
     }
 
+    DEBUG_LOG("Starting game countdown with " + std::to_string(players.size()) + " players");
+
+    // Send a countdown to clients (3...2...1...GO!)
+    for (int count = 3; count >= 0; count--) {
+        // Create a special countdown packet
+        std::vector<uint8_t> payload = { static_cast<uint8_t>(count) };
+        std::vector<uint8_t> packet = Protocol::createPacket(MSG_COUNTDOWN, payload);
+
+        // Broadcast to all clients
+        broadcastToAllClients(packet);
+
+        if (count > 0) {
+            // Sleep between countdown steps
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+
+    // Create and send the actual game start message
+    std::vector<uint8_t> startPayload;
+    std::vector<uint8_t> startPacket = Protocol::createPacket(MSG_GAME_START, startPayload);
+    broadcastToAllClients(startPacket);
+
+    // Set the game state to started
     game_started = true;
 
     // Initialize player positions
     initializePlayerPositions();
-
-    // Send game start message to all clients
-    std::vector<uint8_t> payload;
-    std::vector<uint8_t> packet = Protocol::createPacket(MSG_GAME_START, payload);
-    broadcastToAllClients(packet);
 
     DEBUG_LOG("Game started with " + std::to_string(players.size()) + " players");
 }
@@ -173,7 +190,15 @@ void Server::handlePlayerInput(int client_fd, bool jet_activated)
         return;
     }
 
-    it->second->setJetActive(jet_activated);
+    Player* player = it->second;
+    int player_number = player->getPlayerNumber();
+
+    DEBUG_LOG("Input from client_fd=" + std::to_string(client_fd) +
+              ", player=" + std::to_string(player_number) +
+              ", jetpack=" + (jet_activated ? "ON" : "OFF"));
+
+    // Only update this specific player's jetpack state
+    player->setJetActive(jet_activated);
 }
 
 void Server::notifyCollision(int client_fd, char collision_type, int x, int y)

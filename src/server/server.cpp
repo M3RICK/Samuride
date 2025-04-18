@@ -260,11 +260,14 @@ void Server::acceptNewClient()
     // Create player object for this client
     players[client_fd] = new Player(client_fd);
 
-    std::cout << "New client connected: " << client_fd - 3 << std::endl;
+    std::cout << "New client connected: " << client_fd << std::endl;
     DEBUG_LOG("Client connected: fd=" + std::to_string(client_fd));
 
     // Send map data to client
     sendMapToClient(client_fd);
+
+    // Allow a small delay for client to process map data
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Don't allow joining a game in progress
     if (game_started) {
@@ -401,9 +404,19 @@ void Server::processClientMessage(int client_fd, ssize_t bytes_read)
             break;
 
         case MSG_PLAYER_INPUT:
-            if (payload_size >= 1) {
-                bool jet_activated = (recv_buffer[sizeof(MessageHeader)] != 0);
-                handlePlayerInput(client_fd, jet_activated);
+            if (payload_size >= 2) {  // Now expecting 2 bytes: player number + jet state
+                int player_num = recv_buffer[sizeof(MessageHeader)];
+                bool jet_activated = (recv_buffer[sizeof(MessageHeader) + 1] != 0);
+
+                // Verify this client is allowed to control this player
+                if (players.find(client_fd) != players.end() &&
+                    players[client_fd]->getPlayerNumber() == player_num) {
+                    handlePlayerInput(client_fd, jet_activated);
+                    DEBUG_LOG("Player " + std::to_string(player_num) +
+                             " input processed: jet " + (jet_activated ? "ON" : "OFF"));
+                } else {
+                    DEBUG_LOG("Rejected input - wrong player number");
+                }
             }
             break;
 
@@ -445,13 +458,19 @@ void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
  * Broadcast data to all connected clients
  * @param data The data to send
  */
-void Server::broadcastToAllClients(const std::vector<uint8_t>& data)
-{
-    for (auto& pair : players) {
-        int client_fd = pair.first;
-        sendToClient(client_fd, data);
+ void Server::broadcastToAllClients(const std::vector<uint8_t>& data) {
+     DEBUG_LOG("Broadcasting message to " + std::to_string(players.size()) + " clients");
 
-        // Add debugging to help track broadcast issues
-        DEBUG_LOG("Broadcasting to client: " + std::to_string(client_fd));
-    }
-}
+     for (auto& pair : players) {
+         int client_fd = pair.first;
+         ssize_t sent = send(client_fd, data.data(), data.size(), 0);
+
+         if (sent < 0) {
+             DEBUG_LOG("Failed to broadcast to client: " + std::to_string(client_fd) +
+                       ", errno=" + std::to_string(errno));
+         } else {
+             DEBUG_LOG("Successfully broadcast " + std::to_string(sent) +
+                       " bytes to client: " + std::to_string(client_fd));
+         }
+     }
+ }

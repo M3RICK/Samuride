@@ -87,6 +87,7 @@ public:
 
     bool initialize();
     void run(InputManager& input_manager, Renderer& renderer);
+    void forceGameStarted() { game_started = true; }
     void stop();
 
     void sendPlayerInput(bool jet_activated);

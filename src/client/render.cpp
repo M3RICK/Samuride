@@ -14,7 +14,7 @@
 
 
 Renderer::Renderer(Client* client)
-    : client(client), camera_x(0) {
+    : client(client), camera_x(0), show_countdown(false), countdown_value(0) {
 }
 
 Renderer::~Renderer() {
@@ -119,14 +119,24 @@ void Renderer::renderGameScreen(GameState *state)
     }
 }
 
-void Renderer::renderWaitingScreen()
-{
-    sf::Text waitText;
+void Renderer::renderWaitingScreen() {
+    if (show_countdown) {
+        sf::Text countText;
+        setupText(countText, std::to_string(countdown_value), 100, sf::Color::White);
+        centerText(countText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+        window.draw(countText);
 
-    setupText(waitText, "Wake the fuck up...", 40, sf::Color::Black);
-    centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-
-    window.draw(waitText);
+        // Hide countdown after 1 second
+        auto elapsed = std::chrono::steady_clock::now() - countdown_time;
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 1000) {
+            show_countdown = false;
+        }
+    } else {
+        sf::Text waitText;
+        setupText(waitText, "Wake the fuck up...", 40, sf::Color::Black);
+        centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+        window.draw(waitText);
+    }
 }
 
 //=============================================================================
@@ -470,6 +480,13 @@ void Renderer::renderExitInstructions()
 //=============================================================================
 // Helper Functions
 //=============================================================================
+
+void Renderer::setCountdown(int value)
+{
+    show_countdown = (value > 0);
+    countdown_value = value;
+    countdown_time = std::chrono::steady_clock::now();
+}
 
 int Renderer::getCurrentAnimationFrame(bool) const
 {
