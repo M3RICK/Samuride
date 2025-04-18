@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 

@@ -1,5 +1,12 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #ifndef DEBUG_HPP
-#define DEBUG_HPP
+    #define DEBUG_HPP
 
 #include <iostream>
 #include <string>

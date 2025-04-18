@@ -1,5 +1,12 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #ifndef INPUTS_HPP
-#define INPUTS_HPP
+    #define INPUTS_HPP
 
 #include <SFML/Window.hpp>
 #include <atomic>
@@ -21,4 +28,4 @@ public:
     bool shouldExit() const { return exit_requested; }
 };
 
-#endif // INPUTS_HPP
+#endif

@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #include "debug.hpp"
 
 Logger::Logger(bool debug) : debug_mode(debug)

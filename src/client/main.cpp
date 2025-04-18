@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #include "client.hpp"
 #include "render.hpp"
 #include "inputs.hpp"

@@ -1,5 +1,12 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #ifndef CLIENT_HPP
-#define CLIENT_HPP
+    #define CLIENT_HPP
 
 #include <string>
 #include <thread>
@@ -19,6 +26,7 @@
 
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
+
 
 class GameState;
 class Renderer;

@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #include "server.hpp"
 #include "player.hpp"
 #include "../common/debug.hpp"

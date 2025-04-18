@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #include "server.hpp"
 #include "player.hpp"
 #include "../common/debug.hpp"
@@ -34,10 +41,10 @@ void Server::initializePlayerPositions()
     for (auto& pair : players) {
         Player* player = pair.second;
         player->setX(0);
-        player->setY(game_map.getHeight() / 2);
+        player->setY(game_map.getHeight() - 3);
         player->setPlayerNumber(player_num++);
     }
-}
+ }
 
 /**
  * Check and update game state

@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #include "player.hpp"
 #include <algorithm>
 
@@ -13,17 +20,13 @@ void Player::moveForward()
 
 void Player::applyPhysics()
 {
-    // Apply jetpack force if active
     if (jet_active) {
         y_velocity += JET_POWER;
     } else {
-        // Apply gravity
         y_velocity += GRAVITY;
     }
 
-    // Clamp velocity
     y_velocity = std::max(-MAX_VELOCITY, std::min(y_velocity, MAX_VELOCITY));
 
-    // Update position
     y += static_cast<int>(y_velocity);
 }

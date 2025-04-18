@@ -1,3 +1,10 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
 #ifndef STATE_HPP
 #define STATE_HPP
 
@@ -16,11 +23,7 @@ struct PlayerState {
 };
 
 class GameState {
-private:
-    std::map<int, PlayerState> players;
-    std::mutex state_mutex;
-    int winner;
-
+public:  // Change this from private to public
     // Coin and collision effects
     struct CollisionEffect {
         char type;
@@ -31,6 +34,11 @@ private:
         CollisionEffect(char type, int x, int y)
             : type(type), x(x), y(y), lifetime(20) {}
     };
+
+private:
+    std::map<int, PlayerState> players;
+    std::mutex state_mutex;
+    int winner;
 
     std::vector<CollisionEffect> effects;
 
@@ -47,5 +55,4 @@ public:
     std::vector<CollisionEffect> getEffects();
     void updateEffects();
 };
-
 #endif // STATE_HPP
