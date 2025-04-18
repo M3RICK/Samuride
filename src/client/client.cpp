@@ -87,7 +87,6 @@ void Client::run(InputManager &input, Renderer &renderer)
     network_thread = std::thread(&Client::networkLoop, this);
 
     while (running) {
-        // Check the game_started flag explicitly
         if (game_started.load(std::memory_order_acquire)) {
             DEBUG_LOG("Game is started in main loop: " + std::to_string(game_started.load()));
         }
@@ -123,8 +122,6 @@ void Client::networkLoop()
     while (running) {
         processOutgoingMessages();
         readIncomingData();
-
-        // Force game started after some time if we've received player number
         cycles++;
         if (cycles > 100 && my_player_number >= 0 && !game_started) {
             DEBUG_LOG("*** FORCING GAME STARTED STATE ***");
@@ -159,13 +156,10 @@ void Client::readIncomingData()
         MessageHeader header;
 
         if (Protocol::parseHeader(recv_buffer, bytes_read, header)) {
-            // Special handling for game start message
             if (header.type == MSG_GAME_START) {
-                DEBUG_LOG("*** DETECTED GAME START MESSAGE IN INCOMING DATA ***");
                 handleGameStart();
                 return;
             }
-
             processMessage(header, recv_buffer + sizeof(MessageHeader),
                           bytes_read - sizeof(MessageHeader));
         }
@@ -180,14 +174,10 @@ void Client::processMessage(const MessageHeader &header, const char *data, size_
 {
     uint32_t payload_size = Protocol::getPayloadSize(header);
 
-    if (data_size < payload_size)
-        return;
-
-    // Prioritize handling game start message
     if (header.type == MSG_GAME_START) {
         DEBUG_LOG("*** RECEIVED GAME START MESSAGE, SETTING GAME STARTED FLAG ***");
         game_started = true;
-        return;  // Return immediately after processing game start
+        return;
     }
 
     switch (header.type) {
@@ -209,7 +199,7 @@ void Client::processMessage(const MessageHeader &header, const char *data, size_
                 if (count > 0) {
                     DEBUG_LOG("Game starting in " + std::to_string(count) + "...");
                 } else {
-                    DEBUG_LOG("GO!");
+                    DEBUG_LOG("BURN THE CITY!");
                 }
             }
             break;
@@ -235,7 +225,6 @@ void Client::handleGameStart()
 {
     DEBUG_LOG("Game start received, beginning countdown");
 
-    // Start a short countdown before setting game_started
     std::thread([this]() {
         for (int i = 3; i > 0; i--) {
             DEBUG_LOG("Game starting in " + std::to_string(i) + "...");
@@ -262,20 +251,12 @@ void Client::handleGameState(const char* data, size_t size)
         uint16_t score = (data[pos] << 8) | data[pos+1]; pos += 2;
         bool jet_active = data[pos++] != 0;
 
-        // Set my_player_number only once
         if (my_player_number == -1) {
             my_player_number = player_number;
             DEBUG_LOG("I am player " + std::to_string(my_player_number));
         }
 
         game_state->updatePlayer(player_number, x, y, score, jet_active);
-
-        // Add debug info about updates for each player
-        DEBUG_LOG("Updated player " + std::to_string(player_number) +
-                  " pos=(" + std::to_string(x) + "," + std::to_string(y) + ")" +
-                  " score=" + std::to_string(score) +
-                  " jet=" + (jet_active ? "ON" : "OFF") +
-                  (player_number == my_player_number ? " (ME)" : ""));
     }
 }
 

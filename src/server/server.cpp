@@ -20,9 +20,6 @@
 // Constructor & Destructor
 //=============================================================================
 
-/**
- * Server constructor - initializes the server with given parameters
- */
 Server::Server(int port, const std::string& map_path, bool debug_mode)
     : server_fd(-1), port(port), map_path(map_path), debug_mode(debug_mode),
       game_started(false) {
@@ -49,10 +46,6 @@ Server::~Server()
 // Server Initialization
 //=============================================================================
 
-/**
- * Initialize the server - loads map and sets up network
- * @return true if initialization succeeded, false otherwise
- */
 bool Server::initialize()
 {
     // Load the game map
@@ -64,10 +57,6 @@ bool Server::initialize()
     return initializeServer();
 }
 
-/**
- * Load the game map from file
- * @return true if map loaded successfully, false otherwise
- */
 bool Server::loadGameMap()
 {
     if (!game_map.loadFromFile(map_path)) {
@@ -80,10 +69,6 @@ bool Server::loadGameMap()
     return true;
 }
 
-/**
- * Initialize the server socket and prepare for accepting connections
- * @return true if server socket initialized successfully, false otherwise
- */
 bool Server::initializeServer()
 {
     // Create socket
@@ -125,10 +110,6 @@ bool Server::initializeServer()
     return true;
 }
 
-/**
- * Set socket options (like address reuse)
- * @return true if options set successfully, false otherwise
- */
 bool Server::setSocketOptions()
 {
     int opt = 1;
@@ -139,10 +120,6 @@ bool Server::setSocketOptions()
     return true;
 }
 
-/**
- * Bind the socket to address and port
- * @return true if bind succeeded, false otherwise
- */
 bool Server::bindSocket()
 {
     struct sockaddr_in address;
@@ -157,10 +134,6 @@ bool Server::bindSocket()
     return true;
 }
 
-/**
- * Set a socket to non-blocking mode
- * @param fd The file descriptor to set non-blocking
- */
 void Server::setNonBlocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -171,9 +144,6 @@ void Server::setNonBlocking(int fd)
 // Main Server Loop
 //=============================================================================
 
-/**
- * Main server loop - handles connections and game updates
- */
 void Server::run()
 {
     while (true) {
@@ -191,9 +161,6 @@ void Server::run()
     }
 }
 
-/**
- * Process events on all sockets
- */
 void Server::processSocketEvents()
 {
     for (size_t i = 0; i < poll_fds.size(); i++) {
@@ -219,9 +186,6 @@ void Server::processSocketEvents()
     }
 }
 
-/**
- * Update game state if game is running or check if game should start
- */
 void Server::updateGameState()
 {
     // If game has started, update game state
@@ -238,9 +202,6 @@ void Server::updateGameState()
 // Client Connection Management
 //=============================================================================
 
-/**
- * Accept a new client connection
- */
 void Server::acceptNewClient()
 {
     struct sockaddr_in address;
@@ -276,10 +237,6 @@ void Server::acceptNewClient()
     }
 }
 
-/**
- * Send the map data to a client
- * @param client_fd The client socket
- */
 void Server::sendMapToClient(int client_fd)
 {
     std::vector<uint8_t> map_data = game_map.serialize();
@@ -287,10 +244,6 @@ void Server::sendMapToClient(int client_fd)
     sendToClient(client_fd, packet);
 }
 
-/**
- * Remove a client from the server
- * @param client_fd The client socket
- */
 void Server::removeClient(int client_fd)
 {
     close(client_fd); // Close the socket
@@ -315,9 +268,6 @@ void Server::removeClient(int client_fd)
     DEBUG_LOG("Client removed: " + std::to_string(client_fd));
 }
 
-/**
- * Handle game state changes when a player disconnects
- */
 void Server::handlePlayerDisconnection()
 {
     if (game_started && players.size() < 2) {
@@ -335,10 +285,6 @@ void Server::handlePlayerDisconnection()
 // Client Data Handling
 //=============================================================================
 
-/**
- * Handle data received from a client
- * @param client_fd The client socket
- */
 void Server::handleClientData(int client_fd)
 {
     // Clear receive buffer
@@ -359,11 +305,7 @@ void Server::handleClientData(int client_fd)
     processClientMessage(client_fd, bytes_read);
 }
 
-/**
- * Handle an error or disconnection when receiving data
- * @param client_fd The client socket
- * @param bytes_read The result from recv()
- */
+
 void Server::handleReceiveError(int client_fd, ssize_t bytes_read)
 {
     if (bytes_read == 0) {
@@ -375,54 +317,62 @@ void Server::handleReceiveError(int client_fd, ssize_t bytes_read)
     }
 }
 
-/**
- * Process a message received from a client
- * @param client_fd The client socket
- * @param bytes_read The number of bytes received
- */
-void Server::processClientMessage(int client_fd, ssize_t bytes_read)
+bool Server::parseMessageHeader(int client_fd, ssize_t bytes_read, MessageHeader& header)
 {
-    // Parse message header
-    MessageHeader header;
-    if (!Protocol::parseHeader(recv_buffer, bytes_read, header)) {
-        DEBUG_LOG("Invalid packet from client: " + std::to_string(client_fd));
-        return;
-    }
+    if (!Protocol::parseHeader(recv_buffer, bytes_read, header))
+        return false;
 
     uint32_t payload_size = Protocol::getPayloadSize(header);
 
-    // Check if we have the complete packet
-    if (bytes_read < sizeof(MessageHeader) + payload_size) {
-        DEBUG_LOG("Incomplete packet from client: " + std::to_string(client_fd));
+    if (bytes_read < sizeof(MessageHeader) + payload_size)
+        return false;
+
+    return true;
+}
+
+void Server::handleConnectMessage(int client_fd)
+{
+    DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
+}
+
+void Server::handlePlayerInputMessage(int client_fd, const MessageHeader &header)
+{
+    uint32_t payload_size = Protocol::getPayloadSize(header);
+
+    if (payload_size >= 1) {
+        bool jet_activated = (recv_buffer[sizeof(MessageHeader)] != 0);
+        handlePlayerInput(client_fd, jet_activated);
+
+        logPlayerInput(client_fd, jet_activated);
+    }
+}
+
+void Server::logPlayerInput(int client_fd, bool jet_activated)
+{
+    auto player_it = players.find(client_fd);
+    if (player_it != players.end()) {
+        DEBUG_LOG("Player " + std::to_string(player_it->second->getPlayerNumber()) +
+                 " input processed: jet " + (jet_activated ? "ON" : "OFF"));
+    }
+}
+
+void Server::processClientMessage(int client_fd, ssize_t bytes_read)
+{
+    MessageHeader header;
+    if (!parseMessageHeader(client_fd, bytes_read, header)) {
         return;
     }
-    // Handle message based on type
+
     switch (header.type) {
         case MSG_CONNECT:
-            DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
-            // Player is already connected by this point
+            handleConnectMessage(client_fd);
             break;
 
         case MSG_PLAYER_INPUT:
-            if (payload_size >= 2) {  // Now expecting 2 bytes: player number + jet state
-                int player_num = recv_buffer[sizeof(MessageHeader)];
-                bool jet_activated = (recv_buffer[sizeof(MessageHeader) + 1] != 0);
-
-                // Verify this client is allowed to control this player
-                if (players.find(client_fd) != players.end() &&
-                    players[client_fd]->getPlayerNumber() == player_num) {
-                    handlePlayerInput(client_fd, jet_activated);
-                    DEBUG_LOG("Player " + std::to_string(player_num) +
-                             " input processed: jet " + (jet_activated ? "ON" : "OFF"));
-                } else {
-                    DEBUG_LOG("Rejected input - wrong player number");
-                }
-            }
+            handlePlayerInputMessage(client_fd, header);
             break;
 
         default:
-            DEBUG_LOG("Unknown message type from client: " + std::to_string(client_fd) +
-                      ", type=" + std::to_string(header.type));
             break;
     }
 }
@@ -431,11 +381,6 @@ void Server::processClientMessage(int client_fd, ssize_t bytes_read)
 // Network Communication
 //=============================================================================
 
-/**
- * Send data to a specific client
- * @param client_fd The client socket
- * @param data The data to send
- */
 void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
 {
     if (data.empty()) {
@@ -454,11 +399,8 @@ void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
     DEBUG_PACKET_SEND(reinterpret_cast<const char*>(data.data()), bytes_sent);
 }
 
-/**
- * Broadcast data to all connected clients
- * @param data The data to send
- */
- void Server::broadcastToAllClients(const std::vector<uint8_t>& data) {
+ void Server::broadcastToAllClients(const std::vector<uint8_t>& data)
+ {
      DEBUG_LOG("Broadcasting message to " + std::to_string(players.size()) + " clients");
 
      for (auto& pair : players) {
