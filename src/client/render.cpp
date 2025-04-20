@@ -27,12 +27,13 @@ Renderer::~Renderer() {
 // Initialization
 //=============================================================================
 
-bool Renderer::initialize() {
-    if (!createWindow()) {
+bool Renderer::initialize()
+{
+    if (!createWindow())
         return false;
-    }
 
     loadAssets();
+    loadAudio();
     return true;
 }
 
@@ -50,8 +51,7 @@ void Renderer::loadAssets() {
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png", "waiting_screen");
     loadTexture(johny_texture, "assets/johny/johny.png", "player");
     loadTexture(david_texture, "assets/david/david.png", "player2");
-    loadTexture(jetpack_texture, "assets/Xjetpack.png", "jetpack");
-    loadTexture(coin_texture, "assets/coins/Xcoin.png", "coin");
+    loadTexture(coin_texture, "assets/coins/coin.png", "coin");
     loadTexture(electric_texture, "assets/electric/Xzap.png", "electric");
 
     loadFont();
@@ -82,7 +82,7 @@ void Renderer::render()
     if (!client)
         return;
 
-    window.clear(sf::Color(50, 50, 150));
+    window.clear(sf::Color::Black);
 
     GameState *state = client->getGameState();
 
@@ -113,6 +113,11 @@ void Renderer::updateCamera(GameState *state)
 
 void Renderer::renderGameScreen(GameState *state)
 {
+    if (background_music.getStatus() != sf::Music::Playing) {
+        waiting_music.stop();
+        background_music.play();
+    }
+
     renderMap(client->getMap());
     renderPlayers(state);
     renderEffects(state);
@@ -125,12 +130,16 @@ void Renderer::renderGameScreen(GameState *state)
 
 void Renderer::renderWaitingScreen()
 {
+    if (waiting_music.getStatus() != sf::Music::Playing) {
+        background_music.stop();
+        waiting_music.play();
+    }
+
     if (waiting_screen_texture.getSize().x > 0) {
         sf::Sprite waitingScreenSprite(waiting_screen_texture);
 
         float scale_x = static_cast<float>(SCREEN_WIDTH) / waiting_screen_texture.getSize().x;
         float scale_y = static_cast<float>(SCREEN_HEIGHT) / waiting_screen_texture.getSize().y;
-
         float scale = std::min(scale_x, scale_y);
 
         waitingScreenSprite.setScale(scale, scale);
@@ -327,19 +336,19 @@ void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_pla
 
 void Renderer::renderJetpack(float x, float y)
 {
-    if (jetpack_texture.getSize().x > 0) {
-        sf::Sprite jetpackSprite(jetpack_texture);
-        jetpackSprite.setPosition(x - TILE_SIZE / 2, y);
-        float scale = static_cast<float>(TILE_SIZE) / jetpack_texture.getSize().x;
-        jetpackSprite.setScale(scale, scale);
-        window.draw(jetpackSprite);
-    } else {
-        sf::RectangleShape jetpackShape;
-        jetpackShape.setSize(sf::Vector2f(TILE_SIZE / 2, TILE_SIZE / 2));
-        jetpackShape.setPosition(x - TILE_SIZE / 2, y + TILE_SIZE / 2);
-        jetpackShape.setFillColor(sf::Color(255, 165, 0));
-        window.draw(jetpackShape);
-    }
+//    if (jetpack_texture.getSize().x > 0) {
+//        sf::Sprite jetpackSprite(jetpack_texture);
+//        jetpackSprite.setPosition(x - TILE_SIZE / 2, y);
+//        float scale = static_cast<float>(TILE_SIZE) / jetpack_texture.getSize().x;
+//        jetpackSprite.setScale(scale, scale);
+//        window.draw(jetpackSprite);
+//    } else {
+//        sf::RectangleShape jetpackShape;
+//        jetpackShape.setSize(sf::Vector2f(TILE_SIZE / 2, TILE_SIZE / 2));
+//        jetpackShape.setPosition(x - TILE_SIZE / 2, y + TILE_SIZE / 2);
+//        jetpackShape.setFillColor(sf::Color(255, 165, 0));
+//        window.draw(jetpackShape);
+//    }
 }
 
 //=============================================================================
@@ -404,7 +413,7 @@ void Renderer::renderHUD(GameState *state)
             score_text.setFillColor(sf::Color::White);
             score_text.setStyle(sf::Text::Bold);
         } else {
-            score_text.setFillColor(sf::Color(200, 200, 200));  // Light gray for other players
+            score_text.setFillColor(sf::Color::Yellow);
         }
 
         score_text.setPosition(10, y_offset);
@@ -518,4 +527,25 @@ void Renderer::centerText(sf::Text& text, float x, float y)
     sf::FloatRect textRect = text.getLocalBounds();
     text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
     text.setPosition(x, y);
+}
+
+//=============================================================================
+// AUDIO
+//=============================================================================
+
+void Renderer::loadAudio()
+{
+    if (!waiting_music.openFromFile("assets/music/waiting_screen.wav")) {
+        DEBUG_LOG("Failed to load waiting music");
+    } else {
+        waiting_music.setLoop(true);
+        waiting_music.setVolume(50);
+    }
+
+    if (!background_music.openFromFile("assets/music/ingame.wav")) {
+        DEBUG_LOG("Failed to load background music");
+    } else {
+        background_music.setLoop(true);  // Make it loop
+        background_music.setVolume(40);  // Set to 40% volume
+    }
 }

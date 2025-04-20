@@ -9,6 +9,7 @@
 #define RENDER_HPP
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <map>
 #include "../common/map.hpp"
 #include "state.hpp"
@@ -30,6 +31,10 @@ private:
     sf::Texture electric_texture;
     sf::Font font;
 
+    // Audio
+    sf::Music waiting_music;
+    sf::Music background_music;
+
     // Camera position
     float camera_x;
 
@@ -49,8 +54,9 @@ private:
     //===========================================================================
     bool createWindow();
     void loadAssets();
-    void loadTexture(sf::Texture& texture, const std::string& path, const std::string& name);
+    void loadTexture(sf::Texture& texture, const std::string &path, const std::string &name);
     void loadFont();
+    void loadAudio();
 
     //===========================================================================
     // Main Render Loop Helpers
