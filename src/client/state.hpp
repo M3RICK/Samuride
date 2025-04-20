@@ -6,7 +6,7 @@
  */
 
 #ifndef STATE_HPP
-#define STATE_HPP
+    #define STATE_HPP
 
 #include <map>
 #include <mutex>
@@ -23,8 +23,7 @@ struct PlayerState {
 };
 
 class GameState {
-public:  // Change this from private to public
-    // Coin and collision effects
+public: //DUCP on a pas d animations ca sert a r
     struct CollisionEffect {
         char type;
         int x;
@@ -50,9 +49,10 @@ public:
     void setWinner(int player_number);
     int getWinner() const;
 
-    // Data access (thread-safe)
+    // mutex
     std::map<int, PlayerState> getPlayers();
     std::vector<CollisionEffect> getEffects();
+
     void updateEffects();
 };
-#endif // STATE_HPP
+#endif

@@ -28,13 +28,11 @@ Server::Server(int port, const std::string& map_path, bool debug_mode)
 
 Server::~Server()
 {
-    // Clean up players
     for (auto& pair : players) {
         delete pair.second;
     }
     players.clear();
 
-    // Close all connections
     for (auto& pfd : poll_fds) {
         if (pfd.fd >= 0) {
             close(pfd.fd);
@@ -48,19 +46,16 @@ Server::~Server()
 
 bool Server::initialize()
 {
-    // Load the game map
-    if (!loadGameMap()) {
+    if (!loadGameMap())
         return false;
-    }
 
-    // Initialize server socket
     return initializeServer();
 }
 
 bool Server::loadGameMap()
 {
     if (!game_map.loadFromFile(map_path)) {
-        std::cerr << "Failed to load map: " << map_path << std::endl;
+        std::cerr << "T as chie la map mon reuf: " << map_path << std::endl;
         return false;
     }
 
@@ -71,41 +66,34 @@ bool Server::loadGameMap()
 
 bool Server::initializeServer()
 {
-    // Create socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
-        std::cerr << "Failed to create socket." << std::endl;
+        std::cerr << "Failed to create chaussette." << std::endl;
         return false;
     }
 
-    // Set socket to non-blocking mode
     setNonBlocking(server_fd);
 
-    // Allow socket address reuse
     if (!setSocketOptions()) {
         close(server_fd);
         return false;
     }
 
-    // Bind socket to address and port
     if (!bindSocket()) {
         close(server_fd);
         return false;
     }
 
-    // Listen for connections
     if (listen(server_fd, 5) < 0) {
-        std::cerr << "Failed to listen on socket." << std::endl;
         close(server_fd);
         return false;
     }
 
-    // Add server socket to poll array
     pollfd pfd = {server_fd, POLLIN, 0};
     poll_fds.push_back(pfd);
 
-    std::cout << "Server started on port " << port << std::endl;
-    DEBUG_LOG("Server initialized with debug mode " + std::string(debug_mode ? "enabled" : "disabled"));
+    std::cout << "Port is: " << port << std::endl;
+    DEBUG_LOG("Debug mode is " + std::string(debug_mode ? "Here" : "Not here"));
 
     return true;
 }
@@ -113,10 +101,9 @@ bool Server::initializeServer()
 bool Server::setSocketOptions()
 {
     int opt = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        std::cerr << "Failed to set socket options." << std::endl;
+
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
         return false;
-    }
     return true;
 }
 
@@ -128,9 +115,8 @@ bool Server::bindSocket()
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
 
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
         return false;
-    }
     return true;
 }
 
@@ -147,16 +133,13 @@ void Server::setNonBlocking(int fd)
 void Server::run()
 {
     while (true) {
-        // Poll for events with a 100ms timeout
         int poll_count = poll(poll_fds.data(), poll_fds.size(), 100);
 
         if (poll_count < 0)
             break;
 
-        // Process events on sockets
         processSocketEvents();
 
-        // Game logic updates
         updateGameState();
     }
 }
@@ -164,35 +147,27 @@ void Server::run()
 void Server::processSocketEvents()
 {
     for (size_t i = 0; i < poll_fds.size(); i++) {
-        if (poll_fds[i].revents == 0) {
-            continue; // No events on this socket
-        }
+        if (poll_fds[i].revents == 0)
+            continue;
 
-        // Handle new connections on server socket
         if (poll_fds[i].fd == server_fd && (poll_fds[i].revents & POLLIN)) {
             acceptNewClient();
             continue;
         }
 
-        // Handle data from client
-        if (poll_fds[i].revents & POLLIN) {
+        if (poll_fds[i].revents & POLLIN)
             handleClientData(poll_fds[i].fd);
-        }
 
-        // Handle client disconnection
-        if (poll_fds[i].revents & (POLLHUP | POLLERR)) {
+        if (poll_fds[i].revents & (POLLHUP | POLLERR))
             removeClient(poll_fds[i].fd);
-        }
     }
 }
 
 void Server::updateGameState()
 {
-    // If game has started, update game state
     if (game_started) {
         checkGameState();
     }
-    // If we have at least 2 players and game not started, check if we should start
     else if (players.size() >= 2 && !game_started) {
         startGame();
     }
@@ -211,28 +186,21 @@ void Server::acceptNewClient()
     if (client_fd < 0)
         return;
 
-    // Set client socket to non-blocking
     setNonBlocking(client_fd);
 
-    // Add client to poll array
     pollfd pfd = {client_fd, POLLIN, 0};
     poll_fds.push_back(pfd);
-
-    // Create player object for this client
     players[client_fd] = new Player(client_fd);
 
-    std::cout << "New client connected: " << client_fd << std::endl;
+    std::cout << "New client: " << client_fd << std::endl;
     DEBUG_LOG("Client connected: fd=" + std::to_string(client_fd));
 
-    // Send map data to client
     sendMapToClient(client_fd);
 
-    // Allow a small delay for client to process map data
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Don't allow joining a game in progress
     if (game_started) {
-        DEBUG_LOG("Game already started, disconnecting client: " + std::to_string(client_fd));
+        DEBUG_LOG("Game already started, you gotta wait buddy: " + std::to_string(client_fd));
         removeClient(client_fd);
     }
 }
@@ -241,28 +209,27 @@ void Server::sendMapToClient(int client_fd)
 {
     std::vector<uint8_t> map_data = game_map.serialize();
     std::vector<uint8_t> packet = Protocol::createPacket(MSG_MAP_DATA, map_data);
+
     sendToClient(client_fd, packet);
 }
 
 void Server::removeClient(int client_fd)
 {
-    close(client_fd); // Close the socket
+    close(client_fd);
 
-    // Remove from poll_fds array
     auto it = std::find_if(poll_fds.begin(), poll_fds.end(),
                           [client_fd](const pollfd& pfd) { return pfd.fd == client_fd; });
-    if (it != poll_fds.end()) {
-        poll_fds.erase(it);
-    }
 
-    // Delete player object and remove from players map
+    if (it != poll_fds.end())
+        poll_fds.erase(it);
+
     auto player_it = players.find(client_fd);
+
     if (player_it != players.end()) {
         delete player_it->second;
         players.erase(player_it);
     }
 
-    // Handle game state changes due to player disconnection
     handlePlayerDisconnection();
 
     DEBUG_LOG("Client removed: " + std::to_string(client_fd));
@@ -271,11 +238,9 @@ void Server::removeClient(int client_fd)
 void Server::handlePlayerDisconnection()
 {
     if (game_started && players.size() < 2) {
-        // End game if only one player left
         if (players.size() == 1) {
             endGame(players.begin()->first);
         } else {
-            // No players left, reset game
             game_started = false;
         }
     }
@@ -287,13 +252,10 @@ void Server::handlePlayerDisconnection()
 
 void Server::handleClientData(int client_fd)
 {
-    // Clear receive buffer
     memset(recv_buffer, 0, BUFFER_SIZE);
 
-    // Receive data
     ssize_t bytes_read = recv(client_fd, recv_buffer, BUFFER_SIZE, 0);
 
-    // Check for disconnection or error
     if (bytes_read <= 0) {
         handleReceiveError(client_fd, bytes_read);
         return;
@@ -301,7 +263,6 @@ void Server::handleClientData(int client_fd)
 
     DEBUG_PACKET_RECV(recv_buffer, bytes_read);
 
-    // Process the message
     processClientMessage(client_fd, bytes_read);
 }
 
@@ -390,7 +351,7 @@ void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
     ssize_t bytes_sent = send(client_fd, data.data(), data.size(), 0);
 
     if (bytes_sent < 0) {
-        std::cerr << "Failed to send data to client: " << client_fd << std::endl;
+        std::cerr << "Cannot send data to client: " << client_fd << std::endl;
         DEBUG_LOG("Failed to send data to client: " + std::to_string(client_fd) +
                   ", errno=" + std::to_string(errno));
         return;
@@ -408,10 +369,10 @@ void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
          ssize_t sent = send(client_fd, data.data(), data.size(), 0);
 
          if (sent < 0) {
-             DEBUG_LOG("Failed to broadcast to client: " + std::to_string(client_fd) +
+             DEBUG_LOG("CAnnot broadcast to client: " + std::to_string(client_fd) +
                        ", errno=" + std::to_string(errno));
          } else {
-             DEBUG_LOG("Successfully broadcast " + std::to_string(sent) +
+             DEBUG_LOG("Ca broadcast " + std::to_string(sent) +
                        " bytes to client: " + std::to_string(client_fd));
          }
      }

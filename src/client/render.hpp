@@ -71,8 +71,8 @@ private:
     // Player Rendering
     //===========================================================================
     void renderPlayers(GameState *state);
-    void renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num);
-    void renderPlayerSprite(const PlayerState& player, int player_num, float x, float y, int my_player_num);
+    void renderPlayer(const PlayerState &player, int player_num, float x, float y, int my_player_num);
+    void renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num);
     void renderPlayerFallback(int player_num, float x, float y, int my_player_num);
     void renderJetpack(float x, float y);
 

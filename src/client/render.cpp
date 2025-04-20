@@ -43,6 +43,8 @@ bool Renderer::createWindow()
     return window.isOpen();
 }
 
+
+// ENLEVER X POUR GOOD PATH (!FALLBACK)
 void Renderer::loadAssets() {
     loadTexture(background_texture, "assets/background/background.png", "background");
     loadTexture(player_texture, "assets/johny/Xjohny.png", "player");
@@ -119,22 +121,27 @@ void Renderer::renderGameScreen(GameState *state)
     }
 }
 
-void Renderer::renderWaitingScreen() {
+void Renderer::renderWaitingScreen()
+{
     if (show_countdown) {
         sf::Text countText;
+
         setupText(countText, std::to_string(countdown_value), 100, sf::Color::White);
         centerText(countText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
         window.draw(countText);
 
-        // Hide countdown after 1 second
         auto elapsed = std::chrono::steady_clock::now() - countdown_time;
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 1000) {
+
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 1000)
             show_countdown = false;
-        }
+
     } else {
         sf::Text waitText;
+
         setupText(waitText, "Wake the fuck up...", 40, sf::Color::Black);
         centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
         window.draw(waitText);
     }
 }
@@ -143,7 +150,7 @@ void Renderer::renderWaitingScreen() {
 // Map Rendering
 //=============================================================================
 
-void Renderer::renderMap(const Map& map)
+void Renderer::renderMap(const Map &map)
 {
     renderBackground();
     renderMapTiles(map);
@@ -170,9 +177,8 @@ void Renderer::renderMapTiles(const Map &map)
     size_t map_width = map.getWidth();
     size_t map_height = map.getHeight();
 
-    if (static_cast<size_t>(end_x) > map_width) {
+    if (static_cast<size_t>(end_x) > map_width)
         end_x = static_cast<int>(map_width);
-    }
 
     for (size_t y = 0; y < map_height; y++) {
         for (int x = start_x; x < end_x; x++) {
@@ -273,41 +279,37 @@ void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, 
 
 void Renderer::renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num)
 {
-    sf::Sprite playerSprite(player_texture);
-
-    int frame = getCurrentAnimationFrame(player.jet_active);
-    int frame_width = player_texture.getSize().x / 4; // 4 frames per row
-
-    // Set texture rectangle based on animation
-    if (player.jet_active) {
-        // Jetpack animation (second row)
-        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, TILE_SIZE, frame_width, TILE_SIZE));
-    } else {
-        // Walking animation (first row)
-        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, 0, frame_width, TILE_SIZE));
-    }
-
-    playerSprite.setPosition(x, y);
-    float scale = static_cast<float>(TILE_SIZE) / frame_width;
-    playerSprite.setScale(scale, scale);
-
-    // Highlight my player
-    if (player_num == my_player_num) {
-        playerSprite.setColor(sf::Color(255, 255, 255));
-    } else {
-        playerSprite.setColor(sf::Color(200, 200, 200));
-    }
-    window.draw(playerSprite);
+//    sf::Sprite playerSprite(player_texture);
+//
+//    int frame = getCurrentAnimationFrame(player.jet_active);
+//    int frame_width = player_texture.getSize().x / 4; // 4 frames per row
+//
+//    if (player.jet_active) {
+//        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, TILE_SIZE, frame_width, TILE_SIZE));
+//    } else {
+//        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, 0, frame_width, TILE_SIZE));
+//    }
+//
+//    playerSprite.setPosition(x, y);
+//    float scale = static_cast<float>(TILE_SIZE) / frame_width;
+//    playerSprite.setScale(scale, scale);
+//
+//    if (player_num == my_player_num) {
+//        playerSprite.setColor(sf::Color(255, 255, 255));
+//    } else {
+//        playerSprite.setColor(sf::Color(200, 200, 200));
+//    }
+//    window.draw(playerSprite);
 }
 
 void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_player_num)
 {
-    // Fallback to a rectangle if no texture is loaded
     sf::RectangleShape playerShape;
 
     playerShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
     playerShape.setPosition(x, y);
     playerShape.setFillColor(player_num == my_player_num ? sf::Color(0, 255, 0) : sf::Color(255, 0, 0));
+
     window.draw(playerShape);
 }
 
@@ -373,11 +375,8 @@ void Renderer::renderHUD(GameState *state)
 {
     auto players = state->getPlayers();
     int my_player_number = client->getPlayerNumber();
+    int y_offset = 10;
 
-    // Create a simple score display for all players
-    int y_offset = 10;  // Start at the top with some margin
-
-    // Display all player scores in a clean, simple format
     for (const auto& player_pair : players) {
         int player_num = player_pair.first;
         const PlayerState& player = player_pair.second;
@@ -385,12 +384,10 @@ void Renderer::renderHUD(GameState *state)
         sf::Text score_text;
         score_text.setFont(font);
 
-        // Format: "Player X: 000" or "You: 000" for the local player
         std::string player_label = (player_num == my_player_number) ? "You" : "Player " + std::to_string(player_num);
         score_text.setString(player_label + ": " + std::to_string(player.score));
-
-        // Set text size and color (highlight local player's score)
         score_text.setCharacterSize(24);
+
         if (player_num == my_player_number) {
             score_text.setFillColor(sf::Color::White);
             score_text.setStyle(sf::Text::Bold);
@@ -398,11 +395,8 @@ void Renderer::renderHUD(GameState *state)
             score_text.setFillColor(sf::Color(200, 200, 200));  // Light gray for other players
         }
 
-        // Position the text
         score_text.setPosition(10, y_offset);
         window.draw(score_text);
-
-        // Increment vertical position for next score text
         y_offset += 30;
     }
 }
@@ -426,8 +420,10 @@ void Renderer::renderGameOverBackground()
 void Renderer::renderGameOverTitle()
 {
     sf::Text game_over_text;
-    setupText(game_over_text, "GAME OVER", 50, sf::Color::White);
+
+    setupText(game_over_text, "THIS IS THE END", 50, sf::Color::White);
     centerText(game_over_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50);
+
     window.draw(game_over_text);
 }
 
@@ -450,15 +446,16 @@ void Renderer::renderWinnerText(GameState *state)
 
 void Renderer::renderFinalScores(GameState *state)
 {
+    int player_num;
     sf::Text scores_text;
     scores_text.setFont(font);
 
-    // Collect all player scores
     std::string score_string = "Final Scores:";
     auto players = state->getPlayers();
+
     for (const auto& player_pair : players) {
-        int player_num = player_pair.first;
-        const PlayerState& player = player_pair.second;
+        player_num = player_pair.first;
+        const PlayerState &player = player_pair.second;
 
         std::string player_label = (player_num == client->getPlayerNumber()) ? "You" : "Player " + std::to_string(player_num);
         score_string += "\n" + player_label + ": " + std::to_string(player.score);
@@ -491,6 +488,7 @@ void Renderer::setCountdown(int value)
 int Renderer::getCurrentAnimationFrame(bool) const
 {
     float elapsed = animation_clock.getElapsedTime().asSeconds();
+
     return static_cast<int>(elapsed / ANIMATION_FRAME_DURATION) % 4;
 }
 

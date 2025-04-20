@@ -47,7 +47,6 @@ private:
 
     int my_player_number;
 
-    // Communication
     std::thread network_thread;
     std::atomic<bool> running;
 
@@ -72,8 +71,8 @@ private:
     void networkLoop();
     void processOutgoingMessages();
     void readIncomingData();
-    void processMessage(const MessageHeader& header, const char* data, size_t data_size);
-    void sendToServer(const std::vector<uint8_t>& data);
+    void processMessage(const MessageHeader& header, const char *data, size_t data_size);
+    void sendToServer(const std::vector<uint8_t> &data);
 
     void handleGameStart();
     void handleMapData(const char *data, size_t data_size);
@@ -82,11 +81,11 @@ private:
     void handleGameEnd(const char *data, size_t data_size);
 
 public:
-    Client(const std::string& server_ip, int server_port, bool debug_mode);
+    Client(const std::string &server_ip, int server_port, bool debug_mode);
     ~Client();
 
     bool initialize();
-    void run(InputManager& input_manager, Renderer& renderer);
+    void run(InputManager &input_manager, Renderer& renderer);
     void forceGameStarted() { game_started = true; }
     void stop();
 
@@ -95,11 +94,11 @@ public:
     bool isConnected() const { return connected; }
     bool isGameStarted() const { return game_started; }
     bool isGameOver() const { return game_over; }
-    const Map& getMap() const { return game_map; }
+    const Map &getMap() const { return game_map; }
     int getPlayerNumber() const { return my_player_number; }
 
-    void setGameState(GameState* state) { game_state = state; }
-    GameState* getGameState() const { return game_state; }
+    void setGameState(GameState *state) { game_state = state; }
+    GameState *getGameState() const { return game_state; }
 };
 
-#endif // CLIENT_HPP
+#endif

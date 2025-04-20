@@ -31,7 +31,6 @@ public:
     size_t getWidth() const { return width; }
     size_t getHeight() const { return height; }
 
-    // Debug
     void printMap() const;
 };
 

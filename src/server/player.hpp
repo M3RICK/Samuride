@@ -6,7 +6,7 @@
  */
 
 #ifndef PLAYER_HPP
-#define PLAYER_HPP
+    #define PLAYER_HPP
 
 class Player {
 private:
@@ -24,7 +24,7 @@ private:
     int score;
     bool jet_active;
 
-    // Constants
+    // Constants a modif si mal equilibré, juste faut mettre en commentaires les anciennes valeurs au cas ou
     static constexpr float GRAVITY = 0.5f;
     static constexpr float JET_POWER = -0.8f;
     static constexpr float MAX_VELOCITY = 2.0f;
@@ -33,7 +33,6 @@ private:
 public:
     Player(int client_fd);
 
-    // Accessors
     int getClientFd() const { return client_fd; }
     int getPlayerNumber() const { return player_number; }
     void setPlayerNumber(int num) { player_number = num; }
@@ -50,9 +49,8 @@ public:
     bool isJetActive() const { return jet_active; }
     void setJetActive(bool active) { jet_active = active; }
 
-    // Game logic
     void moveForward();
     void applyPhysics();
 };
 
-#endif // PLAYER_HPP
+#endif

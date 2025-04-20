@@ -25,7 +25,6 @@ void printUsage(const char *programName)
 
 int main(int argc, char **argv)
 {
-    // Parse command-line arguments
     int opt;
     std::string server_ip;
     int server_port = -1;
@@ -48,36 +47,30 @@ int main(int argc, char **argv)
         }
     }
 
-    // Validate arguments
     if (server_ip.empty() || server_port <= 0) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
 
-    // Initialize client
     Client client(server_ip, server_port, debug_mode);
 
     if (!client.initialize()) {
-        std::cerr << "Failed to initialize client." << std::endl;
+        std::cerr << "Client PROBlEM with init." << std::endl;
         return EXIT_FAILURE;
     }
 
-    // Initialize renderer
     Renderer renderer(&client);
 
     if (!renderer.initialize()) {
-        std::cerr << "Failed to initialize renderer." << std::endl;
+        std::cerr << "RENDER PROBLEM init." << std::endl;
         return EXIT_FAILURE;
     }
 
-    // Initialize input manager
     InputManager input_manager(&client, &renderer.getWindow());
 
-    // Create game state and attach it to the client
     GameState game_state;
     client.setGameState(&game_state);
 
-    // Run the game loop
     client.run(input_manager, renderer);
 
     return EXIT_SUCCESS;

@@ -9,7 +9,7 @@
 #include "debug.hpp"
 #include <cstring>
 
-std::vector<uint8_t> Protocol::createPacket(MessageType type, const std::vector<uint8_t>& payload)
+std::vector<uint8_t> Protocol::createPacket(MessageType type, const std::vector<uint8_t> &payload)
 {
     MessageHeader header;
     header.type = type;
@@ -29,7 +29,7 @@ std::vector<uint8_t> Protocol::createPacket(MessageType type, const std::vector<
     return packet;
 }
 
-bool Protocol::parseHeader(const char* data, size_t size, MessageHeader& header)
+bool Protocol::parseHeader(const char *data, size_t size, MessageHeader &header)
 {
     if (size < sizeof(MessageHeader)) {
         DEBUG_LOG("Error parsing header: insufficient data");
@@ -44,17 +44,16 @@ bool Protocol::parseHeader(const char* data, size_t size, MessageHeader& header)
     return true;
 }
 
-uint32_t Protocol::getPayloadSize(const MessageHeader& header)
+uint32_t Protocol::getPayloadSize(const MessageHeader &header)
 {
     return (header.payload_size[0] << 16) |
            (header.payload_size[1] << 8) |
            header.payload_size[2];
 }
 
-void Protocol::setPayloadSize(MessageHeader& header, uint32_t size)
+void Protocol::setPayloadSize(MessageHeader &header, uint32_t size)
 {
-    if (size > 0xFFFFFF) {
-        // Size is too large for 3 bytes
+    if (size > 0xFFFFFF) { // Faut pas depasser 3 bytes sinn kaboom
         DEBUG_LOG("Warning: Payload size too large, truncating");
         size = 0xFFFFFF;
     }

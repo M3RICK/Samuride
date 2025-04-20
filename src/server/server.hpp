@@ -6,7 +6,7 @@
  */
 
 #ifndef SERVER_HPP
-#define SERVER_HPP
+    #define SERVER_HPP
 
 #include <string>
 #include <vector>
@@ -70,11 +70,11 @@ private:
 
     void handleReceiveError(int client_fd, ssize_t bytes_read);
 
-    bool parseMessageHeader(int client_fd, ssize_t bytes_read, MessageHeader& header);
+    bool parseMessageHeader(int client_fd, ssize_t bytes_read, MessageHeader &header);
 
     void handleConnectMessage(int client_fd);
 
-    void handlePlayerInputMessage(int client_fd, const MessageHeader& header);
+    void handlePlayerInputMessage(int client_fd, const MessageHeader &header);
 
     void logPlayerInput(int client_fd, bool jet_activated);
 
@@ -92,9 +92,9 @@ private:
     // Network Communication
     //===========================================================================
 
-    void sendToClient(int client_fd, const std::vector<uint8_t>& data);
+    void sendToClient(int client_fd, const std::vector<uint8_t> &data);
 
-    void broadcastToAllClients(const std::vector<uint8_t>& data);
+    void broadcastToAllClients(const std::vector<uint8_t> &data);
 
     //===========================================================================
     // Game Logic
@@ -106,13 +106,13 @@ private:
 
     void checkGameOverConditions();
 
-    void constrainPlayerToMap(Player* player);
+    void constrainPlayerToMap(Player *player);
 
-    bool checkPlayerCollisions(int client_fd, Player* player);
+    bool checkPlayerCollisions(int client_fd, Player *player);
 
     void updateAndSendGameState();
 
-    void addPlayerStateToPacket(std::vector<uint8_t>& data, Player* player);
+    void addPlayerStateToPacket(std::vector<uint8_t> &data, Player *player);
 
 public:
     Server(int port, const std::string& map_path, bool debug_mode);
@@ -136,4 +136,4 @@ public:
     void endGame(int winner_fd);
 };
 
-#endif // SERVER_HPP
+#endif

@@ -16,6 +16,7 @@ InputManager::InputManager(Client* client, sf::Window* window)
 void InputManager::processInputs()
 {
     sf::Event event;
+
     while (window->pollEvent(event)) {
 
         if (event.type == sf::Event::Closed)

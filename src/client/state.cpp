@@ -25,13 +25,13 @@ void GameState::handleCollision(char type, int x, int y)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    // Add a visual effect for the collision
     effects.emplace_back(type, x, y);
 }
 
 void GameState::setWinner(int player_number)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
+
     winner = player_number;
 }
 
@@ -43,12 +43,14 @@ int GameState::getWinner() const
 std::map<int, PlayerState> GameState::getPlayers()
 {
     std::lock_guard<std::mutex> lock(state_mutex);
+
     return players;
 }
 
 std::vector<GameState::CollisionEffect> GameState::getEffects()
 {
     std::lock_guard<std::mutex> lock(state_mutex);
+
     return effects;
 }
 

@@ -13,6 +13,8 @@ Player::Player(int client_fd)
       score(0), jet_active(false) {
 }
 
+// Tout les defines se retrouvent dans le hpp
+
 void Player::moveForward()
 {
     x += static_cast<int>(FORWARD_SPEED);

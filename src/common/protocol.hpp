@@ -30,10 +30,10 @@ struct MessageHeader {
 
 class Protocol {
 public:
-    static std::vector<uint8_t> createPacket(MessageType type, const std::vector<uint8_t>& payload);
-    static bool parseHeader(const char* data, size_t size, MessageHeader& header);
-    static uint32_t getPayloadSize(const MessageHeader& header);
-    static void setPayloadSize(MessageHeader& header, uint32_t size);
+    static std::vector<uint8_t> createPacket(MessageType type, const std::vector<uint8_t> &payload);
+    static bool parseHeader(const char *data, size_t size, MessageHeader &header);
+    static uint32_t getPayloadSize(const MessageHeader &header);
+    static void setPayloadSize(MessageHeader &header, uint32_t size);
 };
 
 #endif

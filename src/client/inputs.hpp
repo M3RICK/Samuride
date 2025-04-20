@@ -15,17 +15,26 @@ class Client;
 
 class InputManager {
 private:
-    Client* client;
-    sf::Window* window;
+    Client *client;
+    sf::Window *window;
     std::atomic<bool> jet_active;
     std::atomic<bool> exit_requested;
 
 public:
-    InputManager(Client* client, sf::Window* window);
 
+    InputManager(Client* client, sf::Window *window);
     void processInputs();
-    bool isJetActive() const { return jet_active; }
-    bool shouldExit() const { return exit_requested; }
+
+
+    bool isJetActive() const
+    {
+        return jet_active;
+    }
+
+    bool shouldExit() const
+    {
+        return exit_requested;
+    }
 };
 
 #endif

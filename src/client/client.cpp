@@ -111,22 +111,21 @@ void Client::stop()
 {
     running = false;
 
-    if (network_thread.joinable()) {
+    if (network_thread.joinable())
         network_thread.join();
-    }
 }
 
 void Client::networkLoop()
 {
     int cycles = 0;
+
     while (running) {
         processOutgoingMessages();
         readIncomingData();
         cycles++;
-        if (cycles > 100 && my_player_number >= 0 && !game_started) {
-            DEBUG_LOG("*** FORCING GAME STARTED STATE ***");
+
+        if (cycles > 100 && my_player_number >= 0 && !game_started)
             game_started = true;
-        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -140,7 +139,9 @@ void Client::processOutgoingMessages()
     while (!message_queue.empty()) {
         const auto& message = message_queue.front();
         send(client_fd, message.data(), message.size(), 0);
+
         DEBUG_PACKET_SEND(reinterpret_cast<const char*>(message.data()), message.size());
+
         message_queue.pop();
     }
 }
@@ -208,7 +209,7 @@ void Client::processMessage(const MessageHeader &header, const char *data, size_
     }
 }
 
-void Client::handleMapData(const char* data, size_t size)
+void Client::handleMapData(const char *data, size_t size)
 {
     DEBUG_LOG("Received map data");
     std::vector<uint8_t> map_data(data, data + size);
@@ -235,7 +236,8 @@ void Client::handleGameStart()
     }).detach();
 }
 
-void Client::handleGameState(const char* data, size_t size) {
+void Client::handleGameState(const char *data, size_t size)
+{
     if (!game_state)
         return;
 
@@ -250,23 +252,21 @@ void Client::handleGameState(const char* data, size_t size) {
         uint16_t score = (data[pos] << 8) | data[pos+1]; pos += 2;
         bool jet_active = data[pos++] != 0;
 
-        // Set my_player_number only once and only if it's not already set
         if (my_player_number == -1) {
             my_player_number = player_number;
             DEBUG_LOG("Setting my player number to: " + std::to_string(my_player_number));
         }
 
-        // Update the correct player in the game state
         game_state->updatePlayer(player_number, x, y, score, jet_active);
 
-        // Log update for debugging
         std::string isMe = (player_number == my_player_number) ? " (ME)" : "";
         DEBUG_LOG("Updated player " + std::to_string(player_number) + isMe +
                   ": pos=(" + std::to_string(x) + "," + std::to_string(y) +
                   "), jet=" + (jet_active ? "ON" : "OFF"));
     }
 }
-void Client::handleCollision(const char* data, size_t size)
+
+void Client::handleCollision(const char *data, size_t size)
 {
     if (size < 5)
         return;
@@ -278,9 +278,8 @@ void Client::handleCollision(const char* data, size_t size)
     DEBUG_LOG("Collision: type=" + std::string(1, collision_type) +
               ", position=(" + std::to_string(x) + "," + std::to_string(y) + ")");
 
-    if (game_state) {
+    if (game_state)
         game_state->handleCollision(collision_type, x, y);
-    }
 }
 
 void Client::handleGameEnd(const char* data, size_t size)
