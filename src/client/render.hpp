@@ -22,6 +22,7 @@ private:
 
     // Game assets
     sf::Texture background_texture;
+    sf::Texture waiting_screen_texture;
     sf::Texture johny_texture;
     sf::Texture david_texture;
     sf::Texture jetpack_texture;

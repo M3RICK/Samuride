@@ -47,6 +47,7 @@ bool Renderer::createWindow()
 // ENLEVER X POUR GOOD PATH (!FALLBACK)
 void Renderer::loadAssets() {
     loadTexture(background_texture, "assets/background/background.png", "background");
+    loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png", "waiting_screen");
     loadTexture(johny_texture, "assets/johny/johny.png", "player");
     loadTexture(david_texture, "assets/david/david.png", "player2");
     loadTexture(jetpack_texture, "assets/Xjetpack.png", "jetpack");
@@ -124,25 +125,25 @@ void Renderer::renderGameScreen(GameState *state)
 
 void Renderer::renderWaitingScreen()
 {
-    if (show_countdown) {
-        sf::Text countText;
+    if (waiting_screen_texture.getSize().x > 0) {
+        sf::Sprite waitingScreenSprite(waiting_screen_texture);
 
-        setupText(countText, std::to_string(countdown_value), 100, sf::Color::White);
-        centerText(countText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+        float scale_x = static_cast<float>(SCREEN_WIDTH) / waiting_screen_texture.getSize().x;
+        float scale_y = static_cast<float>(SCREEN_HEIGHT) / waiting_screen_texture.getSize().y;
 
-        window.draw(countText);
+        float scale = std::min(scale_x, scale_y);
 
-        auto elapsed = std::chrono::steady_clock::now() - countdown_time;
+        waitingScreenSprite.setScale(scale, scale);
 
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 1000)
-            show_countdown = false;
+        float x_pos = (SCREEN_WIDTH - (waiting_screen_texture.getSize().x * scale)) / 2;
+        float y_pos = (SCREEN_HEIGHT - (waiting_screen_texture.getSize().y * scale)) / 2;
 
-    } else {
+        waitingScreenSprite.setPosition(x_pos, y_pos);
+        window.draw(waitingScreenSprite);
+
         sf::Text waitText;
-
-        setupText(waitText, "Wake the fuck up...", 40, sf::Color::Black);
-        centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-
+        setupText(waitText, "Wake the fuck up...", 80, sf::Color::Red);
+        centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT/ 11);
         window.draw(waitText);
     }
 }
