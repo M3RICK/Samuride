@@ -10,6 +10,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <cmath>
 #include <map>
 #include "../common/map.hpp"
 #include "state.hpp"
@@ -37,6 +38,14 @@ private:
 
     // Camera position
     float camera_x;
+
+
+    //===========================================================================
+    // Background Scroll
+    //===========================================================================
+
+    float background_offset;
+    float scroll_speed;
 
     //===========================================================================
     // Render parameters

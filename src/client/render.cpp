@@ -14,7 +14,8 @@
 
 
 Renderer::Renderer(Client* client)
-    : client(client), camera_x(0), show_countdown(false), countdown_value(0) {
+    : client(client), camera_x(0), show_countdown(false), countdown_value(3),
+      background_offset(1.0f), scroll_speed(0.5f) {
 }
 
 Renderer::~Renderer() {
@@ -47,7 +48,7 @@ bool Renderer::createWindow()
 
 // ENLEVER X POUR GOOD PATH (!FALLBACK)
 void Renderer::loadAssets() {
-    loadTexture(background_texture, "assets/background/coolerBG.png", "background");
+    loadTexture(background_texture, "assets/background/Resized.png", "background");
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png", "waiting_screen");
     loadTexture(johny_texture, "assets/johny/johny.png", "player");
     loadTexture(david_texture, "assets/david/david.png", "player2");
@@ -100,14 +101,16 @@ void Renderer::render()
     window.display();
 }
 
-void Renderer::updateCamera(GameState *state)
+void Renderer::updateCamera(GameState* state)
 {
     auto players = state->getPlayers();
     int my_player_num = client->getPlayerNumber();
 
     if (players.count(my_player_num) > 0) {
-        camera_x = players[my_player_num].x - SCREEN_WIDTH / (2 * TILE_SIZE);
-        if (camera_x < 0) camera_x = 0;
+        float target_x = players[my_player_num].x - SCREEN_WIDTH / (2 * TILE_SIZE);
+        camera_x += (target_x - camera_x) * 0.1f;
+        if (camera_x < 0)
+            camera_x = 0;
     }
 }
 
@@ -169,13 +172,23 @@ void Renderer::renderMap(const Map &map)
 
 void Renderer::renderBackground()
 {
-    if (background_texture.getSize().x > 0) {
+    if (background_texture.getSize().x == 0)
+        return;
+
+    background_offset = camera_x * scroll_speed;
+
+    float bg_width = static_cast<float>(background_texture.getSize().x);
+    int repetitions = static_cast<int>(SCREEN_WIDTH / bg_width) + 2;
+
+    for (int i = 0; i < repetitions; i++) {
         sf::Sprite background(background_texture);
 
-        float scale_x = static_cast<float>(SCREEN_WIDTH) / background_texture.getSize().x;
-        float scale_y = static_cast<float>(SCREEN_HEIGHT) / background_texture.getSize().y;
+        float x_pos = i * bg_width - fmodf(background_offset, bg_width);
+        background.setPosition(x_pos, 0);
 
-        background.setScale(scale_x, scale_y);
+        float scale_y = static_cast<float>(SCREEN_HEIGHT) / background_texture.getSize().y;
+        background.setScale(1.0f, scale_y);
+
         window.draw(background);
     }
 }
@@ -218,36 +231,21 @@ void Renderer::renderTile(char tile, int x, int y)
 
 void Renderer::renderCoin(float x, float y)
 {
-    if (coin_texture.getSize().x > 0) {
-        sf::Sprite coin(coin_texture);
-        coin.setPosition(x, y);
-        float scale = static_cast<float>(TILE_SIZE) / coin_texture.getSize().x;
-        coin.setScale(scale, scale);
-        window.draw(coin);
-    } else {
-        sf::RectangleShape coinShape;
-        coinShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-        coinShape.setPosition(x, y);
-        coinShape.setFillColor(sf::Color::Yellow);
-        window.draw(coinShape);
-    }
+    sf::Sprite coin(coin_texture);
+    coin.setPosition(x, y);
+    float scale = static_cast<float>(TILE_SIZE) / coin_texture.getSize().x;
+    coin.setScale(scale, scale);
+    window.draw(coin);
+
 }
 
 void Renderer::renderElectric(float x, float y)
 {
-    if (electric_texture.getSize().x > 0) {
-        sf::Sprite electric(electric_texture);
-        electric.setPosition(x, y);
-        float scale = static_cast<float>(TILE_SIZE) / electric_texture.getSize().x;
-        electric.setScale(scale, scale);
-        window.draw(electric);
-    } else {
-        sf::RectangleShape electricShape;
-        electricShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-        electricShape.setPosition(x, y);
-        electricShape.setFillColor(sf::Color::Red);
-        window.draw(electricShape);
-    }
+    sf::Sprite electric(electric_texture);
+    electric.setPosition(x, y);
+    float scale = static_cast<float>(TILE_SIZE) / electric_texture.getSize().x;
+    electric.setScale(scale, scale);
+    window.draw(electric);
 }
 
 //=============================================================================
@@ -263,7 +261,6 @@ void Renderer::renderPlayers(GameState *state)
         int player_num = pair.first;
         const PlayerState& player = pair.second;
 
-        // Calculate screen position
         float x = (player.x - camera_x) * TILE_SIZE;
         float y = player.y * TILE_SIZE;
 
@@ -277,15 +274,11 @@ void Renderer::renderPlayers(GameState *state)
 
 void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num)
 {
-    if (johny_texture.getSize().x > 0) {
-        renderPlayerSprite(player, player_num, x, y, my_player_num);
-    } else {
-        renderPlayerFallback(player_num, x, y, my_player_num);
-    }
+    renderPlayerSprite(player, player_num, x, y, my_player_num);
 }
 
 //=============================================================================================
-// TENTATIVE D ANIMATION A CHANGER DUCP CA MARCHE PAS
+//  ANIMATIONS
 //=============================================================================================
 
 void Renderer::renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num)
@@ -336,19 +329,7 @@ void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_pla
 
 void Renderer::renderJetpack(float x, float y)
 {
-//    if (jetpack_texture.getSize().x > 0) {
-//        sf::Sprite jetpackSprite(jetpack_texture);
-//        jetpackSprite.setPosition(x - TILE_SIZE / 2, y);
-//        float scale = static_cast<float>(TILE_SIZE) / jetpack_texture.getSize().x;
-//        jetpackSprite.setScale(scale, scale);
-//        window.draw(jetpackSprite);
-//    } else {
-//        sf::RectangleShape jetpackShape;
-//        jetpackShape.setSize(sf::Vector2f(TILE_SIZE / 2, TILE_SIZE / 2));
-//        jetpackShape.setPosition(x - TILE_SIZE / 2, y + TILE_SIZE / 2);
-//        jetpackShape.setFillColor(sf::Color(255, 165, 0));
-//        window.draw(jetpackShape);
-//    }
+    // c est compris dans le sprite original
 }
 
 //=============================================================================
@@ -357,35 +338,12 @@ void Renderer::renderJetpack(float x, float y)
 
 void Renderer::renderEffects(GameState *state)
 {
-//    auto effects = state->getEffects();
-//
-//    for (const auto& effect : effects) {
-//        float x = (effect.x - camera_x) * TILE_SIZE;
-//        float y = effect.y * TILE_SIZE;
-//
-//        renderEffect(effect, x, y);
-//    }
-//    state->updateEffects();
+    // Pareil hein
 }
 
 void Renderer::renderEffect(const GameState::CollisionEffect& effect, float x, float y)
 {
-//    sf::CircleShape effectShape;
-//    effectShape.setRadius(TILE_SIZE / 2);
-//    effectShape.setPosition(x, y);
-//
-//    // Fade out based on lifetime
-//    int alpha = 255 * effect.lifetime / 20;
-//
-//    if (effect.type == 'c') {
-//        // Coin effect
-//        effectShape.setFillColor(sf::Color(255, 255, 0, alpha));
-//    } else if (effect.type == 'e') {
-//        // Electric hazard effect
-//        effectShape.setFillColor(sf::Color(255, 0, 0, alpha));
-//    }
-//
-//    window.draw(effectShape);
+    // J aurais pas le tps
 }
 
 //=============================================================================
@@ -490,9 +448,32 @@ void Renderer::renderFinalScores(GameState *state)
 void Renderer::renderExitInstructions()
 {
     sf::Text exit_text;
-    setupText(exit_text, "Press ESC to get the fuck out of here, you fucking loser", 20, sf::Color(200, 200, 200));
+
+    setupText(exit_text, "Press ESC to get the fuck out of here, you fucking loser", 75, sf::Color::Red);
     centerText(exit_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 150);
+
     window.draw(exit_text);
+}
+
+//=============================================================================
+// AUDIO
+//=============================================================================
+
+void Renderer::loadAudio()
+{
+    if (!waiting_music.openFromFile("assets/music/waiting_screen.wav")) {
+        DEBUG_LOG("Failed to load waiting music");
+    } else {
+        waiting_music.setLoop(false);
+        waiting_music.setVolume(50);
+    }
+
+    if (!background_music.openFromFile("assets/music/ingame.wav")) {
+        DEBUG_LOG("Failed to load background music");
+    } else {
+        background_music.setLoop(true);
+        background_music.setVolume(40);
+    }
 }
 
 //=============================================================================
@@ -506,16 +487,17 @@ void Renderer::setCountdown(int value)
     countdown_time = std::chrono::steady_clock::now();
 }
 
-int Renderer::getCurrentAnimationFrame(bool jet_active) const {
+int Renderer::getCurrentAnimationFrame(bool jet_active) const
+{
     float elapsed = animation_clock.getElapsedTime().asSeconds();
-    float frame_duration = jet_active ? 0.08f : 0.15f;  // Faster animation with jetpack
-
-    // For jetpack, use all 4 frames, for walking use first 4 frames
+    float frame_duration = jet_active ? 0.08f : 0.15f;
     int num_frames = 4;
+
     return static_cast<int>((elapsed / frame_duration)) % num_frames;
 }
 
-void Renderer::setupText(sf::Text& text, const std::string& content, unsigned int size, const sf::Color& color) {
+void Renderer::setupText(sf::Text &text, const std::string &content, unsigned int size, const sf::Color &color)
+{
     text.setFont(font);
     text.setString(content);
     text.setCharacterSize(size);
@@ -527,25 +509,4 @@ void Renderer::centerText(sf::Text& text, float x, float y)
     sf::FloatRect textRect = text.getLocalBounds();
     text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
     text.setPosition(x, y);
-}
-
-//=============================================================================
-// AUDIO
-//=============================================================================
-
-void Renderer::loadAudio()
-{
-    if (!waiting_music.openFromFile("assets/music/waiting_screen.wav")) {
-        DEBUG_LOG("Failed to load waiting music");
-    } else {
-        waiting_music.setLoop(true);
-        waiting_music.setVolume(50);
-    }
-
-    if (!background_music.openFromFile("assets/music/ingame.wav")) {
-        DEBUG_LOG("Failed to load background music");
-    } else {
-        background_music.setLoop(true);  // Make it loop
-        background_music.setVolume(40);  // Set to 40% volume
-    }
 }
