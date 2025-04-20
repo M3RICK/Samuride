@@ -47,12 +47,12 @@ bool Renderer::createWindow()
 
 // ENLEVER X POUR GOOD PATH (!FALLBACK)
 void Renderer::loadAssets() {
-    loadTexture(background_texture, "assets/background/background.png", "background");
+    loadTexture(background_texture, "assets/background/coolerBG.png", "background");
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png", "waiting_screen");
     loadTexture(johny_texture, "assets/johny/johny.png", "player");
     loadTexture(david_texture, "assets/david/david.png", "player2");
     loadTexture(coin_texture, "assets/coins/coin.png", "coin");
-    loadTexture(electric_texture, "assets/electric/Xzap.png", "electric");
+    loadTexture(electric_texture, "assets/electric/zap.png", "electric");
 
     loadFont();
 }
