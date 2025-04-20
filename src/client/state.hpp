@@ -19,7 +19,7 @@ struct PlayerState {
     int score;
     bool jet_active;
 
-    PlayerState() : x(0), y(0), score(0), jet_active(false) {}
+    PlayerState() : x(0), y(0), score(0), jet_active(false){}
 };
 
 class GameState {

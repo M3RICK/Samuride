@@ -47,7 +47,8 @@ bool Renderer::createWindow()
 // ENLEVER X POUR GOOD PATH (!FALLBACK)
 void Renderer::loadAssets() {
     loadTexture(background_texture, "assets/background/background.png", "background");
-    loadTexture(player_texture, "assets/johny/Xjohny.png", "player");
+    loadTexture(johny_texture, "assets/johny/johny.png", "player");
+    loadTexture(david_texture, "assets/david/david.png", "player2");
     loadTexture(jetpack_texture, "assets/Xjetpack.png", "jetpack");
     loadTexture(coin_texture, "assets/coins/Xcoin.png", "coin");
     loadTexture(electric_texture, "assets/electric/Xzap.png", "electric");
@@ -82,7 +83,7 @@ void Renderer::render()
 
     window.clear(sf::Color(50, 50, 150));
 
-    GameState* state = client->getGameState();
+    GameState *state = client->getGameState();
 
     if (!state)
         return;
@@ -266,7 +267,7 @@ void Renderer::renderPlayers(GameState *state)
 
 void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num)
 {
-    if (player_texture.getSize().x > 0) {
+    if (johny_texture.getSize().x > 0) {
         renderPlayerSprite(player, player_num, x, y, my_player_num);
     } else {
         renderPlayerFallback(player_num, x, y, my_player_num);
@@ -279,27 +280,37 @@ void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, 
 
 void Renderer::renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num)
 {
-//    sf::Sprite playerSprite(player_texture);
-//
-//    int frame = getCurrentAnimationFrame(player.jet_active);
-//    int frame_width = player_texture.getSize().x / 4; // 4 frames per row
-//
-//    if (player.jet_active) {
-//        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, TILE_SIZE, frame_width, TILE_SIZE));
-//    } else {
-//        playerSprite.setTextureRect(sf::IntRect(frame * frame_width, 0, frame_width, TILE_SIZE));
-//    }
-//
-//    playerSprite.setPosition(x, y);
-//    float scale = static_cast<float>(TILE_SIZE) / frame_width;
-//    playerSprite.setScale(scale, scale);
-//
-//    if (player_num == my_player_num) {
-//        playerSprite.setColor(sf::Color(255, 255, 255));
-//    } else {
-//        playerSprite.setColor(sf::Color(200, 200, 200));
-//    }
-//    window.draw(playerSprite);
+    sf::Texture &playerTexture = (player_num == 0) ? johny_texture : david_texture;
+    sf::Sprite playerSprite(playerTexture);
+
+    const int SPRITE_WIDTH = playerTexture.getSize().x / 4;
+    const int SPRITE_HEIGHT = playerTexture.getSize().y / 3;
+
+    if (playerTexture.getSize().x == 0)
+        return;
+
+
+    int row = 0;
+    int frame = getCurrentAnimationFrame(player.jet_active);
+
+    if (player.jet_active) {
+        row = 2;
+    } else {
+        row = 0;
+    }
+
+    playerSprite.setTextureRect(sf::IntRect(
+        frame *SPRITE_WIDTH,
+        row *SPRITE_HEIGHT,
+        SPRITE_WIDTH,
+        SPRITE_HEIGHT
+    ));
+
+    playerSprite.setPosition(x, y - (SPRITE_HEIGHT - TILE_SIZE));
+    float scale = static_cast<float>(TILE_SIZE) / SPRITE_WIDTH;
+    playerSprite.setScale(scale, scale);
+
+    window.draw(playerSprite);
 }
 
 void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_player_num)
@@ -485,11 +496,13 @@ void Renderer::setCountdown(int value)
     countdown_time = std::chrono::steady_clock::now();
 }
 
-int Renderer::getCurrentAnimationFrame(bool) const
-{
+int Renderer::getCurrentAnimationFrame(bool jet_active) const {
     float elapsed = animation_clock.getElapsedTime().asSeconds();
+    float frame_duration = jet_active ? 0.08f : 0.15f;  // Faster animation with jetpack
 
-    return static_cast<int>(elapsed / ANIMATION_FRAME_DURATION) % 4;
+    // For jetpack, use all 4 frames, for walking use first 4 frames
+    int num_frames = 4;
+    return static_cast<int>((elapsed / frame_duration)) % num_frames;
 }
 
 void Renderer::setupText(sf::Text& text, const std::string& content, unsigned int size, const sf::Color& color) {

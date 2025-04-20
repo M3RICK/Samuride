@@ -11,7 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <map>
 #include "../common/map.hpp"
-#include "state.hpp" // Include the actual GameState class definition
+#include "state.hpp"
 
 class Client;
 
@@ -22,7 +22,8 @@ private:
 
     // Game assets
     sf::Texture background_texture;
-    sf::Texture player_texture;
+    sf::Texture johny_texture;
+    sf::Texture david_texture;
     sf::Texture jetpack_texture;
     sf::Texture coin_texture;
     sf::Texture electric_texture;
@@ -39,8 +40,8 @@ private:
     static constexpr int SCREEN_HEIGHT = 1080;
 
     // Animation
-    sf::Clock animation_clock; // Tracks elapsed time for animations
-    static constexpr float ANIMATION_FRAME_DURATION = 0.1f; // 10 frames per second
+    sf::Clock animation_clock;
+    static constexpr float ANIMATION_FRAME_DURATION = 0.1f;
 
     //===========================================================================
     // Initialization Helpers
