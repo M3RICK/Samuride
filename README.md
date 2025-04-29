@@ -1,6 +1,8 @@
 Samuride - Multiplayer Jetpack Game
 <p align="center"> <img src="https://github.com/user-attachments/assets/cbadfc9f-8b40-41c6-b83a-08a557ad397a" alt="Samuride Game" width="600px"> </p> <p align="center"> <em>A multiplayer Jetpack Joyride-inspired game with network play.</em> </p>
-## Multiplayer gameplay — Race against your friends in real-time
+
+##
+Multiplayer gameplay — Race against your friends in real-time
 
 Client-server architecture with efficient binary TCP protocol
 Coin collection and competitive scoring
@@ -13,16 +15,15 @@ Note: This project is currently in development and not fully completed.
 
 Working on:
 
-Animations refinement
-Visual polish
-Additional sound effects
-UI improvements
+- Animations refinement
+- Visual polish
+- Additional sound effects
+- UI improvements
 
 # Building the Game
 ## Prerequisites
-C++20 compiler (g++ recommended)
-SFML library (graphics, window, audio)
-pthread library
++ C++20 compiler (g++ recommended)
++ SFML library (graphics, window, audio)
 
 # Compilation
 
@@ -113,7 +114,9 @@ Implement a proper lobby system for waiting players
 
 Add player customization options
 
-📝 License
+# 📝License
 This project is licensed under the MIT License.
+This is a fan-made project inspired by Cyberpunk 2077. All related trademarks, logos, and assets are the property of CD Projekt Red. This project is non-commercial and has no affiliation with CD Projekt Red.
+![image](https://github.com/user-attachments/assets/74e20a88-ae60-4169-9d25-c5a5c66f381d)
 
 <p align="center"> <sub>Wake the fuck up, Samurai. We've got a city to burn.</sub> </p>
