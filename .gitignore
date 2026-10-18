@@ -1,0 +1,5 @@
+*.o
+*.d
+jetpack_server
+jetpack_client
+run_tests

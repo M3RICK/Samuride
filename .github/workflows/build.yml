@@ -1,0 +1,14 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Arch ships SFML 3, Ubuntu is still on 2.x
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pacman -Syu --noconfirm base-devel sfml
+      - run: make -j"$(nproc)"
+      - run: make tests
