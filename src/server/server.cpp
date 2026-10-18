@@ -7,6 +7,7 @@
 
 #include "server.hpp"
 #include "../common/debug.hpp"
+#include "../common/socket.hpp"
 #include <iostream>
 #include <cstring>
 #include <chrono>
@@ -14,7 +15,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <fcntl.h>
 #include <algorithm>
 
 //=============================================================================
@@ -57,7 +57,7 @@ bool Server::initializeServer()
         return false;
     }
 
-    setNonBlocking(server_fd);
+    Socket::setNonBlocking(server_fd);
 
     if (!setSocketOptions() || !bindSocket() || listen(server_fd, 5) < 0) {
         std::cerr << "Cannot listen on port " << port << ": " << strerror(errno) << std::endl;
@@ -89,12 +89,6 @@ bool Server::bindSocket()
     address.sin_port = htons(port);
 
     return bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == 0;
-}
-
-void Server::setNonBlocking(int fd)
-{
-    int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
 //=============================================================================
@@ -159,7 +153,7 @@ void Server::acceptNewClient()
         return;
     }
 
-    setNonBlocking(client_fd);
+    Socket::setNonBlocking(client_fd);
 
     pollfd pfd = {client_fd, POLLIN, 0};
     poll_fds.push_back(pfd);
@@ -208,20 +202,12 @@ void Server::handleClientData(int client_fd)
     if (it == players.end())
         return;
 
-    ssize_t bytes_read = recv(client_fd, recv_buffer, BUFFER_SIZE, 0);
+    std::vector<uint8_t> &stream = it->second.getRecvBuffer();
 
-    if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-        return;
-
-    if (bytes_read <= 0) {
+    if (!Socket::receive(client_fd, stream)) {
         removeClient(client_fd);
         return;
     }
-
-    DEBUG_PACKET_RECV(reinterpret_cast<const char *>(recv_buffer), bytes_read);
-
-    std::vector<uint8_t> &stream = it->second.getRecvBuffer();
-    stream.insert(stream.end(), recv_buffer, recv_buffer + bytes_read);
 
     MessageHeader header;
     std::vector<uint8_t> payload;
@@ -230,7 +216,7 @@ void Server::handleClientData(int client_fd)
         processClientMessage(client_fd, header, payload);
 
     // Clients only send tiny packets, anything this big is garbage
-    if (stream.size() > BUFFER_SIZE) {
+    if (stream.size() > MAX_PENDING_BYTES) {
         DEBUG_LOG("Client " + std::to_string(client_fd) + " sent garbage, kicking");
         removeClient(client_fd);
     }
@@ -267,18 +253,9 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
 // Network Communication
 //=============================================================================
 
-// ponytail: a partial send on a full socket buffer is dropped, add a per-client write queue if packets ever get big
 void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
 {
-    ssize_t bytes_sent = send(client_fd, data.data(), data.size(), MSG_NOSIGNAL);
-
-    if (bytes_sent < 0) {
-        DEBUG_LOG("Failed to send data to client: " + std::to_string(client_fd) +
-                  ", errno=" + std::to_string(errno));
-        return;
-    }
-
-    DEBUG_PACKET_SEND(reinterpret_cast<const char*>(data.data()), bytes_sent);
+    Socket::send(client_fd, data);
 }
 
 void Server::broadcastToAllClients(const std::vector<uint8_t>& data)

@@ -9,7 +9,7 @@ LDFLAGS += -L$(SFML_DIR)/lib -Wl,-rpath,$(SFML_DIR)/lib
 endif
 
 # Common sources
-COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp
+COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp
 
 # Server sources
 SERVER_SRCS = src/server/main.cpp src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp

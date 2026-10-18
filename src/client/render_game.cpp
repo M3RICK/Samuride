@@ -47,7 +47,7 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
     updateWorld(state, players, me, dt);
 
     // World view shakes when someone gets zapped, the HUD doesn't
-    sf::View ui_view(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT}));
+    sf::View ui_view = screenView();
     sf::View world_view = ui_view;
     if (shake > 0) {
         world_view.move({randf(-12, 12), randf(-12, 12)});
@@ -97,12 +97,10 @@ void Renderer::renderBanner()
 
 void Renderer::renderCountdown(Phase phase, int countdown)
 {
-    sf::Vector2f center(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-
     if (phase == Phase::Countdown && countdown > 0)
-        drawGlitchText(std::to_string(countdown), 220, NEON_YELLOW, center);
+        drawGlitchText(std::to_string(countdown), 220, NEON_YELLOW, SCREEN_CENTER);
     else if (phase == Phase::Running && phase_clock.getElapsedTime().asSeconds() < 1.2f)
-        drawGlitchText("BURN THE CITY", 120, NEON_RED, center);
+        drawGlitchText("BURN THE CITY", 120, NEON_RED, SCREEN_CENTER);
 }
 
 void Renderer::renderGameOver(GameState &state, const std::map<int, PlayerState> &players, int me)
@@ -123,7 +121,7 @@ void Renderer::renderGameOver(GameState &state, const std::map<int, PlayerState>
 
 void Renderer::renderSoloResults(const PlayerState &me)
 {
-    sf::Vector2f center(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    sf::Vector2f center = SCREEN_CENTER;
     std::string result = std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
 
     drawGlitchText("FLATLINED", 140, NEON_RED, center + sf::Vector2f(0, -150));
@@ -137,7 +135,7 @@ void Renderer::renderSoloResults(const PlayerState &me)
 
 void Renderer::renderVersusResults(const std::map<int, PlayerState> &players, int winner, int me)
 {
-    sf::Vector2f center(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    sf::Vector2f center = SCREEN_CENTER;
     sf::Vector2f title_pos = center + sf::Vector2f(0, -150);
     auto mine = players.find(me);
     int distance = mine != players.end() ? static_cast<int>(mine->second.x) : 0;
@@ -162,7 +160,7 @@ void Renderer::renderVersusResults(const std::map<int, PlayerState> &players, in
 
 void Renderer::renderRematchPrompt(GameState &state, bool solo)
 {
-    sf::Vector2f pos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 220);
+    sf::Vector2f pos = SCREEN_CENTER + sf::Vector2f(0, 220);
 
     if (state.isRematchRequested())
         window.draw(makeText("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos));
@@ -173,11 +171,11 @@ void Renderer::renderRematchPrompt(GameState &state, bool solo)
 
 void Renderer::renderConnectionLost()
 {
-    window.setView(sf::View(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT})));
+    window.setView(screenView());
     drawOverlay(200);
 
-    drawGlitchText("CONNECTION LOST", 110, NEON_RED, {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40});
-    window.draw(makeText("[ESC] BACK TO MENU", 32, NEON_YELLOW, {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100}));
+    drawGlitchText("CONNECTION LOST", 110, NEON_RED, SCREEN_CENTER + sf::Vector2f(0, -40));
+    window.draw(makeText("[ESC] BACK TO MENU", 32, NEON_YELLOW, SCREEN_CENTER + sf::Vector2f(0, 100)));
 }
 
 //=============================================================================
@@ -215,13 +213,11 @@ void Renderer::renderEffects()
 
         if (active.effect.type == 'c') {
             // Coin pops: swells and fades out while +1 floats up
-            sf::Color color = NEON_CYAN;
-            color.a = alpha;
-            drawTileSprite(coin_texture, tile, 0.55f + t, sf::Color(255, 255, 255, alpha));
-            window.draw(makeText("+1", 30, color, toScreen(tile + sf::Vector2f(0.5f, -t))));
+            drawTileSprite(coin_texture, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
+            window.draw(makeText("+1", 30, withAlpha(NEON_CYAN, alpha), toScreen(tile + sf::Vector2f(0.5f, -t))));
         } else {
             sf::RectangleShape flash({SCREEN_WIDTH, SCREEN_HEIGHT});
-            flash.setFillColor(sf::Color(NEON_RED.r, NEON_RED.g, NEON_RED.b, alpha / 2));
+            flash.setFillColor(withAlpha(NEON_RED, alpha / 2));
             window.draw(flash);
         }
     }
@@ -254,13 +250,10 @@ void Renderer::renderParticles()
     sf::RectangleShape shape;
 
     for (const Particle &p : particles) {
-        sf::Color color = p.color;
-        color.a = static_cast<uint8_t>(255 * p.life / p.max_life);
-
         shape.setSize({p.size, p.size});
         shape.setOrigin({p.size / 2, p.size / 2});
         shape.setPosition(toScreen(p.pos));
-        shape.setFillColor(color);
+        shape.setFillColor(withAlpha(p.color, 255 * p.life / p.max_life));
         window.draw(shape, sf::BlendAdd);
     }
 }
@@ -291,16 +284,7 @@ void Renderer::renderHUD(const std::map<int, PlayerState> &players, int me)
 // Portrait, then "YOU   12 EDDIES"
 void Renderer::renderHUDLine(int player_num, const PlayerState &player, int me, float y)
 {
-    const sf::Texture &portrait = characterOf(player_num).portrait;
-
-    if (portrait.getSize().y > 0) {
-        sf::Sprite icon(portrait);
-        float scale = 34.f / portrait.getSize().y;
-        icon.setScale({scale, scale});
-        icon.setPosition({24, y - 2});
-        window.draw(icon);
-    }
-
     std::string line = playerLabel(player_num, me) + "   " + std::to_string(player.score) + " EDDIES";
+    drawImage(characterOf(player_num).portrait, {24, y - 2}, 34, {0, 0}, sf::Color::White);
     window.draw(makeText(line, 28, player_num == me ? NEON_YELLOW : NEON_CYAN, {70, y}, {0, 0}));
 }

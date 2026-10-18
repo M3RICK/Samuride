@@ -151,19 +151,9 @@ void Renderer::drawCharacterCard(int index, bool selected, float time)
     sf::FloatRect box = MenuLayout::cardBox(index, characters.size());
     float center_x = box.getCenter().x;
     float top = box.position.y;
-    sf::Color dim(255, 255, 255, 130);
 
     drawCard(box, selected);
-
-    if (character.portrait.getSize().y > 0) {
-        sf::Sprite portrait(character.portrait);
-        float scale = 150.f / character.portrait.getSize().y;
-        portrait.setScale({scale, scale});
-        portrait.setOrigin({character.portrait.getSize().x / 2.f, 0});
-        portrait.setPosition({center_x, top + 25});
-        portrait.setColor(selected ? sf::Color::White : dim);
-        window.draw(portrait);
-    }
+    drawImage(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, selected ? sf::Color::White : FADED);
 
     if (selected)
         drawGlitchText(character.name, 46, NEON_YELLOW, {center_x, top + 215});
@@ -189,7 +179,7 @@ void Renderer::drawCharacterPreview(const Character &character, sf::FloatRect bo
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
-    sprite.setColor(selected ? sf::Color::White : sf::Color(255, 255, 255, 130));
+    sprite.setColor(selected ? sf::Color::White : FADED);
     window.draw(sprite);
 }
 

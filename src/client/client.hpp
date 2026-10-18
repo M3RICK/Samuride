@@ -36,9 +36,7 @@ private:
     std::thread network_thread;
     std::atomic<bool> running;
 
-    static const size_t BUFFER_SIZE = 4096;
-    uint8_t recv_buffer[BUFFER_SIZE];
-    std::vector<uint8_t> stream;
+    std::vector<uint8_t> stream;    // bytes received, not yet a full packet
 
     std::queue<std::vector<uint8_t>> message_queue;
     std::mutex queue_mutex;

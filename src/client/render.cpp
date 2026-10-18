@@ -161,23 +161,26 @@ void Renderer::beginFrame(bool in_game)
         wanted.play();
     }
 
-    window.setView(sf::View(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT})));
+    window.setView(screenView());
     window.clear(sf::Color::Black);
 }
 
 void Renderer::endFrame()
 {
-    window.setView(sf::View(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT})));
+    window.setView(screenView());
     window.draw(scanlines);
     window.display();
 }
 
 void Renderer::onPhaseChange(GameState &state, Phase phase)
 {
+    Phase previous = last_phase;
+
     last_phase = phase;
     phase_clock.restart();
 
-    if (phase == Phase::Countdown)
+    // A run starts with its countdown, or straight away if the countdown went unseen
+    if (phase == Phase::Countdown || (phase == Phase::Running && previous != Phase::Countdown))
         resetRun();
     if (phase == Phase::Over)
         recordSoloDistance(state);
@@ -245,15 +248,27 @@ void Renderer::drawGlitchText(const std::string &content, unsigned int size, sf:
     sf::Text text = makeText(content, size, color, pos);
 
     text.setOutlineThickness(0);
-    text.setFillColor(sf::Color(NEON_CYAN.r, NEON_CYAN.g, NEON_CYAN.b, 170));
+    text.setFillColor(withAlpha(NEON_CYAN, 170));
     text.setPosition(pos + sf::Vector2f(-offset, 0));
     window.draw(text);
 
-    text.setFillColor(sf::Color(NEON_RED.r, NEON_RED.g, NEON_RED.b, 170));
+    text.setFillColor(withAlpha(NEON_RED, 170));
     text.setPosition(pos + sf::Vector2f(offset, 0));
     window.draw(text);
 
     window.draw(makeText(content, size, color, pos));
+}
+
+sf::Color Renderer::withAlpha(sf::Color color, uint8_t alpha)
+{
+    color.a = alpha;
+    return color;
+}
+
+// The fixed 1920x1080 space everything is drawn in
+sf::View Renderer::screenView() const
+{
+    return sf::View(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT}));
 }
 
 void Renderer::drawOverlay(uint8_t alpha)
@@ -271,9 +286,38 @@ void Renderer::drawCard(sf::FloatRect box, bool selected)
 
     card.setPosition(box.position);
     card.setFillColor(sf::Color(10, 8, 20, 235));
-    card.setOutlineColor(selected ? NEON_YELLOW : sf::Color(NEON_CYAN.r, NEON_CYAN.g, NEON_CYAN.b, 90));
+    card.setOutlineColor(selected ? NEON_YELLOW : withAlpha(NEON_CYAN, 90));
     card.setOutlineThickness(selected ? 5 : 2);
     window.draw(card);
+}
+
+// Additive glow disc
+void Renderer::drawHalo(sf::Vector2f center, float radius, sf::Color color)
+{
+    sf::CircleShape halo(radius);
+
+    halo.setOrigin({radius, radius});
+    halo.setPosition(center);
+    halo.setFillColor(color);
+    window.draw(halo, sf::BlendAdd);
+}
+
+// A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)
+void Renderer::drawImage(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color)
+{
+    sf::Vector2f size(texture.getSize());
+
+    if (size.y == 0)
+        return;
+
+    sf::Sprite sprite(texture);
+    float scale = height / size.y;
+
+    sprite.setOrigin(size.componentWiseMul(anchor));
+    sprite.setScale({scale, scale});
+    sprite.setPosition(pos);
+    sprite.setColor(color);
+    window.draw(sprite);
 }
 
 std::string Renderer::playerLabel(int player_num, int me) const

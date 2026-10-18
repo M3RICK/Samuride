@@ -85,8 +85,7 @@ void Renderer::renderBackdrop(const Backdrop &backdrop, float opacity)
 
     float scale = (PLAY_BOTTOM - PLAY_TOP) / ((backdrop.floor - backdrop.ceiling) * size.y);
     float image_top = PLAY_TOP - backdrop.ceiling * size.y * scale;
-    sf::Color color = backdrop.tint;
-    color.a = static_cast<uint8_t>(255 * opacity);
+    sf::Color color = withAlpha(backdrop.tint, 255 * opacity);
 
     for (const Backdrop::Layer &layer : backdrop.layers) {
         float y0 = image_top + layer.top * size.y * scale;
@@ -138,8 +137,7 @@ void Renderer::drawFadingPicture(const Backdrop::Segment &segment, sf::FloatRect
     float u_fade = u0 + src.size.x * fade / dest.size.x;
     float v0 = src.position.y;
     float v1 = v0 + src.size.y;
-    sf::Color clear = color;
-    clear.a = 0;
+    sf::Color clear = withAlpha(color, 0);
     sf::VertexArray quads(sf::PrimitiveType::Triangles);
 
     auto addQuad = [&](float left, float right, float ua, float ub, sf::Color left_color) {
@@ -182,13 +180,8 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected)
 void Renderer::renderCoin(int x, int y, float time)
 {
     sf::Vector2f world(x, y + std::sin(time * 4 + x) * 0.06f);
-    sf::CircleShape halo(tile_size * 0.32f);
 
-    halo.setOrigin({halo.getRadius(), halo.getRadius()});
-    halo.setPosition(toScreen(world + sf::Vector2f(0.5f, 0.5f)));
-    halo.setFillColor(sf::Color(NEON_PINK.r, NEON_PINK.g, NEON_PINK.b, 40));
-    window.draw(halo, sf::BlendAdd);
-
+    drawHalo(toScreen(world + sf::Vector2f(0.5f, 0.5f)), tile_size * 0.32f, withAlpha(NEON_PINK, 40));
     drawTileSprite(coin_texture, world, 0.55f, sf::Color::White);
 }
 
@@ -214,11 +207,7 @@ void Renderer::renderZapper(int x, int y)
     }
 
     float pulse = 0.8f + 0.2f * std::sin(animation_clock.getElapsedTime().asSeconds() * 14 + x);
-    sf::CircleShape halo(tile_size * 0.5f * pulse);
-    halo.setOrigin({halo.getRadius(), halo.getRadius()});
-    halo.setPosition(center);
-    halo.setFillColor(sf::Color(NEON_CYAN.r, NEON_CYAN.g, NEON_CYAN.b, 70));
-    window.draw(halo, sf::BlendAdd);
+    drawHalo(center, tile_size * 0.5f * pulse, withAlpha(NEON_CYAN, 70));
 
     sf::Color flicker(255, 255, 255, std::rand() % 8 ? 255 : 140);
     drawTileSprite(electric_texture, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, flicker);
@@ -233,14 +222,14 @@ void Renderer::drawBeam(sf::Vector2f from, sf::Vector2f to)
     glow.setOrigin({0, glow.getSize().y / 2});
     glow.setPosition(from);
     glow.setRotation(delta.angle());
-    glow.setFillColor(sf::Color(NEON_CYAN.r, NEON_CYAN.g, NEON_CYAN.b, 60));
+    glow.setFillColor(withAlpha(NEON_CYAN, 60));
     window.draw(glow, sf::BlendAdd);
 
     sf::RectangleShape core({delta.length(), 4});
     core.setOrigin({0, 2});
     core.setPosition(from);
     core.setRotation(delta.angle());
-    core.setFillColor(sf::Color(255, 255, 255, static_cast<uint8_t>(200 * flicker)));
+    core.setFillColor(withAlpha(sf::Color::White, 200 * flicker));
     window.draw(core, sf::BlendAdd);
 
     drawLightning(from, to, NEON_CYAN);

@@ -59,8 +59,8 @@ private:
     std::vector<pollfd> poll_fds;
     std::map<int, Player> players;
 
-    static const size_t BUFFER_SIZE = 1024;
-    uint8_t recv_buffer[BUFFER_SIZE];
+    // More unparsed bytes than this from a client is garbage
+    static constexpr size_t MAX_PENDING_BYTES = 1024;
 
     //===========================================================================
     // Server Initialization
@@ -75,8 +75,6 @@ private:
     bool setSocketOptions();
 
     bool bindSocket();
-
-    void setNonBlocking(int fd);
 
     //===========================================================================
     // Client Connection Management

@@ -139,6 +139,7 @@ private:
     //===========================================================================
     static constexpr float SCREEN_WIDTH = 1920;
     static constexpr float SCREEN_HEIGHT = 1080;
+    static constexpr sf::Vector2f SCREEN_CENTER{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
 
     // The map is stretched between these two screen lines
     static constexpr float PLAY_TOP = 40;
@@ -166,6 +167,7 @@ private:
     static constexpr sf::Color NEON_ORANGE{255, 140, 0};
     static constexpr sf::Color DIM_WHITE{200, 200, 200};
     static constexpr sf::Color HINT_GREY{150, 150, 150};
+    static constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards
 
     //===========================================================================
     // render.cpp: window, assets, frame lifecycle, text helpers
@@ -189,8 +191,12 @@ private:
     sf::Text makeText(const std::string &content, unsigned int size, sf::Color color,
                       sf::Vector2f pos, sf::Vector2f anchor = {0.5f, 0.5f});
     void drawGlitchText(const std::string &content, unsigned int size, sf::Color color, sf::Vector2f pos);
+    static sf::Color withAlpha(sf::Color color, uint8_t alpha);
+    sf::View screenView() const;
     void drawOverlay(uint8_t alpha);
     void drawCard(sf::FloatRect box, bool selected);
+    void drawHalo(sf::Vector2f center, float radius, sf::Color color);
+    void drawImage(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
     std::string playerLabel(int player_num, int me) const;
     const Character &characterOf(int player_num) const;
 

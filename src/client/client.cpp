@@ -10,6 +10,7 @@
 #include "render.hpp"
 #include "inputs.hpp"
 #include "../common/debug.hpp"
+#include "../common/socket.hpp"
 
 #include <iostream>
 #include <map>
@@ -20,7 +21,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <fcntl.h>
 
 Client::Client(const std::string& server_ip, int server_port, int character, int district,
                bool debug_mode, GameState &game_state)
@@ -72,7 +72,7 @@ bool Client::connectToServer()
 
     DEBUG_LOG("Connected to server: " + server_ip + ":" + std::to_string(server_port));
 
-    fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL, 0) | O_NONBLOCK);
+    Socket::setNonBlocking(client_fd);
     connected = true;
     sendConnectMessage();
     return true;
@@ -145,30 +145,18 @@ void Client::processOutgoingMessages()
     std::lock_guard<std::mutex> lock(queue_mutex);
 
     while (!message_queue.empty()) {
-        const auto& message = message_queue.front();
-        send(client_fd, message.data(), message.size(), MSG_NOSIGNAL);
-
-        DEBUG_PACKET_SEND(reinterpret_cast<const char*>(message.data()), message.size());
-
+        Socket::send(client_fd, message_queue.front());
         message_queue.pop();
     }
 }
 
 void Client::readIncomingData()
 {
-    ssize_t bytes_read = recv(client_fd, recv_buffer, BUFFER_SIZE, 0);
-
-    if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-        return;
-
-    if (bytes_read <= 0) {
+    if (!Socket::receive(client_fd, stream)) {
         DEBUG_LOG("Lost connection to server");
         connected = false;
         return;
     }
-
-    DEBUG_PACKET_RECV(reinterpret_cast<const char *>(recv_buffer), bytes_read);
-    stream.insert(stream.end(), recv_buffer, recv_buffer + bytes_read);
 
     MessageHeader header;
     std::vector<uint8_t> payload;
