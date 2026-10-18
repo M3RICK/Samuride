@@ -13,6 +13,9 @@
 
 <p align="center"><img src="docs/gameplay.webp" alt="Gameplay: Mikasa and Jinx in CYBERPSYCHO" width="720px"></p>
 
+<p align="center"><img src="docs/versus.png" alt="Two players: Jinx and Mikasa in CYBERPSYCHO" width="720px"><br>
+<em>Two runners, one corridor: Jinx and Mikasa in CYBERPSYCHO.</em></p>
+
 ## The run
 
 You sprint forward on your own, the jetpack is the only thing you control. The corridor never ends: it is generated on the fly, faster and nastier the further you go.
