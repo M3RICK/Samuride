@@ -1,10 +1,3 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
-
 #include "server.hpp"
 
 // The Attack Titan power-up: orbs placed in the map, and what the titan form smashes

@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Keyboard: jetpack, attack, confirm and back
 
 #include "inputs.hpp"
 #include "client.hpp"

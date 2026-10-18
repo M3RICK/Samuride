@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// A player on the server: physics, score, pickups and Attack Titan forms
 
 #include "player.hpp"
 #include <algorithm>

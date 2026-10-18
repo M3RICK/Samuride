@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Player settings and best run, saved in the data directory
 
 #include "settings.hpp"
 #include "../common/platform.hpp"

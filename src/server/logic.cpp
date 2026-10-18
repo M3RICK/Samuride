@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game rules: lobby, countdown, endless map, physics ticks, collisions, game over
 
 #include "server.hpp"
 #include "generator.hpp"

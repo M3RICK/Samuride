@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Debug logging, enabled with -d
 
 #ifndef DEBUG_HPP
     #define DEBUG_HPP

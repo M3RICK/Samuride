@@ -1,10 +1,3 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
-
 #ifndef AUDIO_HPP
     #define AUDIO_HPP
 

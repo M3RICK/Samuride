@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// The authoritative game server, split by theme over server, logic, combat, titans and shift .cpp
 
 #ifndef SERVER_HPP
     #define SERVER_HPP

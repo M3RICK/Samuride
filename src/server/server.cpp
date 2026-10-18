@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Server core: listening socket, clients, message handling, fixed 60 Hz loop
 
 #include "server.hpp"
 #include "../common/debug.hpp"

@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Music, and the sound effects synthesized from oscillators and noise
 
 #include "audio.hpp"
 #include "../common/debug.hpp"

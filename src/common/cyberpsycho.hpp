@@ -1,10 +1,3 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
-
 #ifndef CYBERPSYCHO_HPP
     #define CYBERPSYCHO_HPP
 

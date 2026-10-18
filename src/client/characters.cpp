@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Loads a character from the meta.txt written by tools/slice_sheets.py
 
 #include "characters.hpp"
 #include "../common/debug.hpp"

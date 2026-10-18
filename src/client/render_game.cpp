@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game screens: the run, countdown, game over, effects, particles and HUD
 
 #include "render.hpp"
 #include <algorithm>

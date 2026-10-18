@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// The world: camera, backdrops, map tiles and players
 
 #include "render.hpp"
 #include "menu.hpp"

@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Menu screens: main menu, options, character, mode and district select, lobby
 
 #include "render.hpp"
 #include "menu.hpp"

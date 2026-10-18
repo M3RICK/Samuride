@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Self-checks run by make tests: packet framing, map streaming, map generator
 
 #include "map.hpp"
 #include "protocol.hpp"

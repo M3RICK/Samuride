@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Menu logic: navigation, options, character, mode and district select
 
 #include "menu.hpp"
 #include "render.hpp"

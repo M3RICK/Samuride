@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// TCP for the client and the server, on POSIX and Winsock alike
 
 #include "socket.hpp"
 #include "debug.hpp"

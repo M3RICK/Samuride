@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game state shared between the network thread and the render thread
 
 #ifndef STATE_HPP
     #define STATE_HPP

@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Renderer core: window, assets, frame lifecycle, text and shape helpers
 
 #include "render.hpp"
 #include "menu.hpp"

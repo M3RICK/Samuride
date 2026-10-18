@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Everything drawn on screen, split by theme over the render_*.cpp files
 
 #ifndef RENDER_HPP
 #define RENDER_HPP
