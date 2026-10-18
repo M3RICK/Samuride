@@ -2,7 +2,7 @@
 
 #include "client.hpp"
 #include "state.hpp"
-#include "render.hpp"
+#include "render/renderer.hpp"
 #include "inputs.hpp"
 #include "../common/debug.hpp"
 #include "../common/socket.hpp"

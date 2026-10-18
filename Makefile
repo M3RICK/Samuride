@@ -41,9 +41,9 @@ SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
-CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/render.cpp src/client/inputs.cpp src/client/state.cpp \
-              src/client/render_menu.cpp src/client/render_world.cpp src/client/render_game.cpp src/client/render_combat.cpp src/client/render_titans.cpp src/client/render_shift.cpp \
-              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp
+CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/inputs.cpp src/client/state.cpp \
+              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp \
+              $(wildcard src/client/render/*.cpp)
 CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 # Object files

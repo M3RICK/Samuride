@@ -1,0 +1,284 @@
+// The run on screen: phases, world, speed lines and hit effects
+
+#include "game_screen.hpp"
+#include "backdrops.hpp"
+#include "sprites.hpp"
+#include "../audio.hpp"
+#include "../settings.hpp"
+#include <algorithm>
+#include <format>
+
+using namespace Palette;
+
+GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
+    : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
+      tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
+      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles) {
+}
+
+void GameScreen::draw(GameState &state, Phase phase, bool connected, float dt)
+{
+    for (const auto &data : state.takeMapData())
+        run.map.applyData(data);
+
+    if (phase != last_phase)
+        onPhaseChange(state, phase);
+
+    if (phase != Phase::Waiting && run.map.getHeight() > 0)
+        drawWorld(state, state.getPlayers(), state.getMyPlayerNumber(), dt);
+
+    if (!connected && phase != Phase::Over)
+        drawConnectionLost();
+}
+
+//=============================================================================
+// Phases
+//=============================================================================
+
+void GameScreen::onPhaseChange(GameState &state, Phase phase)
+{
+    Phase previous = last_phase;
+
+    last_phase = phase;
+    phase_clock.restart();
+
+    // A run starts with its countdown, or straight away if the countdown went unseen
+    if (phase == Phase::Countdown || (phase == Phase::Running && previous != Phase::Countdown))
+        resetRun();
+    if (phase == Phase::Running && previous == Phase::Countdown)
+        audio.play(Audio::Sfx::Go);
+    if (phase == Phase::Over) {
+        recordSoloDistance(state);
+        audio.play(Audio::Sfx::GameOver);
+    }
+}
+
+// New run (first one or rematch): forget the previous one
+void GameScreen::resetRun()
+{
+    run.reset();
+    particles.clear();
+    titans.reset();
+    shots.clear();
+    effects.clear();
+    speed_lines.clear();
+    shown_backdrop = -1;
+    heard_countdown = -1;
+    drones_down = 0;
+    new_record = false;
+    best_distance = loadBestDistance();
+}
+
+// Solo runs chase the personal best
+void GameScreen::recordSoloDistance(GameState &state)
+{
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
+
+    if (players.size() != 1 || mine == players.end())
+        return;
+
+    int distance = static_cast<int>(mine->second.x);
+    new_record = distance > best_distance;
+    if (new_record) {
+        best_distance = distance;
+        saveBestDistance(distance);
+    }
+}
+
+//=============================================================================
+// World
+//=============================================================================
+
+void GameScreen::update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
+{
+    run.roster = state.getCharacters();
+    run.follow(players, me, dt);
+    updateSpeedLines(dt);
+    particles.update(dt);
+
+    for (const CollisionEffect &effect : state.takeEffects())
+        addEffect(effect, me);
+    shots.handle(state);
+}
+
+// Countdown beeps, and the jetpack rumble while your thrust is on
+void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me)
+{
+    int countdown = state.getCountdown();
+    auto mine = players.find(me);
+    bool alive = !run.death_clocks.count(me);
+
+    if (phase == Phase::Countdown && countdown > 0 && countdown != heard_countdown) {
+        heard_countdown = countdown;
+        audio.play(Audio::Sfx::Beep);
+    }
+
+    bool flying = mine != players.end() && mine->second.form != Form::Shifting && mine->second.form != Form::Titan;
+    audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
+}
+
+void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
+{
+    Phase phase = last_phase;
+    update(state, players, me, dt);
+    updateSounds(state, phase, players, me);
+
+    // World view shakes when someone gets zapped, the HUD doesn't
+    sf::View ui_view = canvas.screenView();
+    sf::View world_view = ui_view;
+    if (run.shake > 0) {
+        world_view.move({randf(-12, 12), randf(-12, 12)});
+        run.shake -= dt;
+    }
+
+    canvas.target().setView(world_view);
+    drawDistrict(state.getDistrict());
+    drawSpeedLines();
+    std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
+    tiles.draw(state.getCollectedCoins(), destroyed);
+    std::vector<TitanState> titan_states = state.getTitans();
+    titans.draw(titan_states);
+    runners.draw(players, me, phase == Phase::Running);
+    shots.draw(destroyed);
+    particles.draw(canvas, run.view);
+
+    canvas.target().setView(ui_view);
+    drawEffects();
+    titans.drawWarnings(titan_states);
+    if (players.count(me))
+        drawShiftGauge(players.at(me), me);
+    drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
+    drawCountdown(phase, state.getCountdown());
+    if (phase != Phase::Over)
+        drawBanner();
+
+    // Leave time to watch the zap before the curtain falls
+    if (phase == Phase::Over && phase_clock.getElapsedTime().asSeconds() > GAME_OVER_DELAY)
+        drawGameOver(state, players, me);
+}
+
+// "ENTERING <district>" each time the scenery changes
+void GameScreen::drawDistrict(int district)
+{
+    int current = backdrops.drawDistrict(canvas, run.view, district);
+
+    if (current != shown_backdrop) {
+        shown_backdrop = current;
+        banner = "ENTERING " + backdrops[current].name;
+        banner_tagline = backdrops[current].tagline;
+        banner_clock.restart();
+    }
+}
+
+//=============================================================================
+// Speed Lines
+//=============================================================================
+
+// Streaks start past 7 tiles/s and thicken up to top speed
+void GameScreen::updateSpeedLines(float dt)
+{
+    size_t wanted = std::clamp(static_cast<int>((run.run_speed - 7) * 4), 0, 60);
+
+    while (speed_lines.size() < wanted) {
+        float speed = run.run_speed * run.view.tile_size * randf(1.5f, 2.5f);
+        sf::Vector2f pos(Screen::WIDTH + randf(0, Screen::WIDTH), randf(Screen::PLAY_TOP, Screen::PLAY_BOTTOM));
+        speed_lines.push_back({pos, randf(80, 240), speed});
+    }
+
+    for (SpeedLine &line : speed_lines)
+        line.pos.x -= line.speed * dt;
+    std::erase_if(speed_lines, [](const SpeedLine &line) { return line.pos.x + line.length < 0; });
+    if (speed_lines.size() > wanted)
+        speed_lines.resize(wanted);
+}
+
+void GameScreen::drawSpeedLines()
+{
+    sf::RectangleShape line;
+
+    // Brighter at the head, so each streak reads as moving left
+    for (const SpeedLine &streak : speed_lines) {
+        line.setSize({streak.length, 3});
+        line.setPosition(streak.pos);
+        line.setFillColor(withAlpha(sf::Color::White, 70));
+        canvas.draw(line, sf::BlendAdd);
+
+        line.setSize({streak.length * 0.25f, 3});
+        line.setFillColor(withAlpha(NEON_CYAN, 140));
+        canvas.draw(line, sf::BlendAdd);
+    }
+}
+
+//=============================================================================
+// Effects
+//=============================================================================
+
+void GameScreen::addEffect(const CollisionEffect &effect, int me)
+{
+    sf::Vector2f tile_center(effect.x + 0.5f, effect.y + 0.5f);
+
+    if (effect.type == 'e') {
+        audio.play(Audio::Sfx::Zap);
+        run.shake = 0.5f;
+        run.death_clocks.try_emplace(effect.player);
+        particles.emit(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
+        particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == TITAN_HIT) {
+        audio.play(Audio::Sfx::Stomp);
+        run.shake = 0.6f;
+        run.death_clocks.try_emplace(effect.player);
+        particles.emit(tile_center, 40, NEON_RED, 9, 0.7f, 12);
+        particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == TITAN_KILL) {
+        // Steam bursting from the nape
+        audio.play(Audio::Sfx::Explosion);
+        run.shakeAtLeast(0.3f);
+        particles.emit(tile_center + sf::Vector2f(0, -3), 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
+        particles.emit(tile_center + sf::Vector2f(0, -3), 20, NEON_RED, 6, 0.6f, 8);
+    } else if (effect.type == DRONE_TILE) {
+        audio.play(Audio::Sfx::Explosion);
+        run.shakeAtLeast(0.15f);
+        drones_down += effect.player == me;
+        particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
+        particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.player == me) {
+        audio.play(Audio::Sfx::Coin);
+        particles.emit(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
+        particles.emit(tile_center, 6, NEON_YELLOW, 3, 0.35f, 0);
+    } else {
+        return;
+    }
+    effects.push_back({effect, sf::Clock(), effect.player == me});
+}
+
+void GameScreen::drawEffects()
+{
+    std::erase_if(effects, [](const ActiveEffect &e) {
+        return e.clock.getElapsedTime().asSeconds() > EFFECT_DURATION;
+    });
+
+    for (const ActiveEffect &active : effects) {
+        float t = active.clock.getElapsedTime().asSeconds() / EFFECT_DURATION;
+        auto alpha = static_cast<uint8_t>(255 * (1 - t));
+        sf::Vector2f tile(active.effect.x, active.effect.y);
+
+        if (active.effect.type == 'c') {
+            // Coin pops: swells and fades out while +1 floats up
+            tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
+            canvas.text("+1", 30, withAlpha(NEON_CYAN, alpha), run.toScreen(tile + sf::Vector2f(0.5f, -t)));
+        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
+            // Blast ring, and the bounty for whoever took it down
+            bool titan = active.effect.type == TITAN_KILL;
+            sf::Vector2f center = run.toScreen(tile + sf::Vector2f(0.5f, titan ? -3 : 0.5f));
+            canvas.halo(center, run.view.tile_size * (0.3f + t) * (titan ? 3 : 1), withAlpha(NEON_ORANGE, alpha / 2));
+            if (active.mine)
+                canvas.text(std::format("+{}", titan ? TITAN_BOUNTY : DRONE_BOUNTY), titan ? 48 : 34,
+                            withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
+        } else {
+            sf::RectangleShape flash({Screen::WIDTH, Screen::HEIGHT});
+            flash.setFillColor(withAlpha(NEON_RED, alpha / 2));
+            canvas.draw(flash);
+        }
+    }
+}

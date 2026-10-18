@@ -1,7 +1,7 @@
 // Menu logic: navigation, options, character, mode and district select
 
 #include "menu.hpp"
-#include "render.hpp"
+#include "render/renderer.hpp"
 #include "audio.hpp"
 #include "characters.hpp"
 #include <algorithm>
