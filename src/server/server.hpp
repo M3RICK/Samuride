@@ -199,6 +199,18 @@ private:
 
     void titanSmash(Player &player);
 
+    //===========================================================================
+    // Shield & Sandevistan (powerups.cpp)
+    //===========================================================================
+
+    bool placeInFreeTile(std::vector<std::string> &rows, char tile);
+
+    void placePowerUp(std::vector<std::string> &rows);
+
+    char powerUpAt(int x, int y) const;
+
+    bool hurt(Player &player, char cause, int x, int y);
+
 public:
     explicit Server(const ServerConfig &config);
 

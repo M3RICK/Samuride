@@ -9,21 +9,8 @@ void Server::placeShiftOrb(std::vector<std::string> &rows)
 
     bool too_soon = chunks_generated < SHIFT_FIRST_CHUNK || chunks_generated - last_orb_chunk < SHIFT_MIN_GAP_CHUNKS;
 
-    if (too_soon || chance(rng) >= SHIFT_CHANCE)
-        return;
-
-    std::uniform_int_distribution<int> column(5, rows[0].size() - 5);
-    std::uniform_int_distribution<int> row(2, rows.size() - 3);
-
-    // A few tries to land on free space
-    for (int attempt = 0; attempt < 10; attempt++) {
-        char &tile = rows[row(rng)][column(rng)];
-        if (tile == '_') {
-            tile = SHIFT_TILE;
-            last_orb_chunk = chunks_generated;
-            return;
-        }
-    }
+    if (!too_soon && chance(rng) < SHIFT_CHANCE && placeInFreeTile(rows, SHIFT_TILE))
+        last_orb_chunk = chunks_generated;
 }
 
 // Everything in the titan's body: coins collected, drones and titans smashed

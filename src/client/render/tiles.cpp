@@ -26,14 +26,22 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
         for (int x = start_x; x < end_x; x++) {
             char tile = run.map.getTile(x, y);
 
-            if (tile == 'c' && !collected.count({x, y}))
-                drawCoin(x, y, time);
-            else if (tile == 'e')
+            // A destroyed drone may have left a power-up behind
+            if (tile == DRONE_TILE && destroyed.count({x, y}))
+                tile = droneDrop(x, y);
+
+            if (tile == 'e')
                 drawZapper(x, y, time);
-            else if (tile == SHIFT_TILE && !collected.count({x, y}))
-                drawShiftOrb(x, y, time);
-            else if (run.isLiveDrone(x, y, destroyed))
+            else if (tile == DRONE_TILE)
                 drawDrone(x, y, time);
+            else if (collected.count({x, y}))
+                continue;
+            else if (tile == 'c')
+                drawCoin(x, y, time);
+            else if (tile == SHIFT_TILE)
+                drawShiftOrb(x, y, time);
+            else if (isPowerUp(tile))
+                drawPowerUp(x, y, tile, time);
         }
     }
 }
@@ -153,6 +161,38 @@ void Tiles::drawShiftOrb(int x, int y, float time)
     canvas.halo(center, tile_size * (0.7f + 0.15f * pulse), withAlpha(NEON_ORANGE, 70));
     canvas.backing(center, tile_size * 0.45f, withAlpha(NEON_ORANGE, 230));
     canvas.image(sprites.titan_face, center, tile_size * 0.7f, {0.5f, 0.5f}, sf::Color::White);
+}
+
+// Shield: a hexagon plate; Sandevistan: green chevrons rushing forward
+void Tiles::drawPowerUp(int x, int y, char tile, float time)
+{
+    float tile_size = run.view.tile_size;
+    bool shield = tile == SHIELD_TILE;
+    sf::Color color = shield ? NEON_CYAN : NEON_GREEN;
+    sf::Vector2f center = run.toScreen({x + 0.5f, y + 0.5f + std::sin(time * 3 + x) * 0.1f});
+    float pulse = 0.5f + 0.5f * std::sin(time * 6 + x);
+
+    canvas.halo(center, tile_size * (0.65f + 0.1f * pulse), withAlpha(color, 70));
+    canvas.backing(center, tile_size * 0.45f, withAlpha(color, 230));
+
+    if (shield) {
+        canvas.hexagon(center, tile_size * 0.26f, color, time * 40);
+        return;
+    }
+
+    sf::ConvexShape chevron(6);
+    float s = tile_size * 0.13f;
+    chevron.setPoint(0, {-s, -1.6f * s});
+    chevron.setPoint(1, {0, -1.6f * s});
+    chevron.setPoint(2, {1.4f * s, 0});
+    chevron.setPoint(3, {0, 1.6f * s});
+    chevron.setPoint(4, {-s, 1.6f * s});
+    chevron.setPoint(5, {0.4f * s, 0});
+    chevron.setFillColor(color);
+    for (float dx : {-0.8f, 0.6f}) {
+        chevron.setPosition(center + sf::Vector2f(dx * s, 0));
+        canvas.draw(chevron);
+    }
 }
 
 void Tiles::drawSprite(const sf::Texture &texture, sf::Vector2f world, float fill, sf::Color color)

@@ -16,6 +16,8 @@ struct PlayerAnim {
     Form form = Form::Normal;
     sf::Clock form_clock;   // time in the current form
     float smoke_x = 0;      // where the titan stood when it ended, in tiles
+    bool sprinting = false;
+    sf::Clock sprint_clock; // time since the Sandevistan kicked in
 };
 
 struct Run {

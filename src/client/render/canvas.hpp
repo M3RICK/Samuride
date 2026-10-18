@@ -24,6 +24,7 @@ namespace Palette {
     constexpr sf::Color NEON_RED{255, 0, 60};
     constexpr sf::Color NEON_PINK{255, 40, 200};
     constexpr sf::Color NEON_ORANGE{255, 140, 0};
+    constexpr sf::Color NEON_GREEN{60, 255, 120};
     constexpr sf::Color DIM_WHITE{200, 200, 200};
     constexpr sf::Color HINT_GREY{150, 150, 150};
     constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards
@@ -76,6 +77,7 @@ public:
     void card(sf::FloatRect box, bool selected);
     void halo(sf::Vector2f center, float radius, sf::Color color);
     void backing(sf::Vector2f center, float radius, sf::Color ring);
+    void hexagon(sf::Vector2f center, float radius, sf::Color color, float angle);
     void image(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
     void stripFrame(const sf::Texture &texture, int frames, int frame, sf::Vector2f center, float width);
 };

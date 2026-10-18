@@ -5,7 +5,8 @@
 
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0) {
+      score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0),
+      shield(false), sprint_timer(0), grace_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -18,6 +19,9 @@ void Player::reset(int number, float spawn_y)
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
+    shield = false;
+    sprint_timer = 0;
+    grace_timer = 0;
     collected_coins.clear();
 }
 
@@ -39,6 +43,23 @@ void Player::startShift()
 {
     form = Form::Shifting;
     form_timer = SHIFT_TIME;
+}
+
+void Player::powerUp(char tile)
+{
+    if (tile == SHIELD_TILE)
+        shield = true;
+    else if (tile == SANDEVISTAN_TILE)
+        sprint_timer = SANDEVISTAN_TIME;
+}
+
+bool Player::absorbHit()
+{
+    if (!shield)
+        return false;
+    shield = false;
+    grace_timer = SHIELD_GRACE;
+    return true;
 }
 
 // Shifting -> Titan -> Emerging -> Normal; bursting out of the smoke throws you up
@@ -67,10 +88,12 @@ void Player::update(float dt, float forward_speed, float max_y)
 {
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt);
+    grace_timer = std::max(0.0f, grace_timer - dt);
 
     // Standing still while the smoke rises; the titan runs on the floor
     if (form != Form::Shifting)
-        x += forward_speed * dt;
+        x += forward_speed * (isSprinting() ? SANDEVISTAN_SPEED : 1) * dt;
+    sprint_timer = std::max(0.0f, sprint_timer - dt);
     if (form == Form::Titan) {
         y = max_y;
         y_velocity = 0;

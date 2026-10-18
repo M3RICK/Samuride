@@ -38,37 +38,53 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
 }
 
-// Portrait, then "YOU   12 EDDIES"
+// Portrait, then "YOU   12 EDDIES", and a hexagon while shielded
 void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, float y)
 {
     std::string line = playerLabel(player_num, me) + "   " + std::to_string(player.score) + " EDDIES";
+    sf::Text text = canvas.makeText(line, 28, player_num == me ? NEON_YELLOW : NEON_CYAN, {70, y}, {0, 0});
 
     canvas.image(sprites.character(run.characterOf(player_num)).portrait, {24, y - 2}, 34, {0, 0}, sf::Color::White);
-    canvas.text(line, 28, player_num == me ? NEON_YELLOW : NEON_CYAN, {70, y}, {0, 0});
+    canvas.draw(text);
+
+    if (player.shielded) {
+        sf::FloatRect bounds = text.getGlobalBounds();
+        canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, NEON_CYAN, 0);
+    }
 }
 
-// Draining gauge while you are the titan
-void GameScreen::drawShiftGauge(const PlayerState &player, int me)
+// Your timed power-ups drain a gauge; the Sandevistan also tints the screen green
+void GameScreen::drawPowerUps(const PlayerState &player, int me)
 {
-    if (player.form != Form::Titan)
-        return;
+    const PlayerAnim &anim = run.player_anims[me];
 
-    float left = 1 - run.player_anims[me].form_clock.getElapsedTime().asSeconds() / TITAN_TIME;
+    if (player.form == Form::Titan) {
+        drawGauge("ATTACK TITAN", NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / TITAN_TIME);
+    } else if (player.sprinting) {
+        sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
+        tint.setFillColor(withAlpha(NEON_GREEN, 22));
+        canvas.draw(tint, sf::BlendAdd);
+        drawGauge("SANDEVISTAN", NEON_GREEN, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME);
+    }
+}
+
+void GameScreen::drawGauge(const std::string &label, sf::Color color, float left)
+{
     sf::Vector2f pos(Screen::WIDTH / 2 - 250, 40);
 
     sf::RectangleShape back({500, 18});
     back.setPosition(pos);
     back.setFillColor(sf::Color(0, 0, 0, 160));
-    back.setOutlineColor(NEON_ORANGE);
+    back.setOutlineColor(color);
     back.setOutlineThickness(2);
     canvas.draw(back);
 
     sf::RectangleShape fill({500 * std::clamp(left, 0.0f, 1.0f), 18});
     fill.setPosition(pos);
-    fill.setFillColor(NEON_ORANGE);
+    fill.setFillColor(color);
     canvas.draw(fill);
 
-    canvas.text("ATTACK TITAN", 26, NEON_ORANGE, pos + sf::Vector2f(250, 40));
+    canvas.text(label, 26, color, pos + sf::Vector2f(250, 40));
 }
 
 // "ENTERING <district>", for a moment after the scenery changes

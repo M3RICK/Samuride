@@ -3,6 +3,7 @@
 #ifndef PLAYERS_HPP
     #define PLAYERS_HPP
 
+#include <SFML/Graphics.hpp>
 #include <map>
 #include "../state.hpp"
 
@@ -31,6 +32,9 @@ private:
     bool updateAirState(int player_num);
     AnimationFrame pickAnimation(int player_num, const PlayerState &player, bool on_ground);
     void drawPlayer(int player_num, const PlayerState &player, bool is_me);
+    void updateSprint(int player_num, const PlayerState &player);
+    void drawAfterimages(const sf::Sprite &sprite, float tile_size);
+    void drawShieldBubble(sf::Vector2f center, float tile_size);
 
     // The Attack Titan: forms come from the server, how long a player has been in one is timed here
     void updateForm(int player_num, const PlayerState &player, bool is_me);

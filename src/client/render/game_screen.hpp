@@ -81,7 +81,8 @@ private:
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
-    void drawShiftGauge(const PlayerState &player, int me);
+    void drawPowerUps(const PlayerState &player, int me);
+    void drawGauge(const std::string &label, sf::Color color, float left);
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);

@@ -147,7 +147,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawEffects();
     titans.drawWarnings(titan_states);
     if (players.count(me))
-        drawShiftGauge(players.at(me), me);
+        drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
@@ -242,6 +242,16 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         drones_down += effect.player == me;
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (isPowerUp(effect.type)) {
+        bool shield = effect.type == SHIELD_TILE;
+        if (effect.player == me)
+            audio.play(shield ? Audio::Sfx::Shield : Audio::Sfx::Sandevistan);
+        particles.emit(tile_center, 24, shield ? NEON_CYAN : NEON_GREEN, 6, 0.5f, 0);
+    } else if (effect.type == SHIELD_BREAK) {
+        audio.play(Audio::Sfx::ShieldBreak);
+        run.shakeAtLeast(0.3f);
+        particles.emit(tile_center, 36, NEON_CYAN, 8, 0.6f, 10);
+        particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
     } else if (effect.player == me) {
         audio.play(Audio::Sfx::Coin);
         particles.emit(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
@@ -275,9 +285,16 @@ void GameScreen::drawEffects()
             if (active.mine)
                 canvas.text(std::format("+{}", titan ? TITAN_BOUNTY : DRONE_BOUNTY), titan ? 48 : 34,
                             withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
+        } else if (isPowerUp(active.effect.type)) {
+            // What you just grabbed floats up
+            bool shield = active.effect.type == SHIELD_TILE;
+            if (active.mine)
+                canvas.text(shield ? "SHIELD" : "SANDEVISTAN", 34, withAlpha(shield ? NEON_CYAN : NEON_GREEN, alpha),
+                            run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else {
+            // A death flashes red, a broken shield cyan
             sf::RectangleShape flash({Screen::WIDTH, Screen::HEIGHT});
-            flash.setFillColor(withAlpha(NEON_RED, alpha / 2));
+            flash.setFillColor(withAlpha(active.effect.type == SHIELD_BREAK ? NEON_CYAN : NEON_RED, alpha / 2));
             canvas.draw(flash);
         }
     }

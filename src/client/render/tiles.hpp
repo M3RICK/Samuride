@@ -23,6 +23,7 @@ private:
     void drawLightning(sf::Vector2f from, sf::Vector2f to, sf::Color color);
     void drawDrone(int x, int y, float time);
     void drawShiftOrb(int x, int y, float time);
+    void drawPowerUp(int x, int y, char tile, float time);
 
 public:
     Tiles(Canvas &canvas, const Sprites &sprites, const Run &run);

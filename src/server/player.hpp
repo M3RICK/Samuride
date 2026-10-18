@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include "../common/shift.hpp"
+#include "../common/powerups.hpp"
 
 class Player {
 private:
@@ -29,6 +30,9 @@ private:
     float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
     Form form;
     float form_timer;           // seconds left in the current form
+    bool shield;
+    float sprint_timer;         // seconds of Sandevistan left
+    float grace_timer;          // seconds of invincibility left after a shield broke
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet
@@ -60,7 +64,12 @@ public:
     bool takePickup(int tile_x, int tile_y);
 
     Form getForm() const { return form; }
-    bool isInvincible() const { return form != Form::Normal; }
+    bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
+    bool hasShield() const { return shield; }
+    bool isSprinting() const { return sprint_timer > 0; }
+    void powerUp(char tile);
+    // Returns true when the shield took the hit
+    bool absorbHit();
     void startShift();
     void addScore(int points) { score += points; }
 

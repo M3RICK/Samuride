@@ -173,6 +173,11 @@ void Audio::synthesize()
     buffers[Sfx::Steam] = toBuffer(burst(0.7f, 0.4f, 0.5f));
     buffers[Sfx::Stomp] = toBuffer(mix(tone(Wave::Sine, 70, 40, 0.35f, 0.5f), burst(0.2f, 0.25f, 0.05f)));
     buffers[Sfx::Explosion] = toBuffer(mix(burst(0.6f, 0.45f, 0.08f), tone(Wave::Saw, 120, 40, 0.5f, 0.2f)));
+    // Power-ups: a rising chime, the plate shattering, the Sandevistan's whoosh
+    buffers[Sfx::Shield] = toBuffer(concat(tone(Wave::Sine, 520, 1040, 0.15f, 0.3f),
+                                           tone(Wave::Sine, 1040, 1560, 0.15f, 0.25f)));
+    buffers[Sfx::ShieldBreak] = toBuffer(mix(burst(0.35f, 0.35f, 0.9f), tone(Wave::Square, 1800, 400, 0.25f, 0.15f)));
+    buffers[Sfx::Sandevistan] = toBuffer(mix(tone(Wave::Saw, 200, 1400, 0.4f, 0.2f), burst(0.4f, 0.2f, 0.6f)));
 
     // No envelope: it loops
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));

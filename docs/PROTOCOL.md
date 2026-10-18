@@ -68,8 +68,13 @@ Tiles:
 | `e` | Zapper, deadly |
 | `d` | Drone (CYBERPSYCHO), deadly, +5 when destroyed |
 | `p` | Attack Titan orb |
+| `a` | Shield: takes one deadly hit |
+| `v` | Sandevistan: 3 s of sprint at 1.7× the run speed, invincible |
 
-Collected coins and orbs stay in the map: the server tracks who took what, so both players can
+A destroyed drone's tile can hold a shield or a Sandevistan: one in three drops one, picked by a hash
+of its position (`droneDrop` in `src/common/powerups.hpp`), so clients know without being told.
+
+Collected coins, orbs and power-ups stay in the map: the server tracks who took what, so both players can
 take the same one.
 
 ### `MSG_GAME_START`
@@ -108,7 +113,7 @@ A 10-byte record per player, 60 times per second:
 | 4 | X, also the distance run |
 | 2 | Y: top of the 2-tile-tall body, 0 is the top row |
 | 2 | Score |
-| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging) |
+| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan |
 
 ### `MSG_COLLISION`
 
@@ -127,6 +132,9 @@ A 10-byte record per player, 60 times per second:
 | `t` | Run down by a titan: death |
 | `k` | Titan taken down (Mikasa's blade or the Attack Titan), +20 |
 | `p` | Attack Titan orb taken: shifting starts |
+| `a` | Shield taken |
+| `v` | Sandevistan taken: the sprint starts |
+| `b` | A shield took a deadly hit (zapper, drone or titan) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`
 
@@ -134,7 +142,7 @@ A 10-byte record per player, 60 times per second:
 | --- | --- |
 | 1 | Winner's player number, or `0xFF` for none |
 
-The game ends at the first death (zapper, drone or titan): the other player wins, nobody if both
+The game ends at the first death (zapper, drone or titan, unless a shield takes it): the other player wins, nobody if both
 died on the same tick. If a player disconnects, the remaining one wins. In solo the winner is
 always `0xFF` and the score is the distance run.
 

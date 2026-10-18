@@ -37,7 +37,8 @@ COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp sr
 
 # Server sources; the game links the server core too, to host solo and multiplayer runs itself
 SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
-                   src/server/combat.cpp src/server/titans.cpp src/server/shift.cpp
+                   src/server/combat.cpp src/server/titans.cpp src/server/shift.cpp \
+                   src/server/powerups.cpp
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
@@ -73,7 +74,7 @@ $(CLIENT_BIN): $(CLIENT_OBJS) $(SERVER_CORE_OBJS) $(COMMON_OBJS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tests: src/common/tests.o src/server/generator.o $(COMMON_OBJS)
+tests: src/common/tests.o src/server/generator.o src/server/player.o $(COMMON_OBJS)
 	$(CC) $(CFLAGS) -o run_tests $^ $(LDFLAGS)
 	./run_tests
 

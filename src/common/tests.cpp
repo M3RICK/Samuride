@@ -1,8 +1,9 @@
-// Self-checks run by make tests: packet framing, map streaming, map generator
+// Self-checks run by make tests: packet framing, map streaming, map generator, power-ups
 
 #include "map.hpp"
 #include "protocol.hpp"
 #include "../server/generator.hpp"
+#include "../server/player.hpp"
 #include "cyberpsycho.hpp"
 #include <cassert>
 #include <iostream>
@@ -89,12 +90,46 @@ static void testGenerator()
     }
 }
 
+// The shield takes one hit then gives a moment to get clear; the Sandevistan outruns everyone
+static void testPowerUps()
+{
+    Player shielded(-1);
+    shielded.reset(0, 0);
+    assert(!shielded.absorbHit());
+    shielded.powerUp(SHIELD_TILE);
+    assert(shielded.hasShield() && shielded.absorbHit() && !shielded.hasShield());
+    assert(shielded.isInvincible() && !shielded.absorbHit());
+    for (int i = 0; i < 61; i++)
+        shielded.update(1 / 60.f, 10, 8);
+    assert(!shielded.isInvincible());
+
+    Player sprinter(-1);
+    sprinter.reset(1, 0);
+    sprinter.powerUp(SANDEVISTAN_TILE);
+    assert(sprinter.isSprinting() && sprinter.isInvincible());
+    sprinter.update(1, 10, 8);
+    assert(sprinter.getX() > 10 * SANDEVISTAN_SPEED - 0.01f);
+    sprinter.update(SANDEVISTAN_TIME, 10, 8);
+    assert(!sprinter.isSprinting());
+
+    // About one drone in three drops something, both kinds show up
+    int drops[2] = {0, 0};
+    for (int x = 0; x < 3000; x++) {
+        char drop = droneDrop(x, x % 10);
+        if (drop != '_')
+            drops[drop == SHIELD_TILE]++;
+    }
+    assert(drops[0] + drops[1] > 800 && drops[0] + drops[1] < 1200);
+    assert(drops[0] > 300 && drops[1] > 300);
+}
+
 int main()
 {
     testPacketFraming();
     testIntegers();
     testMapChunks();
     testGenerator();
+    testPowerUps();
     std::cout << "All tests passed" << std::endl;
     return 0;
 }

@@ -165,6 +165,20 @@ void Canvas::backing(sf::Vector2f center, float radius, sf::Color ring)
     window.draw(disc);
 }
 
+// Outlined hexagon, turned by `angle` degrees: the shield's mark
+void Canvas::hexagon(sf::Vector2f center, float radius, sf::Color color, float angle)
+{
+    sf::CircleShape shape(radius, 6);
+
+    shape.setOrigin({radius, radius});
+    shape.setPosition(center);
+    shape.setRotation(sf::degrees(angle));
+    shape.setFillColor(withAlpha(color, 50));
+    shape.setOutlineColor(color);
+    shape.setOutlineThickness(radius * 0.18f);
+    window.draw(shape);
+}
+
 // A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)
 void Canvas::image(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color)
 {
