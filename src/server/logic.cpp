@@ -41,7 +41,9 @@ void Server::extendMap(float leader_x)
         float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
 
         bool drones = mode == GameMode::Cyberpsycho;
-        game_map.appendChunk(generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones));
+        std::vector<std::string> rows = generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
+        placeShiftOrb(rows);
+        game_map.appendChunk(rows);
 
         // Before the run, clients get the whole map in one go instead
         if (phase == Phase::Running)
@@ -174,6 +176,13 @@ bool Server::checkPlayerCollisions(Player &player)
 {
     float px = player.getX() + 0.5f;
 
+    if (player.getForm() == Form::Titan) {
+        titanSmash(player);
+        return false;
+    }
+    if (player.getForm() == Form::Shifting)
+        return false;
+
     for (float dy : {0.3f, 1.0f, 1.7f}) {
         float py = player.getY() + dy;
         int tile_x = static_cast<int>(px);
@@ -182,6 +191,12 @@ bool Server::checkPlayerCollisions(Player &player)
 
         if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
             notifyCollision('c', player, tile_x, tile_y);
+        } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
+            player.startShift();
+            notifyCollision(SHIFT_TILE, player, tile_x, tile_y);
+            return false;
+        } else if (player.isInvincible()) {
+            continue;
         } else if ((tile == 'e' || isLiveDrone(tile_x, tile_y)) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
@@ -190,7 +205,7 @@ bool Server::checkPlayerCollisions(Player &player)
         }
     }
 
-    if (hitByTitan(player)) {
+    if (!player.isInvincible() && hitByTitan(player)) {
         notifyCollision(TITAN_HIT, player, player.getX(), player.getY() + 1);
         return true;
     }
@@ -206,7 +221,8 @@ void Server::sendGameState()
         Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getScore());
-        state_data.push_back(player.isJetActive() ? 1 : 0);
+        // bit 0: jetpack, bits 1-2: form
+        state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

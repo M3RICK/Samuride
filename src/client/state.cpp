@@ -37,18 +37,18 @@ void GameState::setCountdown(int value)
         phase = Phase::Running;
 }
 
-void GameState::updatePlayer(int player_number, float x, float y, int score, bool jet_active)
+void GameState::updatePlayer(int player_number, const PlayerState &player)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    players[player_number] = {x, y, score, jet_active};
+    players[player_number] = player;
 }
 
 void GameState::handleCollision(char type, int player, int x, int y)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    if (type == 'c' && player == my_player_number)
+    if ((type == 'c' || type == SHIFT_TILE) && player == my_player_number)
         my_coins.insert({x, y});
     if (type == DRONE_TILE)
         destroyed_drones.insert({x, y});

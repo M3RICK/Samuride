@@ -226,6 +226,8 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected, co
                 renderCoin(x, y, time);
             else if (tile == 'e')
                 renderZapper(x, y);
+            else if (tile == SHIFT_TILE && !collected.count({x, y}))
+                renderShiftOrb(x, y, time);
             else if (isLiveDrone(x, y, destroyed))
                 renderDrone(x, y, time);
         }
@@ -353,7 +355,8 @@ void Renderer::renderPlayers(const std::map<int, PlayerState> &players, int me)
     for (const auto &[player_num, player] : players) {
         sf::Vector2f nozzle = display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
 
-        if (live && player.jet_active) {
+        bool flying = player.form == Form::Normal || player.form == Form::Emerging;
+        if (live && flying && player.jet_active) {
             emitParticles(nozzle, 2, characterOf(player_num).exhaust, 1.5f, 0.35f, 0, {0, 8});
             emitParticles(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
@@ -411,6 +414,14 @@ Renderer::AnimationFrame Renderer::pickAnimation(int player_num, const PlayerSta
 
 void Renderer::renderPlayerSprite(int player_num, const PlayerState &player, bool is_me)
 {
+    updateForm(player_num, player, is_me);
+    if (player.form == Form::Shifting || player.form == Form::Titan) {
+        drawShift(player_num, player, is_me);
+        return;
+    }
+    if (player.form == Form::Emerging)
+        drawSteamPuff(player_num);
+
     const Character &character = characterOf(player_num);
     AnimationFrame animation = pickAnimation(player_num, player, updateAirState(player_num));
     int frame = animation.animation->frameAt(animation.time);

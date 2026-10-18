@@ -115,6 +115,9 @@ void Renderer::loadTitans()
 {
     static const char *dirs[TITAN_TYPES] = {"titan_female", "titan_armored"};
 
+    if (!shift_sprite.load("assets/eren_shift") || !titan_face.loadFromFile("assets/titan_eren/portrait.png"))
+        DEBUG_LOG("Failed to load the Attack Titan");
+
     titan_sprites.resize(TITAN_TYPES);
     for (int i = 0; i < TITAN_TYPES; i++) {
         if (!titan_sprites[i].load(std::string("assets/") + dirs[i]))

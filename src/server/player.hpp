@@ -12,6 +12,7 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include "../common/shift.hpp"
 
 class Player {
 private:
@@ -30,6 +31,8 @@ private:
     bool jet_active;
     int character;
     float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
+    Form form;
+    float form_timer;           // seconds left in the current form
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet
@@ -39,6 +42,8 @@ private:
     static constexpr float GRAVITY = 28.0f;
     static constexpr float JET_POWER = -32.0f;
     static constexpr float MAX_VELOCITY = 10.0f;
+
+    void updateForm(float dt);
 
 public:
     // The body is 1 tile wide and HEIGHT tiles tall, (x, y) is its top-left corner
@@ -56,6 +61,11 @@ public:
 
     int getScore() const { return score; }
     bool collectCoin(int tile_x, int tile_y);
+    bool takePickup(int tile_x, int tile_y);
+
+    Form getForm() const { return form; }
+    bool isInvincible() const { return form != Form::Normal; }
+    void startShift();
     void addScore(int points) { score += points; }
 
     bool canAttack() const { return attack_cooldown <= 0; }

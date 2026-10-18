@@ -71,6 +71,8 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
     window.setView(ui_view);
     renderEffects();
     renderTitanWarnings(titans);
+    if (players.count(me))
+        renderShiftGauge(players.at(me), me);
     renderHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     renderCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
@@ -109,7 +111,8 @@ void Renderer::updateSounds(GameState &state, Phase phase, const std::map<int, P
         audio.play(Audio::Sfx::Beep);
     }
 
-    audio.setJetpack(phase == Phase::Running && alive && mine != players.end() && mine->second.jet_active);
+    bool flying = mine != players.end() && mine->second.form != Form::Shifting && mine->second.form != Form::Titan;
+    audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
 }
 
 // "ENTERING <district>", for a moment after the scenery changes

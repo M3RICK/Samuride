@@ -16,6 +16,7 @@
 #include <vector>
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
+#include "../common/shift.hpp"
 
 enum class Phase { Waiting, Countdown, Running, Over };
 
@@ -24,6 +25,7 @@ struct PlayerState {
     float y = 0;
     int score = 0;
     bool jet_active = false;
+    Form form = Form::Normal;
 };
 
 // Someone attacked in CYBERPSYCHO
@@ -71,7 +73,7 @@ public:
     void pushShot(ShotEvent shot);
     void setTitans(std::vector<TitanState> list);
     void setCountdown(int value);
-    void updatePlayer(int player_number, float x, float y, int score, bool jet_active);
+    void updatePlayer(int player_number, const PlayerState &player);
     void handleCollision(char type, int player, int x, int y);
     void setWinner(int player_number);
     void pushMapData(std::vector<uint8_t> data);

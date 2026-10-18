@@ -9,6 +9,7 @@
 #include "debug.hpp"
 #include "protocol.hpp"
 #include "cyberpsycho.hpp"
+#include "shift.hpp"
 #include <fstream>
 
 Map::Map() : width(0), height(0)
@@ -41,7 +42,7 @@ bool Map::loadFromFile(const std::string& filename)
         }
 
         for (char c : row) {
-            if (c != '_' && c != 'c' && c != 'e' && c != DRONE_TILE)
+            if (c != '_' && c != 'c' && c != 'e' && c != DRONE_TILE && c != SHIFT_TILE)
                 return false;
         }
     }

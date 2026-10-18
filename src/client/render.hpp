@@ -90,6 +90,9 @@ private:
     struct PlayerAnim {
         bool on_ground = true;
         sf::Clock air_clock;
+        Form form = Form::Normal;
+        sf::Clock form_clock;   // time in the current form
+        float smoke_x = 0;      // where the titan stood when it ended, in tiles
     };
 
     struct AnimationFrame {
@@ -124,6 +127,8 @@ private:
 
     // One per TitanType, and how many were on screen last frame (a new one stomps in)
     std::vector<Character> titan_sprites;
+    Character shift_sprite;     // Eren's transformation
+    sf::Texture titan_face;     // on the power-up orb
     size_t titans_on_screen;
 
     Audio audio;
@@ -324,6 +329,16 @@ private:
     void drawTitan(const TitanState &titan, float time);
     void renderTitanWarnings(const std::vector<TitanState> &titans);
     void updateTitanStomps(const std::vector<TitanState> &titans);
+
+    //===========================================================================
+    // render_shift.cpp: the Attack Titan power-up
+    //===========================================================================
+    void renderShiftOrb(int x, int y, float time);
+    void updateForm(int player_num, const PlayerState &player, bool is_me);
+    void drawShift(int player_num, const PlayerState &player, bool is_me);
+    void drawSteamPuff(int player_num);
+    void drawShiftFrame(const Animation &anim, int frame, float center_x, uint8_t alpha);
+    void renderShiftGauge(const PlayerState &player, int me);
 
 public:
     Renderer();

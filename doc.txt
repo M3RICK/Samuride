@@ -126,7 +126,8 @@ Player Number (1 byte): The player's identifier
 X Position (4 bytes): in hundredths of a tile, also the distance run
 Y Position (2 bytes): in hundredths of a tile, top of the player's 2-tile-tall body, 0 is the top row
 Score (2 bytes)
-Jet (1 byte) 1 if jetpack is active, 0 if inactive
+Flags (1 byte): bit 0 jetpack active, bits 1-2 form:
+    0 normal, 1 shifting (standing still in the smoke), 2 Attack Titan (invincible), 3 emerging (invincible)
 
 The payload contains a sequence of these 10-byte player records, one for each player in the game.
 
@@ -141,7 +142,8 @@ Collision Type (1 byte): Character representing the collision type:
 'c' for coin, 'e' for electric hazard (zapper or drone contact),
 'd' for a drone destroyed in CYBERPSYCHO (the player gets 5 eddies),
 't' when a titan runs the player down (death),
-'k' when Mikasa cuts a titan down in CYBERPSYCHO (the player gets 20 eddies)
+'k' when a titan is taken down (Mikasa's blade or the Attack Titan, the player gets 20 eddies),
+'p' when a player grabs the Attack Titan orb (shifting starts)
 Player Number (1 byte): The player who hit it
 X Position (4 bytes): tile column
 Y Position (2 bytes): tile row

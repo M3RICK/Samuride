@@ -190,6 +190,14 @@ private:
 
     void sendTitans();
 
+    //===========================================================================
+    // Attack Titan power-up (shift.cpp)
+    //===========================================================================
+
+    void placeShiftOrb(std::vector<std::string> &rows);
+
+    void titanSmash(Player &player);
+
 public:
     Server(int port, const std::string& map_path, bool solo, bool debug_mode);
 

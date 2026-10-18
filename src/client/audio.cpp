@@ -173,6 +173,9 @@ void Audio::synthesize()
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // Attack Titan: a growl rising out of the smoke, then the steam burst when it ends
+    buffers[Sfx::Roar] = toBuffer(mix(tone(Wave::Saw, 80, 140, 1.2f, 0.3f), burst(1.2f, 0.2f, 0.08f)));
+    buffers[Sfx::Steam] = toBuffer(burst(0.7f, 0.4f, 0.5f));
     buffers[Sfx::Stomp] = toBuffer(mix(tone(Wave::Sine, 70, 40, 0.35f, 0.5f), burst(0.2f, 0.25f, 0.05f)));
     buffers[Sfx::Explosion] = toBuffer(mix(burst(0.6f, 0.45f, 0.08f), tone(Wave::Saw, 120, 40, 0.5f, 0.2f)));
 

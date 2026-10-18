@@ -240,11 +240,13 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
     for (size_t pos = 0; pos + 10 <= payload.size(); pos += 10) {
         const uint8_t *p = payload.data() + pos;
 
-        game_state.updatePlayer(p[0],
+        // Last byte: bit 0 jetpack, bits 1-2 form
+        game_state.updatePlayer(p[0], {
             Protocol::readU32(p + 1) / POSITION_SCALE,
             Protocol::readU16(p + 5) / POSITION_SCALE,
             Protocol::readU16(p + 7),
-            p[9] != 0);
+            (p[9] & 1) != 0,
+            static_cast<Form>((p[9] >> 1) & 3)});
     }
 }
 
