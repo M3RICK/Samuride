@@ -88,6 +88,18 @@ static void configure(int fd)
 #endif
 }
 
+// The end of every socket setup: configured if it worked, closed if it didn't
+static int finish(int fd, bool ok)
+{
+    if (!ok) {
+        if (fd >= 0)
+            Socket::close(fd);
+        return -1;
+    }
+    configure(fd);
+    return fd;
+}
+
 int Socket::listen(int port, bool loopback_only)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -102,21 +114,15 @@ int Socket::listen(int port, bool loopback_only)
     address.sin_port = htons(port);
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char *>(&reuse), sizeof(reuse));
 
-    if (bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) != 0 || ::listen(fd, 5) != 0) {
-        close(fd);
-        return -1;
-    }
-    configure(fd);
-    return fd;
+    bool ok = bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0 && ::listen(fd, 5) == 0;
+    return finish(fd, ok);
 }
 
 int Socket::accept(int listener)
 {
     int fd = ::accept(listener, nullptr, nullptr);
 
-    if (fd >= 0)
-        configure(fd);
-    return fd;
+    return finish(fd, fd >= 0);
 }
 
 int Socket::connect(const std::string &host, int port)
@@ -132,14 +138,7 @@ int Socket::connect(const std::string &host, int port)
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     bool ok = fd >= 0 && ::connect(fd, result->ai_addr, result->ai_addrlen) == 0;
     freeaddrinfo(result);
-
-    if (!ok) {
-        if (fd >= 0)
-            close(fd);
-        return -1;
-    }
-    configure(fd);
-    return fd;
+    return finish(fd, ok);
 }
 
 bool Socket::poll(std::vector<PollEntry> &entries, int timeout_ms)

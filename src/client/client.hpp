@@ -76,7 +76,6 @@ public:
 
     void sendPlayerInput(bool jet_activated);
     void sendAttack();
-
 };
 
 #endif
