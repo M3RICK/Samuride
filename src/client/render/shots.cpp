@@ -27,12 +27,12 @@ void Shots::handle(GameState &state)
             case Weapon::Rockets:
                 audio.play(Audio::Sfx::Rocket);
                 particles.emit(muzzle, 8, NEON_PINK, 4, 0.3f, 0);
-                trails.push_back({shot.player, shot.weapon, sf::Clock()});
+                trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
                 break;
             default:
                 audio.play(Audio::Sfx::Gun);
                 particles.emit(muzzle, 5, NEON_YELLOW, 3, 0.15f, 0);
-                trails.push_back({shot.player, shot.weapon, sf::Clock()});
+                trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
                 break;
         }
     }
@@ -41,10 +41,10 @@ void Shots::handle(GameState &state)
 sf::Vector2f Shots::positionOf(const Trail &trail) const
 {
     auto shooter = run.display_positions.find(trail.player);
-    sf::Vector2f origin = shooter != run.display_positions.end() ? shooter->second : sf::Vector2f();
+    float shooter_x = shooter != run.display_positions.end() ? shooter->second.x : 0;
     float travelled = statsOf(trail.weapon).speed * trail.age.getElapsedTime().asSeconds();
 
-    return origin + sf::Vector2f(0.9f + travelled, 1.0f);
+    return {shooter_x + 0.9f + travelled, trail.y};
 }
 
 // A shot ends out of range or on the first live drone, like on the server

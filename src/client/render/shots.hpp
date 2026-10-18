@@ -1,6 +1,7 @@
 // CYBERPSYCHO attacks: muzzle flashes, slashes and the projectiles in flight.
-// Projectiles are drawn from the shooter's position and their age: the server moves them
-// at run speed + weapon speed, the shooter at run speed, so the gap only depends on the weapon.
+// Projectiles keep the height they were fired at, and are drawn ahead of the shooter by their age:
+// the server moves them at run speed + weapon speed, the shooter at run speed, so the gap only
+// depends on the weapon.
 
 #ifndef SHOTS_HPP
     #define SHOTS_HPP
@@ -20,6 +21,7 @@ private:
     struct Trail {
         int player;
         Weapon weapon;
+        float y;        // in tiles, like on the server
         sf::Clock age;
     };
 
