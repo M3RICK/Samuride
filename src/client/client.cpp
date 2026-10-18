@@ -11,10 +11,21 @@
 #include "inputs.hpp"
 #include "../common/debug.hpp"
 
-Client::Client(const std::string& server_ip, int server_port, bool debug_mode)
-    : client_fd(-1), server_ip(server_ip), server_port(server_port), debug_mode(debug_mode),
-      game_started(false), game_over(false), connected(false), my_player_number(-1),
-      running(false), game_state(nullptr) {
+#include <iostream>
+#include <map>
+#include <cstring>
+#include <cerrno>
+#include <unistd.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <fcntl.h>
+
+Client::Client(const std::string& server_ip, int server_port, int character, int district,
+               bool debug_mode, GameState &game_state)
+    : client_fd(-1), server_ip(server_ip), server_port(server_port), character(character), district(district),
+      game_state(game_state), connected(false), running(false) {
     g_logger.setDebugMode(debug_mode);
 }
 
@@ -27,84 +38,86 @@ Client::~Client()
     }
 }
 
+// Retries for a couple of seconds: a server we just launched may not be listening yet
 bool Client::initialize()
 {
-    client_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_fd < 0) {
-        return false;
+    for (int attempt = 0; attempt < 40; attempt++) {
+        if (connectToServer())
+            return true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    return connectToServer();
+    return false;
 }
 
 bool Client::connectToServer()
 {
-    struct sockaddr_in server_addr = setupServerAddress();
+    addrinfo hints = {};
+    addrinfo *result = nullptr;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
 
-    if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+    if (getaddrinfo(server_ip.c_str(), std::to_string(server_port).c_str(), &hints, &result) != 0)
+        return false;
+
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    bool ok = client_fd >= 0 && connect(client_fd, result->ai_addr, result->ai_addrlen) == 0;
+    freeaddrinfo(result);
+
+    if (!ok) {
+        if (client_fd >= 0)
+            close(client_fd);
+        client_fd = -1;
         return false;
     }
 
     DEBUG_LOG("Connected to server: " + server_ip + ":" + std::to_string(server_port));
 
-    setSocketNonBlocking();
-    sendConnectMessage();
-
+    fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL, 0) | O_NONBLOCK);
     connected = true;
+    sendConnectMessage();
     return true;
-}
-
-struct sockaddr_in Client::setupServerAddress()
-{
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(server_port);
-
-    if (inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address: " << server_ip << std::endl;
-    }
-    return server_addr;
-}
-
-void Client::setSocketNonBlocking()
-{
-    int flags = fcntl(client_fd, F_GETFL, 0);
-
-    fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
 
 void Client::sendConnectMessage()
 {
-    std::vector<uint8_t> payload;
-    std::vector<uint8_t> packet = Protocol::createPacket(MSG_CONNECT, payload);
+    std::vector<uint8_t> payload = { static_cast<uint8_t>(character) };
 
-    sendToServer(packet);
+    // No district when joining: the host's applies
+    if (district >= 0)
+        payload.push_back(district);
+    sendToServer(Protocol::createPacket(MSG_CONNECT, payload));
 }
 
-void Client::run(InputManager &input, Renderer &renderer)
+Client::RunResult Client::run(InputManager &input, Renderer &renderer)
 {
+    using clock = std::chrono::steady_clock;
+    Phase last_phase = Phase::Waiting;
+    auto phase_since = clock::now();
+
     running = true;
     network_thread = std::thread(&Client::networkLoop, this);
 
-    while (running) {
-        if (game_started.load(std::memory_order_acquire)) {
-            DEBUG_LOG("Game is started in main loop: " + std::to_string(game_started.load()));
-        }
-
+    while (true) {
         input.processInputs();
-        renderer.render();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (input.closeRequested() || input.backRequested())
+            break;
 
-        if (game_over) {
-            if (input.shouldExit()) {
-                running = false;
-            }
+        Phase phase = game_state.getPhase();
+        if (phase != last_phase) {
+            last_phase = phase;
+            phase_since = clock::now();
         }
+
+        // Short grace period so a jetpack still held at death doesn't skip the results
+        bool can_rematch = phase == Phase::Over && clock::now() - phase_since > std::chrono::milliseconds(1500);
+        if (input.confirmPressed() && can_rematch && game_state.requestRematch())
+            sendToServer(Protocol::createPacket(MSG_READY, {}));
+
+        renderer.render(game_state, connected);
     }
 
-    if (network_thread.joinable()) {
-        network_thread.join();
-    }
+    stop();
+    return input.closeRequested() ? RunResult::Quit : RunResult::Menu;
 }
 
 void Client::stop()
@@ -117,20 +130,15 @@ void Client::stop()
 
 void Client::networkLoop()
 {
-    int cycles = 0;
+    pollfd pfd = {client_fd, POLLIN, 0};
 
-    while (running) {
+    while (running && connected) {
         processOutgoingMessages();
-        readIncomingData();
-        cycles++;
 
-        if (cycles > 100 && my_player_number >= 0 && !game_started)
-            game_started = true;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (poll(&pfd, 1, 5) > 0)
+            readIncomingData();
     }
 }
-
 
 void Client::processOutgoingMessages()
 {
@@ -138,7 +146,7 @@ void Client::processOutgoingMessages()
 
     while (!message_queue.empty()) {
         const auto& message = message_queue.front();
-        send(client_fd, message.data(), message.size(), 0);
+        send(client_fd, message.data(), message.size(), MSG_NOSIGNAL);
 
         DEBUG_PACKET_SEND(reinterpret_cast<const char*>(message.data()), message.size());
 
@@ -148,158 +156,101 @@ void Client::processOutgoingMessages()
 
 void Client::readIncomingData()
 {
-    memset(recv_buffer, 0, BUFFER_SIZE);
     ssize_t bytes_read = recv(client_fd, recv_buffer, BUFFER_SIZE, 0);
 
-    if (bytes_read > 0) {
-        DEBUG_PACKET_RECV(recv_buffer, bytes_read);
+    if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        return;
 
-        MessageHeader header;
-
-        if (Protocol::parseHeader(recv_buffer, bytes_read, header)) {
-            if (header.type == MSG_GAME_START) {
-                handleGameStart();
-                return;
-            }
-            processMessage(header, recv_buffer + sizeof(MessageHeader),
-                          bytes_read - sizeof(MessageHeader));
-        }
-    } else if (bytes_read == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
+    if (bytes_read <= 0) {
+        DEBUG_LOG("Lost connection to server");
         connected = false;
-        running = false;
-    }
-}
-
-
-void Client::processMessage(const MessageHeader &header, const char *data, size_t data_size)
-{
-    uint32_t payload_size = Protocol::getPayloadSize(header);
-
-    if (header.type == MSG_GAME_START) {
-        DEBUG_LOG("*** RECEIVED GAME START MESSAGE, SETTING GAME STARTED FLAG ***");
-        game_started = true;
         return;
     }
 
+    DEBUG_PACKET_RECV(reinterpret_cast<const char *>(recv_buffer), bytes_read);
+    stream.insert(stream.end(), recv_buffer, recv_buffer + bytes_read);
+
+    MessageHeader header;
+    std::vector<uint8_t> payload;
+
+    while (Protocol::extractPacket(stream, header, payload))
+        processMessage(header, payload);
+}
+
+void Client::processMessage(const MessageHeader &header, const std::vector<uint8_t> &payload)
+{
     switch (header.type) {
         case MSG_MAP_DATA:
-            handleMapData(data, payload_size);
+            game_state.pushMapData(payload);
             break;
-        case MSG_GAME_STATE:
-            handleGameState(data, payload_size);
-            break;
-        case MSG_COLLISION:
-            handleCollision(data, payload_size);
-            break;
-        case MSG_GAME_END:
-            handleGameEnd(data, payload_size);
+        case MSG_GAME_START:
+            handleGameStart(payload);
             break;
         case MSG_COUNTDOWN:
-            if (payload_size >= 1) {
-                int count = data[0];
-                if (count > 0) {
-                    DEBUG_LOG("Game starting in " + std::to_string(count) + "...");
-                } else {
-                    DEBUG_LOG("BURN THE CITY!");
-                }
-            }
+            if (!payload.empty())
+                game_state.setCountdown(payload[0]);
+            break;
+        case MSG_GAME_STATE:
+            handleGameState(payload);
+            break;
+        case MSG_COLLISION:
+            handleCollision(payload);
+            break;
+        case MSG_GAME_END:
+            handleGameEnd(payload);
             break;
         default:
             break;
     }
 }
 
-void Client::handleMapData(const char *data, size_t size)
+// [my number][player count]([number][character])...[district]
+void Client::handleGameStart(const std::vector<uint8_t> &payload)
 {
-    DEBUG_LOG("Received map data");
-    std::vector<uint8_t> map_data(data, data + size);
+    std::map<int, int> roster;
 
-    if (game_map.loadFromData(map_data)) {
-        DEBUG_LOG("Map loaded successfully: " + std::to_string(game_map.getWidth()) +
-                  "x" + std::to_string(game_map.getHeight()));
-    } else {
-        DEBUG_LOG("Failed to load map data");
-    }
-}
-
-void Client::handleGameStart()
-{
-    DEBUG_LOG("Game start received, beginning countdown");
-
-    std::thread([this]() {
-        for (int i = 3; i > 0; i--) {
-            DEBUG_LOG("Game starting in " + std::to_string(i) + "...");
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-        DEBUG_LOG("Game started!");
-        game_started = true;
-    }).detach();
-}
-
-void Client::handleGameState(const char *data, size_t size)
-{
-    if (!game_state)
+    if (payload.size() < 2)
         return;
 
-    std::lock_guard<std::mutex> lock(data_mutex);
+    size_t count = payload[1];
+    for (size_t i = 0; i < count && 3 + 2 * i < payload.size(); i++)
+        roster[payload[2 + 2 * i]] = payload[3 + 2 * i];
 
-    size_t pos = 0;
+    size_t district_pos = 2 + 2 * count;
+    game_state.startCountdown(payload[0], roster, district_pos < payload.size() ? payload[district_pos] : 0);
+}
 
-    while (pos + 8 <= size) {
-        int player_number = data[pos++];
-        uint16_t x = (data[pos] << 8) | data[pos+1]; pos += 2;
-        uint16_t y = (data[pos] << 8) | data[pos+1]; pos += 2;
-        uint16_t score = (data[pos] << 8) | data[pos+1]; pos += 2;
-        bool jet_active = data[pos++] != 0;
+void Client::handleGameState(const std::vector<uint8_t> &payload)
+{
+    for (size_t pos = 0; pos + 10 <= payload.size(); pos += 10) {
+        const uint8_t *p = payload.data() + pos;
 
-        if (my_player_number == -1) {
-            my_player_number = player_number;
-            DEBUG_LOG("Setting my player number to: " + std::to_string(my_player_number));
-        }
-
-        game_state->updatePlayer(player_number, x, y, score, jet_active);
-
-        std::string isMe = (player_number == my_player_number) ? " (ME)" : "";
-        DEBUG_LOG("Updated player " + std::to_string(player_number) + isMe +
-                  ": pos=(" + std::to_string(x) + "," + std::to_string(y) +
-                  "), jet=" + (jet_active ? "ON" : "OFF"));
+        game_state.updatePlayer(p[0],
+            Protocol::readU32(p + 1) / POSITION_SCALE,
+            Protocol::readU16(p + 5) / POSITION_SCALE,
+            Protocol::readU16(p + 7),
+            p[9] != 0);
     }
 }
 
-void Client::handleCollision(const char *data, size_t size)
+void Client::handleCollision(const std::vector<uint8_t> &payload)
 {
-    if (size < 5)
+    if (payload.size() < 8)
         return;
 
-    char collision_type = data[0];
-    uint16_t x = (data[1] << 8) | data[2];
-    uint16_t y = (data[3] << 8) | data[4];
-
-    DEBUG_LOG("Collision: type=" + std::string(1, collision_type) +
-              ", position=(" + std::to_string(x) + "," + std::to_string(y) + ")");
-
-    if (game_state)
-        game_state->handleCollision(collision_type, x, y);
+    game_state.handleCollision(payload[0], payload[1],
+        Protocol::readU32(payload.data() + 2), Protocol::readU16(payload.data() + 6));
 }
 
-void Client::handleGameEnd(const char* data, size_t size)
+void Client::handleGameEnd(const std::vector<uint8_t> &payload)
 {
-    game_over = true;
+    if (payload.empty())
+        return;
 
-    if (size >= 1) {
+    int winner = payload[0] == 0xFF ? -1 : payload[0];
 
-        int winner = static_cast<uint8_t>(data[0]);
-
-        if (winner != 0xFF) {
-            DEBUG_LOG("Game over. Player " + std::to_string(winner) + " wins!");
-            if (game_state)
-                game_state->setWinner(winner);
-        } else {
-            DEBUG_LOG("Game over. No winner.");
-            if (game_state)
-                game_state->setWinner(-1);
-        }
-    }
+    DEBUG_LOG(winner >= 0 ? "Game over. Player " + std::to_string(winner) + " wins!" : "Game over. No winner.");
+    game_state.setWinner(winner);
 }
 
 void Client::sendToServer(const std::vector<uint8_t>& data)
@@ -314,12 +265,7 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
 
 void Client::sendPlayerInput(bool jet_activated)
 {
-    if (!connected || !game_started || game_over)
-        return;
-
     std::vector<uint8_t> payload = { static_cast<uint8_t>(jet_activated ? 1 : 0) };
-    std::vector<uint8_t> packet = Protocol::createPacket(MSG_PLAYER_INPUT, payload);
 
-    DEBUG_LOG("Sending input: jet " + std::string(jet_activated ? "ON" : "OFF"));
-    sendToServer(packet);
+    sendToServer(Protocol::createPacket(MSG_PLAYER_INPUT, payload));
 }

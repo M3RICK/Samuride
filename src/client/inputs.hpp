@@ -9,7 +9,6 @@
     #define INPUTS_HPP
 
 #include <SFML/Window.hpp>
-#include <atomic>
 
 class Client;
 
@@ -17,24 +16,20 @@ class InputManager {
 private:
     Client *client;
     sf::Window *window;
-    std::atomic<bool> jet_active;
-    std::atomic<bool> exit_requested;
+    bool jet_active;
+
+    // Set for the frame they happened in
+    bool close_requested;
+    bool back_requested;
+    bool confirm_pressed;
 
 public:
-
-    InputManager(Client* client, sf::Window *window);
+    InputManager(Client *client, sf::Window *window);
     void processInputs();
 
-
-    bool isJetActive() const
-    {
-        return jet_active;
-    }
-
-    bool shouldExit() const
-    {
-        return exit_requested;
-    }
+    bool closeRequested() const { return close_requested; }
+    bool backRequested() const { return back_requested; }
+    bool confirmPressed() const { return confirm_pressed; }
 };
 
 #endif
