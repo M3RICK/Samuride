@@ -1,122 +1,91 @@
-Samuride - Multiplayer Jetpack Game
-<p align="center"> <img src="https://github.com/user-attachments/assets/cbadfc9f-8b40-41c6-b83a-08a557ad397a" alt="Samuride Game" width="600px"> </p> <p align="center"> <em>A multiplayer Jetpack Joyride-inspired game with network play.</em> </p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cbadfc9f-8b40-41c6-b83a-08a557ad397a" alt="Samuride" width="500px">
+</p>
 
-##
-Multiplayer gameplay — Race against your friends in real-time
+<h3 align="center"><em>Wake the fuck up, Samurai. We have a city to burn.</em></h3>
 
-Client-server architecture with efficient binary TCP protocol
-Coin collection and competitive scoring
-Hazard avoidance — Don't get electrocuted!
-Game audio and visual effects
-Real-time physics with jetpack mechanics
+<p align="center">
+  Endless online Jetpack Joyride, rewired with a Cyberpunk 2077 soul.<br>
+  C++20 · SFML 3 · custom binary TCP protocol · authoritative 60 Hz server
+</p>
 
-# 🚧 Development Status
-Note: This project is currently in development and not fully completed.
+---
 
-Working on:
+<p align="center"><img src="docs/gameplay.png" alt="Gameplay" width="800px"></p>
 
-- Animations refinement
-- Visual polish
-- Additional sound effects
-- UI improvements
+## The run
 
-# Building the Game
-## Prerequisites
-+ C++20 compiler (g++ recommended)
-+ SFML library (graphics, window, audio)
+You sprint forward on your own, the jetpack is the only thing you control. The corridor never ends: it is generated on the fly, faster and nastier the further you go.
 
-# Compilation
+- **Solo**: run as far as you can. Your best distance is saved.
+- **Versus**: two runners, one corridor. First one to get zapped loses.
+- **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
+- **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.
+- **Four districts**: The Corridor, Worlds Collide (Night City meets Zaun under the Walls: a parallax journey from sunset to night that takes minutes to loop), Neon Citadel (that journey's panorama from the first metre), or Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
+- **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.
+- After a game, hit `Space` for an instant rematch.
 
-## Build both server and client
-make
+| Key | Action |
+| --- | --- |
+| `Space` (hold) | Jetpack |
+| `Esc` | Back to menu |
+| Arrows / mouse + `Enter` | Menu |
 
-### Build only the server
-make server
+<p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>
+<p align="center"><img src="docs/characters.png" alt="Character select" width="600px"></p>
+<p align="center"><img src="docs/districts.png" alt="District select" width="600px"></p>
 
-## Build only the client
-make client
+## Build
 
-## Clean object files
-make clean
+Linux, a C++20 compiler and **SFML 3**.
 
-## Clean everything (objects and executables)
-make fclean
+```sh
+sudo pacman -S sfml      # Arch / CachyOS
+make                     # jetpack_server + jetpack_client
+make tests               # protocol, map streaming & generator self-checks
+```
 
-## Rebuild everything
-make re
+SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
 
-# 🎮 Running the Game
+## Play
 
-## Server
-./jetpack_server -p <port> -m <map_file> [-d]
+```sh
+./jetpack_client
+```
 
-Options:
+That's it: **Solo** and **Host** start a server in the background for you. To play with a friend on your network, one picks **Host a run**, the other **Join a run** and types the address shown on the host's screen.
 
--p <port> — Port to listen on
--m <map_file> — Path to map file
--d — Enable debug mode (optional)
+A dedicated server and direct connection are available too:
 
-Example:
+```sh
+./jetpack_server -p 4242 [-m maps/small_good.txt] [-s] [-d]
+./jetpack_client -h 127.0.0.1 -p 4242 [-c 2] [-d]
+```
 
-./jetpack_server -p 4242 -m maps/small_good.txt -d
+`-c` picks the character (0 Johnny, 1 David, 2 Jinx, 3 Mikasa), `-m` starts the run on a hand-made map before going procedural, `-s` is solo mode, `-d` prints debug logs (packets, inputs).
 
-## Client
-./jetpack_client -h <ip> -p <port> [-d]
+## Under the hood
 
-Options:
+- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send "jetpack on/off".
+- **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
+- **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
+- **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
+- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`doc.txt`](doc.txt).
 
--h <ip> — Server IP address
+### Hand-made maps
 
--p <port> — Server port
+Plain text, one character per tile, all lines the same length:
 
--d — Enable debug mode (optional)
+| Char | Tile |
+| --- | --- |
+| `_` | empty |
+| `c` | eddie (coin) |
+| `e` | zapper |
 
-Example:
-./jetpack_client -h 127.0.0.1 -p 4242 -d
+## Crew
 
-# Game Controls
-Press Space — Activate jetpack
+Tony, Thierry, Aymeric — Epitech, B-NWP jetpack project.
 
-Press Escape — Exit game
+Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
 
-# Protocol Information
-Samuride uses a custom binary protocol for client-server communication:
-
-Standard message format: 4-byte header (1 byte message type + 3 bytes payload size)
-
-## Message types:
-
-Connection establishment
-
-Map data transmission
-
-Game state updates
-
-Player input
-
-Collision notifications
-
-Game end conditions
-For complete protocol details, see the doc.txt file.
-
-# Future Improvements
-Complete and polish all character animations
-
-Add more varied map elements and obstacles
-
-Implement power-ups and special abilities
-
-Add more sound effects and music options
-
-Improve the UI and add more in-game feedback
-
-Implement a proper lobby system for waiting players
-
-Add player customization options
-
-# 📝License
-This project is licensed under the MIT License.
-This is a fan-made project inspired by Cyberpunk 2077. All related trademarks, logos, and assets are the property of CD Projekt Red. This project is non-commercial and has no affiliation with CD Projekt Red.
-![image](https://github.com/user-attachments/assets/74e20a88-ae60-4169-9d25-c5a5c66f381d)
-
-<p align="center"> <sub>Wake the fuck up, Samurai. We've got a city to burn.</sub> </p>
+Non-commercial fan project. Johnny Silverhand and David Martinez belong to CD Projekt, Jinx to Riot Games, Mikasa Ackerman to Hajime Isayama / Kodansha. Not affiliated with any of them.
