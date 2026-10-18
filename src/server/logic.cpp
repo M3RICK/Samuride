@@ -6,212 +6,229 @@
  */
 
 #include "server.hpp"
-#include "player.hpp"
+#include "generator.hpp"
 #include "../common/debug.hpp"
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+
+// A fresh run: the map file if there is one (the run carries on procedurally past its end),
+// otherwise a short empty runway
+bool Server::resetMap()
+{
+    game_map.clear();
+    chunks_generated = 0;
+
+    if (!map_path.empty()) {
+        if (!game_map.loadFromFile(map_path)) {
+            std::cerr << "Invalid map file: " << map_path << std::endl;
+            return false;
+        }
+    } else {
+        game_map.appendChunk(std::vector<std::string>(MAP_HEIGHT, std::string(SAFE_START, '_')));
+    }
+    extendMap(0);
+    return true;
+}
+
+void Server::extendMap(float leader_x)
+{
+    while (game_map.getWidth() < leader_x + LOOKAHEAD) {
+        size_t from = game_map.getWidth();
+        float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
+
+        game_map.appendChunk(generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty));
+
+        // Before the run, clients get the whole map in one go instead
+        if (phase == Phase::Running)
+            broadcastToAllClients(Protocol::createPacket(MSG_MAP_DATA, game_map.serialize(from)));
+    }
+}
+
+void Server::updateGameState()
+{
+    switch (phase) {
+        case Phase::Waiting:
+            if (players.size() == required_players)
+                startGame();
+            break;
+        case Phase::Countdown:
+            updateCountdown();
+            break;
+        case Phase::Running:
+            updatePlayers();
+            break;
+        case Phase::Over:
+            // Lobby reopens once everyone has jacked out
+            if (players.empty()) {
+                resetMap();
+                phase = Phase::Waiting;
+                std::cout << "Lobby open" << std::endl;
+            }
+            break;
+    }
+}
 
 void Server::startGame()
 {
-    if (players.size() < 2)
+    int player_num = 0;
+    std::vector<uint8_t> roster = { static_cast<uint8_t>(players.size()) };
+
+    for (auto &[client_fd, player] : players) {
+        player.reset(player_num, game_map.getHeight() - Player::HEIGHT);
+        roster.push_back(player_num++);
+        roster.push_back(player.getCharacter());
+    }
+
+    roster.push_back(district);
+
+    // Each client gets its own number first, then who plays which character, then the district
+    for (auto &[client_fd, player] : players) {
+        std::vector<uint8_t> payload = { static_cast<uint8_t>(player.getPlayerNumber()) };
+        payload.insert(payload.end(), roster.begin(), roster.end());
+        sendToClient(client_fd, Protocol::createPacket(MSG_GAME_START, payload));
+    }
+
+    phase = Phase::Countdown;
+    countdown = COUNTDOWN_SECONDS;
+    countdown_ticks = 0;
+    run_speed = START_SPEED;
+    ready_clients.clear();
+
+    std::cout << "Game starting with " << players.size() << " players" << std::endl;
+}
+
+// Rematch once everyone in the lobby asked for one
+void Server::handleReady(int client_fd)
+{
+    if (phase != Phase::Over)
         return;
 
-    DEBUG_LOG("Starting game countdown with " + std::to_string(players.size()) + " players");
+    ready_clients.insert(client_fd);
+    if (players.size() < required_players || ready_clients.size() < players.size())
+        return;
 
-    // Ca marche qu a moitie
-    for (int count = 3; count >= 0; count--) {
-
-        std::vector<uint8_t> payload = { static_cast<uint8_t>(count) };
-        std::vector<uint8_t> packet = Protocol::createPacket(MSG_COUNTDOWN, payload);
-
-        broadcastToAllClients(packet);
-
-        if (count > 0)
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    std::vector<uint8_t> startPayload;
-    std::vector<uint8_t> startPacket = Protocol::createPacket(MSG_GAME_START, startPayload);
-
-    broadcastToAllClients(startPacket);
-
-    game_started = true;
-
-    initializePlayerPositions();
-
-    DEBUG_LOG("Game started with " + std::to_string(players.size()) + " players");
+    resetMap();
+    for (auto &pair : players)
+        sendMapToClient(pair.first);
+    startGame();
 }
 
-void Server::initializePlayerPositions()
+void Server::updateCountdown()
 {
-    int player_num = 0;
-
-    for (auto &pair : players) {
-        Player *player = pair.second;
-        player->setX(0);
-        player->setY(game_map.getHeight() - 3);
-        player->setPlayerNumber(player_num++);
+    if (countdown_ticks > 0) {
+        countdown_ticks--;
+        return;
     }
- }
 
-void Server::checkGameState()
-{
-    checkGameOverConditions();
-    updateAndSendGameState();
+    broadcastToAllClients(Protocol::createPacket(MSG_COUNTDOWN, { static_cast<uint8_t>(countdown) }));
+    sendGameState();
+
+    if (countdown == 0) {
+        phase = Phase::Running;
+        return;
+    }
+    countdown--;
+    countdown_ticks = TICK_RATE - 1;
 }
 
-void Server::checkGameOverConditions()
+// The run never ends on its own: it stops at the first death
+void Server::updatePlayers()
 {
-    for (auto &pair : players) {
+    float max_y = game_map.getHeight() - Player::HEIGHT;
+    float leader_x = 0;
+    std::vector<int> survivors;
 
-        Player *player = pair.second;
+    run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
 
-        player->moveForward();
-        player->applyPhysics();
+    for (auto &[client_fd, player] : players) {
+        player.update(TICK_DT, run_speed, max_y);
+        leader_x = std::max(leader_x, player.getX());
 
-        constrainPlayerToMap(player);
-        checkPlayerCollisions(pair.first, player);
-
-        if (player->getX() >= game_map.getWidth()) {
-            endGame(pair.first); //deter qui win
-            return;
-        }
+        if (!checkPlayerCollisions(player))
+            survivors.push_back(player.getPlayerNumber());
     }
+
+    extendMap(leader_x);
+    sendGameState();
+
+    if (survivors.size() < players.size())
+        endGame(survivors.size() == 1 && !solo ? survivors[0] : -1);
 }
 
-void Server::constrainPlayerToMap(Player *player)
+// Samples the body from head to feet. Returns true when the player got zapped.
+bool Server::checkPlayerCollisions(Player &player)
 {
-    if (player->getY() < 0) {
-        player->setY(0);
-    } else if (player->getY() >= game_map.getHeight()) {
-        player->setY(game_map.getHeight() - 1);
-    }
-}
+    float px = player.getX() + 0.5f;
 
-bool Server::checkPlayerCollisions(int client_fd, Player *player)
-{
-    char tile = game_map.getTile(player->getX(), player->getY());
+    for (float dy : {0.3f, 1.0f, 1.7f}) {
+        float py = player.getY() + dy;
+        int tile_x = static_cast<int>(px);
+        int tile_y = static_cast<int>(py);
+        char tile = game_map.getTile(tile_x, tile_y);
 
-    if (tile == 'c') {
-        player->addScore(1);
-        notifyCollision(client_fd, 'c', player->getX(), player->getY());
-    } else if (tile == 'e') {
-        notifyCollision(client_fd, 'e', player->getX(), player->getY());
-        for (auto &other_pair : players) {
-            if (other_pair.first != client_fd) {
-                endGame(other_pair.first);
-                return true;
-            }
+        if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
+            notifyCollision('c', player, tile_x, tile_y);
+        } else if (tile == 'e' && std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
+            // Zappers only bite near their core, grazing the tile edge is fine
+            notifyCollision('e', player, tile_x, tile_y);
+            return true;
         }
     }
     return false;
 }
 
-void Server::updateAndSendGameState()
+void Server::sendGameState()
 {
     std::vector<uint8_t> state_data;
 
-    DEBUG_LOG("Updating game state for " + std::to_string(players.size()) + " players");
-
-    for (auto& pair : players) {
-        Player* player = pair.second;
-
-        DEBUG_LOG("Player " + std::to_string(player->getPlayerNumber()) +
-                  " state: pos=(" + std::to_string(player->getX()) + "," +
-                  std::to_string(player->getY()) + "), jet=" +
-                  (player->isJetActive() ? "ON" : "OFF"));
-
-        addPlayerStateToPacket(state_data, player);
+    for (const auto &[client_fd, player] : players) {
+        state_data.push_back(player.getPlayerNumber());
+        Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
+        Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
+        Protocol::pushU16(state_data, player.getScore());
+        state_data.push_back(player.isJetActive() ? 1 : 0);
     }
 
-    std::vector<uint8_t> state_packet = Protocol::createPacket(MSG_GAME_STATE, state_data);
-
-    broadcastToAllClients(state_packet);
-}
-
-void Server::addPlayerStateToPacket(std::vector<uint8_t> &data, Player *player)
-{
-    data.push_back(player->getPlayerNumber());
-
-    // X position 2 bytes
-    uint16_t x = player->getX();
-    data.push_back((x >> 8) & 0xFF);
-    data.push_back(x & 0xFF);
-
-    // Y position 2 bytes
-    uint16_t y = player->getY();
-    data.push_back((y >> 8) & 0xFF);
-    data.push_back(y & 0xFF);
-
-    // Score 2 bytes
-    uint16_t score = player->getScore();
-    data.push_back((score >> 8) & 0xFF);
-    data.push_back(score & 0xFF);
-
-    // Jetpack state 1 byte
-    data.push_back(player->isJetActive() ? 1 : 0);
+    broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));
 }
 
 void Server::handlePlayerInput(int client_fd, bool jet_activated)
 {
     auto it = players.find(client_fd);
 
-    if (it == players.end()) {
-        DEBUG_LOG("Unknown input, dont try cheatin: " + std::to_string(client_fd));
+    if (it == players.end())
         return;
-    }
 
-    Player *player = it->second;
-    int player_number = player->getPlayerNumber();
-
-    DEBUG_LOG("INPUT: client_fd=" + std::to_string(client_fd) +
-              ", player_number=" + std::to_string(player_number) +
-              ", jet=" + (jet_activated ? "ON" : "OFF"));
-
-    player->setJetActive(jet_activated);
-
-    for (const auto& p : players) {
-        DEBUG_LOG("PLAYER STATE: client_fd=" + std::to_string(p.first) +
-                  ", player_number=" + std::to_string(p.second->getPlayerNumber()) +
-                  ", jet=" + (p.second->isJetActive() ? "ON" : "OFF"));
-    }
+    it->second.setJetActive(jet_activated);
+    DEBUG_LOG("Player " + std::to_string(it->second.getPlayerNumber()) +
+              " jet " + (jet_activated ? "ON" : "OFF"));
 }
 
-void Server::notifyCollision(int client_fd, char collision_type, int x, int y)
+void Server::notifyCollision(char collision_type, const Player &player, int x, int y)
 {
     std::vector<uint8_t> collision_data;
 
     collision_data.push_back(collision_type);
+    collision_data.push_back(player.getPlayerNumber());
+    Protocol::pushU32(collision_data, x);
+    Protocol::pushU16(collision_data, y);
 
-    // Position 4 bytes total = x and y coordinates 2 + 2
-    uint16_t pos_x = x;
-    uint16_t pos_y = y;
-    collision_data.push_back((pos_x >> 8) & 0xFF);
-    collision_data.push_back(pos_x & 0xFF);
-    collision_data.push_back((pos_y >> 8) & 0xFF);
-    collision_data.push_back(pos_y & 0xFF);
-
-    // Create and send collision packet
-    std::vector<uint8_t> collision_packet = Protocol::createPacket(MSG_COLLISION, collision_data);
-    broadcastToAllClients(collision_packet);
+    broadcastToAllClients(Protocol::createPacket(MSG_COLLISION, collision_data));
 }
 
-void Server::endGame(int winner_fd)
+void Server::endGame(int winner_number)
 {
-    if (!game_started)
+    if (phase != Phase::Countdown && phase != Phase::Running)
         return;
 
-    std::vector<uint8_t> end_data;
+    phase = Phase::Over;
 
-    // identify winner or 0xFF for no winner
-    if (winner_fd >= 0 && players.find(winner_fd) != players.end()) {
-        end_data.push_back(players[winner_fd]->getPlayerNumber());
-    } else {
-        end_data.push_back(0xFF);
-    }
+    uint8_t winner = winner_number >= 0 ? winner_number : 0xFF;
+    broadcastToAllClients(Protocol::createPacket(MSG_GAME_END, { winner }));
 
-    std::vector<uint8_t> end_packet = Protocol::createPacket(MSG_GAME_END, end_data);
-    broadcastToAllClients(end_packet);
-
-    game_started = false;
-
-    DEBUG_LOG("ITS OVER, WINNER IS: " + (winner_fd >= 0 ? std::to_string(players[winner_fd]->getPlayerNumber()) : "No winner ? You both suck"));
+    if (winner_number >= 0)
+        std::cout << "Game over, player " << winner_number << " wins" << std::endl;
+    else
+        std::cout << "Game over, no winner" << std::endl;
 }
