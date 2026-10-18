@@ -107,7 +107,7 @@ A dedicated server and direct connection are available too:
 - **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
 - **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
 - **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
-- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`doc.txt`](doc.txt).
+- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ### Hand-made maps
 
