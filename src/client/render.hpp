@@ -20,6 +20,14 @@
 
 struct MenuState;
 
+// Uniform random float in [min, max]
+float randf(float min, float max);
+
+// Split by theme over four files:
+//   render.cpp        window, assets, frame lifecycle, text helpers
+//   render_menu.cpp   menu, character and district select, lobby
+//   render_world.cpp  backdrops, map tiles, players
+//   render_game.cpp   game screens, effects, particles, HUD
 class Renderer {
 private:
     struct ActiveEffect {
@@ -38,22 +46,11 @@ private:
         sf::Color color;
     };
 
-    sf::RenderWindow window;
-
-    // Game assets
-    sf::Texture waiting_screen_texture;
-    sf::Texture coin_texture;
-    sf::Texture electric_texture;
-    sf::Font font;
-    // The jetpack font has no punctuation: text that needs some falls back to this one
-    sf::Font fallback_font;
-    std::string missing_glyphs;
-
     // A district's look: one image cut into horizontal layers, each scrolling at its own speed.
     // A layer can also chain several pictures one after the other, to avoid looping too soon.
     struct Backdrop {
         struct Segment {
-            int texture;        // 0 is the main texture, then extra_textures[n - 1]
+            const sf::Texture *texture;
             sf::IntRect source;
         };
 
@@ -66,15 +63,37 @@ private:
 
         std::string name;
         std::string tagline;
-        sf::Texture texture;
-        std::vector<sf::Texture> extra_textures;
+        const sf::Texture *texture;     // main image: calibration and layers without segments
         // Calibration knobs: image height fractions landing on the top of the map and on the feet line
         float ceiling;
         float floor;
         sf::Color tint;
         std::vector<Layer> layers;
     };
+
+    struct PlayerAnim {
+        bool on_ground = true;
+        sf::Clock air_clock;
+    };
+
+    struct AnimationFrame {
+        const Animation *animation;
+        float time;
+    };
+
+    sf::RenderWindow window;
+
+    // Game assets
+    sf::Texture waiting_screen_texture;
+    sf::Texture coin_texture;
+    sf::Texture electric_texture;
+    sf::Font font;
+    // The jetpack font has no punctuation: text that needs some falls back to this one
+    sf::Font fallback_font;
+    std::string missing_glyphs;
+
     std::vector<Backdrop> backdrops;
+    std::map<std::string, sf::Texture> textures;   // shared between backdrops, loaded once
 
     // District banner ("ENTERING ..."), shown when the scenery changes
     int shown_backdrop;
@@ -101,10 +120,6 @@ private:
 
     std::vector<ActiveEffect> effects;
     std::vector<Particle> particles;
-    struct PlayerAnim {
-        bool on_ground = true;
-        sf::Clock air_clock;
-    };
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     float shake;
@@ -150,51 +165,91 @@ private:
     static constexpr sf::Color NEON_PINK{255, 40, 200};
     static constexpr sf::Color NEON_ORANGE{255, 140, 0};
     static constexpr sf::Color DIM_WHITE{200, 200, 200};
+    static constexpr sf::Color HINT_GREY{150, 150, 150};
 
     //===========================================================================
-    // Initialization Helpers
+    // render.cpp: window, assets, frame lifecycle, text helpers
     //===========================================================================
     void createWindow();
     void loadAssets();
-    void loadTexture(sf::Texture &texture, const std::string &path);
+    void loadBackdrops();
+    void loadCharacters();
+    void loadFonts();
     void loadAudio();
+    void loadTexture(sf::Texture &texture, const std::string &path);
+    const sf::Texture *sharedTexture(const std::string &path);
 
-    //===========================================================================
-    // Screens
-    //===========================================================================
     void beginFrame(bool in_game);
     void endFrame();
     void onPhaseChange(GameState &state, Phase phase);
-    void renderPoster();
-    void renderCharacterSelect(const MenuState &menu);
-    void renderDistrictSelect(const MenuState &menu);
-    void renderWaitingScreen();
-    void renderGameScreen(GameState &state, Phase phase, float dt);
-    void renderCountdown(Phase phase, int countdown);
-    void renderGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
-    void renderConnectionLost();
+    void resetRun();
+    void recordSoloDistance(GameState &state);
+
+    bool blink() const;
+    sf::Text makeText(const std::string &content, unsigned int size, sf::Color color,
+                      sf::Vector2f pos, sf::Vector2f anchor = {0.5f, 0.5f});
+    void drawGlitchText(const std::string &content, unsigned int size, sf::Color color, sf::Vector2f pos);
+    void drawOverlay(uint8_t alpha);
+    void drawCard(sf::FloatRect box, bool selected);
+    std::string playerLabel(int player_num, int me) const;
+    const Character &characterOf(int player_num) const;
 
     //===========================================================================
-    // World Rendering
+    // render_menu.cpp: menu, character and district select, lobby
+    //===========================================================================
+    void renderMenuBackground(const MenuState &menu);
+    void renderTagline();
+    void renderMainMenu(const MenuState &menu);
+    void renderMenuItem(int index, bool selected);
+    void renderJoinField(const MenuState &menu);
+    void renderCharacterSelect(const MenuState &menu);
+    void drawCharacterCard(int index, bool selected, float time);
+    void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time);
+    void renderDistrictSelect(const MenuState &menu);
+    void drawDistrictCard(int index, bool selected);
+    std::vector<Backdrop::Segment> districtSlices(int district) const;
+    Backdrop::Segment thumbnailOf(const Backdrop &backdrop, size_t index) const;
+    void drawThumbnail(const Backdrop::Segment &segment, sf::FloatRect dest, float from, float to);
+    void renderPoster();
+    void renderWaitingScreen();
+
+    //===========================================================================
+    // render_world.cpp: backdrops, map tiles, players
     //===========================================================================
     sf::Vector2f toScreen(sf::Vector2f world) const;
     void smoothPositions(const std::map<int, PlayerState> &players, float dt);
     void updateCamera(int me);
-    void renderBackdrop(const Backdrop &backdrop, float opacity);
+
     void renderDistrict(int district);
-    void drawThumbnail(const Backdrop &backdrop, sf::FloatRect dest, float from, float to);
+    void renderBackdrop(const Backdrop &backdrop, float opacity);
+    void renderLayer(const Backdrop &backdrop, const Backdrop::Layer &layer, float y0, float y1, sf::Color color);
+    void drawFadingPicture(const Backdrop::Segment &segment, sf::FloatRect dest, float fade, sf::Color color);
+
     void renderMapTiles(const std::set<std::pair<int, int>> &collected);
+    void renderCoin(int x, int y, float time);
     void renderZapper(int x, int y);
     void drawBeam(sf::Vector2f from, sf::Vector2f to);
     void drawLightning(sf::Vector2f from, sf::Vector2f to, sf::Color color);
     void drawTileSprite(const sf::Texture &texture, sf::Vector2f world, float fill, sf::Color color);
-    const Character &characterOf(int player_num) const;
+
     void renderPlayers(const std::map<int, PlayerState> &players, int me);
+    bool updateAirState(int player_num);
+    AnimationFrame pickAnimation(int player_num, const PlayerState &player, bool on_ground);
     void renderPlayerSprite(int player_num, const PlayerState &player, bool is_me);
 
     //===========================================================================
-    // Effects, Particles & HUD
+    // render_game.cpp: game screens, effects, particles, HUD
     //===========================================================================
+    void renderGameScreen(GameState &state, Phase phase, float dt);
+    void updateWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
+    void renderBanner();
+    void renderCountdown(Phase phase, int countdown);
+    void renderGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
+    void renderSoloResults(const PlayerState &me);
+    void renderVersusResults(const std::map<int, PlayerState> &players, int winner, int me);
+    void renderRematchPrompt(GameState &state, bool solo);
+    void renderConnectionLost();
+
     void addEffect(const CollisionEffect &effect, int me);
     void renderEffects();
     void emitParticles(sf::Vector2f pos, int count, sf::Color color, float speed, float life,
@@ -202,15 +257,7 @@ private:
     void updateParticles(float dt);
     void renderParticles();
     void renderHUD(const std::map<int, PlayerState> &players, int me);
-
-    //===========================================================================
-    // Helper Functions
-    //===========================================================================
-    bool blink() const;
-    sf::Text makeText(const std::string &content, unsigned int size, sf::Color color,
-                      sf::Vector2f pos, sf::Vector2f anchor = {0.5f, 0.5f});
-    void drawGlitchText(const std::string &content, unsigned int size, sf::Color color, sf::Vector2f pos);
-    std::string playerLabel(int player_num, int me) const;
+    void renderHUDLine(int player_num, const PlayerState &player, int me, float y);
 
 public:
     Renderer();

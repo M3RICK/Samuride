@@ -9,6 +9,7 @@
     #define MENU_HPP
 
 #include <SFML/Graphics.hpp>
+#include <functional>
 #include <string>
 
 class Renderer;
@@ -45,22 +46,41 @@ namespace MenuLayout {
     constexpr float WIDTH = 620;
     constexpr float HEIGHT = 80;
 
-    // Character cards, centred on the screen
+    // Character cards, in a row
     constexpr float CARD_Y = 560;
     constexpr float CARD_WIDTH = 300;
     constexpr float CARD_HEIGHT = 520;
     constexpr float CARD_SPACING = 350;
 
-    inline float cardX(int index, int count) { return 960 + (index - (count - 1) / 2.0f) * CARD_SPACING; }
+    // Districts: the five backdrops, then the corridor and Worlds Collide taking turns. 3x2 grid.
+    constexpr int DISTRICT_COUNT = 6;
+    constexpr int DISTRICT_MIX = 5;
+    constexpr int DISTRICT_COLUMNS = 3;
+    constexpr float DISTRICT_WIDTH = 440;
+    constexpr float DISTRICT_HEIGHT = 340;
 
-    // Districts: the three backdrops, then the corridor and Worlds Collide taking turns
-    constexpr int DISTRICT_COUNT = 4;
-    constexpr int DISTRICT_MIX = 3;
-    constexpr float DISTRICT_Y = 540;
-    constexpr float DISTRICT_WIDTH = 400;
-    constexpr float DISTRICT_HEIGHT = 420;
+    inline sf::FloatRect centeredBox(sf::Vector2f center, sf::Vector2f size)
+    {
+        return {center - size / 2.f, size};
+    }
 
-    inline float districtX(int index) { return 960 + (index - 1.5f) * 440.0f; }
+    inline sf::FloatRect itemBox(int index)
+    {
+        return centeredBox({X, Y + index * SPACING}, {WIDTH, HEIGHT});
+    }
+
+    inline sf::FloatRect cardBox(int index, int count)
+    {
+        float x = 960 + (index - (count - 1) / 2.0f) * CARD_SPACING;
+        return centeredBox({x, CARD_Y}, {CARD_WIDTH, CARD_HEIGHT});
+    }
+
+    inline sf::FloatRect districtBox(int index)
+    {
+        float x = 960 + (index % DISTRICT_COLUMNS - 1) * 490.0f;
+        float y = 395 + (index / DISTRICT_COLUMNS) * 375.0f;
+        return centeredBox({x, y}, {DISTRICT_WIDTH, DISTRICT_HEIGHT});
+    }
 }
 
 class Menu {
@@ -70,10 +90,16 @@ private:
     MenuChoice pending;
 
     bool handleEvent(const sf::Event &event, MenuChoice &choice);
-    bool activate(MenuChoice &choice);
-    bool parseAddress();
+    bool handleMainEvent(const sf::Event &event, MenuChoice &choice);
+    void handleJoinEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
     bool handleDistrictEvent(const sf::Event &event, MenuChoice &choice);
+
+    bool navigate(const sf::Event &event, int &selected, int count, int columns,
+                  const std::function<sf::FloatRect(int)> &box) const;
+    int boxUnderPointer(const sf::Event &event, int count, const std::function<sf::FloatRect(int)> &box) const;
+    bool activate(MenuChoice &choice);
+    bool parseAddress();
 
 public:
     explicit Menu(sf::RenderWindow &window);

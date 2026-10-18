@@ -21,7 +21,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Versus**: two runners, one corridor. First one to get zapped loses.
 - **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
 - **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.
-- **Four districts**: The Corridor, Worlds Collide (Night City meets Zaun under the Walls: a parallax journey from sunset to night that takes minutes to loop), Neon Citadel (that journey's panorama from the first metre), or Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
+- **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.
 - After a game, hit `Space` for an instant rematch.
 

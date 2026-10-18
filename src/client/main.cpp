@@ -118,35 +118,90 @@ static Client::RunResult play(Renderer &renderer, const std::string &host, int p
     return client.run(input_manager, renderer);
 }
 
-int main(int argc, char **argv)
-{
-    int opt;
-    std::string server_ip;
-    int server_port = -1;
+struct Options {
+    std::string host;
+    int port = -1;
     int character = 0;
     bool debug_mode = false;
+};
+
+static bool parseOptions(int argc, char **argv, Options &options)
+{
+    int opt;
 
     while ((opt = getopt(argc, argv, "h:p:c:d")) != -1) {
         switch (opt) {
             case 'h':
-                server_ip = optarg;
+                options.host = optarg;
                 break;
             case 'p':
-                server_port = std::atoi(optarg);
+                options.port = std::atoi(optarg);
                 break;
             case 'c':
-                character = std::atoi(optarg);
+                options.character = std::atoi(optarg);
                 break;
             case 'd':
-                debug_mode = true;
+                options.debug_mode = true;
                 break;
             default:
-                printUsage(argv[0]);
-                return EXIT_FAILURE;
+                return false;
         }
     }
+    // -h and -p go together
+    return options.host.empty() == (options.port <= 0);
+}
 
-    if (server_ip.empty() != (server_port <= 0)) {
+// Solo and host runs play on a server we start ourselves; joining uses the address typed in
+static bool resolveServer(MenuChoice &choice, LocalServer &server)
+{
+    bool solo = choice.mode == MenuChoice::Mode::Solo;
+
+    if (choice.mode == MenuChoice::Mode::Join)
+        return true;
+
+    choice.host = "127.0.0.1";
+    choice.port = solo ? 40000 + std::random_device{}() % 20000 : HOST_PORT;
+    return server.start(choice.port, solo);
+}
+
+static std::string connectionError(const MenuChoice &choice)
+{
+    if (choice.mode == MenuChoice::Mode::Host)
+        return "PORT " + std::to_string(HOST_PORT) + " IS BUSY";
+    return "CAN'T REACH " + choice.host + ":" + std::to_string(choice.port);
+}
+
+// Menu, run, back to the menu, until the player quits
+static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
+{
+    while (true) {
+        MenuChoice choice = menu.run(renderer);
+        LocalServer local_server;
+        bool connected = true;
+
+        if (choice.mode == MenuChoice::Mode::Quit)
+            return;
+        if (!resolveServer(choice, local_server)) {
+            menu.setError("CAN'T START THE SERVER");
+            continue;
+        }
+
+        bool hosting = choice.mode == MenuChoice::Mode::Host;
+        renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + lanAddress() + ":" + std::to_string(HOST_PORT) : "");
+
+        if (play(renderer, choice.host, choice.port, choice.character, choice.district, debug_mode, connected)
+            == Client::RunResult::Quit)
+            return;
+        if (!connected)
+            menu.setError(connectionError(choice));
+    }
+}
+
+int main(int argc, char **argv)
+{
+    Options options;
+
+    if (!parseOptions(argc, argv, options)) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -160,47 +215,17 @@ int main(int argc, char **argv)
     }
 
     Menu menu(renderer.getWindow());
-    bool connected = true;
 
     // Direct connection from the command line, then the menu as usual
-    if (!server_ip.empty()) {
-        if (play(renderer, server_ip, server_port, character, -1, debug_mode, connected) == Client::RunResult::Quit)
+    if (!options.host.empty()) {
+        bool connected = true;
+        if (play(renderer, options.host, options.port, options.character, -1, options.debug_mode, connected)
+            == Client::RunResult::Quit)
             return EXIT_SUCCESS;
         if (!connected)
-            menu.setError("CAN'T REACH " + server_ip + ":" + std::to_string(server_port));
+            menu.setError("CAN'T REACH " + options.host + ":" + std::to_string(options.port));
     }
 
-    while (true) {
-        MenuChoice choice = menu.run(renderer);
-        LocalServer local_server;
-        std::string host = choice.host;
-        int port = choice.port;
-
-        if (choice.mode == MenuChoice::Mode::Quit)
-            break;
-
-        if (choice.mode == MenuChoice::Mode::Solo) {
-            host = "127.0.0.1";
-            port = 40000 + std::random_device{}() % 20000;
-        } else if (choice.mode == MenuChoice::Mode::Host) {
-            host = "127.0.0.1";
-            port = HOST_PORT;
-        }
-
-        if (choice.mode != MenuChoice::Mode::Join && !local_server.start(port, choice.mode == MenuChoice::Mode::Solo)) {
-            menu.setError("CAN'T START THE SERVER");
-            continue;
-        }
-
-        renderer.setLobbyInfo(choice.mode == MenuChoice::Mode::Host
-            ? "YOUR CHOOM JOINS ON  " + lanAddress() + ":" + std::to_string(HOST_PORT) : "");
-
-        if (play(renderer, host, port, choice.character, choice.district, debug_mode, connected) == Client::RunResult::Quit)
-            break;
-        if (!connected)
-            menu.setError(choice.mode == MenuChoice::Mode::Host
-                ? "PORT " + std::to_string(HOST_PORT) + " IS BUSY" : "CAN'T REACH " + host + ":" + std::to_string(port));
-    }
-
+    menuLoop(renderer, menu, options.debug_mode);
     return EXIT_SUCCESS;
 }

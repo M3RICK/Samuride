@@ -8,7 +8,6 @@
 #include "menu.hpp"
 #include "render.hpp"
 #include "characters.hpp"
-#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -33,64 +32,108 @@ MenuChoice Menu::run(Renderer &renderer)
     return choice;
 }
 
+static bool isKey(const sf::Event &event, sf::Keyboard::Key code)
+{
+    const auto *key = event.getIf<sf::Event::KeyPressed>();
+
+    return key && key->code == code;
+}
+
+// Arrows (or WASD) move the selection: left/right by one, up/down by a row of `columns`
+static void moveSelection(int &selected, sf::Keyboard::Key key, int count, int columns)
+{
+    using Key = sf::Keyboard::Key;
+    int step = 0;
+
+    if (key == Key::Left || key == Key::A)
+        step = -1;
+    else if (key == Key::Right || key == Key::D)
+        step = 1;
+    else if (key == Key::Up || key == Key::W)
+        step = -columns;
+    else if (key == Key::Down || key == Key::S)
+        step = columns;
+    selected = ((selected + step) % count + count) % count;
+}
+
 // Returns true once a choice is made
 bool Menu::handleEvent(const sf::Event &event, MenuChoice &choice)
 {
     if (event.is<sf::Event::Closed>())
         return true;
 
-    if (state.screen == MenuState::Screen::Character)
-        return handleCharacterEvent(event, choice);
-    if (state.screen == MenuState::Screen::District)
-        return handleDistrictEvent(event, choice);
-
-    if (state.screen == MenuState::Screen::Join) {
-        if (const auto *text = event.getIf<sf::Event::TextEntered>()) {
-            char32_t c = text->unicode;
-            bool allowed = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                           c == '.' || c == ':' || c == '-';
-            if (allowed && state.address.size() < 40)
-                state.address += static_cast<char>(c);
-        } else if (const auto *key = event.getIf<sf::Event::KeyPressed>()) {
-            if (key->code == sf::Keyboard::Key::Backspace && !state.address.empty())
-                state.address.pop_back();
-            else if (key->code == sf::Keyboard::Key::Escape)
-                state.screen = MenuState::Screen::Main;
-            else if (key->code == sf::Keyboard::Key::Enter)
-                parseAddress();
-        }
-        return false;
+    switch (state.screen) {
+        case MenuState::Screen::Main:
+            return handleMainEvent(event, choice);
+        case MenuState::Screen::Join:
+            handleJoinEvent(event);
+            return false;
+        case MenuState::Screen::Character:
+            return handleCharacterEvent(event, choice);
+        case MenuState::Screen::District:
+            return handleDistrictEvent(event, choice);
     }
+    return false;
+}
 
+// Shared by every list: arrows or hovering move `selected`, Enter, Space or a click confirm it
+bool Menu::navigate(const sf::Event &event, int &selected, int count, int columns,
+                    const std::function<sf::FloatRect(int)> &box) const
+{
     if (const auto *key = event.getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::Up || key->code == sf::Keyboard::Key::W)
-            state.selected = (state.selected + MenuLayout::ITEM_COUNT - 1) % MenuLayout::ITEM_COUNT;
-        else if (key->code == sf::Keyboard::Key::Down || key->code == sf::Keyboard::Key::S)
-            state.selected = (state.selected + 1) % MenuLayout::ITEM_COUNT;
-        else if (key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space)
-            return activate(choice);
-        return false;
+        moveSelection(selected, key->code, count, columns);
+        return key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space;
     }
 
-    // Mouse: hover selects, click activates
+    int hovered = boxUnderPointer(event, count, box);
+    if (hovered < 0)
+        return false;
+    selected = hovered;
+    return event.is<sf::Event::MouseButtonPressed>();
+}
+
+// Index of the box under the mouse for a mouse event, -1 otherwise
+int Menu::boxUnderPointer(const sf::Event &event, int count, const std::function<sf::FloatRect(int)> &box) const
+{
     sf::Vector2i pixel;
+
     if (const auto *move = event.getIf<sf::Event::MouseMoved>())
         pixel = move->position;
     else if (const auto *click = event.getIf<sf::Event::MouseButtonPressed>())
         pixel = click->position;
     else
-        return false;
+        return -1;
 
     sf::Vector2f pos = window.mapPixelToCoords(pixel);
-    for (int i = 0; i < MenuLayout::ITEM_COUNT; i++) {
-        float y = MenuLayout::Y + i * MenuLayout::SPACING;
-        if (std::abs(pos.x - MenuLayout::X) < MenuLayout::WIDTH / 2 && std::abs(pos.y - y) < MenuLayout::HEIGHT / 2) {
-            state.selected = i;
-            if (event.is<sf::Event::MouseButtonPressed>())
-                return activate(choice);
-        }
+    for (int i = 0; i < count; i++) {
+        if (box(i).contains(pos))
+            return i;
     }
+    return -1;
+}
+
+bool Menu::handleMainEvent(const sf::Event &event, MenuChoice &choice)
+{
+    if (navigate(event, state.selected, MenuLayout::ITEM_COUNT, 1, MenuLayout::itemBox))
+        return activate(choice);
     return false;
+}
+
+void Menu::handleJoinEvent(const sf::Event &event)
+{
+    if (const auto *text = event.getIf<sf::Event::TextEntered>()) {
+        char32_t c = text->unicode;
+        bool allowed = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                       c == '.' || c == ':' || c == '-';
+        if (allowed && state.address.size() < 40)
+            state.address += static_cast<char>(c);
+    } else if (isKey(event, sf::Keyboard::Key::Backspace) && !state.address.empty()) {
+        state.address.pop_back();
+    } else if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.screen = MenuState::Screen::Main;
+    } else if (isKey(event, sf::Keyboard::Key::Enter)) {
+        parseAddress();
+    }
 }
 
 bool Menu::activate(MenuChoice &choice)
@@ -117,37 +160,15 @@ bool Menu::activate(MenuChoice &choice)
 bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
 {
     int count = CHARACTER_DIRS.size();
-    bool confirm = false;
+    auto box = [count](int index) { return MenuLayout::cardBox(index, count); };
 
-    if (const auto *key = event.getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::A)
-            state.character = (state.character + count - 1) % count;
-        else if (key->code == sf::Keyboard::Key::Right || key->code == sf::Keyboard::Key::D)
-            state.character = (state.character + 1) % count;
-        else if (key->code == sf::Keyboard::Key::Escape)
-            state.screen = MenuState::Screen::Main;
-        confirm = key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space;
-    }
-
-    sf::Vector2i pixel;
-    if (const auto *move = event.getIf<sf::Event::MouseMoved>())
-        pixel = move->position;
-    else if (const auto *click = event.getIf<sf::Event::MouseButtonPressed>())
-        pixel = click->position;
-
-    if (event.is<sf::Event::MouseMoved>() || event.is<sf::Event::MouseButtonPressed>()) {
-        sf::Vector2f pos = window.mapPixelToCoords(pixel);
-        for (int i = 0; i < count; i++) {
-            if (std::abs(pos.x - MenuLayout::cardX(i, count)) < MenuLayout::CARD_WIDTH / 2 &&
-                std::abs(pos.y - MenuLayout::CARD_Y) < MenuLayout::CARD_HEIGHT / 2) {
-                state.character = i;
-                confirm = event.is<sf::Event::MouseButtonPressed>();
-            }
-        }
-    }
-
-    if (!confirm)
+    if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.screen = MenuState::Screen::Main;
         return false;
+    }
+    if (!navigate(event, state.character, count, count, box))
+        return false;
+
     pending.character = state.character;
 
     // Whoever joins plays in the host's district
@@ -162,38 +183,14 @@ bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
 
 bool Menu::handleDistrictEvent(const sf::Event &event, MenuChoice &choice)
 {
-    int count = MenuLayout::DISTRICT_COUNT;
-    bool confirm = false;
-
-    if (const auto *key = event.getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::A)
-            state.district = (state.district + count - 1) % count;
-        else if (key->code == sf::Keyboard::Key::Right || key->code == sf::Keyboard::Key::D)
-            state.district = (state.district + 1) % count;
-        else if (key->code == sf::Keyboard::Key::Escape)
-            state.screen = MenuState::Screen::Character;
-        confirm = key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space;
-    }
-
-    sf::Vector2i pixel;
-    if (const auto *move = event.getIf<sf::Event::MouseMoved>())
-        pixel = move->position;
-    else if (const auto *click = event.getIf<sf::Event::MouseButtonPressed>())
-        pixel = click->position;
-
-    if (event.is<sf::Event::MouseMoved>() || event.is<sf::Event::MouseButtonPressed>()) {
-        sf::Vector2f pos = window.mapPixelToCoords(pixel);
-        for (int i = 0; i < count; i++) {
-            if (std::abs(pos.x - MenuLayout::districtX(i)) < MenuLayout::DISTRICT_WIDTH / 2 &&
-                std::abs(pos.y - MenuLayout::DISTRICT_Y) < MenuLayout::DISTRICT_HEIGHT / 2) {
-                state.district = i;
-                confirm = event.is<sf::Event::MouseButtonPressed>();
-            }
-        }
-    }
-
-    if (!confirm)
+    if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.screen = MenuState::Screen::Character;
         return false;
+    }
+    if (!navigate(event, state.district, MenuLayout::DISTRICT_COUNT, MenuLayout::DISTRICT_COLUMNS,
+                  MenuLayout::districtBox))
+        return false;
+
     choice = pending;
     choice.district = state.district;
     state.screen = MenuState::Screen::Main;

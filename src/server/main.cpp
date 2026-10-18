@@ -19,45 +19,52 @@ void printUsage(const char  *programme)
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 
-int main(int argc, char** argv)
-{
+struct Options {
     int port = -1;
-    int opt;
     std::string map_path;
     bool solo = false;
     bool debug_mode = false;
+};
+
+static bool parseOptions(int argc, char **argv, Options &options)
+{
+    int opt;
 
     while ((opt = getopt(argc, argv, "p:m:sd")) != -1) {
         switch (opt) {
             case 'p':
-                port = std::atoi(optarg);
+                options.port = std::atoi(optarg);
                 break;
             case 'm':
-                map_path = optarg;
+                options.map_path = optarg;
                 break;
             case 's':
-                solo = true;
+                options.solo = true;
                 break;
             case 'd':
-                debug_mode = true;
+                options.debug_mode = true;
                 break;
             default:
-                printUsage(argv[0]);
-                return 1;
+                return false;
         }
     }
+    return options.port > 0;
+}
 
-    if (port <= 0) {
+int main(int argc, char **argv)
+{
+    Options options;
+
+    if (!parseOptions(argc, argv, options)) {
         printUsage(argv[0]);
         return 1;
     }
 
-    Server server(port, map_path, solo, debug_mode);
+    Server server(options.port, options.map_path, options.solo, options.debug_mode);
 
     if (!server.initialize())
         return 1;
 
     server.run();
-
     return 0;
 }

@@ -52,8 +52,8 @@ Payload Format:
 
 Character (1 byte, optional): the character the player picked, 0 if absent
 District (1 byte, optional): the scenery, only taken from the first player in the lobby (the host).
-          0 The Corridor, 1 Worlds Collide, 2 Neon Citadel, 3 Both Worlds (corridor and Worlds
-          Collide alternating every 250 tiles)
+          0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun,
+          5 Both Worlds (corridor and Worlds Collide alternating every 250 tiles)
 After receiving this message, the server assigns a player number to the client and sends the map data using MSG_MAP_DATA.
 
 
