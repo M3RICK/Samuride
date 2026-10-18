@@ -18,6 +18,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     mode = run_mode;
     destroyed_drones.clear();
     pending_shots.clear();
+    titans.clear();
     phase = Phase::Countdown;
     countdown = 0;
     winner = -1;
@@ -120,6 +121,20 @@ void GameState::pushShot(ShotEvent shot)
     std::lock_guard<std::mutex> lock(state_mutex);
 
     pending_shots.push_back(shot);
+}
+
+void GameState::setTitans(std::vector<TitanState> list)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    titans = std::move(list);
+}
+
+std::vector<TitanState> GameState::getTitans() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return titans;
 }
 
 GameMode GameState::getMode() const

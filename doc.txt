@@ -44,6 +44,7 @@ Type    Name                Direction           Description
 9       MSG_READY           Client to Server    Rematch request after a game
 10      MSG_ATTACK          Client to Server    CYBERPSYCHO attack
 11      MSG_SHOT            Server to Client    CYBERPSYCHO: a player attacked
+12      MSG_TITANS          Server to Client    Titans charging along the floor
 
 
 MSG_CONNECT
@@ -138,7 +139,9 @@ Payload Format:
 
 Collision Type (1 byte): Character representing the collision type:
 'c' for coin, 'e' for electric hazard (zapper or drone contact),
-'d' for a drone destroyed in CYBERPSYCHO (the player gets 5 eddies)
+'d' for a drone destroyed in CYBERPSYCHO (the player gets 5 eddies),
+'t' when a titan runs the player down (death),
+'k' when Mikasa cuts a titan down in CYBERPSYCHO (the player gets 20 eddies)
 Player Number (1 byte): The player who hit it
 X Position (4 bytes): tile column
 Y Position (2 bytes): tile row
@@ -171,6 +174,21 @@ Payload: None (0 bytes)
 The server enforces the weapon cooldown. Guns and rockets fire a projectile flying ahead at
 run speed + weapon speed for up to 22 tiles; the blade destroys every drone within 2.5 tiles ahead.
 Weapons: Johnny and David have guns, Jinx rockets, Mikasa a blade.
+
+
+MSG_TITANS
+--------
+
+Sent by the server to all clients every tick while the game runs.
+Payload Format:
+
+Count (1 byte)
+Then, for each titan:
+    Type (1 byte): 0 Female (4.5 tiles tall, fast), 1 Armored (4 tiles tall, slower)
+    X (4 bytes): left edge, in hundredths of a tile
+
+Titans stand on the floor and run toward the players. The first one comes past 150 tiles,
+then one every 7 to 14 seconds. They appear 40 tiles ahead of the leader.
 
 
 MSG_SHOT

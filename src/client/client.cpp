@@ -188,6 +188,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_SHOT:
             handleShot(payload);
             break;
+        case MSG_TITANS:
+            handleTitans(payload);
+            break;
         case MSG_GAME_END:
             handleGameEnd(payload);
             break;
@@ -212,6 +215,18 @@ void Client::handleGameStart(const std::vector<uint8_t> &payload)
     int district = district_pos < payload.size() ? payload[district_pos] : 0;
     auto mode = static_cast<GameMode>(district_pos + 1 < payload.size() ? payload[district_pos + 1] : 0);
     game_state.startCountdown(payload[0], roster, district, mode);
+}
+
+// [count]([type][x in 1/100 tile, 4 bytes])...
+void Client::handleTitans(const std::vector<uint8_t> &payload)
+{
+    std::vector<TitanState> titans;
+
+    for (size_t pos = 1; !payload.empty() && pos + 5 <= payload.size(); pos += 5) {
+        auto type = static_cast<TitanType>(payload[pos]);
+        titans.push_back({type, Protocol::readU32(payload.data() + pos + 1) / POSITION_SCALE});
+    }
+    game_state.setTitans(std::move(titans));
 }
 
 void Client::handleShot(const std::vector<uint8_t> &payload)

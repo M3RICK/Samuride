@@ -25,7 +25,7 @@ Server::Server(int port, const std::string& map_path, bool solo, bool debug_mode
     : server_fd(-1), port(port), map_path(map_path), solo(solo), debug_mode(debug_mode),
       required_players(solo ? 1 : 2), rng(std::random_device{}()), chunks_generated(0),
       run_speed(START_SPEED), phase(Phase::Waiting), countdown(0), countdown_ticks(0), district(0),
-      mode(GameMode::Classic) {
+      mode(GameMode::Classic), titan_timer(0) {
     g_logger.setDebugMode(debug_mode);
 }
 

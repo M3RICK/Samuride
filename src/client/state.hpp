@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <vector>
 #include "../common/cyberpsycho.hpp"
+#include "../common/titans.hpp"
 
 enum class Phase { Waiting, Countdown, Running, Over };
 
@@ -29,6 +30,11 @@ struct PlayerState {
 struct ShotEvent {
     int player;
     Weapon weapon;
+};
+
+struct TitanState {
+    TitanType type;
+    float x;    // left edge, in tiles
 };
 
 struct CollisionEffect {
@@ -54,6 +60,7 @@ private:
     GameMode mode = GameMode::Classic;
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<ShotEvent> pending_shots;
+    std::vector<TitanState> titans;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
@@ -62,6 +69,7 @@ private:
 public:
     void startCountdown(int my_number, const std::map<int, int> &roster, int district, GameMode mode);
     void pushShot(ShotEvent shot);
+    void setTitans(std::vector<TitanState> list);
     void setCountdown(int value);
     void updatePlayer(int player_number, float x, float y, int score, bool jet_active);
     void handleCollision(char type, int player, int x, int y);
@@ -79,6 +87,7 @@ public:
     GameMode getMode() const;
     std::set<std::pair<int, int>> getDestroyedDrones() const;
     std::vector<ShotEvent> takeShots();
+    std::vector<TitanState> getTitans() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();

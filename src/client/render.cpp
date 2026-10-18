@@ -19,8 +19,8 @@ float randf(float min, float max)
 }
 
 Renderer::Renderer()
-    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), run_speed(0), last_x(-1), run_phase(0),
-      shake(0), drones_down(0),
+    : shown_backdrop(-1), titans_on_screen(0), heard_countdown(-1), camera_x(0), tile_size(96),
+      run_speed(0), last_x(-1), run_phase(0), shake(0), drones_down(0),
       best_distance(0), new_record(false),
       last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
@@ -59,6 +59,7 @@ void Renderer::loadAssets()
 {
     loadBackdrops();
     loadCharacters();
+    loadTitans();
     loadFonts();
 
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png");
@@ -107,6 +108,17 @@ void Renderer::loadCharacters()
     for (size_t i = 0; i < CHARACTER_DIRS.size(); i++) {
         if (!characters[i].load("assets/" + CHARACTER_DIRS[i]))
             DEBUG_LOG("Failed to load character: " + CHARACTER_DIRS[i]);
+    }
+}
+
+void Renderer::loadTitans()
+{
+    static const char *dirs[TITAN_TYPES] = {"titan_female", "titan_armored"};
+
+    titan_sprites.resize(TITAN_TYPES);
+    for (int i = 0; i < TITAN_TYPES; i++) {
+        if (!titan_sprites[i].load(std::string("assets/") + dirs[i]))
+            DEBUG_LOG(std::string("Failed to load titan: ") + dirs[i]);
     }
 }
 
@@ -191,6 +203,7 @@ void Renderer::resetRun()
     shots.clear();
     attack_clocks.clear();
     speed_lines.clear();
+    titans_on_screen = 0;
     run_speed = 0;
     last_x = -1;
     drones_down = 0;

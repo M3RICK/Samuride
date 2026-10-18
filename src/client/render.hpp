@@ -122,6 +122,10 @@ private:
     std::vector<Character> characters;
     std::map<int, int> roster;
 
+    // One per TitanType, and how many were on screen last frame (a new one stomps in)
+    std::vector<Character> titan_sprites;
+    size_t titans_on_screen;
+
     Audio audio;
     int heard_countdown;    // last countdown value beeped
 
@@ -204,6 +208,7 @@ private:
     void loadAssets();
     void loadBackdrops();
     void loadCharacters();
+    void loadTitans();
     void loadFonts();
     void loadTexture(sf::Texture &texture, const std::string &path);
     const sf::Texture *sharedTexture(const std::string &path);
@@ -310,6 +315,14 @@ private:
     void renderShots(const std::set<std::pair<int, int>> &destroyed);
     void renderDrone(int x, int y, float time);
     void drawDroneSprite(sf::Vector2f center, float width, int frame);
+
+    //===========================================================================
+    // render_titans.cpp: titans charging along the floor
+    //===========================================================================
+    void renderTitans(const std::vector<TitanState> &titans);
+    void drawTitan(const TitanState &titan, float time);
+    void renderTitanWarnings(const std::vector<TitanState> &titans);
+    void updateTitanStomps(const std::vector<TitanState> &titans);
 
 public:
     Renderer();

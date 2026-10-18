@@ -20,6 +20,7 @@ bool Server::resetMap()
     chunks_generated = 0;
     destroyed_drones.clear();
     projectiles.clear();
+    resetTitans();
 
     if (!map_path.empty()) {
         if (!game_map.loadFromFile(map_path)) {
@@ -141,6 +142,7 @@ void Server::updatePlayers()
 {
     float max_y = game_map.getHeight() - Player::HEIGHT;
     float leader_x = 0;
+    float rear_x = 1e9f;
     std::vector<int> survivors;
 
     run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
@@ -148,20 +150,26 @@ void Server::updatePlayers()
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
         leader_x = std::max(leader_x, player.getX());
+        rear_x = std::min(rear_x, player.getX());
+    }
 
+    updateTitans(rear_x);
+    for (auto &[client_fd, player] : players) {
         if (!checkPlayerCollisions(player))
             survivors.push_back(player.getPlayerNumber());
     }
 
+    spawnTitans(leader_x);
     updateProjectiles();
     extendMap(leader_x);
     sendGameState();
+    sendTitans();
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !solo ? survivors[0] : -1);
 }
 
-// Samples the body from head to feet. Returns true when the player got zapped.
+// Samples the body from head to feet. Returns true when the player got zapped or run down.
 bool Server::checkPlayerCollisions(Player &player)
 {
     float px = player.getX() + 0.5f;
@@ -180,6 +188,11 @@ bool Server::checkPlayerCollisions(Player &player)
             notifyCollision('e', player, tile_x, tile_y);
             return true;
         }
+    }
+
+    if (hitByTitan(player)) {
+        notifyCollision(TITAN_HIT, player, player.getX(), player.getY() + 1);
+        return true;
     }
     return false;
 }

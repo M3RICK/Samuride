@@ -17,6 +17,7 @@
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/titans.hpp"
 #include "player.hpp"
 
 class Server {
@@ -38,6 +39,11 @@ private:
     static constexpr float START_SPEED = 9.0f;
     static constexpr float MAX_SPEED = 18.0f;
     static constexpr float ACCELERATION = 0.15f;
+
+    struct Titan {
+        TitanType type;
+        float x;        // left edge, in tiles
+    };
 
     struct Projectile {
         int owner_fd;
@@ -70,6 +76,9 @@ private:
 
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
+
+    std::vector<Titan> titans;
+    float titan_timer;      // seconds before the next titan
 
     std::vector<pollfd> poll_fds;
     std::map<int, Player> players;
@@ -164,6 +173,22 @@ private:
     bool isLiveDrone(int x, int y) const;
 
     void destroyDrone(int owner_fd, int x, int y);
+
+    //===========================================================================
+    // Titans (titans.cpp)
+    //===========================================================================
+
+    void resetTitans();
+
+    void spawnTitans(float leader_x);
+
+    void updateTitans(float rear_x);
+
+    bool hitByTitan(const Player &player) const;
+
+    void slashTitans(int client_fd, const Player &player, float reach);
+
+    void sendTitans();
 
 public:
     Server(int port, const std::string& map_path, bool solo, bool debug_mode);
