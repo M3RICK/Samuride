@@ -1,0 +1,9 @@
+name EREN_SHIFT
+sheet sheet.png
+portrait portrait.png
+frame 98 117
+feet 113
+body 65
+run 0 12 14 loop
+smoke 1 13 14 once
+emerge 2 13 14 once

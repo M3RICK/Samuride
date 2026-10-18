@@ -48,7 +48,13 @@ TITAN_CUTS = [140, 255, 365, 477, 590, 701, 812, 922, 1036, 1150, 1265, 1385, 15
 #   key_background: the "transparent" checkerboard is drawn in the picture, light greys become transparent
 #   mirror:         frames face left in the game (they run toward the player)
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
+#   erase:          boxes cleared before slicing, for labels drawn over the rows
 TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
+
+# Eren's transformation: smoke column, titan emerging from it, titan running.
+# The smoke clouds touch each other, so that row is cut into even columns.
+SHIFT_SHEET = {"effects": False, "erase": [(0, 4, 170, 20), (0, 118, 170, 132), (0, 282, 170, 296)]}
+SHIFT_SMOKE_CUTS = [0, 37, 72, 115, 159, 205, 255, 305, 357, 410, 472, 533, 590, 679]
 
 # name: (source sheet, portrait box or None for the head of the first run frame,
 #        {animation: animation(...)}[, sheet options])
@@ -93,6 +99,11 @@ CHARACTERS = {
     "titan_eren": ("sources/titans.png", None, {
         "run": animation((140, 808, 1536, 970), 14, ground=True, cuts=TITAN_CUTS),
     }, TITAN_SHEET),
+    "eren_shift": ("sources/transformation.png", None, {
+        "run":    animation((0, 298, 679, 363), 14, ground=True),
+        "smoke":  animation((0, 6, 679, 115), 14, ground=True, mode="once", cuts=SHIFT_SMOKE_CUTS),
+        "emerge": animation((0, 118, 679, 195), 14, ground=True, mode="once"),
+    }, SHIFT_SHEET),
 }
 
 
@@ -234,6 +245,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     effects = options.get("effects", True)
     if options.get("key_background"):
         sheet = key_background(sheet)
+    for box in options.get("erase", []):
+        sheet.paste((0, 0, 0, 0), box)
     pixels = np.array(sheet)
     out = ROOT / name
     out.mkdir(exist_ok=True)
