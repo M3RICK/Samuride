@@ -140,27 +140,21 @@ Audio::Audio()
     loadMusic();
     synthesize();
 
-    for (size_t i = 0; i < VOICES; i++) {
+    for (size_t i = 0; i < VOICES; i++)
         voices.emplace_back(buffers.at(Sfx::Coin));
-        voices.back().setVolume(70);
-    }
 
     jet.emplace(jet_buffer);
     jet->setLooping(true);
-    jet->setVolume(35);
+    setVolumes(50, 70);
 }
 
 void Audio::loadMusic()
 {
-    if (menu_music.openFromFile("assets/music/waiting_screen.wav")) {
+    if (menu_music.openFromFile("assets/music/waiting_screen.wav"))
         menu_music.setLooping(true);
-        menu_music.setVolume(50);
-    }
 
-    if (game_music.openFromFile("assets/music/ingame.wav")) {
+    if (game_music.openFromFile("assets/music/ingame.wav"))
         game_music.setLooping(true);
-        game_music.setVolume(40);
-    }
 }
 
 // Retro arcade palette: square-wave blips, saw sweeps and filtered noise
@@ -179,6 +173,10 @@ void Audio::synthesize()
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // Attack Titan: a growl rising out of the smoke, then the steam burst when it ends
+    buffers[Sfx::Roar] = toBuffer(mix(tone(Wave::Saw, 80, 140, 1.2f, 0.3f), burst(1.2f, 0.2f, 0.08f)));
+    buffers[Sfx::Steam] = toBuffer(burst(0.7f, 0.4f, 0.5f));
+    buffers[Sfx::Stomp] = toBuffer(mix(tone(Wave::Sine, 70, 40, 0.35f, 0.5f), burst(0.2f, 0.25f, 0.05f)));
     buffers[Sfx::Explosion] = toBuffer(mix(burst(0.6f, 0.45f, 0.08f), tone(Wave::Saw, 120, 40, 0.5f, 0.2f)));
 
     // No envelope: it loops
@@ -203,6 +201,17 @@ void Audio::play(Sfx sfx)
     next_voice = (next_voice + 1) % VOICES;
     voice.setBuffer(buffers.at(sfx));
     voice.play();
+}
+
+// The in-game track and the jetpack sit a little under the rest of their group
+void Audio::setVolumes(int music, int sfx)
+{
+    menu_music.setVolume(music);
+    game_music.setVolume(music * 0.8f);
+
+    for (sf::Sound &voice : voices)
+        voice.setVolume(sfx);
+    jet->setVolume(sfx * 0.5f);
 }
 
 void Audio::setJetpack(bool on)

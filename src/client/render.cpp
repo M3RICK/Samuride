@@ -7,6 +7,7 @@
 
 #include "render.hpp"
 #include "menu.hpp"
+#include "settings.hpp"
 #include "state.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
@@ -18,7 +19,8 @@ float randf(float min, float max)
 }
 
 Renderer::Renderer()
-    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), drones_down(0),
+    : shown_backdrop(-1), titans_on_screen(0), heard_countdown(-1), camera_x(0), tile_size(96),
+      run_speed(0), last_x(-1), run_phase(0), shake(0), drones_down(0),
       best_distance(0), new_record(false),
       last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
@@ -57,6 +59,7 @@ void Renderer::loadAssets()
 {
     loadBackdrops();
     loadCharacters();
+    loadTitans();
     loadFonts();
 
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png");
@@ -82,13 +85,13 @@ void Renderer::loadBackdrops()
 
     auto onWalkway = [&](const std::string &name, const std::string &tagline,
                          std::vector<Backdrop::Segment> far, float parallax) {
-        // Dimmed a little: the neons would swallow the coins and zappers
-        return Backdrop{name, tagline, walkway, 0.05f, 0.825f, sf::Color(200, 200, 215),
+        // Dimmed: the neons would swallow the coins, zappers and drones
+        return Backdrop{name, tagline, walkway, 0.05f, 0.825f, sf::Color(165, 160, 185),
                         {{0, 0.8f, parallax, far}, {0.8f, 1, 1, {}}}};
     };
 
     backdrops = {
-        {"THE CORRIDOR", "Arasaka sublevel 3", corridor, 0.20f, 0.79f, sf::Color::White, {{0, 1, 0.4f, {}}}},
+        {"THE CORRIDOR", "Arasaka sublevel 3", corridor, 0.20f, 0.79f, sf::Color(215, 215, 215), {{0, 1, 0.4f, {}}}},
         // The three panoramas back to back, a bit faster so a run goes through them
         onWalkway("WORLDS COLLIDE", "Night City, the Walls & Zaun", {night_city, walls, zaun}, 0.25f),
         onWalkway("NIGHT CITY", "Neon towers at sunset", {night_city}, 0.2f),
@@ -105,6 +108,21 @@ void Renderer::loadCharacters()
     for (size_t i = 0; i < CHARACTER_DIRS.size(); i++) {
         if (!characters[i].load("assets/" + CHARACTER_DIRS[i]))
             DEBUG_LOG("Failed to load character: " + CHARACTER_DIRS[i]);
+    }
+}
+
+void Renderer::loadTitans()
+{
+    static const char *dirs[TITAN_TYPES] = {"titan_female", "titan_armored"};
+
+    if (!shift_sprite.load("assets/eren_shift") || !eren_titan.load("assets/titan_eren") ||
+        !titan_face.loadFromFile("assets/titan_eren/portrait.png"))
+        DEBUG_LOG("Failed to load the Attack Titan");
+
+    titan_sprites.resize(TITAN_TYPES);
+    for (int i = 0; i < TITAN_TYPES; i++) {
+        if (!titan_sprites[i].load(std::string("assets/") + dirs[i]))
+            DEBUG_LOG(std::string("Failed to load titan: ") + dirs[i]);
     }
 }
 
@@ -188,6 +206,10 @@ void Renderer::resetRun()
     heard_countdown = -1;
     shots.clear();
     attack_clocks.clear();
+    speed_lines.clear();
+    titans_on_screen = 0;
+    run_speed = 0;
+    last_x = -1;
     drones_down = 0;
     shake = 0;
     new_record = false;
@@ -294,6 +316,19 @@ void Renderer::drawHalo(sf::Vector2f center, float radius, sf::Color color)
     halo.setPosition(center);
     halo.setFillColor(color);
     window.draw(halo, sf::BlendAdd);
+}
+
+// Dark disc with a neon ring: keeps a pickup or an enemy readable on any background
+void Renderer::drawBacking(sf::Vector2f center, float radius, sf::Color ring)
+{
+    sf::CircleShape disc(radius);
+
+    disc.setOrigin({radius, radius});
+    disc.setPosition(center);
+    disc.setFillColor(sf::Color(8, 6, 16, 170));
+    disc.setOutlineColor(ring);
+    disc.setOutlineThickness(3);
+    window.draw(disc);
 }
 
 // A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)

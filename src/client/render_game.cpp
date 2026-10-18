@@ -58,14 +58,21 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
 
     window.setView(world_view);
     renderDistrict(state.getDistrict());
+    renderSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     renderMapTiles(state.getCollectedCoins(), destroyed);
+    std::vector<TitanState> titans = state.getTitans();
+    updateTitanStomps(titans);
+    renderTitans(titans);
     renderPlayers(players, me);
     renderShots(destroyed);
     renderParticles();
 
     window.setView(ui_view);
     renderEffects();
+    renderTitanWarnings(titans);
+    if (players.count(me))
+        renderShiftGauge(players.at(me), me);
     renderHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     renderCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
@@ -83,6 +90,8 @@ void Renderer::updateWorld(GameState &state, const std::map<int, PlayerState> &p
 
     smoothPositions(players, dt);
     updateCamera(me);
+    updateSpeed(me, dt);
+    updateSpeedLines(dt);
     updateParticles(dt);
 
     for (const CollisionEffect &effect : state.takeEffects())
@@ -102,7 +111,8 @@ void Renderer::updateSounds(GameState &state, Phase phase, const std::map<int, P
         audio.play(Audio::Sfx::Beep);
     }
 
-    audio.setJetpack(phase == Phase::Running && alive && mine != players.end() && mine->second.jet_active);
+    bool flying = mine != players.end() && mine->second.form != Form::Shifting && mine->second.form != Form::Titan;
+    audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
 }
 
 // "ENTERING <district>", for a moment after the scenery changes
@@ -212,6 +222,18 @@ void Renderer::addEffect(const CollisionEffect &effect, int me)
         death_clocks.try_emplace(effect.player);
         emitParticles(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
         emitParticles(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == TITAN_HIT) {
+        audio.play(Audio::Sfx::Stomp);
+        shake = 0.6f;
+        death_clocks.try_emplace(effect.player);
+        emitParticles(tile_center, 40, NEON_RED, 9, 0.7f, 12);
+        emitParticles(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == TITAN_KILL) {
+        // Steam bursting from the nape
+        audio.play(Audio::Sfx::Explosion);
+        shake = std::max(shake, 0.3f);
+        emitParticles(tile_center + sf::Vector2f(0, -3), 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
+        emitParticles(tile_center + sf::Vector2f(0, -3), 20, NEON_RED, 6, 0.6f, 8);
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
         shake = std::max(shake, 0.15f);
@@ -243,13 +265,14 @@ void Renderer::renderEffects()
             // Coin pops: swells and fades out while +1 floats up
             drawTileSprite(coin_texture, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
             window.draw(makeText("+1", 30, withAlpha(NEON_CYAN, alpha), toScreen(tile + sf::Vector2f(0.5f, -t))));
-        } else if (active.effect.type == DRONE_TILE) {
+        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
             // Blast ring, and the bounty for whoever took it down
-            sf::Vector2f center = toScreen(tile + sf::Vector2f(0.5f, 0.5f));
-            drawHalo(center, tile_size * (0.3f + t), withAlpha(NEON_ORANGE, alpha / 2));
+            bool titan = active.effect.type == TITAN_KILL;
+            sf::Vector2f center = toScreen(tile + sf::Vector2f(0.5f, titan ? -3 : 0.5f));
+            drawHalo(center, tile_size * (0.3f + t) * (titan ? 3 : 1), withAlpha(NEON_ORANGE, alpha / 2));
             if (active.mine)
-                window.draw(makeText(std::format("+{}", DRONE_BOUNTY), 34, withAlpha(NEON_YELLOW, alpha),
-                                     toScreen(tile + sf::Vector2f(0.5f, -t))));
+                window.draw(makeText(std::format("+{}", titan ? TITAN_BOUNTY : DRONE_BOUNTY), titan ? 48 : 34,
+                                     withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * tile_size)));
         } else {
             sf::RectangleShape flash({SCREEN_WIDTH, SCREEN_HEIGHT});
             flash.setFillColor(withAlpha(NEON_RED, alpha / 2));

@@ -16,7 +16,7 @@
 // Music, plus sound effects synthesized at start-up: no audio files to ship
 class Audio {
 public:
-    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion };
+    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion, Stomp, Roar, Steam };
 
     Audio();
 
@@ -24,6 +24,8 @@ public:
     void play(Sfx sfx);
     // Thrust rumble, looping while the jetpack is on
     void setJetpack(bool on);
+    // Percentages, from the options
+    void setVolumes(int music, int sfx);
 
 private:
     static constexpr size_t VOICES = 12;

@@ -20,10 +20,11 @@ bool Server::resetMap()
     chunks_generated = 0;
     destroyed_drones.clear();
     projectiles.clear();
+    resetTitans();
 
-    if (!map_path.empty()) {
-        if (!game_map.loadFromFile(map_path)) {
-            std::cerr << "Invalid map file: " << map_path << std::endl;
+    if (!config.map_path.empty()) {
+        if (!game_map.loadFromFile(config.map_path)) {
+            std::cerr << "Invalid map file: " << config.map_path << std::endl;
             return false;
         }
     } else {
@@ -40,7 +41,9 @@ void Server::extendMap(float leader_x)
         float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
 
         bool drones = mode == GameMode::Cyberpsycho;
-        game_map.appendChunk(generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones));
+        std::vector<std::string> rows = generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
+        placeShiftOrb(rows);
+        game_map.appendChunk(rows);
 
         // Before the run, clients get the whole map in one go instead
         if (phase == Phase::Running)
@@ -66,7 +69,7 @@ void Server::updateGameState()
             if (players.empty()) {
                 resetMap();
                 phase = Phase::Waiting;
-                std::cout << "Lobby open" << std::endl;
+                announce("Lobby open");
             }
             break;
     }
@@ -99,7 +102,7 @@ void Server::startGame()
     run_speed = START_SPEED;
     ready_clients.clear();
 
-    std::cout << "Game starting with " << players.size() << " players" << std::endl;
+    announce("Game starting with " + std::to_string(players.size()) + " players");
 }
 
 // Rematch once everyone in the lobby asked for one
@@ -141,6 +144,7 @@ void Server::updatePlayers()
 {
     float max_y = game_map.getHeight() - Player::HEIGHT;
     float leader_x = 0;
+    float rear_x = 1e9f;
     std::vector<int> survivors;
 
     run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
@@ -148,23 +152,36 @@ void Server::updatePlayers()
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
         leader_x = std::max(leader_x, player.getX());
+        rear_x = std::min(rear_x, player.getX());
+    }
 
+    updateTitans(rear_x);
+    for (auto &[client_fd, player] : players) {
         if (!checkPlayerCollisions(player))
             survivors.push_back(player.getPlayerNumber());
     }
 
+    spawnTitans(leader_x);
     updateProjectiles();
     extendMap(leader_x);
     sendGameState();
+    sendTitans();
 
     if (survivors.size() < players.size())
-        endGame(survivors.size() == 1 && !solo ? survivors[0] : -1);
+        endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
 }
 
-// Samples the body from head to feet. Returns true when the player got zapped.
+// Samples the body from head to feet. Returns true when the player got zapped or run down.
 bool Server::checkPlayerCollisions(Player &player)
 {
     float px = player.getX() + 0.5f;
+
+    if (player.getForm() == Form::Titan) {
+        titanSmash(player);
+        return false;
+    }
+    if (player.getForm() == Form::Shifting)
+        return false;
 
     for (float dy : {0.3f, 1.0f, 1.7f}) {
         float py = player.getY() + dy;
@@ -174,12 +191,23 @@ bool Server::checkPlayerCollisions(Player &player)
 
         if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
             notifyCollision('c', player, tile_x, tile_y);
+        } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
+            player.startShift();
+            notifyCollision(SHIFT_TILE, player, tile_x, tile_y);
+            return false;
+        } else if (player.isInvincible()) {
+            continue;
         } else if ((tile == 'e' || isLiveDrone(tile_x, tile_y)) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
             notifyCollision('e', player, tile_x, tile_y);
             return true;
         }
+    }
+
+    if (!player.isInvincible() && hitByTitan(player)) {
+        notifyCollision(TITAN_HIT, player, player.getX(), player.getY() + 1);
+        return true;
     }
     return false;
 }
@@ -193,7 +221,8 @@ void Server::sendGameState()
         Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getScore());
-        state_data.push_back(player.isJetActive() ? 1 : 0);
+        // bit 0: jetpack, bits 1-2: form
+        state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));
@@ -234,7 +263,7 @@ void Server::endGame(int winner_number)
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_END, { winner }));
 
     if (winner_number >= 0)
-        std::cout << "Game over, player " << winner_number << " wins" << std::endl;
+        announce("Game over, player " + std::to_string(winner_number) + " wins");
     else
-        std::cout << "Game over, no winner" << std::endl;
+        announce("Game over, no winner");
 }

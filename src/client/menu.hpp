@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <functional>
 #include <string>
+#include "settings.hpp"
 
 class Renderer;
 class Audio;
@@ -27,13 +28,16 @@ struct MenuChoice {
 };
 
 struct MenuState {
-    enum class Screen { Main, Join, Character, Mode, District };
+    enum class Screen { Main, Join, Options, Character, Mode, District };
 
     Screen screen = Screen::Main;
     int selected = 0;
     int character = 0;
     int game_mode = 0;
     int district = 0;
+    int option = 0;
+    bool waiting_for_key = false;   // options: the next key pressed gets bound
+    Settings settings;
     std::string address = "127.0.0.1:4242";
     std::string error;
     int best_distance = 0;
@@ -41,11 +45,14 @@ struct MenuState {
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)
 namespace MenuLayout {
-    constexpr const char *ITEMS[] = {"SOLO RUN", "HOST A RUN", "JOIN A RUN", "JACK OUT"};
-    constexpr int ITEM_COUNT = 4;
+    constexpr const char *ITEMS[] = {"SOLO RUN", "HOST A RUN", "JOIN A RUN", "OPTIONS", "JACK OUT"};
+    enum Item { ITEM_SOLO, ITEM_HOST, ITEM_JOIN, ITEM_OPTIONS, ITEM_QUIT, ITEM_COUNT };
     constexpr float X = 1380;
-    constexpr float Y = 470;
-    constexpr float SPACING = 95;
+    constexpr float Y = 440;
+    constexpr float SPACING = 85;
+
+    // Options rows
+    enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_BACK, OPTION_COUNT };
     constexpr float WIDTH = 620;
     constexpr float HEIGHT = 80;
 
@@ -73,6 +80,11 @@ namespace MenuLayout {
     inline sf::FloatRect modeBox(int index)
     {
         return centeredBox({960 + (index - 0.5f) * 640, 560}, {560, 520});
+    }
+
+    inline sf::FloatRect optionBox(int index)
+    {
+        return centeredBox({960, 330 + index * 110.0f}, {1000, 90});
     }
 
     inline sf::FloatRect itemBox(int index)
@@ -103,6 +115,10 @@ private:
 
     bool handleEvent(const sf::Event &event, MenuChoice &choice);
     bool handleMainEvent(const sf::Event &event, MenuChoice &choice);
+    void handleOptionsEvent(const sf::Event &event);
+    void changeVolume(int delta);
+    void bindKey(sf::Keyboard::Key key);
+    void leaveOptions();
     void handleJoinEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
     void handleModeEvent(const sf::Event &event);
@@ -115,15 +131,12 @@ private:
     bool parseAddress();
 
 public:
-    explicit Menu(sf::RenderWindow &window);
+    Menu(sf::RenderWindow &window, const Settings &settings);
 
     // Shows the menu until the player picks something
     MenuChoice run(Renderer &renderer);
     void setError(const std::string &error) { state.error = error; }
+    const Settings &getSettings() const { return state.settings; }
 };
-
-// Best solo distance, kept in ~/.local/share/samuride
-int loadBestDistance();
-void saveBestDistance(int distance);
 
 #endif

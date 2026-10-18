@@ -37,6 +37,13 @@ private:
         bool mine;      // caused by this player
     };
 
+    // Screen-space streak sold as wind: more and faster as the run speeds up
+    struct SpeedLine {
+        sf::Vector2f pos;
+        float length;
+        float speed;    // pixels per second
+    };
+
     // CYBERPSYCHO projectile, drawn from its shooter and its age
     struct ShotTrail {
         int player;
@@ -83,6 +90,9 @@ private:
     struct PlayerAnim {
         bool on_ground = true;
         sf::Clock air_clock;
+        Form form = Form::Normal;
+        sf::Clock form_clock;   // time in the current form
+        float smoke_x = 0;      // where the titan stood when it ended, in tiles
     };
 
     struct AnimationFrame {
@@ -115,6 +125,13 @@ private:
     std::vector<Character> characters;
     std::map<int, int> roster;
 
+    // One per TitanType, and how many were on screen last frame (a new one stomps in)
+    std::vector<Character> titan_sprites;
+    Character shift_sprite;     // Eren's transformation: smoke and emerging
+    Character eren_titan;       // Eren's titan running, sharper than the transformation sheet's
+    sf::Texture titan_face;     // on the power-up orb
+    size_t titans_on_screen;
+
     Audio audio;
     int heard_countdown;    // last countdown value beeped
 
@@ -126,6 +143,12 @@ private:
     float camera_x;
     float tile_size;
     std::map<int, sf::Vector2f> display_positions;
+
+    // Speed feel: measured from your own movement, no extra network data
+    float run_speed;        // tiles per second
+    float last_x;           // your position on the previous frame, -1 before the first one
+    float run_phase;        // run animation clock, ticking faster as you speed up
+    std::vector<SpeedLine> speed_lines;
 
     std::vector<ActiveEffect> effects;
     std::vector<Particle> particles;
@@ -191,6 +214,7 @@ private:
     void loadAssets();
     void loadBackdrops();
     void loadCharacters();
+    void loadTitans();
     void loadFonts();
     void loadTexture(sf::Texture &texture, const std::string &path);
     const sf::Texture *sharedTexture(const std::string &path);
@@ -210,6 +234,7 @@ private:
     void drawOverlay(uint8_t alpha);
     void drawCard(sf::FloatRect box, bool selected);
     void drawHalo(sf::Vector2f center, float radius, sf::Color color);
+    void drawBacking(sf::Vector2f center, float radius, sf::Color ring);
     void drawImage(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
     std::string playerLabel(int player_num, int me) const;
     const Character &characterOf(int player_num) const;
@@ -225,6 +250,9 @@ private:
     void renderCharacterSelect(const MenuState &menu);
     void drawCharacterCard(int index, bool selected, float time);
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time);
+    void renderOptions(const MenuState &menu);
+    void drawOptionRow(int index, const MenuState &menu);
+    void drawVolumeBar(int volume, sf::Vector2f right, bool selected);
     void renderModeSelect(const MenuState &menu);
     void drawModeCard(int index, bool selected);
     void renderDistrictSelect(const MenuState &menu);
@@ -241,6 +269,9 @@ private:
     sf::Vector2f toScreen(sf::Vector2f world) const;
     void smoothPositions(const std::map<int, PlayerState> &players, float dt);
     void updateCamera(int me);
+    void updateSpeed(int me, float dt);
+    void updateSpeedLines(float dt);
+    void renderSpeedLines();
 
     void renderDistrict(int district);
     void renderBackdrop(const Backdrop &backdrop, float opacity);
@@ -291,6 +322,25 @@ private:
     void renderShots(const std::set<std::pair<int, int>> &destroyed);
     void renderDrone(int x, int y, float time);
     void drawDroneSprite(sf::Vector2f center, float width, int frame);
+
+    //===========================================================================
+    // render_titans.cpp: titans charging along the floor
+    //===========================================================================
+    void renderTitans(const std::vector<TitanState> &titans);
+    void drawTitan(const TitanState &titan, float time);
+    void renderTitanWarnings(const std::vector<TitanState> &titans);
+    void updateTitanStomps(const std::vector<TitanState> &titans);
+
+    //===========================================================================
+    // render_shift.cpp: the Attack Titan power-up
+    //===========================================================================
+    void renderShiftOrb(int x, int y, float time);
+    void updateForm(int player_num, const PlayerState &player, bool is_me);
+    void drawShift(int player_num, const PlayerState &player, bool is_me);
+    void drawSteamPuff(int player_num);
+    void drawShiftFrame(const Character &sheet, const Animation &anim, int frame, float center_x, uint8_t alpha,
+                        bool flip = false);
+    void renderShiftGauge(const PlayerState &player, int me);
 
 public:
     Renderer();

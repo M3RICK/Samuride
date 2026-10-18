@@ -9,87 +9,51 @@
 #include "../common/debug.hpp"
 #include "../common/socket.hpp"
 #include <iostream>
-#include <cstring>
 #include <chrono>
-#include <cerrno>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <algorithm>
 
 //=============================================================================
 // Constructor & Destructor
 //=============================================================================
 
-Server::Server(int port, const std::string& map_path, bool solo, bool debug_mode)
-    : server_fd(-1), port(port), map_path(map_path), solo(solo), debug_mode(debug_mode),
-      required_players(solo ? 1 : 2), rng(std::random_device{}()), chunks_generated(0),
-      run_speed(START_SPEED), phase(Phase::Waiting), countdown(0), countdown_ticks(0), district(0),
-      mode(GameMode::Classic) {
-    g_logger.setDebugMode(debug_mode);
+Server::Server(const ServerConfig &config)
+    : config(config), server_fd(-1), stopping(false), required_players(config.solo ? 1 : 2),
+      rng(std::random_device{}()), chunks_generated(0), run_speed(START_SPEED), phase(Phase::Waiting),
+      countdown(0), countdown_ticks(0), district(0), mode(GameMode::Classic), titan_timer(0) {
+    g_logger.setDebugMode(config.debug_mode);
 }
 
 Server::~Server()
 {
-    for (auto& pfd : poll_fds) {
-        if (pfd.fd >= 0) {
-            close(pfd.fd);
-        }
-    }
+    for (const Socket::PollEntry &entry : poll_fds)
+        Socket::close(entry.fd);
 }
 
 //=============================================================================
 // Server Initialization
 //=============================================================================
 
+// A solo run is nobody else's business: it only listens on loopback
 bool Server::initialize()
 {
-    if (!resetMap())
+    if (!Socket::startup() || !resetMap())
         return false;
 
-    return initializeServer();
-}
-
-bool Server::initializeServer()
-{
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    server_fd = Socket::listen(config.port, config.solo);
     if (server_fd < 0) {
-        std::cerr << "Failed to create socket: " << strerror(errno) << std::endl;
+        std::cerr << "Cannot listen on port " << config.port << ": " << Socket::lastError() << std::endl;
         return false;
     }
 
-    Socket::setNonBlocking(server_fd);
-
-    if (!setSocketOptions() || !bindSocket() || listen(server_fd, 5) < 0) {
-        std::cerr << "Cannot listen on port " << port << ": " << strerror(errno) << std::endl;
-        close(server_fd);
-        return false;
-    }
-
-    pollfd pfd = {server_fd, POLLIN, 0};
-    poll_fds.push_back(pfd);
-
-    std::cout << "Samuride server listening on port " << port << (solo ? " (solo)" : "") << std::endl;
+    poll_fds.push_back({server_fd});
+    announce("Samuride server listening on port " + std::to_string(config.port) + (config.solo ? " (solo)" : ""));
     return true;
 }
 
-bool Server::setSocketOptions()
+void Server::announce(const std::string &message) const
 {
-    int opt = 1;
-
-    return setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == 0;
-}
-
-bool Server::bindSocket()
-{
-    struct sockaddr_in address;
-    memset(&address, 0, sizeof(address));
-    address.sin_family = AF_INET;
-    // A solo run is nobody else's business
-    address.sin_addr.s_addr = htonl(solo ? INADDR_LOOPBACK : INADDR_ANY);
-    address.sin_port = htons(port);
-
-    return bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == 0;
+    if (!config.quiet)
+        std::cout << message << std::endl;
 }
 
 //=============================================================================
@@ -103,10 +67,10 @@ void Server::run()
     const auto tick = std::chrono::microseconds(1000000 / TICK_RATE);
     auto next_tick = clock::now();
 
-    while (true) {
+    while (!stopping) {
         auto wait = std::chrono::duration_cast<std::chrono::milliseconds>(next_tick - clock::now());
 
-        if (poll(poll_fds.data(), poll_fds.size(), std::max<int>(wait.count(), 0)) < 0 && errno != EINTR)
+        if (!Socket::poll(poll_fds, std::max<int>(wait.count(), 0)))
             break;
 
         processSocketEvents();
@@ -121,18 +85,15 @@ void Server::run()
 void Server::processSocketEvents()
 {
     // Copy: accepting or removing a client changes poll_fds
-    std::vector<pollfd> fds = poll_fds;
+    std::vector<Socket::PollEntry> entries = poll_fds;
 
-    for (const pollfd &pfd : fds) {
-        if (pfd.revents == 0)
-            continue;
-
-        if (pfd.fd == server_fd) {
+    for (const Socket::PollEntry &entry : entries) {
+        if (entry.fd == server_fd && entry.readable) {
             acceptNewClient();
-        } else if (pfd.revents & POLLIN) {
-            handleClientData(pfd.fd);
-        } else if (pfd.revents & (POLLHUP | POLLERR)) {
-            removeClient(pfd.fd);
+        } else if (entry.readable) {
+            handleClientData(entry.fd);
+        } else if (entry.closed) {
+            removeClient(entry.fd);
         }
     }
 }
@@ -143,24 +104,21 @@ void Server::processSocketEvents()
 
 void Server::acceptNewClient()
 {
-    int client_fd = accept(server_fd, nullptr, nullptr);
+    int client_fd = Socket::accept(server_fd);
 
     if (client_fd < 0)
         return;
 
     if (phase != Phase::Waiting || players.size() >= required_players) {
         DEBUG_LOG("Lobby full, rejecting client: " + std::to_string(client_fd));
-        close(client_fd);
+        Socket::close(client_fd);
         return;
     }
 
-    Socket::setNonBlocking(client_fd);
-
-    pollfd pfd = {client_fd, POLLIN, 0};
-    poll_fds.push_back(pfd);
+    poll_fds.push_back({client_fd});
     players.try_emplace(client_fd, client_fd);
 
-    std::cout << "Player connected (" << players.size() << "/" << required_players << ")" << std::endl;
+    announce("Player connected (" + std::to_string(players.size()) + "/" + std::to_string(required_players) + ")");
 
     sendMapToClient(client_fd);
 }
@@ -176,10 +134,10 @@ void Server::removeClient(int client_fd)
         return;
 
     ready_clients.erase(client_fd);
-    close(client_fd);
-    std::erase_if(poll_fds, [client_fd](const pollfd &pfd) { return pfd.fd == client_fd; });
+    Socket::close(client_fd);
+    std::erase_if(poll_fds, [client_fd](const Socket::PollEntry &entry) { return entry.fd == client_fd; });
 
-    std::cout << "Player disconnected (" << players.size() << "/" << required_players << ")" << std::endl;
+    announce("Player disconnected (" + std::to_string(players.size()) + "/" + std::to_string(required_players) + ")");
 
     handlePlayerDisconnection();
 }
@@ -189,7 +147,7 @@ void Server::handlePlayerDisconnection()
     bool in_game = phase == Phase::Countdown || phase == Phase::Running;
 
     if (in_game)
-        endGame(players.size() == 1 && !solo ? players.begin()->second.getPlayerNumber() : -1);
+        endGame(players.size() == 1 && !config.solo ? players.begin()->second.getPlayerNumber() : -1);
 }
 
 //=============================================================================

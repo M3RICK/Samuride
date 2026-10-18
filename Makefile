@@ -1,36 +1,52 @@
 CC = g++
 CFLAGS = -Wall -Wextra -g -O2 -std=c++20 -I./src -MMD -MP
 LDFLAGS = -pthread
+EXE =
+
+# TARGET=windows with a MinGW compiler (CC=x86_64-w64-mingw32-g++): .exe files, Winsock,
+# no console window for the game, and the C++ runtime linked in
+ifeq ($(TARGET),windows)
+EXE = .exe
+LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-Bstatic -lpthread -Wl,-Bdynamic
+WINDOWS_LIBS = -lws2_32
+CLIENT_WINDOWS = -mwindows
+endif
 
 # Set SFML_DIR if SFML 3 is not installed system-wide.
 # RPATH is where the binaries look for it at run time ('$$ORIGIN/lib' for a relocatable release).
 ifdef SFML_DIR
 RPATH ?= $(SFML_DIR)/lib
 CFLAGS += -I$(SFML_DIR)/include
-LDFLAGS += -L$(SFML_DIR)/lib -Wl,--disable-new-dtags,-rpath,'$(RPATH)'
+LDFLAGS += -L$(SFML_DIR)/lib
+ifneq ($(TARGET),windows)
+LDFLAGS += -Wl,--disable-new-dtags,-rpath,'$(RPATH)'
+endif
 endif
 
 # Common sources
-COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp
+COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp src/common/platform.cpp
 
-# Server sources
-SERVER_SRCS = src/server/main.cpp src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp src/server/combat.cpp
+# Server sources; the game links the server core too, to host solo and multiplayer runs itself
+SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
+                   src/server/combat.cpp src/server/titans.cpp src/server/shift.cpp
+SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
 CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/render.cpp src/client/inputs.cpp src/client/state.cpp \
-              src/client/render_menu.cpp src/client/render_world.cpp src/client/render_game.cpp src/client/render_combat.cpp \
-              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp
+              src/client/render_menu.cpp src/client/render_world.cpp src/client/render_game.cpp src/client/render_combat.cpp src/client/render_titans.cpp src/client/render_shift.cpp \
+              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp
 CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 # Object files
 COMMON_OBJS = $(COMMON_SRCS:.cpp=.o)
 SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
+SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:.cpp=.o)
 CLIENT_OBJS = $(CLIENT_SRCS:.cpp=.o)
 ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) src/common/tests.o
 
 # Executables
-SERVER_BIN = jetpack_server
-CLIENT_BIN = jetpack_client
+SERVER_BIN = jetpack_server$(EXE)
+CLIENT_BIN = jetpack_client$(EXE)
 
 # Rules
 all: server client
@@ -40,10 +56,10 @@ server: $(SERVER_BIN)
 client: $(CLIENT_BIN)
 
 $(SERVER_BIN): $(SERVER_OBJS) $(COMMON_OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(WINDOWS_LIBS)
 
-$(CLIENT_BIN): $(CLIENT_OBJS) $(COMMON_OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(CLIENT_LDFLAGS)
+$(CLIENT_BIN): $(CLIENT_OBJS) $(SERVER_CORE_OBJS) $(COMMON_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(CLIENT_LDFLAGS) $(WINDOWS_LIBS) $(CLIENT_WINDOWS)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@

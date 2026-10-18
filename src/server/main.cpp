@@ -19,14 +19,7 @@ void printUsage(const char  *programme)
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 
-struct Options {
-    int port = -1;
-    std::string map_path;
-    bool solo = false;
-    bool debug_mode = false;
-};
-
-static bool parseOptions(int argc, char **argv, Options &options)
+static bool parseOptions(int argc, char **argv, ServerConfig &options)
 {
     int opt;
 
@@ -53,14 +46,14 @@ static bool parseOptions(int argc, char **argv, Options &options)
 
 int main(int argc, char **argv)
 {
-    Options options;
+    ServerConfig options;
 
     if (!parseOptions(argc, argv, options)) {
         printUsage(argv[0]);
         return 1;
     }
 
-    Server server(options.port, options.map_path, options.solo, options.debug_mode);
+    Server server(options);
 
     if (!server.initialize())
         return 1;

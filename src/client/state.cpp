@@ -18,6 +18,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     mode = run_mode;
     destroyed_drones.clear();
     pending_shots.clear();
+    titans.clear();
     phase = Phase::Countdown;
     countdown = 0;
     winner = -1;
@@ -36,18 +37,18 @@ void GameState::setCountdown(int value)
         phase = Phase::Running;
 }
 
-void GameState::updatePlayer(int player_number, float x, float y, int score, bool jet_active)
+void GameState::updatePlayer(int player_number, const PlayerState &player)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    players[player_number] = {x, y, score, jet_active};
+    players[player_number] = player;
 }
 
 void GameState::handleCollision(char type, int player, int x, int y)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    if (type == 'c' && player == my_player_number)
+    if ((type == 'c' || type == SHIFT_TILE) && player == my_player_number)
         my_coins.insert({x, y});
     if (type == DRONE_TILE)
         destroyed_drones.insert({x, y});
@@ -120,6 +121,20 @@ void GameState::pushShot(ShotEvent shot)
     std::lock_guard<std::mutex> lock(state_mutex);
 
     pending_shots.push_back(shot);
+}
+
+void GameState::setTitans(std::vector<TitanState> list)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    titans = std::move(list);
+}
+
+std::vector<TitanState> GameState::getTitans() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return titans;
 }
 
 GameMode GameState::getMode() const

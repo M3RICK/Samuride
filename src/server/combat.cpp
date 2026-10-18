@@ -31,6 +31,7 @@ void Server::handleAttack(int client_fd)
 
     if (weapon == Weapon::Blade) {
         strike(client_fd, player, stats.reach);
+        slashTitans(client_fd, player, stats.reach);
         return;
     }
 

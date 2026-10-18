@@ -9,11 +9,12 @@
 #include "render.hpp"
 #include "audio.hpp"
 #include "characters.hpp"
+#include <algorithm>
 #include <cstdlib>
-#include <filesystem>
-#include <fstream>
 
-Menu::Menu(sf::RenderWindow &window) : window(window), pending{MenuChoice::Mode::Quit, "", 0, 0, -1} {
+Menu::Menu(sf::RenderWindow &window, const Settings &settings)
+    : window(window), pending{MenuChoice::Mode::Quit, "", 0, 0, -1} {
+    state.settings = settings;
 }
 
 MenuChoice Menu::run(Renderer &renderer)
@@ -69,6 +70,9 @@ bool Menu::handleEvent(const sf::Event &event, MenuChoice &choice)
             return handleMainEvent(event, choice);
         case MenuState::Screen::Join:
             handleJoinEvent(event);
+            return false;
+        case MenuState::Screen::Options:
+            handleOptionsEvent(event);
             return false;
         case MenuState::Screen::Character:
             return handleCharacterEvent(event, choice);
@@ -149,23 +153,98 @@ void Menu::handleJoinEvent(const sf::Event &event)
 
 bool Menu::activate(MenuChoice &choice)
 {
-    static constexpr MenuChoice::Mode modes[] = {
-        MenuChoice::Mode::Solo, MenuChoice::Mode::Host, MenuChoice::Mode::Join, MenuChoice::Mode::Quit
-    };
-
     state.error.clear();
-    if (modes[state.selected] == MenuChoice::Mode::Join) {
-        state.screen = MenuState::Screen::Join;
-        return false;
+
+    switch (state.selected) {
+        case MenuLayout::ITEM_JOIN:
+            state.screen = MenuState::Screen::Join;
+            return false;
+        case MenuLayout::ITEM_OPTIONS:
+            state.option = 0;
+            state.screen = MenuState::Screen::Options;
+            return false;
+        case MenuLayout::ITEM_QUIT:
+            choice.mode = MenuChoice::Mode::Quit;
+            return true;
+        default:
+            break;
     }
-    choice.mode = modes[state.selected];
-    if (choice.mode == MenuChoice::Mode::Quit)
-        return true;
 
     // Every run goes through the character select
+    choice.mode = state.selected == MenuLayout::ITEM_SOLO ? MenuChoice::Mode::Solo : MenuChoice::Mode::Host;
     pending = {choice.mode, "", 0, 0, -1};
     state.screen = MenuState::Screen::Character;
     return false;
+}
+
+//=============================================================================
+// Options
+//=============================================================================
+
+void Menu::handleOptionsEvent(const sf::Event &event)
+{
+    const auto *key = event.getIf<sf::Event::KeyPressed>();
+    bool on_volume = state.option == MenuLayout::OPTION_MUSIC || state.option == MenuLayout::OPTION_SFX;
+
+    // Waiting for the key to bind: Escape cancels
+    if (state.waiting_for_key) {
+        if (key && key->code != sf::Keyboard::Key::Escape)
+            bindKey(key->code);
+        else if (key)
+            state.waiting_for_key = false;
+        return;
+    }
+
+    if (isKey(event, sf::Keyboard::Key::Escape)) {
+        leaveOptions();
+        return;
+    }
+    // Left and right set the volume instead of moving the selection
+    if (key && (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::Right)) {
+        if (on_volume)
+            changeVolume(key->code == sf::Keyboard::Key::Right ? 10 : -10);
+        return;
+    }
+    if (!navigate(event, state.option, MenuLayout::OPTION_COUNT, 1, MenuLayout::optionBox))
+        return;
+
+    if (state.option == MenuLayout::OPTION_BACK)
+        leaveOptions();
+    else if (on_volume)
+        changeVolume((state.option == MenuLayout::OPTION_MUSIC ? state.settings.music_volume
+                                                                 : state.settings.sfx_volume) == 100 ? -100 : 10);
+    else
+        state.waiting_for_key = true;
+}
+
+// Steps of 10%, heard straight away
+void Menu::changeVolume(int delta)
+{
+    int &volume = state.option == MenuLayout::OPTION_MUSIC ? state.settings.music_volume : state.settings.sfx_volume;
+
+    volume = std::clamp(volume + delta, 0, 100);
+    audio->setVolumes(state.settings.music_volume, state.settings.sfx_volume);
+    audio->play(Audio::Sfx::MenuMove);
+}
+
+// A key already used by the other action swaps with it
+void Menu::bindKey(sf::Keyboard::Key key)
+{
+    Settings &settings = state.settings;
+    sf::Keyboard::Key &target = state.option == MenuLayout::OPTION_JETPACK ? settings.jetpack_key : settings.attack_key;
+    sf::Keyboard::Key &other = state.option == MenuLayout::OPTION_JETPACK ? settings.attack_key : settings.jetpack_key;
+
+    if (key == other)
+        other = target;
+    target = key;
+    state.waiting_for_key = false;
+    audio->play(Audio::Sfx::MenuConfirm);
+}
+
+void Menu::leaveOptions()
+{
+    state.settings.save();
+    state.screen = MenuState::Screen::Main;
 }
 
 bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
@@ -236,27 +315,4 @@ bool Menu::parseAddress()
     pending = {MenuChoice::Mode::Join, host, port, 0, -1};
     state.screen = MenuState::Screen::Character;
     return false;
-}
-
-static std::filesystem::path bestDistancePath()
-{
-    const char *home = std::getenv("HOME");
-
-    return std::filesystem::path(home ? home : ".") / ".local/share/samuride/best_run";
-}
-
-int loadBestDistance()
-{
-    std::ifstream file(bestDistancePath());
-    int distance = 0;
-
-    file >> distance;
-    return distance;
-}
-
-void saveBestDistance(int distance)
-{
-    std::error_code ec;
-    std::filesystem::create_directories(bestDistancePath().parent_path(), ec);
-    std::ofstream(bestDistancePath()) << distance << std::endl;
 }

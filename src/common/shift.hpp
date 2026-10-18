@@ -1,0 +1,33 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
+#ifndef SHIFT_HPP
+    #define SHIFT_HPP
+
+#include <cstdint>
+
+// The Attack Titan power-up: grab the orb, stop while the smoke rises, then run as Eren's
+// titan for a few seconds, invincible, before bursting back out of the smoke.
+
+enum class Form : uint8_t { Normal, Shifting, Titan, Emerging };
+
+// Map tile of the power-up orb
+constexpr char SHIFT_TILE = 'p';
+
+constexpr float SHIFT_TIME = 1.8f;      // standing still in the smoke
+constexpr float TITAN_TIME = 5.0f;      // running as the titan
+constexpr float EMERGE_TIME = 1.0f;     // back to normal, still invincible
+
+// The titan stands on the floor, half the screen tall
+constexpr float TITAN_FORM_HEIGHT = 5.0f;
+constexpr float TITAN_FORM_WIDTH = 2.5f;
+
+// One orb in roughly this share of the map chunks, never in the first ones
+constexpr float SHIFT_CHANCE = 0.3f;
+constexpr int SHIFT_FIRST_CHUNK = 3;
+
+#endif

@@ -38,6 +38,7 @@ struct Character {
     sf::Color exhaust{252, 238, 10};
 
     Animation run, takeoff, rise, hover, fall, death, attack;
+    Animation smoke, emerge;    // Eren's transformation only
 
     bool load(const std::string &dir);
     sf::IntRect frameRect(const Animation &anim, int index) const;

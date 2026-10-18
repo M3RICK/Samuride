@@ -11,7 +11,10 @@
 
 ---
 
-<p align="center"><img src="docs/gameplay.png" alt="Gameplay" width="800px"></p>
+<p align="center"><img src="docs/gameplay.webp" alt="Gameplay: Mikasa and Jinx in CYBERPSYCHO" width="720px"></p>
+
+<p align="center"><img src="docs/versus.png" alt="Two players: Jinx and Mikasa in CYBERPSYCHO" width="720px"><br>
+<em>Two runners, one corridor: Jinx and Mikasa in CYBERPSYCHO.</em></p>
 
 ## The run
 
@@ -21,6 +24,8 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Versus**: two runners, one corridor. First one to get zapped loses.
 - **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
 - **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.
+- **Attack Titan**: grab the rare orange orb and you stop while the smoke rises, then run for 5 seconds as Eren's titan, invincible, crushing drones and titans and sweeping up the eddies, before bursting back out of the smoke.
+- **Titans** charge along the floor past 150 m: a blinking `!` warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.
@@ -28,9 +33,11 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 
 | Key | Action |
 | --- | --- |
-| `Space` (hold) | Jetpack |
-| `F` | Attack (CYBERPSYCHO) |
+| `Space` (hold) | Jetpack (default) |
+| `F` | Attack in CYBERPSYCHO (default) |
 | `Esc` | Back to menu |
+
+Keys and volumes can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
 | Arrows / mouse + `Enter` | Menu |
 
 <p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>
@@ -39,7 +46,13 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 
 ## Download
 
-Grab `samuride-<version>-linux-x86_64.tar.gz` from the [Releases](../../releases) page, then:
+Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install.
+
+**Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `jetpack_client.exe`.
+- The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
+- To host a run, allow the game when the firewall asks, or your friend won't be able to join.
+
+**Linux** (x86_64, glibc 2.39 or newer: Ubuntu 24.04+, Fedora 40+, Arch...):
 
 ```sh
 tar xzf samuride-*-linux-x86_64.tar.gz
@@ -47,7 +60,7 @@ cd samuride-*-linux-x86_64
 ./jetpack_client
 ```
 
-Everything it needs is in the archive. Runs on x86_64 Linux with glibc 2.39 or newer (Ubuntu 24.04+, Fedora 40+, Arch...).
+Windows and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
 
 ## Build
 
@@ -60,7 +73,8 @@ make tests               # protocol, map streaming & generator self-checks
 ```
 
 SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
-`tools/package_release.sh` builds the same self-contained archive as the Releases page.
+`tools/package_release.sh` builds the same self-contained archive as the Releases page, and
+`tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath).
 
 ## Play
 
@@ -97,6 +111,7 @@ Plain text, one character per tile, all lines the same length:
 | `c` | eddie (coin) |
 | `e` | zapper |
 | `d` | drone (CYBERPSYCHO) |
+| `p` | Attack Titan orb |
 
 ## Crew
 

@@ -59,6 +59,7 @@ private:
 
     void handleGameStart(const std::vector<uint8_t> &payload);
     void handleShot(const std::vector<uint8_t> &payload);
+    void handleTitans(const std::vector<uint8_t> &payload);
     void handleGameState(const std::vector<uint8_t> &payload);
     void handleCollision(const std::vector<uint8_t> &payload);
     void handleGameEnd(const std::vector<uint8_t> &payload);

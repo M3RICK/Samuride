@@ -44,6 +44,60 @@ void Renderer::updateCamera(int me)
 }
 
 //=============================================================================
+// Speed
+//=============================================================================
+
+// Your speed from how far you moved since the last frame, eased so it doesn't flicker
+void Renderer::updateSpeed(int me, float dt)
+{
+    auto mine = display_positions.find(me);
+
+    if (mine == display_positions.end() || dt <= 0)
+        return;
+
+    float measured = last_x < 0 ? 0 : (mine->second.x - last_x) / dt;
+    last_x = mine->second.x;
+    if (measured >= 0 && measured < 40)
+        run_speed += (measured - run_speed) * std::min(1.0f, dt * 2);
+    run_phase += dt * std::max(1.0f, run_speed / 9);
+}
+
+// Streaks start past 7 tiles/s and thicken up to top speed
+void Renderer::updateSpeedLines(float dt)
+{
+    size_t wanted = std::clamp(static_cast<int>((run_speed - 7) * 4), 0, 60);
+
+    while (speed_lines.size() < wanted) {
+        float speed = run_speed * tile_size * randf(1.5f, 2.5f);
+        sf::Vector2f pos(SCREEN_WIDTH + randf(0, SCREEN_WIDTH), randf(PLAY_TOP, PLAY_BOTTOM));
+        speed_lines.push_back({pos, randf(80, 240), speed});
+    }
+
+    for (SpeedLine &line : speed_lines)
+        line.pos.x -= line.speed * dt;
+    std::erase_if(speed_lines, [](const SpeedLine &line) { return line.pos.x + line.length < 0; });
+    if (speed_lines.size() > wanted)
+        speed_lines.resize(wanted);
+}
+
+void Renderer::renderSpeedLines()
+{
+    sf::RectangleShape line;
+
+    // Brighter at the head, so each streak reads as moving left
+    for (const SpeedLine &streak : speed_lines) {
+        line.setSize({streak.length, 3});
+        line.setPosition(streak.pos);
+        line.setFillColor(withAlpha(sf::Color::White, 70));
+        window.draw(line, sf::BlendAdd);
+
+        line.setSize({streak.length * 0.25f, 3});
+        line.setFillColor(withAlpha(NEON_CYAN, 140));
+        window.draw(line, sf::BlendAdd);
+    }
+}
+
+//=============================================================================
 // Backdrops
 //=============================================================================
 
@@ -172,6 +226,8 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected, co
                 renderCoin(x, y, time);
             else if (tile == 'e')
                 renderZapper(x, y);
+            else if (tile == SHIFT_TILE && !collected.count({x, y}))
+                renderShiftOrb(x, y, time);
             else if (isLiveDrone(x, y, destroyed))
                 renderDrone(x, y, time);
         }
@@ -179,12 +235,25 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected, co
 }
 
 // Bobbing coin with a soft pink halo
+// Bobbing, spinning coin on a dark disc ringed in yellow: the pink coin alone vanishes on neon skylines
 void Renderer::renderCoin(int x, int y, float time)
 {
-    sf::Vector2f world(x, y + std::sin(time * 4 + x) * 0.06f);
+    sf::Vector2f size(coin_texture.getSize());
+    sf::Vector2f center = toScreen({x + 0.5f, y + 0.5f + std::sin(time * 4 + x) * 0.06f});
 
-    drawHalo(toScreen(world + sf::Vector2f(0.5f, 0.5f)), tile_size * 0.32f, withAlpha(NEON_PINK, 40));
-    drawTileSprite(coin_texture, world, 0.55f, sf::Color::White);
+    drawHalo(center, tile_size * 0.45f, withAlpha(NEON_YELLOW, 45));
+    drawBacking(center, tile_size * 0.36f, withAlpha(NEON_YELLOW, 220));
+
+    if (size.y == 0)
+        return;
+
+    float scale = tile_size * 0.6f / size.y;
+    float spin = std::max(0.25f, std::abs(std::cos(time * 3 + x * 0.7f)));
+    sf::Sprite coin(coin_texture);
+    coin.setOrigin(size / 2.f);
+    coin.setScale({scale * spin, scale});
+    coin.setPosition(center);
+    window.draw(coin);
 }
 
 // Jetpack Joyride zapper: neighbouring nodes are linked by a live beam
@@ -286,7 +355,8 @@ void Renderer::renderPlayers(const std::map<int, PlayerState> &players, int me)
     for (const auto &[player_num, player] : players) {
         sf::Vector2f nozzle = display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
 
-        if (live && player.jet_active) {
+        bool flying = player.form == Form::Normal || player.form == Form::Emerging;
+        if (live && flying && player.jet_active) {
             emitParticles(nozzle, 2, characterOf(player_num).exhaust, 1.5f, 0.35f, 0, {0, 8});
             emitParticles(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
@@ -332,7 +402,7 @@ Renderer::AnimationFrame Renderer::pickAnimation(int player_num, const PlayerSta
     if (attack != attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < character.attack.duration())
         return {&character.attack, attack->second.getElapsedTime().asSeconds()};
     if (on_ground)
-        return {&character.run, time};
+        return {&character.run, run_phase};
     if (air_time < character.takeoff.duration())
         return {&character.takeoff, air_time};
     if (!player.jet_active)
@@ -344,6 +414,14 @@ Renderer::AnimationFrame Renderer::pickAnimation(int player_num, const PlayerSta
 
 void Renderer::renderPlayerSprite(int player_num, const PlayerState &player, bool is_me)
 {
+    updateForm(player_num, player, is_me);
+    if (player.form == Form::Shifting || player.form == Form::Titan) {
+        drawShift(player_num, player, is_me);
+        return;
+    }
+    if (player.form == Form::Emerging)
+        drawSteamPuff(player_num);
+
     const Character &character = characterOf(player_num);
     AnimationFrame animation = pickAnimation(player_num, player, updateAirState(player_num));
     int frame = animation.animation->frameAt(animation.time);
@@ -370,7 +448,7 @@ void Renderer::renderPlayerSprite(int player_num, const PlayerState &player, boo
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
     else if (!is_me)
-        sprite.setColor(sf::Color(255, 255, 255, 140));
+        sprite.setColor(sf::Color(255, 255, 255, 215));
     window.draw(sprite);
 
     if (shocked && std::rand() % 2)

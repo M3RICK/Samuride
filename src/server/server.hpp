@@ -8,16 +8,26 @@
 #ifndef SERVER_HPP
     #define SERVER_HPP
 
+#include <atomic>
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
 #include <random>
-#include <poll.h>
+#include "../common/socket.hpp"
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/titans.hpp"
 #include "player.hpp"
+
+struct ServerConfig {
+    int port = -1;
+    std::string map_path;       // optional hand-made start of the run
+    bool solo = false;          // one player, on loopback only
+    bool debug_mode = false;
+    bool quiet = false;         // no status lines: when running inside the game
+};
 
 class Server {
 private:
@@ -35,9 +45,14 @@ private:
     static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 12;
 
     // Run speed in tiles per second, ramps up over time
-    static constexpr float START_SPEED = 7.0f;
-    static constexpr float MAX_SPEED = 16.0f;
-    static constexpr float ACCELERATION = 0.12f;
+    static constexpr float START_SPEED = 9.0f;
+    static constexpr float MAX_SPEED = 18.0f;
+    static constexpr float ACCELERATION = 0.15f;
+
+    struct Titan {
+        TitanType type;
+        float x;        // left edge, in tiles
+    };
 
     struct Projectile {
         int owner_fd;
@@ -47,11 +62,9 @@ private:
         float max_x;
     };
 
+    ServerConfig config;
     int server_fd;
-    int port;
-    std::string map_path;
-    bool solo;
-    bool debug_mode;
+    std::atomic<bool> stopping;
     size_t required_players;
 
     Map game_map;
@@ -71,7 +84,10 @@ private:
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
 
-    std::vector<pollfd> poll_fds;
+    std::vector<Titan> titans;
+    float titan_timer;      // seconds before the next titan
+
+    std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
 
     // More unparsed bytes than this from a client is garbage
@@ -81,15 +97,10 @@ private:
     // Server Initialization
     //===========================================================================
 
-    bool initializeServer();
 
     bool resetMap();
 
     void extendMap(float leader_x);
-
-    bool setSocketOptions();
-
-    bool bindSocket();
 
     //===========================================================================
     // Client Connection Management
@@ -120,6 +131,8 @@ private:
     void processSocketEvents();
 
     void updateGameState();
+
+    void announce(const std::string &message) const;
 
     //===========================================================================
     // Network Communication
@@ -165,14 +178,40 @@ private:
 
     void destroyDrone(int owner_fd, int x, int y);
 
+    //===========================================================================
+    // Titans (titans.cpp)
+    //===========================================================================
+
+    void resetTitans();
+
+    void spawnTitans(float leader_x);
+
+    void updateTitans(float rear_x);
+
+    bool hitByTitan(const Player &player) const;
+
+    void slashTitans(int client_fd, const Player &player, float reach);
+
+    void sendTitans();
+
+    //===========================================================================
+    // Attack Titan power-up (shift.cpp)
+    //===========================================================================
+
+    void placeShiftOrb(std::vector<std::string> &rows);
+
+    void titanSmash(Player &player);
+
 public:
-    Server(int port, const std::string& map_path, bool solo, bool debug_mode);
+    explicit Server(const ServerConfig &config);
 
     ~Server();
 
     bool initialize();
 
+    // Runs until stop(), from any thread
     void run();
+    void stop() { stopping = true; }
 };
 
 #endif
