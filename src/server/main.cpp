@@ -1,4 +1,4 @@
-// Dedicated server entry point: jetpack_server -p <port> [-m <map>] [-s] [-d]
+// Dedicated server entry point: Samuride_server -p <port> [-m <map>] [-s] [-d]
 
 #include "server.hpp"
 #include <iostream>

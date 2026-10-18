@@ -1,7 +1,7 @@
 *.o
 *.d
-jetpack_server
-jetpack_client
+/Samuride_server
+/Samuride
 run_tests
 build/
 dist/

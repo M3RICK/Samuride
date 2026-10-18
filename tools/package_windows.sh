@@ -32,7 +32,7 @@ make -C "$ROOT" -j"$(nproc)" TARGET=windows CC="$CXX" SFML_DIR="$SFML_DIR"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
-cp "$ROOT/jetpack_client.exe" "$ROOT/jetpack_server.exe" "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
+cp "$ROOT/Samuride.exe" "$ROOT/Samuride_server.exe" "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
 cp "$SFML_DIR"/bin/*.dll "$STAGE/"
 
 # SFML's DLLs need the MinGW runtime the game links statically

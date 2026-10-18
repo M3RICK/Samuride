@@ -52,7 +52,7 @@ Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/
 
 Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install.
 
-**Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `jetpack_client.exe`.
+**Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `Samuride.exe`.
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
 - To host a run, allow the game when the firewall asks, or your friend won't be able to join.
 
@@ -68,7 +68,7 @@ Grab the archive for your system from the [Releases](../../releases) page. Every
 ```sh
 tar xzf samuride-*-linux-x86_64.tar.gz
 cd samuride-*-linux-x86_64
-./jetpack_client
+./Samuride
 ```
 
 Windows, macOS and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
@@ -79,7 +79,7 @@ Linux, a C++20 compiler and **SFML 3**.
 
 ```sh
 sudo pacman -S sfml      # Arch / CachyOS
-make                     # jetpack_server + jetpack_client
+make                     # Samuride_server + Samuride
 make tests               # protocol, map streaming & generator self-checks
 ```
 
@@ -91,7 +91,7 @@ and `tools/package_macos.sh` builds the macOS one on a Mac.
 ## Play
 
 ```sh
-./jetpack_client
+./Samuride
 ```
 
 That's it: **Solo** and **Host** start a server in the background for you. To play with a friend on your network, one picks **Host a run**, the other **Join a run** and types the address shown on the host's screen.
@@ -99,8 +99,8 @@ That's it: **Solo** and **Host** start a server in the background for you. To pl
 A dedicated server and direct connection are available too:
 
 ```sh
-./jetpack_server -p 4242 [-m maps/small_good.txt] [-s] [-d]
-./jetpack_client -h 127.0.0.1 -p 4242 [-c 2] [-d]
+./Samuride_server -p 4242 [-m maps/small_good.txt] [-s] [-d]
+./Samuride -h 127.0.0.1 -p 4242 [-c 2] [-d]
 ```
 
 `-c` picks the character (0 Johnny, 1 David, 2 Jinx, 3 Mikasa), `-m` starts the run on a hand-made map before going procedural, `-s` is solo mode, `-d` prints debug logs (packets, inputs).

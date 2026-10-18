@@ -55,8 +55,8 @@ CLIENT_OBJS = $(CLIENT_SRCS:.cpp=.o)
 ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) src/common/tests.o
 
 # Executables
-SERVER_BIN = jetpack_server$(EXE)
-CLIENT_BIN = jetpack_client$(EXE)
+SERVER_BIN = Samuride_server$(EXE)
+CLIENT_BIN = Samuride$(EXE)
 
 # Rules
 all: server client
