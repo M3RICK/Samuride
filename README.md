@@ -52,15 +52,12 @@ Grab the archive for your system from the [Releases](../../releases) page. Every
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
 - To host a run, allow the game when the firewall asks, or your friend won't be able to join.
 
-**macOS** (Apple Silicon, macOS 13.3 or newer): unzip `samuride-<version>-macos-arm64.zip`. The game isn't
-notarized by Apple, so macOS blocks it until you clear the download flag once, in Terminal:
+**macOS** (Apple Silicon, macOS 13.3 or newer): unzip `samuride-<version>-macos-arm64.zip`, which holds
+`Samuride.app`. The game isn't notarized by Apple, so macOS blocks it until you clear the download flag once:
 
-```sh
-xattr -dr com.apple.quarantine ~/Downloads/samuride-*-macos-arm64
-~/Downloads/samuride-*-macos-arm64/jetpack_client
-```
-
-After that, double-clicking `jetpack_client` works too.
+1. Open **Terminal** and type `xattr -cr ` (with the trailing space), without pressing Enter.
+2. Drag `Samuride.app` from the Finder into the Terminal window: its path gets typed for you. Press Enter.
+3. Double-click `Samuride.app`. You can move it to Applications like any other app.
 
 **Linux** (x86_64, glibc 2.39 or newer: Ubuntu 24.04+, Fedora 40+, Arch...):
 

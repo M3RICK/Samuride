@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds a self-contained macOS release on a Mac: binaries, assets and the SFML 3 dylibs they
-# load (SFML builds its own dependencies into them), zipped as
+# Builds a self-contained macOS release on a Mac: a Samuride.app holding the binaries, the assets
+# and the SFML 3 dylibs they load (SFML builds its own dependencies into them), zipped as
 # dist/samuride-<version>-macos-arm64.zip
 #
 # Usage: tools/package_macos.sh [version]
@@ -30,23 +30,45 @@ make -C "$ROOT" fclean
 make -C "$ROOT" -j"$(sysctl -n hw.ncpu)" CC=clang++ SFML_DIR="$SFML_DIR" RPATH='@executable_path/lib'
 make -C "$ROOT" CC=clang++ SFML_DIR="$SFML_DIR" tests
 
+# A Samuride.app: double-clicking it opens the game window, not a Terminal.
+# The binaries and SFML go in Contents/MacOS, the game data in Contents/Resources.
+APP="$STAGE/Samuride.app/Contents"
 rm -rf "$STAGE"
-mkdir -p "$STAGE/lib"
-cp "$ROOT/jetpack_client" "$ROOT/jetpack_server" "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
-cp -a "$SFML_DIR"/lib/libsfml-*.dylib "$STAGE/lib/"
-cp -r "$ROOT/maps" "$ROOT/assets" "$STAGE/"
+mkdir -p "$APP/MacOS/lib" "$APP/Resources"
+cp "$ROOT/jetpack_client" "$ROOT/jetpack_server" "$APP/MacOS/"
+cp -a "$SFML_DIR"/lib/libsfml-*.dylib "$APP/MacOS/lib/"
+cp -r "$ROOT/maps" "$ROOT/assets" "$APP/Resources/"
 # The sprite sheet sources are only needed to regenerate the characters
-rm -rf "$STAGE/assets/sources"
+rm -rf "$APP/Resources/assets/sources"
+cp "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
+
+cat > "$APP/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>                 <string>Samuride</string>
+    <key>CFBundleDisplayName</key>          <string>Samuride</string>
+    <key>CFBundleIdentifier</key>           <string>io.github.m3rick.samuride</string>
+    <key>CFBundleExecutable</key>           <string>jetpack_client</string>
+    <key>CFBundlePackageType</key>          <string>APPL</string>
+    <key>CFBundleShortVersionString</key>   <string>${VERSION#v}</string>
+    <key>LSMinimumSystemVersion</key>       <string>13.3</string>
+</dict>
+</plist>
+PLIST
 
 # Everything must load from the package or the system, never from this build machine.
 # otool prints each file's own path as a header: only its indented dependency lines count.
-if otool -L "$STAGE/jetpack_client" "$STAGE"/lib/*.dylib | grep -E '^[[:space:]]' | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
+if otool -L "$APP/MacOS/jetpack_client" "$APP"/MacOS/lib/*.dylib | grep -E '^[[:space:]]' | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
     echo "A binary depends on a library outside the package" >&2
     exit 1
 fi
 
-# Apple Silicon only runs signed code: an ad-hoc signature, no Apple account involved
-codesign --force --sign - "$STAGE/jetpack_client" "$STAGE/jetpack_server" "$STAGE"/lib/*.dylib
+# Apple Silicon only runs signed code: ad-hoc signatures, no Apple account involved.
+# Inner code first, then the app as a whole.
+codesign --force --sign - "$APP"/MacOS/lib/*.dylib "$APP/MacOS/jetpack_server"
+codesign --force --sign - "$STAGE/Samuride.app"
 
 (cd "$ROOT/dist" && rm -f "$PACKAGE.zip" && zip -qry "$PACKAGE.zip" "$PACKAGE")
 make -C "$ROOT" fclean
