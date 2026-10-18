@@ -25,6 +25,7 @@ private:
     int score;
     bool jet_active;
     int character;
+    bool introduced;            // sent MSG_CONNECT: the character is the one picked
     float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
     Form form;
     float form_timer;           // seconds left in the current form
@@ -67,7 +68,8 @@ public:
     void startCooldown(float seconds) { attack_cooldown = seconds; }
 
     int getCharacter() const { return character; }
-    void setCharacter(int id) { character = id; }
+    void setCharacter(int id) { character = id; introduced = true; }
+    bool isIntroduced() const { return introduced; }
 
     bool isJetActive() const { return jet_active; }
     void setJetActive(bool active) { jet_active = active; }

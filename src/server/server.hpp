@@ -142,6 +142,7 @@ private:
     // Game Logic
     //===========================================================================
 
+    bool lobbyReady() const;
     void startGame();
 
     void handleReady(int client_fd);

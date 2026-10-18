@@ -5,7 +5,7 @@
 
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false), character(0), attack_cooldown(0), form(Form::Normal), form_timer(0) {
+      score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)

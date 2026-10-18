@@ -51,7 +51,7 @@ void Server::updateGameState()
 {
     switch (phase) {
         case Phase::Waiting:
-            if (players.size() == required_players)
+            if (lobbyReady())
                 startGame();
             break;
         case Phase::Countdown:
@@ -69,6 +69,13 @@ void Server::updateGameState()
             }
             break;
     }
+}
+
+// Full, and everyone said who they play: a game started on accept would miss the loadouts
+bool Server::lobbyReady() const
+{
+    return players.size() == required_players &&
+           std::all_of(players.begin(), players.end(), [](const auto &entry) { return entry.second.isIntroduced(); });
 }
 
 void Server::startGame()
