@@ -25,7 +25,6 @@ class Logger {
         Logger(bool debug = false);
 
         void setDebugMode(bool mode);
-        bool isDebugMode() const;
         void log(const std::string &msg);
         void logPacket(const std::string& direction, const char *data, size_t size);
 };

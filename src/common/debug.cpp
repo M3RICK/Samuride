@@ -15,11 +15,6 @@ void Logger::setDebugMode(bool mode)
     debug_mode = mode;
 }
 
-bool Logger::isDebugMode() const
-{
-    return debug_mode;
-}
-
 // "[HH:MM:SS] ", the start of every log line
 void Logger::writeTimestamp()
 {

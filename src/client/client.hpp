@@ -77,7 +77,6 @@ public:
     void sendPlayerInput(bool jet_activated);
     void sendAttack();
 
-    bool isConnected() const { return connected; }
 };
 
 #endif
