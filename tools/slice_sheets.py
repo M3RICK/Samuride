@@ -15,7 +15,7 @@ from collections import deque
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent / "assets"
 ALPHA = 60          # pixels above this alpha are part of a sprite
@@ -24,7 +24,7 @@ MIN_WIDTH = 30      # thinner bodies are debris, not frames
 PAD = 4
 
 
-def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=()):
+def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None):
     """One animation of a sheet.
 
     region:         box (x0, y0, x1, y1) holding the frames, labels left out
@@ -34,12 +34,24 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
     effects_ahead:  loose effects (muzzle flash, blade arc) belong to the body on their left;
                     by default they are trails and belong to the body on their right
     splits:         sheet x positions where touching frames must be cut apart
+    cuts:           for evenly laid sheets whose frames touch (ground shadows): the x positions
+                    of every frame boundary, frames are then plain columns between them
     """
     return {"region": region, "fps": fps, "ground": ground, "mode": mode,
-            "frames": frames, "effects_ahead": effects_ahead, "splits": splits}
+            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts}
 
 
-# name: (source sheet, portrait box or None for the head of the first run frame, {animation: animation(...)})
+# Frame boundaries of the titan sheet: halfway between its numbered labels
+TITAN_CUTS = [140, 255, 365, 477, 590, 701, 812, 922, 1036, 1150, 1265, 1385, 1536]
+
+# Sheet options:
+#   key_background: the "transparent" checkerboard is drawn in the picture, light greys become transparent
+#   mirror:         frames face left in the game (they run toward the player)
+#   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
+TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
+
+# name: (source sheet, portrait box or None for the head of the first run frame,
+#        {animation: animation(...)}[, sheet options])
 CHARACTERS = {
     "johny": ("sources/johny.png", None, {
         "run":   animation((0, 177, 500, 330), 10, ground=True),
@@ -71,12 +83,24 @@ CHARACTERS = {
         "death":   animation((750, 795, 1536, 877), 10, mode="once"),
         "attack":  animation((795, 505, 1536, 615), 16, mode="once", effects_ahead=True, splits=[1168]),
     }),
+    # Titans charge at the player; Eren's titan is also the transformation power-up
+    "titan_female": ("sources/titans.png", None, {
+        "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
+    }, TITAN_SHEET),
+    "titan_armored": ("sources/titans.png", None, {
+        "run": animation((140, 592, 1536, 756), 12, ground=True, cuts=TITAN_CUTS),
+    }, TITAN_SHEET),
+    "titan_eren": ("sources/titans.png", None, {
+        "run": animation((140, 808, 1536, 970), 14, ground=True, cuts=TITAN_CUTS),
+    }, TITAN_SHEET),
 }
 
 
-def core_mask(px):
+def core_mask(px, effects=True):
     """The character itself: opaque pixels that aren't flames or smoke."""
     r, g, b, a = (px[..., i].astype(int) for i in range(4))
+    if not effects:
+        return a > 200
     flame = (r > 200) & (g > 110) & (b < 170)
     smoke = (r > 165) & (g > 165) & (b > 165) & (np.abs(r - b) < 40)
     return (a > 200) & ~flame & ~smoke
@@ -106,7 +130,7 @@ DISPLAY_NAMES = {"johny": "JOHNNY"}
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200"}
 
 
-def split_frames(pixels, region, effects_ahead=False, splits=()):
+def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
     """Frames in region, left to right, as (box, mask) in sheet coordinates.
 
     Trails link neighbouring frames, so frames are found from their bodies. Every blob
@@ -115,7 +139,7 @@ def split_frames(pixels, region, effects_ahead=False, splits=()):
     """
     x0, y0, x1, y1 = region
     area = pixels[y0:y1, x0:x1]
-    columns = core_mask(area).any(axis=0)
+    columns = core_mask(area, effects).any(axis=0)
 
     bodies, start = [], None
     for x, filled in enumerate(list(columns) + [False]):
@@ -156,30 +180,69 @@ def split_frames(pixels, region, effects_ahead=False, splits=()):
     return frames
 
 
+def column_frames(pixels, region, cuts):
+    """Frames as the columns between `cuts`, each trimmed to its opaque pixels.
+
+    A neighbour's hand or hair can poke across a boundary: only blobs at least a
+    tenth the size of the biggest one (the frame's own body) are kept.
+    """
+    _, y0, _, y1 = region
+    frames = []
+    for left, right in zip(cuts, cuts[1:]):
+        labels, count = label_blobs(pixels[y0:y1, left:right, 3] > ALPHA)
+        sizes = np.bincount(labels.ravel(), minlength=count + 1)
+        sizes[0] = 0
+        mask = np.isin(labels, np.nonzero(sizes >= sizes.max() / 10)[0])
+        ys, xs = np.nonzero(mask)
+        box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
+        frames.append(((left + box[0], y0 + box[1], left + box[2], y0 + box[3]),
+                       mask[box[1]:box[3], box[0]:box[2]]))
+    return frames
+
+
+def find_frames(pixels, spec, effects):
+    if spec["cuts"]:
+        return column_frames(pixels, spec["region"], spec["cuts"])
+    return split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"], effects)
+
+
 def crop_frame(sheet, box, mask):
     frame = np.array(sheet.crop(box))
     frame[~mask] = 0
     return Image.fromarray(frame)
 
 
-def body_centre(frame):
-    core = core_mask(np.array(frame))
+def key_background(sheet):
+    """Light, colourless pixels (a drawn checkerboard) become transparent."""
+    px = np.array(sheet)
+    rgb = px[..., :3].astype(int)
+    grey = (rgb.max(axis=2) - rgb.min(axis=2) <= 16) & (rgb.min(axis=2) >= 185)
+    px[grey, 3] = 0
+    return Image.fromarray(px)
+
+
+def body_centre(frame, effects=True):
+    core = core_mask(np.array(frame), effects)
     if not core.any():
         core = np.array(frame)[..., 3] > ALPHA
     ys, xs = np.nonzero(core)
     return xs.mean(), ys.mean()
 
 
-def slice_character(name, sheet_name, portrait_box, animations, debug_dir):
+def slice_character(name, sheet_name, portrait_box, animations, options, debug_dir):
     sheet = Image.open(ROOT / sheet_name).convert("RGBA")
+    effects = options.get("effects", True)
+    if options.get("key_background"):
+        sheet = key_background(sheet)
     pixels = np.array(sheet)
     out = ROOT / name
     out.mkdir(exist_ok=True)
 
     frames = {}
     for anim, spec in animations.items():
-        found = [crop_frame(sheet, box, mask)
-                 for box, mask in split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"])]
+        found = [crop_frame(sheet, box, mask) for box, mask in find_frames(pixels, spec, effects)]
+        if options.get("mirror"):
+            found = [ImageOps.mirror(frame) for frame in found]
         frames[anim] = [found[i] for i in spec["frames"]] if spec["frames"] else found
 
     # Body height: the tallest running frame, the game scales it to the player's hitbox
@@ -190,7 +253,7 @@ def slice_character(name, sheet_name, portrait_box, animations, debug_dir):
     half_w, top, bottom = 0, 0, 0
     for anim, spec in animations.items():
         for f in frames[anim]:
-            cx, cy = body_centre(f)
+            cx, cy = body_centre(f, effects)
             # anchor: x of the body centre, y of the feet (ground) or the body centre (air)
             ay = f.height if spec["ground"] else cy + body / 2
             placed.setdefault(anim, []).append((f, cx, ay))
@@ -230,7 +293,7 @@ def slice_character(name, sheet_name, portrait_box, animations, debug_dir):
         draw = ImageDraw.Draw(overlay)
         for anim, spec in animations.items():
             draw.rectangle(spec["region"], outline=(255, 255, 0, 255))
-            for box, _ in split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"]):
+            for box, _ in find_frames(pixels, spec, effects):
                 draw.rectangle(box, outline=(255, 0, 60, 255))
         overlay.save(Path(debug_dir) / f"{name}_regions.png")
         preview = Image.new("RGBA", grid.size, (40, 36, 56, 255))
@@ -243,5 +306,5 @@ def slice_character(name, sheet_name, portrait_box, animations, debug_dir):
 
 if __name__ == "__main__":
     debug = sys.argv[1] if len(sys.argv) > 1 else None
-    for name, (sheet, portrait, anims) in CHARACTERS.items():
-        slice_character(name, sheet, portrait, anims, debug)
+    for name, (sheet, portrait, anims, *options) in CHARACTERS.items():
+        slice_character(name, sheet, portrait, anims, options[0] if options else {}, debug)
