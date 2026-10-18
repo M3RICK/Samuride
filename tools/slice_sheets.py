@@ -22,6 +22,7 @@ ALPHA = 60          # pixels above this alpha are part of a sprite
 MERGE_GAP = 2       # body columns closer than this belong to the same frame
 MIN_WIDTH = 30      # thinner bodies are debris, not frames
 PAD = 4
+SHADOW_ROWS = 12    # bottom rows of a region where ground shadows join the frames
 
 
 def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None):
@@ -34,15 +35,16 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
     effects_ahead:  loose effects (muzzle flash, blade arc) belong to the body on their left;
                     by default they are trails and belong to the body on their right
     splits:         sheet x positions where touching frames must be cut apart
-    cuts:           for evenly laid sheets whose frames touch (ground shadows): the x positions
-                    of every frame boundary, frames are then plain columns between them
+    cuts:           for evenly laid sheets whose frames touch (ground shadows): frames are plain
+                    columns between boundaries; either the boundaries' x positions, or
+                    ("seams", frame centres) to cut at the emptiest column between two centres
     """
     return {"region": region, "fps": fps, "ground": ground, "mode": mode,
             "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts}
 
 
-# Frame boundaries of the titan sheet: halfway between its numbered labels
-TITAN_CUTS = [140, 255, 365, 477, 590, 701, 812, 922, 1036, 1150, 1265, 1385, 1536]
+# Titan sheet: frames sit above their numbered labels, cut at the emptiest column between two
+TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323, 1447])
 
 # Sheet options:
 #   key_background: the "transparent" checkerboard is drawn in the picture, light greys become transparent
@@ -211,9 +213,22 @@ def column_frames(pixels, region, cuts):
     return frames
 
 
+def seam_cuts(pixels, region, centres):
+    """Boundaries at the emptiest column between consecutive frame centres, ground shadows ignored."""
+    x0, y0, x1, y1 = region
+    opaque = (pixels[y0:y1 - SHADOW_ROWS, :, 3] > ALPHA).sum(axis=0)
+    cuts = [x0]
+    for left, right in zip(centres, centres[1:]):
+        cuts.append(left + int(np.argmin(opaque[left:right])))
+    return cuts + [x1]
+
+
 def find_frames(pixels, spec, effects):
-    if spec["cuts"]:
-        return column_frames(pixels, spec["region"], spec["cuts"])
+    cuts = spec["cuts"]
+    if cuts and cuts[0] == "seams":
+        cuts = seam_cuts(pixels, spec["region"], cuts[1])
+    if cuts:
+        return column_frames(pixels, spec["region"], cuts)
     return split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"], effects)
 
 

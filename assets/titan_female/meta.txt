@@ -1,7 +1,7 @@
 name TITAN_FEMALE
 sheet sheet.png
 portrait portrait.png
-frame 146 165
-feet 161
-body 157
+frame 157 174
+feet 170
+body 166
 run 0 12 14 loop

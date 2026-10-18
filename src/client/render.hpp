@@ -127,7 +127,8 @@ private:
 
     // One per TitanType, and how many were on screen last frame (a new one stomps in)
     std::vector<Character> titan_sprites;
-    Character shift_sprite;     // Eren's transformation
+    Character shift_sprite;     // Eren's transformation: smoke and emerging
+    Character eren_titan;       // Eren's titan running, sharper than the transformation sheet's
     sf::Texture titan_face;     // on the power-up orb
     size_t titans_on_screen;
 
@@ -337,7 +338,8 @@ private:
     void updateForm(int player_num, const PlayerState &player, bool is_me);
     void drawShift(int player_num, const PlayerState &player, bool is_me);
     void drawSteamPuff(int player_num);
-    void drawShiftFrame(const Animation &anim, int frame, float center_x, uint8_t alpha);
+    void drawShiftFrame(const Character &sheet, const Animation &anim, int frame, float center_x, uint8_t alpha,
+                        bool flip = false);
     void renderShiftGauge(const PlayerState &player, int me);
 
 public:

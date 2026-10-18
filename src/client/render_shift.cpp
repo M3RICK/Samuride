@@ -50,20 +50,21 @@ void Renderer::drawShift(int player_num, const PlayerState &player, bool is_me)
 {
     const PlayerAnim &state = player_anims[player_num];
     float time = state.form_clock.getElapsedTime().asSeconds();
-    const Animation *anim = &shift_sprite.run;
+    float center_x = display_positions[player_num].x + TITAN_FORM_WIDTH / 2;
+    uint8_t alpha = is_me ? 255 : 215;
 
     if (player.form == Form::Shifting) {
-        anim = time < shift_sprite.smoke.duration() ? &shift_sprite.smoke : &shift_sprite.emerge;
-        time = anim == &shift_sprite.smoke ? time : time - shift_sprite.smoke.duration();
-    } else {
-        time = run_phase;
-        // Heavy steps
-        if (static_cast<int>(time * 2.2f) != static_cast<int>((time - 1 / 60.f) * 2.2f))
-            shake = std::max(shake, is_me ? 0.08f : 0.04f);
+        const Animation &smoke = shift_sprite.smoke;
+        const Animation &anim = time < smoke.duration() ? smoke : shift_sprite.emerge;
+        float anim_time = &anim == &smoke ? time : time - smoke.duration();
+        drawShiftFrame(shift_sprite, anim, anim.frameAt(anim_time), center_x, alpha);
+        return;
     }
 
-    float center_x = display_positions[player_num].x + TITAN_FORM_WIDTH / 2;
-    drawShiftFrame(*anim, anim->frameAt(time), center_x, is_me ? 255 : 215);
+    // Heavy steps; the titan sheet runs to the left, flipped to run with you
+    if (static_cast<int>(run_phase * 2.2f) != static_cast<int>((run_phase - 1 / 60.f) * 2.2f))
+        shake = std::max(shake, is_me ? 0.08f : 0.04f);
+    drawShiftFrame(eren_titan, eren_titan.run, eren_titan.run.frameAt(run_phase), center_x, alpha, true);
 }
 
 // Bursting out: the smoke the titan left shrinks and fades where it stood
@@ -76,20 +77,22 @@ void Renderer::drawSteamPuff(int player_num)
     if (t >= 1)
         return;
     int frame = static_cast<int>((smoke.frames - 1) * (1 - t));
-    drawShiftFrame(smoke, frame, state.smoke_x, static_cast<uint8_t>(230 * (1 - t)));
+    drawShiftFrame(shift_sprite, smoke, frame, state.smoke_x, static_cast<uint8_t>(230 * (1 - t)));
 }
 
-void Renderer::drawShiftFrame(const Animation &anim, int frame, float center_x, uint8_t alpha)
+// Feet on the floor, `sheet`'s standing height scaled to the titan form's
+void Renderer::drawShiftFrame(const Character &sheet, const Animation &anim, int frame, float center_x, uint8_t alpha,
+                              bool flip)
 {
-    if (frame < 0 || shift_sprite.sheet.getSize().x == 0)
+    if (frame < 0 || sheet.sheet.getSize().x == 0)
         return;
 
-    float scale = tile_size * TITAN_FORM_HEIGHT / shift_sprite.body;
-    sf::Sprite sprite(shift_sprite.sheet);
+    float scale = tile_size * TITAN_FORM_HEIGHT / sheet.body;
+    sf::Sprite sprite(sheet.sheet);
 
-    sprite.setTextureRect(shift_sprite.frameRect(anim, frame));
-    sprite.setOrigin({shift_sprite.frame_size.x / 2.f, shift_sprite.feet});
-    sprite.setScale({scale, scale});
+    sprite.setTextureRect(sheet.frameRect(anim, frame));
+    sprite.setOrigin({sheet.frame_size.x / 2.f, sheet.feet});
+    sprite.setScale({flip ? -scale : scale, scale});
     sprite.setPosition(toScreen({center_x, static_cast<float>(world_map.getHeight())}));
     sprite.setColor(withAlpha(sf::Color::White, alpha));
     window.draw(sprite);

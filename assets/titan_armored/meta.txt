@@ -1,7 +1,7 @@
 name TITAN_ARMORED
 sheet sheet.png
 portrait portrait.png
-frame 133 165
+frame 141 165
 feet 161
 body 157
 run 0 12 12 loop
