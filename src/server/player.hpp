@@ -35,8 +35,9 @@ private:
     float grace_timer;          // seconds of invincibility left after a shield broke
     std::set<std::pair<int, int>> collected_coins;
 
-    // Bytes received but not yet forming a full packet
+    // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
     std::vector<uint8_t> recv_buffer;
+    std::vector<uint8_t> send_buffer;
 
     // Tuning knobs, in tiles and seconds. A modif si mal equilibré.
     static constexpr float GRAVITY = 28.0f;
@@ -84,6 +85,7 @@ public:
     void setJetActive(bool active) { jet_active = active; }
 
     std::vector<uint8_t> &getRecvBuffer() { return recv_buffer; }
+    std::vector<uint8_t> &getSendBuffer() { return send_buffer; }
 
     void update(float dt, float forward_speed, float max_y);
 };

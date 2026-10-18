@@ -43,7 +43,7 @@ private:
     std::queue<std::vector<uint8_t>> message_queue;
     std::mutex queue_mutex;
 
-    bool connectToServer();
+    bool connectToServer(int timeout_ms);
     void sendConnectMessage();
 
     void networkLoop();

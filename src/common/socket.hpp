@@ -20,8 +20,9 @@ namespace Socket {
     // Non-blocking listening socket, on loopback only or every interface. -1 on failure.
     int listen(int port, bool loopback_only);
     int accept(int listener);
-    // Blocking connect, the socket is made non-blocking once connected. -1 on failure.
-    int connect(const std::string &host, int port);
+    // Gives up after timeout_ms: nobody answering at an address would otherwise hang for minutes.
+    // -1 on failure.
+    int connect(const std::string &host, int port, int timeout_ms);
     void close(int fd);
 
     // Waits up to timeout_ms, then flags each entry. False on a real error.
@@ -29,7 +30,8 @@ namespace Socket {
 
     // Appends whatever the socket has to `stream`. False once the peer is gone.
     bool receive(int fd, std::vector<uint8_t> &stream);
-    bool send(int fd, const std::vector<uint8_t> &data);
+    // Bytes the socket took, possibly fewer than all of them (0 when it's full), -1 on error
+    int send(int fd, const std::vector<uint8_t> &data);
 
     std::string lastError();
 

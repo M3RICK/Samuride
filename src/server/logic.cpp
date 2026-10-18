@@ -62,12 +62,6 @@ void Server::updateGameState()
             updatePlayers();
             break;
         case Phase::Over:
-            // Lobby reopens once everyone has jacked out
-            if (players.empty()) {
-                resetMap();
-                phase = Phase::Waiting;
-                announce("Lobby open");
-            }
             break;
     }
 }
@@ -79,10 +73,13 @@ bool Server::lobbyReady() const
            std::all_of(players.begin(), players.end(), [](const auto &entry) { return entry.second.isIntroduced(); });
 }
 
+// Everyone gets the run's map, then who plays whom
 void Server::startGame()
 {
     int player_num = 0;
     std::vector<uint8_t> roster = { static_cast<uint8_t>(players.size()) };
+
+    broadcastToAllClients(Protocol::createPacket(MSG_MAP_DATA, game_map.serialize()));
 
     for (auto &[client_fd, player] : players) {
         player.reset(player_num, game_map.getHeight() - Player::HEIGHT);
@@ -120,8 +117,6 @@ void Server::handleReady(int client_fd)
         return;
 
     resetMap();
-    for (auto &pair : players)
-        sendMapToClient(pair.first);
     startGame();
 }
 

@@ -19,6 +19,7 @@
 
     static int lastErrorCode() { return WSAGetLastError(); }
     static bool wouldBlock() { return WSAGetLastError() == WSAEWOULDBLOCK; }
+    static bool connecting() { return WSAGetLastError() == WSAEWOULDBLOCK; }
     static int pollSockets(WSAPOLLFD *fds, size_t count, int timeout) { return WSAPoll(fds, count, timeout); }
     static constexpr int NO_SIGPIPE = 0;    // Winsock never raises SIGPIPE
     using PollFd = WSAPOLLFD;
@@ -34,6 +35,7 @@
 
     static int lastErrorCode() { return errno; }
     static bool wouldBlock() { return errno == EAGAIN || errno == EWOULDBLOCK; }
+    static bool connecting() { return errno == EINPROGRESS; }
     static int pollSockets(pollfd *fds, size_t count, int timeout) { return ::poll(fds, count, timeout); }
     // A peer that left must not kill us with SIGPIPE: per send on Linux,
     // per socket on macOS (SO_NOSIGPIPE, set in configure)
@@ -83,6 +85,18 @@ static void configure(int fd)
 #endif
 }
 
+// Writable means the connection settled: SO_ERROR tells whether it worked
+static bool awaitConnection(int fd, int timeout_ms)
+{
+    PollFd entry = {static_cast<decltype(PollFd::fd)>(fd), POLLOUT, 0};
+    int error = 0;
+    socklen_t length = sizeof(error);
+
+    if (pollSockets(&entry, 1, timeout_ms) <= 0)
+        return false;
+    return getsockopt(fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<char *>(&error), &length) == 0 && error == 0;
+}
+
 // The end of every socket setup: configured if it worked, closed if it didn't
 static int finish(int fd, bool ok)
 {
@@ -120,7 +134,8 @@ int Socket::accept(int listener)
     return finish(fd, fd >= 0);
 }
 
-int Socket::connect(const std::string &host, int port)
+// Non-blocking from the start: the connection completes in the background, polled until the timeout
+int Socket::connect(const std::string &host, int port, int timeout_ms)
 {
     addrinfo hints = {};
     addrinfo *result = nullptr;
@@ -131,7 +146,12 @@ int Socket::connect(const std::string &host, int port)
         return -1;
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    bool ok = fd >= 0 && ::connect(fd, result->ai_addr, result->ai_addrlen) == 0;
+    bool ok = false;
+
+    if (fd >= 0) {
+        configure(fd);
+        ok = ::connect(fd, result->ai_addr, result->ai_addrlen) == 0 || (connecting() && awaitConnection(fd, timeout_ms));
+    }
     freeaddrinfo(result);
     return finish(fd, ok);
 }
@@ -173,18 +193,19 @@ bool Socket::receive(int fd, std::vector<uint8_t> &stream)
     return true;
 }
 
-// ponytail: a partial send on a full socket buffer is dropped, add a write queue if packets ever get big
-bool Socket::send(int fd, const std::vector<uint8_t> &data)
+int Socket::send(int fd, const std::vector<uint8_t> &data)
 {
     int bytes_sent = ::send(fd, reinterpret_cast<const char *>(data.data()), data.size(), NO_SIGPIPE);
 
+    if (bytes_sent < 0 && wouldBlock())
+        return 0;
     if (bytes_sent < 0) {
         DEBUG_LOG("Failed to send on fd " + std::to_string(fd) + ": " + lastError());
-        return false;
+        return -1;
     }
 
     DEBUG_PACKET_SEND(reinterpret_cast<const char *>(data.data()), bytes_sent);
-    return true;
+    return bytes_sent;
 }
 
 std::string Socket::lastError()
