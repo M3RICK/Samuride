@@ -38,8 +38,9 @@ cp -r "$ROOT/maps" "$ROOT/assets" "$STAGE/"
 # The sprite sheet sources are only needed to regenerate the characters
 rm -rf "$STAGE/assets/sources"
 
-# Everything must load from the package or the system, never from this build machine
-if otool -L "$STAGE/jetpack_client" "$STAGE"/lib/*.dylib | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
+# Everything must load from the package or the system, never from this build machine.
+# otool prints each file's own path as a header: only its indented dependency lines count.
+if otool -L "$STAGE/jetpack_client" "$STAGE"/lib/*.dylib | grep -E '^[[:space:]]' | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
     echo "A binary depends on a library outside the package" >&2
     exit 1
 fi
