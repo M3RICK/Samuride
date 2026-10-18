@@ -28,7 +28,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Subdermal shield**: the cyan hexagon takes one deadly hit for you (zapper, drone or titan), then gives you a second to get clear.
 - **Sandevistan**: the green chevrons send you into a 3-second sprint nothing can hurt, leaving afterimages behind.
 - In CYBERPSYCHO, **one drone in three drops a shield or a Sandevistan** when you shoot it down.
-- **Titans** charge along the floor past 150 m: a blinking `!` warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
+- **Titans** charge along the floor past 300 m: a blinking red column warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.

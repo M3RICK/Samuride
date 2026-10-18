@@ -171,7 +171,7 @@ up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles a
 | 1 | Count |
 | 5 per titan | Type (0 Female, 4.5 tiles tall and fast; 1 Armored, 4 tiles tall and slower), X of its left edge |
 
-Titans stand on the floor and run at the players. The first one comes past 150 tiles, then one
+Titans stand on the floor and run at the players. The first one comes past 300 tiles, then one
 every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 
 ## A game, step by step
