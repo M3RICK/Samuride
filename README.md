@@ -11,7 +11,7 @@
 
 ---
 
-<p align="center"><img src="docs/gameplay.png" alt="Gameplay" width="800px"></p>
+<p align="center"><img src="docs/gameplay.webp" alt="Gameplay: Mikasa and Jinx in CYBERPSYCHO" width="720px"></p>
 
 ## The run
 
