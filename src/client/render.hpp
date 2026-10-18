@@ -37,6 +37,13 @@ private:
         bool mine;      // caused by this player
     };
 
+    // Screen-space streak sold as wind: more and faster as the run speeds up
+    struct SpeedLine {
+        sf::Vector2f pos;
+        float length;
+        float speed;    // pixels per second
+    };
+
     // CYBERPSYCHO projectile, drawn from its shooter and its age
     struct ShotTrail {
         int player;
@@ -126,6 +133,12 @@ private:
     float camera_x;
     float tile_size;
     std::map<int, sf::Vector2f> display_positions;
+
+    // Speed feel: measured from your own movement, no extra network data
+    float run_speed;        // tiles per second
+    float last_x;           // your position on the previous frame, -1 before the first one
+    float run_phase;        // run animation clock, ticking faster as you speed up
+    std::vector<SpeedLine> speed_lines;
 
     std::vector<ActiveEffect> effects;
     std::vector<Particle> particles;
@@ -244,6 +257,9 @@ private:
     sf::Vector2f toScreen(sf::Vector2f world) const;
     void smoothPositions(const std::map<int, PlayerState> &players, float dt);
     void updateCamera(int me);
+    void updateSpeed(int me, float dt);
+    void updateSpeedLines(float dt);
+    void renderSpeedLines();
 
     void renderDistrict(int district);
     void renderBackdrop(const Backdrop &backdrop, float opacity);

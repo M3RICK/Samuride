@@ -58,6 +58,7 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
 
     window.setView(world_view);
     renderDistrict(state.getDistrict());
+    renderSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     renderMapTiles(state.getCollectedCoins(), destroyed);
     renderPlayers(players, me);
@@ -83,6 +84,8 @@ void Renderer::updateWorld(GameState &state, const std::map<int, PlayerState> &p
 
     smoothPositions(players, dt);
     updateCamera(me);
+    updateSpeed(me, dt);
+    updateSpeedLines(dt);
     updateParticles(dt);
 
     for (const CollisionEffect &effect : state.takeEffects())

@@ -19,7 +19,8 @@ float randf(float min, float max)
 }
 
 Renderer::Renderer()
-    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), drones_down(0),
+    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), run_speed(0), last_x(-1), run_phase(0),
+      shake(0), drones_down(0),
       best_distance(0), new_record(false),
       last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
@@ -189,6 +190,9 @@ void Renderer::resetRun()
     heard_countdown = -1;
     shots.clear();
     attack_clocks.clear();
+    speed_lines.clear();
+    run_speed = 0;
+    last_x = -1;
     drones_down = 0;
     shake = 0;
     new_record = false;

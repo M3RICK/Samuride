@@ -44,6 +44,60 @@ void Renderer::updateCamera(int me)
 }
 
 //=============================================================================
+// Speed
+//=============================================================================
+
+// Your speed from how far you moved since the last frame, eased so it doesn't flicker
+void Renderer::updateSpeed(int me, float dt)
+{
+    auto mine = display_positions.find(me);
+
+    if (mine == display_positions.end() || dt <= 0)
+        return;
+
+    float measured = last_x < 0 ? 0 : (mine->second.x - last_x) / dt;
+    last_x = mine->second.x;
+    if (measured >= 0 && measured < 40)
+        run_speed += (measured - run_speed) * std::min(1.0f, dt * 2);
+    run_phase += dt * std::max(1.0f, run_speed / 9);
+}
+
+// Streaks start past 7 tiles/s and thicken up to top speed
+void Renderer::updateSpeedLines(float dt)
+{
+    size_t wanted = std::clamp(static_cast<int>((run_speed - 7) * 4), 0, 60);
+
+    while (speed_lines.size() < wanted) {
+        float speed = run_speed * tile_size * randf(1.5f, 2.5f);
+        sf::Vector2f pos(SCREEN_WIDTH + randf(0, SCREEN_WIDTH), randf(PLAY_TOP, PLAY_BOTTOM));
+        speed_lines.push_back({pos, randf(80, 240), speed});
+    }
+
+    for (SpeedLine &line : speed_lines)
+        line.pos.x -= line.speed * dt;
+    std::erase_if(speed_lines, [](const SpeedLine &line) { return line.pos.x + line.length < 0; });
+    if (speed_lines.size() > wanted)
+        speed_lines.resize(wanted);
+}
+
+void Renderer::renderSpeedLines()
+{
+    sf::RectangleShape line;
+
+    // Brighter at the head, so each streak reads as moving left
+    for (const SpeedLine &streak : speed_lines) {
+        line.setSize({streak.length, 3});
+        line.setPosition(streak.pos);
+        line.setFillColor(withAlpha(sf::Color::White, 70));
+        window.draw(line, sf::BlendAdd);
+
+        line.setSize({streak.length * 0.25f, 3});
+        line.setFillColor(withAlpha(NEON_CYAN, 140));
+        window.draw(line, sf::BlendAdd);
+    }
+}
+
+//=============================================================================
 // Backdrops
 //=============================================================================
 
@@ -332,7 +386,7 @@ Renderer::AnimationFrame Renderer::pickAnimation(int player_num, const PlayerSta
     if (attack != attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < character.attack.duration())
         return {&character.attack, attack->second.getElapsedTime().asSeconds()};
     if (on_ground)
-        return {&character.run, time};
+        return {&character.run, run_phase};
     if (air_time < character.takeoff.duration())
         return {&character.takeoff, air_time};
     if (!player.jet_active)

@@ -35,9 +35,9 @@ private:
     static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 12;
 
     // Run speed in tiles per second, ramps up over time
-    static constexpr float START_SPEED = 7.0f;
-    static constexpr float MAX_SPEED = 16.0f;
-    static constexpr float ACCELERATION = 0.12f;
+    static constexpr float START_SPEED = 9.0f;
+    static constexpr float MAX_SPEED = 18.0f;
+    static constexpr float ACCELERATION = 0.15f;
 
     struct Projectile {
         int owner_fd;
