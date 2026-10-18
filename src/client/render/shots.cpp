@@ -5,6 +5,7 @@
 #include "particles.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
+#include <algorithm>
 
 using namespace Palette;
 
@@ -47,31 +48,37 @@ sf::Vector2f Shots::positionOf(const Trail &trail) const
     return {shooter_x + 0.9f + travelled, trail.y};
 }
 
-// A shot ends out of range or on the first live drone, like on the server
-void Shots::draw(const std::set<std::pair<int, int>> &destroyed)
+void Shots::land(int player)
+{
+    auto oldest = std::find_if(trails.begin(), trails.end(), [&](const Trail &trail) { return trail.player == player; });
+
+    if (oldest != trails.end())
+        trails.erase(oldest);
+}
+
+// A shot ends out of range, or when the server says it hit (land)
+void Shots::draw()
 {
     float tile_size = run.view.tile_size;
 
-    std::erase_if(trails, [&](const Trail &trail) {
-        sf::Vector2f pos = positionOf(trail);
-        float range = statsOf(trail.weapon).speed * trail.age.getElapsedTime().asSeconds();
-        return range > PROJECTILE_RANGE || run.isLiveDrone(pos.x, pos.y, destroyed);
+    std::erase_if(trails, [](const Trail &trail) {
+        return statsOf(trail.weapon).speed * trail.age.getElapsedTime().asSeconds() > PROJECTILE_RANGE;
     });
 
     for (const Trail &trail : trails) {
         bool rocket = trail.weapon == Weapon::Rockets;
         sf::Color color = rocket ? NEON_PINK : NEON_YELLOW;
         sf::Vector2f pos = positionOf(trail);
-        sf::Vector2f size(tile_size * (rocket ? 0.7f : 0.5f), rocket ? 14 : 6);
+        sf::Vector2f size(tile_size * (rocket ? 1.1f : 0.5f), rocket ? 26 : 6);
 
         sf::RectangleShape bolt(size);
         bolt.setOrigin(size / 2.f);
         bolt.setPosition(run.toScreen(pos));
         bolt.setFillColor(color);
         canvas.draw(bolt, sf::BlendAdd);
-        canvas.halo(run.toScreen(pos), tile_size * (rocket ? 0.35f : 0.18f), withAlpha(color, 90));
+        canvas.halo(run.toScreen(pos), tile_size * (rocket ? 0.6f : 0.18f), withAlpha(color, 90));
 
         if (rocket)
-            particles.emit(pos - sf::Vector2f(0.35f, 0), 1, NEON_PINK, 1, 0.25f, 0);
+            particles.emit(pos - sf::Vector2f(0.55f, 0), 2, NEON_PINK, 1.5f, 0.3f, 0);
     }
 }

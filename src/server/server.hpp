@@ -55,6 +55,7 @@ private:
         float y;
         float speed;
         float max_x;
+        float radius;
     };
 
     ServerConfig config;
@@ -170,6 +171,8 @@ private:
     void strike(int client_fd, const Player &player, float reach);
 
     void updateProjectiles();
+
+    bool projectileHit(const Projectile &shot, float from_x);
 
     bool isLiveDrone(int x, int y) const;
 

@@ -63,11 +63,6 @@ int Run::characterOf(int player_num) const
     return it != roster.end() ? it->second : player_num;
 }
 
-bool Run::isLiveDrone(int x, int y, const std::set<std::pair<int, int>> &destroyed) const
-{
-    return x >= 0 && y >= 0 && map.getTile(x, y) == DRONE_TILE && !destroyed.count({x, y});
-}
-
 void Run::shakeAtLeast(float amount)
 {
     shake = std::max(shake, amount);
