@@ -6,6 +6,7 @@
  */
 
 #include "settings.hpp"
+#include "../common/platform.hpp"
 #include <SFML/System/String.hpp>
 #include <algorithm>
 #include <cctype>
@@ -15,9 +16,7 @@
 
 static std::filesystem::path dataPath(const std::string &file)
 {
-    const char *home = std::getenv("HOME");
-
-    return std::filesystem::path(home ? home : ".") / ".local/share/samuride" / file;
+    return Platform::dataDirectory() / file;
 }
 
 static void writeFile(const std::string &file, const std::string &content)

@@ -11,18 +11,16 @@
 #include "state.hpp"
 #include "menu.hpp"
 
+#include "../common/platform.hpp"
+#include "../common/socket.hpp"
+#include "../server/server.hpp"
+
 #include <iostream>
 #include <cstdlib>
-#include <csignal>
-#include <filesystem>
+#include <memory>
 #include <random>
 #include <string>
-#include <fcntl.h>
-#include <ifaddrs.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/prctl.h>
-#include <sys/wait.h>
+#include <thread>
 #include <unistd.h>
 
 static constexpr int HOST_PORT = 4242;
@@ -40,68 +38,33 @@ void printUsage(const char *programName)
 static void moveToBinaryDirectory()
 {
     std::error_code ec;
-    auto dir = std::filesystem::canonical("/proc/self/exe", ec).parent_path();
-
-    if (!ec)
-        std::filesystem::current_path(dir, ec);
+    std::filesystem::current_path(Platform::executableDirectory(), ec);
 }
 
-// The jetpack_server sitting next to us, run in the background for solo and host modes
+// The server for solo and host runs, in a thread of the game: it stops when the game leaves the run
 class LocalServer {
 private:
-    pid_t pid = -1;
+    std::unique_ptr<Server> server;
+    std::thread thread;
 
 public:
-    bool start(int port, bool solo)
+    bool start(int port, bool solo, bool debug_mode)
     {
-        // Built before fork: the child must not allocate, SFML threads may hold the malloc lock
-        std::string port_arg = std::to_string(port);
-
-        pid = fork();
-        if (pid != 0)
-            return pid > 0;
-
-        // Dies with the client, even if the client crashes
-        prctl(PR_SET_PDEATHSIG, SIGTERM);
-        int null_fd = open("/dev/null", O_WRONLY);
-        dup2(null_fd, STDOUT_FILENO);
-        dup2(null_fd, STDERR_FILENO);
-
-        execl("./jetpack_server", "jetpack_server", "-p", port_arg.c_str(), solo ? "-s" : nullptr, nullptr);
-        _exit(1);
+        server = std::make_unique<Server>(ServerConfig{port, "", solo, debug_mode, true});
+        if (!server->initialize())
+            return false;
+        thread = std::thread(&Server::run, server.get());
+        return true;
     }
 
     ~LocalServer()
     {
-        if (pid > 0) {
-            kill(pid, SIGTERM);
-            waitpid(pid, nullptr, 0);
-        }
+        if (server)
+            server->stop();
+        if (thread.joinable())
+            thread.join();
     }
 };
-
-// First non-loopback IPv4, what a friend on the same network should type
-static std::string lanAddress()
-{
-    ifaddrs *list = nullptr;
-    std::string address = "127.0.0.1";
-
-    if (getifaddrs(&list) != 0)
-        return address;
-
-    for (ifaddrs *it = list; it; it = it->ifa_next) {
-        if (!it->ifa_addr || it->ifa_addr->sa_family != AF_INET)
-            continue;
-        char buffer[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &reinterpret_cast<sockaddr_in *>(it->ifa_addr)->sin_addr, buffer, sizeof(buffer));
-        if (std::string(buffer) != "127.0.0.1") {
-            address = buffer;
-            break;
-        }
-    }
-    freeifaddrs(list);
-    return address;
-}
 
 // Plays one session against a server, until the player leaves
 static Client::RunResult play(Renderer &renderer, const std::string &host, int port, Loadout loadout,
@@ -152,7 +115,7 @@ static bool parseOptions(int argc, char **argv, Options &options)
 }
 
 // Solo and host runs play on a server we start ourselves; joining uses the address typed in
-static bool resolveServer(MenuChoice &choice, LocalServer &server)
+static bool resolveServer(MenuChoice &choice, LocalServer &server, bool debug_mode)
 {
     bool solo = choice.mode == MenuChoice::Mode::Solo;
 
@@ -161,7 +124,7 @@ static bool resolveServer(MenuChoice &choice, LocalServer &server)
 
     choice.host = "127.0.0.1";
     choice.port = solo ? 40000 + std::random_device{}() % 20000 : HOST_PORT;
-    return server.start(choice.port, solo);
+    return server.start(choice.port, solo, debug_mode);
 }
 
 static std::string connectionError(const MenuChoice &choice)
@@ -181,13 +144,13 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
 
         if (choice.mode == MenuChoice::Mode::Quit)
             return;
-        if (!resolveServer(choice, local_server)) {
+        if (!resolveServer(choice, local_server, debug_mode)) {
             menu.setError("CAN'T START THE SERVER");
             continue;
         }
 
         bool hosting = choice.mode == MenuChoice::Mode::Host;
-        renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + lanAddress() + ":" + std::to_string(HOST_PORT) : "");
+        renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + Socket::lanAddress() + ":" + std::to_string(HOST_PORT) : "");
 
         Loadout loadout = {choice.character, choice.district, choice.game_mode};
         if (play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected)

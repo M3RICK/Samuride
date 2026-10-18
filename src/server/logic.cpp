@@ -22,9 +22,9 @@ bool Server::resetMap()
     projectiles.clear();
     resetTitans();
 
-    if (!map_path.empty()) {
-        if (!game_map.loadFromFile(map_path)) {
-            std::cerr << "Invalid map file: " << map_path << std::endl;
+    if (!config.map_path.empty()) {
+        if (!game_map.loadFromFile(config.map_path)) {
+            std::cerr << "Invalid map file: " << config.map_path << std::endl;
             return false;
         }
     } else {
@@ -69,7 +69,7 @@ void Server::updateGameState()
             if (players.empty()) {
                 resetMap();
                 phase = Phase::Waiting;
-                std::cout << "Lobby open" << std::endl;
+                announce("Lobby open");
             }
             break;
     }
@@ -102,7 +102,7 @@ void Server::startGame()
     run_speed = START_SPEED;
     ready_clients.clear();
 
-    std::cout << "Game starting with " << players.size() << " players" << std::endl;
+    announce("Game starting with " + std::to_string(players.size()) + " players");
 }
 
 // Rematch once everyone in the lobby asked for one
@@ -168,7 +168,7 @@ void Server::updatePlayers()
     sendTitans();
 
     if (survivors.size() < players.size())
-        endGame(survivors.size() == 1 && !solo ? survivors[0] : -1);
+        endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
 }
 
 // Samples the body from head to feet. Returns true when the player got zapped or run down.
@@ -263,7 +263,7 @@ void Server::endGame(int winner_number)
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_END, { winner }));
 
     if (winner_number >= 0)
-        std::cout << "Game over, player " << winner_number << " wins" << std::endl;
+        announce("Game over, player " + std::to_string(winner_number) + " wins");
     else
-        std::cout << "Game over, no winner" << std::endl;
+        announce("Game over, no winner");
 }

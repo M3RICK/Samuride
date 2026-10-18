@@ -15,12 +15,6 @@
 #include <iostream>
 #include <map>
 #include <cstring>
-#include <cerrno>
-#include <unistd.h>
-#include <poll.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
 Client::Client(const std::string& server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state)
     : client_fd(-1), server_ip(server_ip), server_port(server_port), loadout(loadout),
@@ -32,14 +26,15 @@ Client::~Client()
 {
     stop();
 
-    if (client_fd >= 0) {
-        close(client_fd);
-    }
+    if (client_fd >= 0)
+        Socket::close(client_fd);
 }
 
 // Retries for a couple of seconds: a server we just launched may not be listening yet
 bool Client::initialize()
 {
+    if (!Socket::startup())
+        return false;
     for (int attempt = 0; attempt < 40; attempt++) {
         if (connectToServer())
             return true;
@@ -50,28 +45,11 @@ bool Client::initialize()
 
 bool Client::connectToServer()
 {
-    addrinfo hints = {};
-    addrinfo *result = nullptr;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    if (getaddrinfo(server_ip.c_str(), std::to_string(server_port).c_str(), &hints, &result) != 0)
+    client_fd = Socket::connect(server_ip, server_port);
+    if (client_fd < 0)
         return false;
-
-    client_fd = socket(AF_INET, SOCK_STREAM, 0);
-    bool ok = client_fd >= 0 && connect(client_fd, result->ai_addr, result->ai_addrlen) == 0;
-    freeaddrinfo(result);
-
-    if (!ok) {
-        if (client_fd >= 0)
-            close(client_fd);
-        client_fd = -1;
-        return false;
-    }
 
     DEBUG_LOG("Connected to server: " + server_ip + ":" + std::to_string(server_port));
-
-    Socket::setNonBlocking(client_fd);
     connected = true;
     sendConnectMessage();
     return true;
@@ -131,12 +109,12 @@ void Client::stop()
 
 void Client::networkLoop()
 {
-    pollfd pfd = {client_fd, POLLIN, 0};
+    std::vector<Socket::PollEntry> socket = {{client_fd}};
 
     while (running && connected) {
         processOutgoingMessages();
 
-        if (poll(&pfd, 1, 5) > 0)
+        if (Socket::poll(socket, 5) && (socket[0].readable || socket[0].closed))
             readIncomingData();
     }
 }

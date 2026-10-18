@@ -8,17 +8,26 @@
 #ifndef SERVER_HPP
     #define SERVER_HPP
 
+#include <atomic>
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
 #include <random>
-#include <poll.h>
+#include "../common/socket.hpp"
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
 #include "player.hpp"
+
+struct ServerConfig {
+    int port = -1;
+    std::string map_path;       // optional hand-made start of the run
+    bool solo = false;          // one player, on loopback only
+    bool debug_mode = false;
+    bool quiet = false;         // no status lines: when running inside the game
+};
 
 class Server {
 private:
@@ -53,11 +62,9 @@ private:
         float max_x;
     };
 
+    ServerConfig config;
     int server_fd;
-    int port;
-    std::string map_path;
-    bool solo;
-    bool debug_mode;
+    std::atomic<bool> stopping;
     size_t required_players;
 
     Map game_map;
@@ -80,7 +87,7 @@ private:
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
 
-    std::vector<pollfd> poll_fds;
+    std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
 
     // More unparsed bytes than this from a client is garbage
@@ -90,15 +97,10 @@ private:
     // Server Initialization
     //===========================================================================
 
-    bool initializeServer();
 
     bool resetMap();
 
     void extendMap(float leader_x);
-
-    bool setSocketOptions();
-
-    bool bindSocket();
 
     //===========================================================================
     // Client Connection Management
@@ -129,6 +131,8 @@ private:
     void processSocketEvents();
 
     void updateGameState();
+
+    void announce(const std::string &message) const;
 
     //===========================================================================
     // Network Communication
@@ -199,13 +203,15 @@ private:
     void titanSmash(Player &player);
 
 public:
-    Server(int port, const std::string& map_path, bool solo, bool debug_mode);
+    explicit Server(const ServerConfig &config);
 
     ~Server();
 
     bool initialize();
 
+    // Runs until stop(), from any thread
     void run();
+    void stop() { stopping = true; }
 };
 
 #endif

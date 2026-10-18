@@ -11,7 +11,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <string>
 
-// Player preferences, kept in ~/.local/share/samuride/settings
+// Player preferences, kept in the platform's data directory (see Platform::dataDirectory)
 struct Settings {
     int music_volume = 50;      // percent
     int sfx_volume = 70;        // percent
