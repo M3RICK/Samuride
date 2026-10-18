@@ -7,6 +7,7 @@
 
 #include "render.hpp"
 #include "menu.hpp"
+#include "settings.hpp"
 #include "state.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>

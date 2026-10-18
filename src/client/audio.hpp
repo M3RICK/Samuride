@@ -24,6 +24,8 @@ public:
     void play(Sfx sfx);
     // Thrust rumble, looping while the jetpack is on
     void setJetpack(bool on);
+    // Percentages, from the options
+    void setVolumes(int music, int sfx);
 
 private:
     static constexpr size_t VOICES = 12;

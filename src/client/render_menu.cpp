@@ -27,6 +27,9 @@ void Renderer::renderMenu(const MenuState &menu)
         case MenuState::Screen::Character:
             renderCharacterSelect(menu);
             break;
+        case MenuState::Screen::Options:
+            renderOptions(menu);
+            break;
         case MenuState::Screen::Mode:
             renderModeSelect(menu);
             break;
@@ -81,7 +84,7 @@ void Renderer::renderMainMenu(const MenuState &menu)
     }
 
     if (!menu.error.empty())
-        window.draw(makeText(menu.error, 30, NEON_RED, {x, MenuLayout::Y + 4 * MenuLayout::SPACING}));
+        window.draw(makeText(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter()));
     if (menu.best_distance > 0)
         window.draw(makeText(std::format("BEST RUN  {} M", menu.best_distance), 32, NEON_YELLOW, {x, 960}));
 
@@ -184,6 +187,65 @@ void Renderer::drawCharacterPreview(const Character &character, sf::FloatRect bo
     sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
     sprite.setColor(selected ? sf::Color::White : FADED);
     window.draw(sprite);
+}
+
+//=============================================================================
+// Options
+//=============================================================================
+
+void Renderer::renderOptions(const MenuState &menu)
+{
+    drawGlitchText("OPTIONS", 80, NEON_YELLOW, {SCREEN_WIDTH / 2, 150});
+
+    for (int i = 0; i < MenuLayout::OPTION_COUNT; i++)
+        drawOptionRow(i, menu);
+
+    window.draw(makeText("[UP / DOWN] SELECT     [LEFT / RIGHT] VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
+                         24, HINT_GREY, {SCREEN_WIDTH / 2, 1030}));
+}
+
+// Label on the left, value on the right: a volume bar or a key
+void Renderer::drawOptionRow(int index, const MenuState &menu)
+{
+    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "BACK"};
+    const Settings &settings = menu.settings;
+    sf::FloatRect box = MenuLayout::optionBox(index);
+    bool selected = index == menu.option;
+    sf::Color color = selected ? NEON_YELLOW : DIM_WHITE;
+    sf::Vector2f left(box.position.x + 40, box.getCenter().y);
+    sf::Vector2f right(box.position.x + box.size.x - 40, box.getCenter().y);
+
+    drawCard(box, selected);
+
+    if (index == MenuLayout::OPTION_BACK) {
+        window.draw(makeText(labels[index], 40, color, box.getCenter()));
+        return;
+    }
+    window.draw(makeText(labels[index], 36, color, left, {0, 0.5f}));
+
+    if (index == MenuLayout::OPTION_MUSIC || index == MenuLayout::OPTION_SFX) {
+        drawVolumeBar(index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        return;
+    }
+
+    bool waiting = selected && menu.waiting_for_key;
+    sf::Keyboard::Key key = index == MenuLayout::OPTION_JETPACK ? settings.jetpack_key : settings.attack_key;
+    std::string value = waiting ? (blink() ? "PRESS A KEY..." : "") : keyName(key);
+    window.draw(makeText(value, 36, waiting ? NEON_CYAN : color, right, {1, 0.5f}));
+}
+
+// Ten segments lit up to the volume, then the percentage
+void Renderer::drawVolumeBar(int volume, sf::Vector2f right, bool selected)
+{
+    sf::RectangleShape segment({22, 30});
+
+    segment.setOrigin({0, 15});
+    for (int i = 0; i < 10; i++) {
+        segment.setPosition(right - sf::Vector2f(120 + (10 - i) * 28, 0));
+        segment.setFillColor(i < volume / 10 ? NEON_CYAN : sf::Color(255, 255, 255, 40));
+        window.draw(segment);
+    }
+    window.draw(makeText(std::format("{}%", volume), 32, selected ? NEON_YELLOW : DIM_WHITE, right, {1, 0.5f}));
 }
 
 //=============================================================================

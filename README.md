@@ -28,9 +28,11 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 
 | Key | Action |
 | --- | --- |
-| `Space` (hold) | Jetpack |
-| `F` | Attack (CYBERPSYCHO) |
+| `Space` (hold) | Jetpack (default) |
+| `F` | Attack in CYBERPSYCHO (default) |
 | `Esc` | Back to menu |
+
+Keys and volumes can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
 | Arrows / mouse + `Enter` | Menu |
 
 <p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>

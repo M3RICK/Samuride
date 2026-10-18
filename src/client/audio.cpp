@@ -140,27 +140,21 @@ Audio::Audio()
     loadMusic();
     synthesize();
 
-    for (size_t i = 0; i < VOICES; i++) {
+    for (size_t i = 0; i < VOICES; i++)
         voices.emplace_back(buffers.at(Sfx::Coin));
-        voices.back().setVolume(70);
-    }
 
     jet.emplace(jet_buffer);
     jet->setLooping(true);
-    jet->setVolume(35);
+    setVolumes(50, 70);
 }
 
 void Audio::loadMusic()
 {
-    if (menu_music.openFromFile("assets/music/waiting_screen.wav")) {
+    if (menu_music.openFromFile("assets/music/waiting_screen.wav"))
         menu_music.setLooping(true);
-        menu_music.setVolume(50);
-    }
 
-    if (game_music.openFromFile("assets/music/ingame.wav")) {
+    if (game_music.openFromFile("assets/music/ingame.wav"))
         game_music.setLooping(true);
-        game_music.setVolume(40);
-    }
 }
 
 // Retro arcade palette: square-wave blips, saw sweeps and filtered noise
@@ -203,6 +197,17 @@ void Audio::play(Sfx sfx)
     next_voice = (next_voice + 1) % VOICES;
     voice.setBuffer(buffers.at(sfx));
     voice.play();
+}
+
+// The in-game track and the jetpack sit a little under the rest of their group
+void Audio::setVolumes(int music, int sfx)
+{
+    menu_music.setVolume(music);
+    game_music.setVolume(music * 0.8f);
+
+    for (sf::Sound &voice : voices)
+        voice.setVolume(sfx);
+    jet->setVolume(sfx * 0.5f);
 }
 
 void Audio::setJetpack(bool on)

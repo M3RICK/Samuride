@@ -225,6 +225,9 @@ private:
     void renderCharacterSelect(const MenuState &menu);
     void drawCharacterCard(int index, bool selected, float time);
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time);
+    void renderOptions(const MenuState &menu);
+    void drawOptionRow(int index, const MenuState &menu);
+    void drawVolumeBar(int volume, sf::Vector2f right, bool selected);
     void renderModeSelect(const MenuState &menu);
     void drawModeCard(int index, bool selected);
     void renderDistrictSelect(const MenuState &menu);

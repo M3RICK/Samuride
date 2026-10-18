@@ -105,7 +105,7 @@ static std::string lanAddress()
 
 // Plays one session against a server, until the player leaves
 static Client::RunResult play(Renderer &renderer, const std::string &host, int port, Loadout loadout,
-                              bool debug_mode, bool &connected)
+                              const Settings &settings, bool debug_mode, bool &connected)
 {
     GameState game_state;
     Client client(host, port, loadout, debug_mode, game_state);
@@ -114,7 +114,7 @@ static Client::RunResult play(Renderer &renderer, const std::string &host, int p
     if (!connected)
         return Client::RunResult::Menu;
 
-    InputManager input_manager(&client, &renderer.getWindow());
+    InputManager input_manager(&client, &renderer.getWindow(), settings);
     return client.run(input_manager, renderer);
 }
 
@@ -190,7 +190,7 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
         renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + lanAddress() + ":" + std::to_string(HOST_PORT) : "");
 
         Loadout loadout = {choice.character, choice.district, choice.game_mode};
-        if (play(renderer, choice.host, choice.port, loadout, debug_mode, connected)
+        if (play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected)
             == Client::RunResult::Quit)
             return;
         if (!connected)
@@ -215,12 +215,14 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    Menu menu(renderer.getWindow());
+    Settings settings = Settings::load();
+    renderer.getAudio().setVolumes(settings.music_volume, settings.sfx_volume);
+    Menu menu(renderer.getWindow(), settings);
 
     // Direct connection from the command line, then the menu as usual
     if (!options.host.empty()) {
         bool connected = true;
-        if (play(renderer, options.host, options.port, {options.character}, options.debug_mode, connected)
+        if (play(renderer, options.host, options.port, {options.character}, settings, options.debug_mode, connected)
             == Client::RunResult::Quit)
             return EXIT_SUCCESS;
         if (!connected)
