@@ -1,11 +1,13 @@
 CC = g++
-CFLAGS = -Wall -Wextra -g -std=c++20 -I./src -MMD -MP
+CFLAGS = -Wall -Wextra -g -O2 -std=c++20 -I./src -MMD -MP
 LDFLAGS = -pthread
 
-# Set SFML_DIR if SFML 3 is not installed system-wide
+# Set SFML_DIR if SFML 3 is not installed system-wide.
+# RPATH is where the binaries look for it at run time ('$$ORIGIN/lib' for a relocatable release).
 ifdef SFML_DIR
+RPATH ?= $(SFML_DIR)/lib
 CFLAGS += -I$(SFML_DIR)/include
-LDFLAGS += -L$(SFML_DIR)/lib -Wl,-rpath,$(SFML_DIR)/lib
+LDFLAGS += -L$(SFML_DIR)/lib -Wl,--disable-new-dtags,-rpath,'$(RPATH)'
 endif
 
 # Common sources

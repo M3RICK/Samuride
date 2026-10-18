@@ -35,6 +35,18 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 <p align="center"><img src="docs/characters.png" alt="Character select" width="600px"></p>
 <p align="center"><img src="docs/districts.png" alt="District select" width="600px"></p>
 
+## Download
+
+Grab `samuride-<version>-linux-x86_64.tar.gz` from the [Releases](../../releases) page, then:
+
+```sh
+tar xzf samuride-*-linux-x86_64.tar.gz
+cd samuride-*-linux-x86_64
+./jetpack_client
+```
+
+Everything it needs is in the archive. Runs on x86_64 Linux with glibc 2.39 or newer (Ubuntu 24.04+, Fedora 40+, Arch...).
+
 ## Build
 
 Linux, a C++20 compiler and **SFML 3**.
@@ -46,6 +58,7 @@ make tests               # protocol, map streaming & generator self-checks
 ```
 
 SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
+`tools/package_release.sh` builds the same self-contained archive as the Releases page.
 
 ## Play
 
