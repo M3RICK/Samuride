@@ -1,0 +1,13 @@
+name MIKASA
+sheet sheet.png
+portrait portrait.png
+frame 181 113
+feet 86
+body 82
+exhaust 0 240 255
+run 0 7 12 loop
+takeoff 1 6 16 once
+rise 2 8 12 loop
+hover 3 7 12 loop
+fall 4 8 12 loop
+death 5 8 10 once
