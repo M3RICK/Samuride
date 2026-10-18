@@ -18,7 +18,7 @@
 
 Server::Server(const ServerConfig &config)
     : config(config), server_fd(-1), stopping(false), required_players(config.solo ? 1 : 2),
-      rng(std::random_device{}()), chunks_generated(0), run_speed(START_SPEED), phase(Phase::Waiting),
+      rng(std::random_device{}()), chunks_generated(0), last_orb_chunk(-SHIFT_MIN_GAP_CHUNKS), run_speed(START_SPEED), phase(Phase::Waiting),
       countdown(0), countdown_ticks(0), district(0), mode(GameMode::Classic), titan_timer(0) {
     g_logger.setDebugMode(config.debug_mode);
 }

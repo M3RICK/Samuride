@@ -34,11 +34,16 @@ void printUsage(const char *programName)
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 
-// Assets live next to the binary, so the client can be launched from anywhere
-static void moveToBinaryDirectory()
+// Assets live next to the binary, or in Contents/Resources inside a macOS Samuride.app,
+// so the client can be launched from anywhere
+static void moveToAssetsDirectory()
 {
+    std::filesystem::path dir = Platform::executableDirectory();
     std::error_code ec;
-    std::filesystem::current_path(Platform::executableDirectory(), ec);
+
+    if (!std::filesystem::exists(dir / "assets") && std::filesystem::exists(dir / "../Resources/assets"))
+        dir /= "../Resources";
+    std::filesystem::current_path(dir, ec);
 }
 
 // The server for solo and host runs, in a thread of the game: it stops when the game leaves the run
@@ -170,7 +175,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    moveToBinaryDirectory();
+    moveToAssetsDirectory();
 
     Renderer renderer;
     if (!renderer.initialize()) {

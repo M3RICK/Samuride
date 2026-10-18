@@ -40,8 +40,13 @@
     static int lastErrorCode() { return errno; }
     static bool wouldBlock() { return errno == EAGAIN || errno == EWOULDBLOCK; }
     static int pollSockets(pollfd *fds, size_t count, int timeout) { return ::poll(fds, count, timeout); }
-    // A peer that left must not kill us with SIGPIPE
+    // A peer that left must not kill us with SIGPIPE: per send on Linux,
+    // per socket on macOS (SO_NOSIGPIPE, set in configure)
+    #ifdef MSG_NOSIGNAL
     static constexpr int NO_SIGPIPE = MSG_NOSIGNAL;
+    #else
+    static constexpr int NO_SIGPIPE = 0;
+    #endif
     using PollFd = pollfd;
 #endif
 
@@ -68,13 +73,18 @@ void Socket::close(int fd)
 #endif
 }
 
-static void setNonBlocking(int fd)
+// Every socket in use: non-blocking, and never raising SIGPIPE
+static void configure(int fd)
 {
 #ifdef _WIN32
     u_long on = 1;
     ioctlsocket(fd, FIONBIO, &on);
 #else
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+    #ifdef SO_NOSIGPIPE
+    int no_sigpipe = 1;
+    setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe));
+    #endif
 #endif
 }
 
@@ -96,7 +106,7 @@ int Socket::listen(int port, bool loopback_only)
         close(fd);
         return -1;
     }
-    setNonBlocking(fd);
+    configure(fd);
     return fd;
 }
 
@@ -105,7 +115,7 @@ int Socket::accept(int listener)
     int fd = ::accept(listener, nullptr, nullptr);
 
     if (fd >= 0)
-        setNonBlocking(fd);
+        configure(fd);
     return fd;
 }
 
@@ -128,7 +138,7 @@ int Socket::connect(const std::string &host, int port)
             close(fd);
         return -1;
     }
-    setNonBlocking(fd);
+    configure(fd);
     return fd;
 }
 

@@ -1,6 +1,6 @@
 name: release
 
-# Push a tag like v1.0 to publish downloadable Linux and Windows builds on the Releases page
+# Push a tag like v1.0 to publish downloadable Linux, Windows and macOS builds on the Releases page
 on:
   push:
     tags: ['v*']
@@ -54,6 +54,26 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: samuride-windows
+          path: dist/*.zip
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+
+  macos:
+    # Apple Silicon runner; the package runs on macOS 13.3 or newer
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the package
+        run: tools/package_macos.sh "${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samuride-macos
           path: dist/*.zip
 
       - name: Publish the release

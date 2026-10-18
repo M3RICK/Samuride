@@ -14,7 +14,9 @@ void Server::placeShiftOrb(std::vector<std::string> &rows)
 {
     std::uniform_real_distribution<float> chance(0, 1);
 
-    if (chunks_generated < SHIFT_FIRST_CHUNK || chance(rng) >= SHIFT_CHANCE)
+    bool too_soon = chunks_generated < SHIFT_FIRST_CHUNK || chunks_generated - last_orb_chunk < SHIFT_MIN_GAP_CHUNKS;
+
+    if (too_soon || chance(rng) >= SHIFT_CHANCE)
         return;
 
     std::uniform_int_distribution<int> column(5, rows[0].size() - 5);
@@ -25,6 +27,7 @@ void Server::placeShiftOrb(std::vector<std::string> &rows)
         char &tile = rows[row(rng)][column(rng)];
         if (tile == '_') {
             tile = SHIFT_TILE;
+            last_orb_chunk = chunks_generated;
             return;
         }
     }
