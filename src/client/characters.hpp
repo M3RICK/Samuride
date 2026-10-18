@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// A playable character: sprite sheet, portrait and animations
 
 #ifndef CHARACTERS_HPP
     #define CHARACTERS_HPP

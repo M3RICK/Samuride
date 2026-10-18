@@ -1,12 +1,7 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game entry point: menu, then runs on a local or remote server, until the player quits
 
 #include "client.hpp"
-#include "render.hpp"
+#include "render/renderer.hpp"
 #include "inputs.hpp"
 #include "state.hpp"
 #include "menu.hpp"

@@ -24,7 +24,10 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Versus**: two runners, one corridor. First one to get zapped loses.
 - **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
 - **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.
-- **Attack Titan**: grab the rare orange orb and you stop while the smoke rises, then run for 5 seconds as Eren's titan, invincible, crushing drones and titans and sweeping up the eddies, before bursting back out of the smoke.
+- **Attack Titan**: grab the rare orange orb and you stop while the smoke rises, then run for 4 seconds as Eren's titan, invincible, crushing drones and titans and sweeping up the eddies, before bursting back out of the smoke.
+- **Subdermal shield**: the cyan hexagon takes one deadly hit for you (zapper, drone or titan), then gives you a second to get clear.
+- **Sandevistan**: the green chevrons send you into a 3-second sprint nothing can hurt, leaving afterimages behind.
+- In CYBERPSYCHO, **one drone in three drops a shield or a Sandevistan** when you shoot it down.
 - **Titans** charge along the floor past 150 m: a blinking `!` warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
@@ -107,7 +110,7 @@ A dedicated server and direct connection are available too:
 - **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
 - **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
 - **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
-- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`doc.txt`](doc.txt).
+- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ### Hand-made maps
 
@@ -120,6 +123,8 @@ Plain text, one character per tile, all lines the same length:
 | `e` | zapper |
 | `d` | drone (CYBERPSYCHO) |
 | `p` | Attack Titan orb |
+| `a` | shield |
+| `v` | Sandevistan |
 
 ## Crew
 

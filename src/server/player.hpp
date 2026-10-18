@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// A player on the server: physics, score, pickups and Attack Titan forms
 
 #ifndef PLAYER_HPP
     #define PLAYER_HPP
@@ -13,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include "../common/shift.hpp"
+#include "../common/powerups.hpp"
 
 class Player {
 private:
@@ -30,9 +26,13 @@ private:
     int score;
     bool jet_active;
     int character;
+    bool introduced;            // sent MSG_CONNECT: the character is the one picked
     float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
     Form form;
     float form_timer;           // seconds left in the current form
+    bool shield;
+    float sprint_timer;         // seconds of Sandevistan left
+    float grace_timer;          // seconds of invincibility left after a shield broke
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet
@@ -64,7 +64,12 @@ public:
     bool takePickup(int tile_x, int tile_y);
 
     Form getForm() const { return form; }
-    bool isInvincible() const { return form != Form::Normal; }
+    bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
+    bool hasShield() const { return shield; }
+    bool isSprinting() const { return sprint_timer > 0; }
+    void powerUp(char tile);
+    // Returns true when the shield took the hit
+    bool absorbHit();
     void startShift();
     void addScore(int points) { score += points; }
 
@@ -72,7 +77,8 @@ public:
     void startCooldown(float seconds) { attack_cooldown = seconds; }
 
     int getCharacter() const { return character; }
-    void setCharacter(int id) { character = id; }
+    void setCharacter(int id) { character = id; introduced = true; }
+    bool isIntroduced() const { return introduced; }
 
     bool isJetActive() const { return jet_active; }
     void setJetActive(bool active) { jet_active = active; }

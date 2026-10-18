@@ -1,16 +1,9 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
-
 #ifndef PLATFORM_HPP
     #define PLATFORM_HPP
 
 #include <filesystem>
 
-// The few paths that differ between Linux and Windows
+// The few paths that differ between Linux, macOS and Windows
 namespace Platform {
     // Folder of the running executable: the assets sit next to it
     std::filesystem::path executableDirectory();

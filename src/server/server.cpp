@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Server core: listening socket, clients, message handling, fixed 60 Hz loop
 
 #include "server.hpp"
 #include "../common/debug.hpp"
@@ -212,8 +207,7 @@ void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
 {
     DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
 
-    if (!payload.empty())
-        players.at(client_fd).setCharacter(payload[0]);
+    players.at(client_fd).setCharacter(payload.empty() ? 0 : payload[0]);
     if (players.size() != 1)
         return;
     if (payload.size() >= 2)

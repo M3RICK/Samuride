@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Debug logging, enabled with -d
 
 #include "debug.hpp"
 
@@ -13,11 +8,6 @@ Logger::Logger(bool debug) : debug_mode(debug)
 void Logger::setDebugMode(bool mode)
 {
     debug_mode = mode;
-}
-
-bool Logger::isDebugMode() const
-{
-    return debug_mode;
 }
 
 // "[HH:MM:SS] ", the start of every log line

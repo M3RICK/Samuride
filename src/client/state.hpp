@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game state shared between the network thread and the render thread
 
 #ifndef STATE_HPP
     #define STATE_HPP
@@ -17,6 +12,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
 #include "../common/shift.hpp"
+#include "../common/powerups.hpp"
 
 enum class Phase { Waiting, Countdown, Running, Over };
 
@@ -26,6 +22,8 @@ struct PlayerState {
     int score = 0;
     bool jet_active = false;
     Form form = Form::Normal;
+    bool shielded = false;
+    bool sprinting = false;     // Sandevistan
 };
 
 // Someone attacked in CYBERPSYCHO

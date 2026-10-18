@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Random map chunks: zapper beams, coin blocks and waves, drone squads
 
 #ifndef GENERATOR_HPP
     #define GENERATOR_HPP

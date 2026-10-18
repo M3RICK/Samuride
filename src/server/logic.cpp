@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Game rules: lobby, countdown, endless map, physics ticks, collisions, game over
 
 #include "server.hpp"
 #include "generator.hpp"
@@ -44,6 +39,7 @@ void Server::extendMap(float leader_x)
         bool drones = mode == GameMode::Cyberpsycho;
         std::vector<std::string> rows = generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
         placeShiftOrb(rows);
+        placePowerUp(rows);
         game_map.appendChunk(rows);
 
         // Before the run, clients get the whole map in one go instead
@@ -56,7 +52,7 @@ void Server::updateGameState()
 {
     switch (phase) {
         case Phase::Waiting:
-            if (players.size() == required_players)
+            if (lobbyReady())
                 startGame();
             break;
         case Phase::Countdown:
@@ -74,6 +70,13 @@ void Server::updateGameState()
             }
             break;
     }
+}
+
+// Full, and everyone said who they play: a game started on accept would miss the loadouts
+bool Server::lobbyReady() const
+{
+    return players.size() == required_players &&
+           std::all_of(players.begin(), players.end(), [](const auto &entry) { return entry.second.isIntroduced(); });
 }
 
 void Server::startGame()
@@ -190,8 +193,13 @@ bool Server::checkPlayerCollisions(Player &player)
         int tile_y = static_cast<int>(py);
         char tile = game_map.getTile(tile_x, tile_y);
 
+        char power = powerUpAt(tile_x, tile_y);
+
         if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
             notifyCollision('c', player, tile_x, tile_y);
+        } else if (power != '_' && player.takePickup(tile_x, tile_y)) {
+            player.powerUp(power);
+            notifyCollision(power, player, tile_x, tile_y);
         } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
             player.startShift();
             notifyCollision(SHIFT_TILE, player, tile_x, tile_y);
@@ -201,15 +209,12 @@ bool Server::checkPlayerCollisions(Player &player)
         } else if ((tile == 'e' || isLiveDrone(tile_x, tile_y)) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
-            notifyCollision('e', player, tile_x, tile_y);
-            return true;
+            return hurt(player, 'e', tile_x, tile_y);
         }
     }
 
-    if (!player.isInvincible() && hitByTitan(player)) {
-        notifyCollision(TITAN_HIT, player, player.getX(), player.getY() + 1);
-        return true;
-    }
+    if (!player.isInvincible() && hitByTitan(player))
+        return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
     return false;
 }
 
@@ -222,8 +227,9 @@ void Server::sendGameState()
         Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getScore());
-        // bit 0: jetpack, bits 1-2: form
-        state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1);
+        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan
+        state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
+                             (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

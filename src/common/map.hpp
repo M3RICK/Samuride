@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// The run's tile map: loaded from a file, generated in chunks, streamed to clients
 
 #ifndef MAP_HPP
     #define MAP_HPP

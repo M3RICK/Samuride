@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// The authoritative game server, split by theme over server, logic, combat, titans and shift .cpp
 
 #ifndef SERVER_HPP
     #define SERVER_HPP
@@ -147,6 +142,7 @@ private:
     // Game Logic
     //===========================================================================
 
+    bool lobbyReady() const;
     void startGame();
 
     void handleReady(int client_fd);
@@ -202,6 +198,18 @@ private:
     void placeShiftOrb(std::vector<std::string> &rows);
 
     void titanSmash(Player &player);
+
+    //===========================================================================
+    // Shield & Sandevistan (powerups.cpp)
+    //===========================================================================
+
+    bool placeInFreeTile(std::vector<std::string> &rows, char tile);
+
+    void placePowerUp(std::vector<std::string> &rows);
+
+    char powerUpAt(int x, int y) const;
+
+    bool hurt(Player &player, char cause, int x, int y);
 
 public:
     explicit Server(const ServerConfig &config);

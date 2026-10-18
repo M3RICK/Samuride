@@ -1,13 +1,8 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Connection to the server: a network thread fills the GameState, the main thread renders it
 
 #include "client.hpp"
 #include "state.hpp"
-#include "render.hpp"
+#include "render/renderer.hpp"
 #include "inputs.hpp"
 #include "../common/debug.hpp"
 #include "../common/socket.hpp"
@@ -218,13 +213,15 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
     for (size_t pos = 0; pos + 10 <= payload.size(); pos += 10) {
         const uint8_t *p = payload.data() + pos;
 
-        // Last byte: bit 0 jetpack, bits 1-2 form
+        // Last byte: bit 0 jetpack, bits 1-2 form, bit 3 shield, bit 4 Sandevistan
         game_state.updatePlayer(p[0], {
             Protocol::readU32(p + 1) / POSITION_SCALE,
             Protocol::readU16(p + 5) / POSITION_SCALE,
             Protocol::readU16(p + 7),
             (p[9] & 1) != 0,
-            static_cast<Form>((p[9] >> 1) & 3)});
+            static_cast<Form>((p[9] >> 1) & 3),
+            (p[9] & 8) != 0,
+            (p[9] & 16) != 0});
     }
 }
 

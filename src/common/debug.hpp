@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Debug logging, enabled with -d
 
 #ifndef DEBUG_HPP
     #define DEBUG_HPP
@@ -25,7 +20,6 @@ class Logger {
         Logger(bool debug = false);
 
         void setDebugMode(bool mode);
-        bool isDebugMode() const;
         void log(const std::string &msg);
         void logPacket(const std::string& direction, const char *data, size_t size);
 };

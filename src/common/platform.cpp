@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// The few paths that differ between Linux, macOS and Windows
 
 #include "platform.hpp"
 #include <cstdint>

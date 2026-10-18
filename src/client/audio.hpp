@@ -1,10 +1,3 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
-
 #ifndef AUDIO_HPP
     #define AUDIO_HPP
 
@@ -16,7 +9,8 @@
 // Music, plus sound effects synthesized at start-up: no audio files to ship
 class Audio {
 public:
-    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion, Stomp, Roar, Steam };
+    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion, Stomp, Roar, Steam,
+                     Shield, ShieldBreak, Sandevistan };
 
     Audio();
 

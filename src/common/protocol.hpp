@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Binary protocol: packets with a 4-byte header, reassembled from the TCP stream (see docs/PROTOCOL.md)
 
 #ifndef PROTOCOL_HPP
     #define PROTOCOL_HPP

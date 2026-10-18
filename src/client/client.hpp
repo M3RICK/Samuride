@@ -1,9 +1,4 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Connection to the server: a network thread fills the GameState, the main thread renders it
 
 #ifndef CLIENT_HPP
     #define CLIENT_HPP
@@ -76,8 +71,6 @@ public:
 
     void sendPlayerInput(bool jet_activated);
     void sendAttack();
-
-    bool isConnected() const { return connected; }
 };
 
 #endif

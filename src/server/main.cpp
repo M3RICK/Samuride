@@ -1,16 +1,11 @@
-/*
- ** EPITECH PROJECT, 2024
- ** B-NWP-jetpack
- ** File description:
- ** JETPACK
- */
+// Dedicated server entry point: jetpack_server -p <port> [-m <map>] [-s] [-d]
 
 #include "server.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
 
-void printUsage(const char  *programme)
+void printUsage(const char *programme)
 {
     std::cerr << "Usage: " << programme << " -p <port> [-m <map>] [-s] [-d]" << std::endl;
     std::cerr << "  -p <port>   Port to listen on" << std::endl;
