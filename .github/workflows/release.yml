@@ -1,6 +1,6 @@
 name: release
 
-# Push a tag like v1.0 to publish a downloadable Linux build on the Releases page
+# Push a tag like v1.0 to publish downloadable Linux and Windows builds on the Releases page
 on:
   push:
     tags: ['v*']
@@ -36,3 +36,28 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.tar.gz
+
+  windows:
+    # Cross-compiled with MinGW, the same way tools/package_windows.sh is tested locally under Wine
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the MinGW toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-mingw-w64-x86-64-posix cmake git make zip
+
+      - name: Build the package
+        run: tools/package_windows.sh "${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samuride-windows
+          path: dist/*.zip
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
