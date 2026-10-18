@@ -11,3 +11,4 @@ rise 2 7 12 loop
 hover 3 15 14 loop
 fall 4 8 12 loop
 death 5 9 10 hide
+attack 6 5 16 once
