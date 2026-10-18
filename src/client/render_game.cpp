@@ -45,6 +45,7 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
     auto players = state.getPlayers();
     int me = state.getMyPlayerNumber();
     updateWorld(state, players, me, dt);
+    updateSounds(state, phase, players, me);
 
     // World view shakes when someone gets zapped, the HUD doesn't
     sf::View ui_view = screenView();
@@ -83,6 +84,21 @@ void Renderer::updateWorld(GameState &state, const std::map<int, PlayerState> &p
 
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
+}
+
+// Countdown beeps, and the jetpack rumble while your thrust is on
+void Renderer::updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me)
+{
+    int countdown = state.getCountdown();
+    auto mine = players.find(me);
+    bool alive = !death_clocks.count(me);
+
+    if (phase == Phase::Countdown && countdown > 0 && countdown != heard_countdown) {
+        heard_countdown = countdown;
+        audio.play(Audio::Sfx::Beep);
+    }
+
+    audio.setJetpack(phase == Phase::Running && alive && mine != players.end() && mine->second.jet_active);
 }
 
 // "ENTERING <district>", for a moment after the scenery changes
@@ -187,11 +203,13 @@ void Renderer::addEffect(const CollisionEffect &effect, int me)
     sf::Vector2f tile_center(effect.x + 0.5f, effect.y + 0.5f);
 
     if (effect.type == 'e') {
+        audio.play(Audio::Sfx::Zap);
         shake = 0.5f;
         death_clocks.try_emplace(effect.player);
         emitParticles(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
         emitParticles(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.player == me) {
+        audio.play(Audio::Sfx::Coin);
         emitParticles(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
         emitParticles(tile_center, 6, NEON_YELLOW, 3, 0.35f, 0);
     } else {

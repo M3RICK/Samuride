@@ -1,0 +1,45 @@
+/*
+ ** EPITECH PROJECT, 2024
+ ** B-NWP-jetpack
+ ** File description:
+ ** JETPACK
+ */
+
+#ifndef AUDIO_HPP
+    #define AUDIO_HPP
+
+#include <SFML/Audio.hpp>
+#include <map>
+#include <optional>
+#include <vector>
+
+// Music, plus sound effects synthesized at start-up: no audio files to ship
+class Audio {
+public:
+    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm };
+
+    Audio();
+
+    void playMusic(bool in_game);
+    void play(Sfx sfx);
+    // Thrust rumble, looping while the jetpack is on
+    void setJetpack(bool on);
+
+private:
+    static constexpr size_t VOICES = 12;
+
+    sf::Music menu_music;
+    sf::Music game_music;
+
+    std::map<Sfx, sf::SoundBuffer> buffers;
+    std::vector<sf::Sound> voices;     // played round-robin so effects can overlap
+    size_t next_voice = 0;
+
+    sf::SoundBuffer jet_buffer;
+    std::optional<sf::Sound> jet;
+
+    void loadMusic();
+    void synthesize();
+};
+
+#endif

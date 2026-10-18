@@ -17,6 +17,7 @@
 #include "../common/map.hpp"
 #include "state.hpp"
 #include "characters.hpp"
+#include "audio.hpp"
 
 struct MenuState;
 
@@ -105,9 +106,8 @@ private:
     std::vector<Character> characters;
     std::map<int, int> roster;
 
-    // Audio
-    sf::Music waiting_music;
-    sf::Music background_music;
+    Audio audio;
+    int heard_countdown;    // last countdown value beeped
 
     // The run, rebuilt from the chunks the server streams
     Map world_map;
@@ -177,7 +177,6 @@ private:
     void loadBackdrops();
     void loadCharacters();
     void loadFonts();
-    void loadAudio();
     void loadTexture(sf::Texture &texture, const std::string &path);
     const sf::Texture *sharedTexture(const std::string &path);
 
@@ -248,6 +247,7 @@ private:
     //===========================================================================
     void renderGameScreen(GameState &state, Phase phase, float dt);
     void updateWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
+    void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void renderBanner();
     void renderCountdown(Phase phase, int countdown);
     void renderGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
@@ -273,6 +273,7 @@ public:
     void renderMenu(const MenuState &menu);
     void setLobbyInfo(const std::string &info) { lobby_info = info; }
     sf::RenderWindow &getWindow() { return window; }
+    Audio &getAudio() { return audio; }
 };
 
 #endif // RENDER_HPP

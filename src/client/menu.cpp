@@ -7,6 +7,7 @@
 
 #include "menu.hpp"
 #include "render.hpp"
+#include "audio.hpp"
 #include "characters.hpp"
 #include <cstdlib>
 #include <filesystem>
@@ -19,6 +20,7 @@ MenuChoice Menu::run(Renderer &renderer)
 {
     MenuChoice choice = {MenuChoice::Mode::Quit, "", 0, 0, -1};
 
+    audio = &renderer.getAudio();
     state.screen = MenuState::Screen::Main;
     state.best_distance = loadBestDistance();
 
@@ -78,18 +80,24 @@ bool Menu::handleEvent(const sf::Event &event, MenuChoice &choice)
 
 // Shared by every list: arrows or hovering move `selected`, Enter, Space or a click confirm it
 bool Menu::navigate(const sf::Event &event, int &selected, int count, int columns,
-                    const std::function<sf::FloatRect(int)> &box) const
+                    const std::function<sf::FloatRect(int)> &box)
 {
+    int before = selected;
+    bool confirmed = false;
+
     if (const auto *key = event.getIf<sf::Event::KeyPressed>()) {
         moveSelection(selected, key->code, count, columns);
-        return key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space;
+        confirmed = key->code == sf::Keyboard::Key::Enter || key->code == sf::Keyboard::Key::Space;
+    } else if (int hovered = boxUnderPointer(event, count, box); hovered >= 0) {
+        selected = hovered;
+        confirmed = event.is<sf::Event::MouseButtonPressed>();
     }
 
-    int hovered = boxUnderPointer(event, count, box);
-    if (hovered < 0)
-        return false;
-    selected = hovered;
-    return event.is<sf::Event::MouseButtonPressed>();
+    if (confirmed)
+        audio->play(Audio::Sfx::MenuConfirm);
+    else if (selected != before)
+        audio->play(Audio::Sfx::MenuMove);
+    return confirmed;
 }
 
 // Index of the box under the mouse for a mouse event, -1 otherwise

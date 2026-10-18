@@ -18,7 +18,7 @@ float randf(float min, float max)
 }
 
 Renderer::Renderer()
-    : shown_backdrop(-1), camera_x(0), tile_size(96), shake(0), best_distance(0), new_record(false),
+    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), best_distance(0), new_record(false),
       last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
 
@@ -33,7 +33,6 @@ bool Renderer::initialize()
         return false;
 
     loadAssets();
-    loadAudio();
 
     for (float y = 0; y < SCREEN_HEIGHT; y += 4) {
         scanlines.append({{0, y}, sf::Color(0, 0, 0, 45)});
@@ -116,19 +115,6 @@ void Renderer::loadFonts()
     }
 }
 
-void Renderer::loadAudio()
-{
-    if (waiting_music.openFromFile("assets/music/waiting_screen.wav")) {
-        waiting_music.setLooping(true);
-        waiting_music.setVolume(50);
-    }
-
-    if (background_music.openFromFile("assets/music/ingame.wav")) {
-        background_music.setLooping(true);
-        background_music.setVolume(40);
-    }
-}
-
 void Renderer::loadTexture(sf::Texture &texture, const std::string &path)
 {
     if (!texture.loadFromFile(path)) {
@@ -153,13 +139,9 @@ const sf::Texture *Renderer::sharedTexture(const std::string &path)
 
 void Renderer::beginFrame(bool in_game)
 {
-    sf::Music &wanted = in_game ? background_music : waiting_music;
-    sf::Music &other = in_game ? waiting_music : background_music;
-
-    if (wanted.getStatus() != sf::SoundSource::Status::Playing) {
-        other.stop();
-        wanted.play();
-    }
+    audio.playMusic(in_game);
+    if (!in_game)
+        audio.setJetpack(false);
 
     window.setView(screenView());
     window.clear(sf::Color::Black);
@@ -182,8 +164,12 @@ void Renderer::onPhaseChange(GameState &state, Phase phase)
     // A run starts with its countdown, or straight away if the countdown went unseen
     if (phase == Phase::Countdown || (phase == Phase::Running && previous != Phase::Countdown))
         resetRun();
-    if (phase == Phase::Over)
+    if (phase == Phase::Running && previous == Phase::Countdown)
+        audio.play(Audio::Sfx::Go);
+    if (phase == Phase::Over) {
         recordSoloDistance(state);
+        audio.play(Audio::Sfx::GameOver);
+    }
 }
 
 // New run (first one or rematch): forget the previous one
@@ -195,6 +181,7 @@ void Renderer::resetRun()
     player_anims.clear();
     death_clocks.clear();
     shown_backdrop = -1;
+    heard_countdown = -1;
     shake = 0;
     new_record = false;
     best_distance = loadBestDistance();

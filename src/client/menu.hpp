@@ -13,6 +13,7 @@
 #include <string>
 
 class Renderer;
+class Audio;
 
 struct MenuChoice {
     enum class Mode { Solo, Host, Join, Quit };
@@ -88,6 +89,7 @@ private:
     sf::RenderWindow &window;
     MenuState state;
     MenuChoice pending;
+    Audio *audio = nullptr;     // the renderer's, set by run()
 
     bool handleEvent(const sf::Event &event, MenuChoice &choice);
     bool handleMainEvent(const sf::Event &event, MenuChoice &choice);
@@ -96,7 +98,7 @@ private:
     bool handleDistrictEvent(const sf::Event &event, MenuChoice &choice);
 
     bool navigate(const sf::Event &event, int &selected, int count, int columns,
-                  const std::function<sf::FloatRect(int)> &box) const;
+                  const std::function<sf::FloatRect(int)> &box);
     int boxUnderPointer(const sf::Event &event, int count, const std::function<sf::FloatRect(int)> &box) const;
     bool activate(MenuChoice &choice);
     bool parseAddress();
