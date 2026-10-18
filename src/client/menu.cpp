@@ -16,6 +16,7 @@ MenuChoice Menu::run(Renderer &renderer)
 {
     MenuChoice choice = {MenuChoice::Mode::Quit, "", 0, 0, -1};
 
+    this->renderer = &renderer;
     audio = &renderer.getAudio();
     audio->greet();
     state.screen = MenuState::Screen::Main;
@@ -196,6 +197,8 @@ void Menu::handleOptionsEvent(const sf::Event &event)
         leaveOptions();
         return;
     }
+    if (pointVolume(event))
+        return;
     // Left and right set the volume instead of moving the selection
     if (key && (key->code == sf::Keyboard::Key::Left || key->code == sf::Keyboard::Key::Right)) {
         if (on_volume)
@@ -205,13 +208,57 @@ void Menu::handleOptionsEvent(const sf::Event &event)
     if (!navigate(event, state.option, MenuLayout::OPTION_COUNT, 1, MenuLayout::optionBox))
         return;
 
-    if (state.option == MenuLayout::OPTION_BACK)
+    if (state.option == MenuLayout::OPTION_BACK) {
         leaveOptions();
-    else if (on_volume)
+    } else if (state.option == MenuLayout::OPTION_FULLSCREEN) {
+        state.settings.fullscreen = !state.settings.fullscreen;
+        renderer->setFullscreen(state.settings.fullscreen);
+    } else if (on_volume) {
         changeVolume((state.option == MenuLayout::OPTION_MUSIC ? state.settings.music_volume
                                                                  : state.settings.sfx_volume) == 100 ? -100 : 10);
-    else
+    } else {
         state.waiting_for_key = true;
+    }
+}
+
+// With the mouse: a click on a segment of a volume bar sets it there, the wheel turns it up or down.
+// Returns whether the event was used.
+bool Menu::pointVolume(const sf::Event &event)
+{
+    sf::Vector2i pixel;
+    const auto *wheel = event.getIf<sf::Event::MouseWheelScrolled>();
+    const auto *click = event.getIf<sf::Event::MouseButtonPressed>();
+
+    if (!wheel && !click)
+        return false;
+    pixel = wheel ? wheel->position : click->position;
+    sf::Vector2f pos = window.mapPixelToCoords(pixel);
+
+    for (int row : {MenuLayout::OPTION_MUSIC, MenuLayout::OPTION_SFX}) {
+        if (!MenuLayout::optionBox(row).contains(pos))
+            continue;
+        state.option = row;
+        int &volume = row == MenuLayout::OPTION_MUSIC ? state.settings.music_volume : state.settings.sfx_volume;
+        if (wheel) {
+            changeVolume(wheel->delta > 0 ? 10 : -10);
+            return true;
+        }
+        for (int i = 0; i < 10; i++) {
+            sf::FloatRect segment = MenuLayout::volumeSegment(row, i);
+            // The gaps between segments count, so they're easy to hit
+            segment.size.x += 6;
+            if (segment.contains(pos)) {
+                changeVolume((i + 1) * 10 - volume);
+                return true;
+            }
+        }
+        // Left of the bar: mute
+        if (pos.x < MenuLayout::volumeSegment(row, 0).position.x && pos.x > MenuLayout::volumeSegment(row, 0).position.x - 80) {
+            changeVolume(-volume);
+            return true;
+        }
+    }
+    return false;
 }
 
 // Steps of 10%, heard straight away

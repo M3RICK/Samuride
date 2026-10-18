@@ -180,6 +180,8 @@ int main(int argc, char **argv)
 
     Settings settings = Settings::load();
     renderer.getAudio().setVolumes(settings.music_volume, settings.sfx_volume);
+    if (settings.fullscreen)
+        renderer.setFullscreen(true);
     Menu menu(renderer.getWindow(), settings);
 
     // Direct connection from the command line, then the menu as usual

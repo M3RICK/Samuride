@@ -251,14 +251,14 @@ void MenuScreens::drawOptions(const MenuState &menu)
     for (int i = 0; i < MenuLayout::OPTION_COUNT; i++)
         drawOptionRow(i, menu);
 
-    canvas.text("[UP / DOWN] SELECT     [LEFT / RIGHT] VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
+    canvas.text("[UP / DOWN] SELECT     [LEFT / RIGHT] OR CLICK THE BAR: VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
                 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // Label on the left, value on the right: a volume bar or a key
 void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 {
-    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "BACK"};
+    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "FULLSCREEN", "BACK"};
     const Settings &settings = menu.settings;
     sf::FloatRect box = MenuLayout::optionBox(index);
     bool selected = index == menu.option;
@@ -275,7 +275,11 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
     canvas.text(labels[index], 36, color, left, {0, 0.5f});
 
     if (index == MenuLayout::OPTION_MUSIC || index == MenuLayout::OPTION_SFX) {
-        drawVolumeBar(index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        drawVolumeBar(index, index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        return;
+    }
+    if (index == MenuLayout::OPTION_FULLSCREEN) {
+        canvas.text(settings.fullscreen ? "ON" : "OFF", 36, color, right, {1, 0.5f});
         return;
     }
 
@@ -286,13 +290,12 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 }
 
 // Ten segments lit up to the volume, then the percentage
-void MenuScreens::drawVolumeBar(int volume, sf::Vector2f right, bool selected)
+void MenuScreens::drawVolumeBar(int row, int volume, sf::Vector2f right, bool selected)
 {
-    sf::RectangleShape segment({22, 30});
-
-    segment.setOrigin({0, 15});
     for (int i = 0; i < 10; i++) {
-        segment.setPosition(right - sf::Vector2f(120 + (10 - i) * 28, 0));
+        sf::FloatRect box = MenuLayout::volumeSegment(row, i);
+        sf::RectangleShape segment(box.size);
+        segment.setPosition(box.position);
         segment.setFillColor(i < volume / 10 ? NEON_CYAN : sf::Color(255, 255, 255, 40));
         canvas.draw(segment);
     }

@@ -35,6 +35,7 @@ public:
     void renderMenu(const MenuState &menu);
     void setLobbyInfo(const std::string &info) { lobby_info = info; }
     sf::RenderWindow &getWindow() { return canvas.target(); }
+    void setFullscreen(bool fullscreen) { canvas.setFullscreen(fullscreen); }
     Audio &getAudio() { return audio; }
 };
 

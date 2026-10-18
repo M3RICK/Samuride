@@ -34,7 +34,7 @@ private:
 
     void drawOptions(const MenuState &menu);
     void drawOptionRow(int index, const MenuState &menu);
-    void drawVolumeBar(int volume, sf::Vector2f right, bool selected);
+    void drawVolumeBar(int row, int volume, sf::Vector2f right, bool selected);
 
     void drawModeSelect(const MenuState &menu);
     void drawModeCard(int index, bool selected);
