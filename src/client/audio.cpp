@@ -98,6 +98,24 @@ Samples zap()
     return buzz;
 }
 
+// Noise whose loudness follows the envelope, for whooshes and blasts
+Samples burst(float seconds, float volume, float smoothing)
+{
+    Samples out = noise(seconds, volume, smoothing);
+
+    for (size_t i = 0; i < out.size(); i++)
+        out[i] *= envelope(i, out.size());
+    return out;
+}
+
+Samples mix(Samples first, const Samples &second)
+{
+    first.resize(std::max(first.size(), second.size()), 0);
+    for (size_t i = 0; i < second.size(); i++)
+        first[i] += second[i];
+    return first;
+}
+
 sf::SoundBuffer toBuffer(const Samples &samples)
 {
     std::vector<std::int16_t> pcm(samples.size());
@@ -156,6 +174,12 @@ void Audio::synthesize()
     buffers[Sfx::GameOver] = toBuffer(tone(Wave::Saw, 600, 120, 0.8f, 0.3f));
     buffers[Sfx::MenuMove] = toBuffer(tone(Wave::Square, 1500, 1500, 0.03f, 0.12f));
     buffers[Sfx::MenuConfirm] = toBuffer(tone(Wave::Square, 700, 1400, 0.12f, 0.18f));
+
+    // CYBERPSYCHO weapons and drones
+    buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
+    buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
+    buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    buffers[Sfx::Explosion] = toBuffer(mix(burst(0.6f, 0.45f, 0.08f), tone(Wave::Saw, 120, 40, 0.5f, 0.2f)));
 
     // No envelope: it loops
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));

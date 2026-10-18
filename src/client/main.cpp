@@ -104,11 +104,11 @@ static std::string lanAddress()
 }
 
 // Plays one session against a server, until the player leaves
-static Client::RunResult play(Renderer &renderer, const std::string &host, int port, int character, int district,
+static Client::RunResult play(Renderer &renderer, const std::string &host, int port, Loadout loadout,
                               bool debug_mode, bool &connected)
 {
     GameState game_state;
-    Client client(host, port, character, district, debug_mode, game_state);
+    Client client(host, port, loadout, debug_mode, game_state);
 
     connected = client.initialize();
     if (!connected)
@@ -189,7 +189,8 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
         bool hosting = choice.mode == MenuChoice::Mode::Host;
         renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + lanAddress() + ":" + std::to_string(HOST_PORT) : "");
 
-        if (play(renderer, choice.host, choice.port, choice.character, choice.district, debug_mode, connected)
+        Loadout loadout = {choice.character, choice.district, choice.game_mode};
+        if (play(renderer, choice.host, choice.port, loadout, debug_mode, connected)
             == Client::RunResult::Quit)
             return;
         if (!connected)
@@ -219,7 +220,7 @@ int main(int argc, char **argv)
     // Direct connection from the command line, then the menu as usual
     if (!options.host.empty()) {
         bool connected = true;
-        if (play(renderer, options.host, options.port, options.character, -1, options.debug_mode, connected)
+        if (play(renderer, options.host, options.port, {options.character}, options.debug_mode, connected)
             == Client::RunResult::Quit)
             return EXIT_SUCCESS;
         if (!connected)

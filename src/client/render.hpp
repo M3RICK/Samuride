@@ -34,6 +34,14 @@ private:
     struct ActiveEffect {
         CollisionEffect effect;
         sf::Clock clock;
+        bool mine;      // caused by this player
+    };
+
+    // CYBERPSYCHO projectile, drawn from its shooter and its age
+    struct ShotTrail {
+        int player;
+        Weapon weapon;
+        sf::Clock age;
     };
 
     // World space, in tiles
@@ -88,6 +96,7 @@ private:
     sf::Texture waiting_screen_texture;
     sf::Texture coin_texture;
     sf::Texture electric_texture;
+    sf::Texture drone_texture;
     sf::Font font;
     // The jetpack font has no punctuation: text that needs some falls back to this one
     sf::Font fallback_font;
@@ -124,6 +133,11 @@ private:
     std::map<int, sf::Clock> death_clocks;
     float shake;
 
+    // CYBERPSYCHO
+    std::vector<ShotTrail> shots;
+    std::map<int, sf::Clock> attack_clocks;
+    int drones_down;
+
     int best_distance;
     bool new_record;
 
@@ -158,6 +172,7 @@ private:
     static constexpr float EFFECT_DURATION = 0.6f;
     static constexpr float GAME_OVER_DELAY = 0.9f;
     static constexpr float PROMPT_DELAY = 1.5f;
+    static constexpr int DRONE_FRAMES = 4;
 
     // Night City palette
     static constexpr sf::Color NEON_YELLOW{252, 238, 10};
@@ -210,6 +225,8 @@ private:
     void renderCharacterSelect(const MenuState &menu);
     void drawCharacterCard(int index, bool selected, float time);
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time);
+    void renderModeSelect(const MenuState &menu);
+    void drawModeCard(int index, bool selected);
     void renderDistrictSelect(const MenuState &menu);
     void drawDistrictCard(int index, bool selected);
     std::vector<Backdrop::Segment> districtSlices(int district) const;
@@ -230,7 +247,7 @@ private:
     void renderLayer(const Backdrop &backdrop, const Backdrop::Layer &layer, float y0, float y1, sf::Color color);
     void drawFadingPicture(const Backdrop::Segment &segment, sf::FloatRect dest, float fade, sf::Color color);
 
-    void renderMapTiles(const std::set<std::pair<int, int>> &collected);
+    void renderMapTiles(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed);
     void renderCoin(int x, int y, float time);
     void renderZapper(int x, int y);
     void drawBeam(sf::Vector2f from, sf::Vector2f to);
@@ -262,8 +279,18 @@ private:
                        float gravity, sf::Vector2f base_vel = {0, 0});
     void updateParticles(float dt);
     void renderParticles();
-    void renderHUD(const std::map<int, PlayerState> &players, int me);
+    void renderHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
     void renderHUDLine(int player_num, const PlayerState &player, int me, float y);
+
+    //===========================================================================
+    // render_combat.cpp: CYBERPSYCHO drones, attacks and projectiles
+    //===========================================================================
+    void handleShots(GameState &state);
+    sf::Vector2f shotPosition(const ShotTrail &shot) const;
+    bool isLiveDrone(int x, int y, const std::set<std::pair<int, int>> &destroyed) const;
+    void renderShots(const std::set<std::pair<int, int>> &destroyed);
+    void renderDrone(int x, int y, float time);
+    void drawDroneSprite(sf::Vector2f center, float width, int frame);
 
 public:
     Renderer();

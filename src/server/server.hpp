@@ -16,6 +16,7 @@
 #include <poll.h>
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
+#include "../common/cyberpsycho.hpp"
 #include "player.hpp"
 
 class Server {
@@ -38,6 +39,14 @@ private:
     static constexpr float MAX_SPEED = 16.0f;
     static constexpr float ACCELERATION = 0.12f;
 
+    struct Projectile {
+        int owner_fd;
+        float x;
+        float y;
+        float speed;
+        float max_x;
+    };
+
     int server_fd;
     int port;
     std::string map_path;
@@ -54,7 +63,13 @@ private:
     int countdown;
     int countdown_ticks;
     std::set<int> ready_clients;
+
+    // Picked by the first player in the lobby: the host
     uint8_t district;
+    GameMode mode;
+
+    std::set<std::pair<int, int>> destroyed_drones;
+    std::vector<Projectile> projectiles;
 
     std::vector<pollfd> poll_fds;
     std::map<int, Player> players;
@@ -96,6 +111,8 @@ private:
 
     void processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
 
+    void handleConnect(int client_fd, const std::vector<uint8_t> &payload);
+
     //===========================================================================
     // Socket Event Processing
     //===========================================================================
@@ -133,6 +150,20 @@ private:
     void notifyCollision(char collision_type, const Player &player, int x, int y);
 
     void endGame(int winner_number);
+
+    //===========================================================================
+    // CYBERPSYCHO (combat.cpp)
+    //===========================================================================
+
+    void handleAttack(int client_fd);
+
+    void strike(int client_fd, const Player &player, float reach);
+
+    void updateProjectiles();
+
+    bool isLiveDrone(int x, int y) const;
+
+    void destroyDrone(int owner_fd, int x, int y);
 
 public:
     Server(int port, const std::string& map_path, bool solo, bool debug_mode);

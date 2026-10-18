@@ -8,6 +8,7 @@
 #include "map.hpp"
 #include "protocol.hpp"
 #include "../server/generator.hpp"
+#include "cyberpsycho.hpp"
 #include <cassert>
 #include <iostream>
 
@@ -74,20 +75,21 @@ static void testGenerator()
 {
     std::mt19937 rng(42);
 
-    for (int run = 0; run < 200; run++) {
-        float difficulty = run / 199.0f;
-        auto rows = generateChunk(rng, 40, 10, difficulty);
+    for (int run = 0; run < 400; run++) {
+        float difficulty = (run % 200) / 199.0f;
+        bool drones = run >= 200;
+        auto rows = generateChunk(rng, 40, 10, difficulty, drones);
         assert(rows.size() == 10);
 
         for (size_t x = 0; x < 40; x++) {
-            int zappers = 0;
+            int obstacles = 0;
             for (const auto &row : rows) {
                 assert(row.size() == 40);
-                assert(row[x] == '_' || row[x] == 'c' || row[x] == 'e');
-                zappers += row[x] == 'e';
+                assert(row[x] == '_' || row[x] == 'c' || row[x] == 'e' || (drones && row[x] == DRONE_TILE));
+                obstacles += row[x] == 'e' || row[x] == DRONE_TILE;
             }
             // A 2-tile-tall player always has room to pass
-            assert(zappers <= 6);
+            assert(obstacles <= 6);
         }
     }
 }

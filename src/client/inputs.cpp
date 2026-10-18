@@ -26,6 +26,9 @@ void InputManager::processInputs()
                 back_requested = true;
             if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
                 confirm_pressed = true;
+            // CYBERPSYCHO; the server ignores it in CLASSIC
+            if (key->code == sf::Keyboard::Key::F)
+                client->sendAttack();
         }
     }
 

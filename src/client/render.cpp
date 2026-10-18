@@ -18,7 +18,8 @@ float randf(float min, float max)
 }
 
 Renderer::Renderer()
-    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), best_distance(0), new_record(false),
+    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), drones_down(0),
+      best_distance(0), new_record(false),
       last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
 
@@ -61,6 +62,9 @@ void Renderer::loadAssets()
     loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png");
     loadTexture(coin_texture, "assets/coins/coin.png");
     loadTexture(electric_texture, "assets/electric/zap.png");
+    // Pixel art: scaled up without smoothing
+    loadTexture(drone_texture, "assets/drone/drone.png");
+    drone_texture.setSmooth(false);
 }
 
 // The corridor scrolls as one layer; the others run on the Worlds Collide walkway, a panorama far behind
@@ -182,6 +186,9 @@ void Renderer::resetRun()
     death_clocks.clear();
     shown_backdrop = -1;
     heard_countdown = -1;
+    shots.clear();
+    attack_clocks.clear();
+    drones_down = 0;
     shake = 0;
     new_record = false;
     best_distance = loadBestDistance();

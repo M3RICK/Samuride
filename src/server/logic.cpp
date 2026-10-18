@@ -18,6 +18,8 @@ bool Server::resetMap()
 {
     game_map.clear();
     chunks_generated = 0;
+    destroyed_drones.clear();
+    projectiles.clear();
 
     if (!map_path.empty()) {
         if (!game_map.loadFromFile(map_path)) {
@@ -37,7 +39,8 @@ void Server::extendMap(float leader_x)
         size_t from = game_map.getWidth();
         float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
 
-        game_map.appendChunk(generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty));
+        bool drones = mode == GameMode::Cyberpsycho;
+        game_map.appendChunk(generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones));
 
         // Before the run, clients get the whole map in one go instead
         if (phase == Phase::Running)
@@ -81,6 +84,7 @@ void Server::startGame()
     }
 
     roster.push_back(district);
+    roster.push_back(static_cast<uint8_t>(mode));
 
     // Each client gets its own number first, then who plays which character, then the district
     for (auto &[client_fd, player] : players) {
@@ -149,6 +153,7 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
+    updateProjectiles();
     extendMap(leader_x);
     sendGameState();
 
@@ -169,8 +174,9 @@ bool Server::checkPlayerCollisions(Player &player)
 
         if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
             notifyCollision('c', player, tile_x, tile_y);
-        } else if (tile == 'e' && std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
-            // Zappers only bite near their core, grazing the tile edge is fine
+        } else if ((tile == 'e' || isLiveDrone(tile_x, tile_y)) &&
+                   std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
+            // Zappers and drones only bite near their core, grazing the tile edge is fine
             notifyCollision('e', player, tile_x, tile_y);
             return true;
         }

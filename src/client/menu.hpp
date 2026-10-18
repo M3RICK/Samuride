@@ -22,15 +22,17 @@ struct MenuChoice {
     std::string host;
     int port;
     int character;
-    int district;       // -1 when joining: the host picks
+    int district;           // -1 when joining: the host picks
+    int game_mode = -1;     // GameMode, -1 when joining
 };
 
 struct MenuState {
-    enum class Screen { Main, Join, Character, District };
+    enum class Screen { Main, Join, Character, Mode, District };
 
     Screen screen = Screen::Main;
     int selected = 0;
     int character = 0;
+    int game_mode = 0;
     int district = 0;
     std::string address = "127.0.0.1:4242";
     std::string error;
@@ -65,6 +67,14 @@ namespace MenuLayout {
         return {center - size / 2.f, size};
     }
 
+    // Game modes, two big cards
+    constexpr int MODE_COUNT = 2;
+
+    inline sf::FloatRect modeBox(int index)
+    {
+        return centeredBox({960 + (index - 0.5f) * 640, 560}, {560, 520});
+    }
+
     inline sf::FloatRect itemBox(int index)
     {
         return centeredBox({X, Y + index * SPACING}, {WIDTH, HEIGHT});
@@ -95,6 +105,7 @@ private:
     bool handleMainEvent(const sf::Event &event, MenuChoice &choice);
     void handleJoinEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
+    void handleModeEvent(const sf::Event &event);
     bool handleDistrictEvent(const sf::Event &event, MenuChoice &choice);
 
     bool navigate(const sf::Event &event, int &selected, int count, int columns,

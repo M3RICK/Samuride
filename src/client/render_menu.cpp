@@ -27,6 +27,9 @@ void Renderer::renderMenu(const MenuState &menu)
         case MenuState::Screen::Character:
             renderCharacterSelect(menu);
             break;
+        case MenuState::Screen::Mode:
+            renderModeSelect(menu);
+            break;
         case MenuState::Screen::District:
             renderDistrictSelect(menu);
             break;
@@ -181,6 +184,52 @@ void Renderer::drawCharacterPreview(const Character &character, sf::FloatRect bo
     sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
     sprite.setColor(selected ? sf::Color::White : FADED);
     window.draw(sprite);
+}
+
+//=============================================================================
+// Mode Select
+//=============================================================================
+
+void Renderer::renderModeSelect(const MenuState &menu)
+{
+    drawGlitchText("CHOOSE YOUR MODE", 80, NEON_YELLOW, {SCREEN_WIDTH / 2, 150});
+
+    for (int i = 0; i < MenuLayout::MODE_COUNT; i++)
+        drawModeCard(i, i == menu.game_mode);
+
+    window.draw(makeText("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", 24,
+                         HINT_GREY, {SCREEN_WIDTH / 2, 1030}));
+}
+
+void Renderer::drawModeCard(int index, bool selected)
+{
+    bool psycho = index == static_cast<int>(GameMode::Cyberpsycho);
+    sf::FloatRect box = MenuLayout::modeBox(index);
+    sf::Vector2f center = box.getCenter();
+    float time = animation_clock.getElapsedTime().asSeconds();
+    std::string name = psycho ? "CYBERPSYCHO" : "CLASSIC";
+    sf::Color accent = psycho ? NEON_RED : NEON_CYAN;
+
+    drawCard(box, selected);
+
+    if (selected)
+        drawGlitchText(name, 64, NEON_YELLOW, center + sf::Vector2f(0, -170));
+    else
+        window.draw(makeText(name, 56, DIM_WHITE, center + sf::Vector2f(0, -170)));
+
+    // What the mode is about: zappers and eddies, or drones to gun down
+    if (psycho) {
+        drawHalo(center, 110, withAlpha(NEON_RED, 50));
+        drawDroneSprite(center, 260, static_cast<int>(time * 12) % DRONE_FRAMES);
+    } else {
+        drawImage(coin_texture, center + sf::Vector2f(-90, 0), 120, {0.5f, 0.5f}, sf::Color::White);
+        drawImage(electric_texture, center + sf::Vector2f(90, 0), 110, {0.5f, 0.5f}, sf::Color::White);
+    }
+
+    std::string tagline = psycho ? "Gun down Arasaka drones for bounty" : "Dodge the zappers, grab the eddies";
+    std::string detail = psycho ? std::format("[F] ATTACK     +{} EDDIES PER DRONE", DRONE_BOUNTY) : "The original run";
+    window.draw(makeText(tagline, 28, selected ? accent : HINT_GREY, center + sf::Vector2f(0, 150)));
+    window.draw(makeText(detail, 24, DIM_WHITE, center + sf::Vector2f(0, 200)));
 }
 
 //=============================================================================

@@ -37,7 +37,7 @@ struct Character {
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
     sf::Color exhaust{252, 238, 10};
 
-    Animation run, takeoff, rise, hover, fall, death;
+    Animation run, takeoff, rise, hover, fall, death, attack;
 
     bool load(const std::string &dir);
     sf::IntRect frameRect(const Animation &anim, int index) const;

@@ -29,7 +29,8 @@ bool Character::load(const std::string &dir)
 {
     std::ifstream meta(dir + "/meta.txt");
     std::map<std::string, Animation *> animations = {
-        {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall}, {"death", &death}
+        {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
+        {"death", &death}, {"attack", &attack}
     };
     std::string key;
 

@@ -21,7 +21,9 @@ enum MessageType : uint8_t {
     MSG_COLLISION = 6,    // collision
     MSG_GAME_END = 7,     // game is over
     MSG_COUNTDOWN = 8,    // countdown before game starts, 0 = go
-    MSG_READY = 9         // client wants a rematch
+    MSG_READY = 9,        // client wants a rematch
+    MSG_ATTACK = 10,      // CYBERPSYCHO: client attacks
+    MSG_SHOT = 11         // CYBERPSYCHO: someone attacked, payload = player number, weapon
 };
 
 struct MessageHeader {

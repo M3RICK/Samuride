@@ -42,6 +42,8 @@ Type    Name                Direction           Description
 7       MSG_GAME_END        Server to Client    Game over notification
 8       MSG_COUNTDOWN       Server to Client    Countdown before the run
 9       MSG_READY           Client to Server    Rematch request after a game
+10      MSG_ATTACK          Client to Server    CYBERPSYCHO attack
+11      MSG_SHOT            Server to Client    CYBERPSYCHO: a player attacked
 
 
 MSG_CONNECT
@@ -54,6 +56,8 @@ Character (1 byte, optional): the character the player picked, 0 if absent
 District (1 byte, optional): the scenery, only taken from the first player in the lobby (the host).
           0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun,
           5 Both Worlds (corridor and Worlds Collide alternating every 250 tiles)
+Mode (1 byte, optional): 0 CLASSIC, 1 CYBERPSYCHO, also only taken from the host.
+          The map already sent is regenerated (with drones for CYBERPSYCHO) and sent again.
 After receiving this message, the server assigns a player number to the client and sends the map data using MSG_MAP_DATA.
 
 
@@ -86,6 +90,7 @@ Then, for each player:
     Player Number (1 byte)
     Character (1 byte)
 District (1 byte)
+Mode (1 byte)
 
 Upon receiving this message, clients should transition from the waiting screen to the game screen and prepare to receive countdown and game state updates.
 
@@ -132,7 +137,8 @@ Sent by the server to all clients when a player collides with a game element (co
 Payload Format:
 
 Collision Type (1 byte): Character representing the collision type:
-'c' for coin, 'e' for electric hazard
+'c' for coin, 'e' for electric hazard (zapper or drone contact),
+'d' for a drone destroyed in CYBERPSYCHO (the player gets 5 eddies)
 Player Number (1 byte): The player who hit it
 X Position (4 bytes): tile column
 Y Position (2 bytes): tile row
@@ -155,6 +161,26 @@ The run never ends on its own. The game ends when:
     o Both players get zapped on the same tick: no winner
     o A player disconnects: the remaining one wins
 In solo mode the winner is always 0xFF, the score is the distance run.
+
+
+MSG_ATTACK
+--------
+
+Sent by a client to attack (CYBERPSYCHO only, ignored otherwise).
+Payload: None (0 bytes)
+The server enforces the weapon cooldown. Guns and rockets fire a projectile flying ahead at
+run speed + weapon speed for up to 22 tiles; the blade destroys every drone within 2.5 tiles ahead.
+Weapons: Johnny and David have guns, Jinx rockets, Mikasa a blade.
+
+
+MSG_SHOT
+--------
+
+Sent by the server to all clients when an attack goes off, so they can animate it.
+Payload Format:
+
+Player Number (1 byte)
+Weapon (1 byte): 0 gun, 1 rockets, 2 blade
 
 
 MSG_READY

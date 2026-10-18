@@ -7,7 +7,7 @@
 
 #include "state.hpp"
 
-void GameState::startCountdown(int my_number, const std::map<int, int> &roster, int run_district)
+void GameState::startCountdown(int my_number, const std::map<int, int> &roster, int run_district, GameMode run_mode)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
@@ -15,6 +15,9 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     my_player_number = my_number;
     characters = roster;
     district = run_district;
+    mode = run_mode;
+    destroyed_drones.clear();
+    pending_shots.clear();
     phase = Phase::Countdown;
     countdown = 0;
     winner = -1;
@@ -46,6 +49,8 @@ void GameState::handleCollision(char type, int player, int x, int y)
 
     if (type == 'c' && player == my_player_number)
         my_coins.insert({x, y});
+    if (type == DRONE_TILE)
+        destroyed_drones.insert({x, y});
     pending_effects.push_back({type, player, x, y});
 }
 
@@ -108,6 +113,34 @@ std::map<int, PlayerState> GameState::getPlayers() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return players;
+}
+
+void GameState::pushShot(ShotEvent shot)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    pending_shots.push_back(shot);
+}
+
+GameMode GameState::getMode() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return mode;
+}
+
+std::set<std::pair<int, int>> GameState::getDestroyedDrones() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return destroyed_drones;
+}
+
+std::vector<ShotEvent> GameState::takeShots()
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return std::exchange(pending_shots, {});
 }
 
 int GameState::getDistrict() const

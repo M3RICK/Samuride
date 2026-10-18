@@ -6,6 +6,7 @@
  */
 
 #include "generator.hpp"
+#include "../common/cyberpsycho.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -54,6 +55,18 @@ static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
     }
 }
 
+// A small squad of drones stacked in one column, with room left to fly past
+static int placeDrones(Rows &rows, std::mt19937 &rng, int x, float difficulty)
+{
+    int height = rows.size();
+    int count = randInt(rng, 1, 2 + static_cast<int>(difficulty));
+    int y = randInt(rng, 0, height - 2 * count);
+
+    for (int i = 0; i < count; i++)
+        setTile(rows, x, y + 2 * i, DRONE_TILE);
+    return 1;
+}
+
 static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
 {
     int height = rows.size();
@@ -77,15 +90,21 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
 }
 
 // ponytail: fairness is statistical (gaps scale down to 5 columns), add a reachability check if runs feel unfair
-std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t height, float difficulty)
+std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t height, float difficulty,
+                                       bool drones)
 {
     Rows rows(height, std::string(width, '_'));
     std::uniform_real_distribution<float> chance(0, 1);
     int x = randInt(rng, 2, 5);
+    int breather = 9 - static_cast<int>(3 * difficulty);
 
     while (x < static_cast<int>(width)) {
-        if (chance(rng) < 0.45f + 0.3f * difficulty)
-            x += placeZapper(rows, rng, x, difficulty) + randInt(rng, 5, 9 - static_cast<int>(3 * difficulty));
+        float roll = chance(rng);
+
+        if (drones && roll < 0.3f)
+            x += placeDrones(rows, rng, x, difficulty) + randInt(rng, 4, breather);
+        else if (roll < 0.45f + 0.3f * difficulty)
+            x += placeZapper(rows, rng, x, difficulty) + randInt(rng, 5, breather);
         else
             x += placeCoins(rows, rng, x) + randInt(rng, 3, 6);
     }

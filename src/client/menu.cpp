@@ -72,6 +72,9 @@ bool Menu::handleEvent(const sf::Event &event, MenuChoice &choice)
             return false;
         case MenuState::Screen::Character:
             return handleCharacterEvent(event, choice);
+        case MenuState::Screen::Mode:
+            handleModeEvent(event);
+            return false;
         case MenuState::Screen::District:
             return handleDistrictEvent(event, choice);
     }
@@ -185,14 +188,27 @@ bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
         state.screen = MenuState::Screen::Main;
         return true;
     }
-    state.screen = MenuState::Screen::District;
+    state.screen = MenuState::Screen::Mode;
     return false;
+}
+
+void Menu::handleModeEvent(const sf::Event &event)
+{
+    if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.screen = MenuState::Screen::Character;
+        return;
+    }
+    if (!navigate(event, state.game_mode, MenuLayout::MODE_COUNT, MenuLayout::MODE_COUNT, MenuLayout::modeBox))
+        return;
+
+    pending.game_mode = state.game_mode;
+    state.screen = MenuState::Screen::District;
 }
 
 bool Menu::handleDistrictEvent(const sf::Event &event, MenuChoice &choice)
 {
     if (isKey(event, sf::Keyboard::Key::Escape)) {
-        state.screen = MenuState::Screen::Character;
+        state.screen = MenuState::Screen::Mode;
         return false;
     }
     if (!navigate(event, state.district, MenuLayout::DISTRICT_COUNT, MenuLayout::DISTRICT_COLUMNS,

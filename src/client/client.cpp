@@ -22,9 +22,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-Client::Client(const std::string& server_ip, int server_port, int character, int district,
-               bool debug_mode, GameState &game_state)
-    : client_fd(-1), server_ip(server_ip), server_port(server_port), character(character), district(district),
+Client::Client(const std::string& server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state)
+    : client_fd(-1), server_ip(server_ip), server_port(server_port), loadout(loadout),
       game_state(game_state), connected(false), running(false) {
     g_logger.setDebugMode(debug_mode);
 }
@@ -80,11 +79,13 @@ bool Client::connectToServer()
 
 void Client::sendConnectMessage()
 {
-    std::vector<uint8_t> payload = { static_cast<uint8_t>(character) };
+    std::vector<uint8_t> payload = { static_cast<uint8_t>(loadout.character) };
 
-    // No district when joining: the host's applies
-    if (district >= 0)
-        payload.push_back(district);
+    // Nothing more when joining: the host's district and mode apply
+    if (loadout.district >= 0 && loadout.mode >= 0) {
+        payload.push_back(loadout.district);
+        payload.push_back(loadout.mode);
+    }
     sendToServer(Protocol::createPacket(MSG_CONNECT, payload));
 }
 
@@ -184,6 +185,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_COLLISION:
             handleCollision(payload);
             break;
+        case MSG_SHOT:
+            handleShot(payload);
+            break;
         case MSG_GAME_END:
             handleGameEnd(payload);
             break;
@@ -192,7 +196,7 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
     }
 }
 
-// [my number][player count]([number][character])...[district]
+// [my number][player count]([number][character])...[district][mode]
 void Client::handleGameStart(const std::vector<uint8_t> &payload)
 {
     std::map<int, int> roster;
@@ -205,7 +209,15 @@ void Client::handleGameStart(const std::vector<uint8_t> &payload)
         roster[payload[2 + 2 * i]] = payload[3 + 2 * i];
 
     size_t district_pos = 2 + 2 * count;
-    game_state.startCountdown(payload[0], roster, district_pos < payload.size() ? payload[district_pos] : 0);
+    int district = district_pos < payload.size() ? payload[district_pos] : 0;
+    auto mode = static_cast<GameMode>(district_pos + 1 < payload.size() ? payload[district_pos + 1] : 0);
+    game_state.startCountdown(payload[0], roster, district, mode);
+}
+
+void Client::handleShot(const std::vector<uint8_t> &payload)
+{
+    if (payload.size() >= 2)
+        game_state.pushShot({payload[0], static_cast<Weapon>(payload[1])});
 }
 
 void Client::handleGameState(const std::vector<uint8_t> &payload)
@@ -249,6 +261,11 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
     std::lock_guard<std::mutex> lock(queue_mutex);
 
     message_queue.push(data);
+}
+
+void Client::sendAttack()
+{
+    sendToServer(Protocol::createPacket(MSG_ATTACK, {}));
 }
 
 void Client::sendPlayerInput(bool jet_activated)

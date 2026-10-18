@@ -18,6 +18,14 @@
 #include "../common/protocol.hpp"
 
 class GameState;
+
+// What the player brings to the server. District and mode: -1 when joining, the host picks.
+struct Loadout {
+    int character = 0;
+    int district = -1;
+    int mode = -1;
+};
+
 class Renderer;
 class InputManager;
 
@@ -27,8 +35,7 @@ private:
     int client_fd;
     std::string server_ip;
     int server_port;
-    int character;
-    int district;
+    Loadout loadout;
 
     GameState &game_state;
     std::atomic<bool> connected;
@@ -51,6 +58,7 @@ private:
     void sendToServer(const std::vector<uint8_t> &data);
 
     void handleGameStart(const std::vector<uint8_t> &payload);
+    void handleShot(const std::vector<uint8_t> &payload);
     void handleGameState(const std::vector<uint8_t> &payload);
     void handleCollision(const std::vector<uint8_t> &payload);
     void handleGameEnd(const std::vector<uint8_t> &payload);
@@ -58,8 +66,7 @@ private:
 public:
     enum class RunResult { Menu, Quit };
 
-    Client(const std::string &server_ip, int server_port, int character, int district,
-           bool debug_mode, GameState &game_state);
+    Client(const std::string &server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state);
     ~Client();
 
     bool initialize();
@@ -67,6 +74,7 @@ public:
     void stop();
 
     void sendPlayerInput(bool jet_activated);
+    void sendAttack();
 
     bool isConnected() const { return connected; }
 };

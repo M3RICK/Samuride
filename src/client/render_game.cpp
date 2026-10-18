@@ -6,6 +6,7 @@
  */
 
 #include "render.hpp"
+#include <algorithm>
 #include <cmath>
 #include <format>
 
@@ -57,13 +58,15 @@ void Renderer::renderGameScreen(GameState &state, Phase phase, float dt)
 
     window.setView(world_view);
     renderDistrict(state.getDistrict());
-    renderMapTiles(state.getCollectedCoins());
+    std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
+    renderMapTiles(state.getCollectedCoins(), destroyed);
     renderPlayers(players, me);
+    renderShots(destroyed);
     renderParticles();
 
     window.setView(ui_view);
     renderEffects();
-    renderHUD(players, me);
+    renderHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     renderCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         renderBanner();
@@ -84,6 +87,7 @@ void Renderer::updateWorld(GameState &state, const std::map<int, PlayerState> &p
 
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
+    handleShots(state);
 }
 
 // Countdown beeps, and the jetpack rumble while your thrust is on
@@ -208,6 +212,12 @@ void Renderer::addEffect(const CollisionEffect &effect, int me)
         death_clocks.try_emplace(effect.player);
         emitParticles(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
         emitParticles(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == DRONE_TILE) {
+        audio.play(Audio::Sfx::Explosion);
+        shake = std::max(shake, 0.15f);
+        drones_down += effect.player == me;
+        emitParticles(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
+        emitParticles(tile_center, 15, NEON_RED, 5, 0.5f, 6);
     } else if (effect.player == me) {
         audio.play(Audio::Sfx::Coin);
         emitParticles(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
@@ -215,7 +225,7 @@ void Renderer::addEffect(const CollisionEffect &effect, int me)
     } else {
         return;
     }
-    effects.push_back({effect, sf::Clock()});
+    effects.push_back({effect, sf::Clock(), effect.player == me});
 }
 
 void Renderer::renderEffects()
@@ -233,6 +243,13 @@ void Renderer::renderEffects()
             // Coin pops: swells and fades out while +1 floats up
             drawTileSprite(coin_texture, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
             window.draw(makeText("+1", 30, withAlpha(NEON_CYAN, alpha), toScreen(tile + sf::Vector2f(0.5f, -t))));
+        } else if (active.effect.type == DRONE_TILE) {
+            // Blast ring, and the bounty for whoever took it down
+            sf::Vector2f center = toScreen(tile + sf::Vector2f(0.5f, 0.5f));
+            drawHalo(center, tile_size * (0.3f + t), withAlpha(NEON_ORANGE, alpha / 2));
+            if (active.mine)
+                window.draw(makeText(std::format("+{}", DRONE_BOUNTY), 34, withAlpha(NEON_YELLOW, alpha),
+                                     toScreen(tile + sf::Vector2f(0.5f, -t))));
         } else {
             sf::RectangleShape flash({SCREEN_WIDTH, SCREEN_HEIGHT});
             flash.setFillColor(withAlpha(NEON_RED, alpha / 2));
@@ -280,7 +297,7 @@ void Renderer::renderParticles()
 // HUD
 //=============================================================================
 
-void Renderer::renderHUD(const std::map<int, PlayerState> &players, int me)
+void Renderer::renderHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho)
 {
     auto mine = display_positions.find(me);
     int distance = mine != display_positions.end() ? static_cast<int>(mine->second.x) : 0;
@@ -297,6 +314,9 @@ void Renderer::renderHUD(const std::map<int, PlayerState> &players, int me)
         renderHUDLine(player_num, player, me, y);
         y += 44;
     }
+
+    if (cyberpsycho)
+        window.draw(makeText(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0}));
 }
 
 // Portrait, then "YOU   12 EDDIES"

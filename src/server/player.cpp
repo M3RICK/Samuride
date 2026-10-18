@@ -10,7 +10,7 @@
 
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false), character(0) {
+      score(0), jet_active(false), character(0), attack_cooldown(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -20,6 +20,7 @@ void Player::reset(int number, float spawn_y)
     y = spawn_y;
     y_velocity = 0;
     score = 0;
+    attack_cooldown = 0;
     collected_coins.clear();
 }
 
@@ -35,6 +36,7 @@ bool Player::collectCoin(int tile_x, int tile_y)
 void Player::update(float dt, float forward_speed, float max_y)
 {
     x += forward_speed * dt;
+    attack_cooldown = std::max(0.0f, attack_cooldown - dt);
 
     y_velocity += (jet_active ? JET_POWER : GRAVITY) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);

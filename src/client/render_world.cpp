@@ -158,7 +158,7 @@ void Renderer::drawFadingPicture(const Backdrop::Segment &segment, sf::FloatRect
 // Map Tiles
 //=============================================================================
 
-void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected)
+void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed)
 {
     int start_x = std::max(0, static_cast<int>(camera_x) - 1);
     int end_x = std::min(static_cast<int>(world_map.getWidth()), static_cast<int>(camera_x + SCREEN_WIDTH / tile_size) + 2);
@@ -172,6 +172,8 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected)
                 renderCoin(x, y, time);
             else if (tile == 'e')
                 renderZapper(x, y);
+            else if (isLiveDrone(x, y, destroyed))
+                renderDrone(x, y, time);
         }
     }
 }
@@ -316,16 +318,19 @@ bool Renderer::updateAirState(int player_num)
     return on_ground;
 }
 
-// Animation follows what the player does: run, take off, rise, hover at the ceiling, fall, die
+// Animation follows what the player does: run, take off, rise, hover at the ceiling, fall, attack, die
 Renderer::AnimationFrame Renderer::pickAnimation(int player_num, const PlayerState &player, bool on_ground)
 {
     const Character &character = characterOf(player_num);
     auto death = death_clocks.find(player_num);
+    auto attack = attack_clocks.find(player_num);
     float air_time = player_anims[player_num].air_clock.getElapsedTime().asSeconds();
     float time = animation_clock.getElapsedTime().asSeconds();
 
     if (death != death_clocks.end() && character.death.frames > 0)
         return {&character.death, death->second.getElapsedTime().asSeconds()};
+    if (attack != attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < character.attack.duration())
+        return {&character.attack, attack->second.getElapsedTime().asSeconds()};
     if (on_ground)
         return {&character.run, time};
     if (air_time < character.takeoff.duration())

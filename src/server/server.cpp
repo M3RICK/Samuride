@@ -24,7 +24,8 @@
 Server::Server(int port, const std::string& map_path, bool solo, bool debug_mode)
     : server_fd(-1), port(port), map_path(map_path), solo(solo), debug_mode(debug_mode),
       required_players(solo ? 1 : 2), rng(std::random_device{}()), chunks_generated(0),
-      run_speed(START_SPEED), phase(Phase::Waiting), countdown(0), countdown_ticks(0), district(0) {
+      run_speed(START_SPEED), phase(Phase::Waiting), countdown(0), countdown_ticks(0), district(0),
+      mode(GameMode::Classic) {
     g_logger.setDebugMode(debug_mode);
 }
 
@@ -226,13 +227,7 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
 {
     switch (header.type) {
         case MSG_CONNECT:
-            // Optional payload: the character the player picked, then the district.
-            // The district is the first player's call: the host, who launched the server.
-            if (!payload.empty())
-                players.at(client_fd).setCharacter(payload[0]);
-            if (payload.size() >= 2 && players.size() == 1)
-                district = payload[1];
-            DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
+            handleConnect(client_fd, payload);
             break;
 
         case MSG_PLAYER_INPUT:
@@ -244,13 +239,38 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
             handleReady(client_fd);
             break;
 
+        case MSG_ATTACK:
+            handleAttack(client_fd);
+            break;
+
         default:
             break;
     }
 }
 
+// Optional payload: the character the player picked, then the district and the mode.
+// District and mode are the first player's call: the host, who launched the server.
+void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
+{
+    DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
+
+    if (!payload.empty())
+        players.at(client_fd).setCharacter(payload[0]);
+    if (players.size() != 1)
+        return;
+    if (payload.size() >= 2)
+        district = payload[1];
+
+    // The map went out on accept: CYBERPSYCHO needs one with drones
+    GameMode wanted = payload.size() >= 3 ? static_cast<GameMode>(payload[2]) : GameMode::Classic;
+    if (wanted != mode) {
+        mode = wanted;
+        resetMap();
+        sendMapToClient(client_fd);
+    }
+}
+
 //=============================================================================
-// Network Communication
 //=============================================================================
 
 void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)

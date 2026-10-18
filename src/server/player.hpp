@@ -29,6 +29,7 @@ private:
     int score;
     bool jet_active;
     int character;
+    float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet
@@ -55,6 +56,10 @@ public:
 
     int getScore() const { return score; }
     bool collectCoin(int tile_x, int tile_y);
+    void addScore(int points) { score += points; }
+
+    bool canAttack() const { return attack_cooldown <= 0; }
+    void startCooldown(float seconds) { attack_cooldown = seconds; }
 
     int getCharacter() const { return character; }
     void setCharacter(int id) { character = id; }
