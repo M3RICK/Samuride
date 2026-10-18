@@ -52,6 +52,16 @@ Grab the archive for your system from the [Releases](../../releases) page. Every
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
 - To host a run, allow the game when the firewall asks, or your friend won't be able to join.
 
+**macOS** (Apple Silicon, macOS 13.3 or newer): unzip `samuride-<version>-macos-arm64.zip`. The game isn't
+notarized by Apple, so macOS blocks it until you clear the download flag once, in Terminal:
+
+```sh
+xattr -dr com.apple.quarantine ~/Downloads/samuride-*-macos-arm64
+~/Downloads/samuride-*-macos-arm64/jetpack_client
+```
+
+After that, double-clicking `jetpack_client` works too.
+
 **Linux** (x86_64, glibc 2.39 or newer: Ubuntu 24.04+, Fedora 40+, Arch...):
 
 ```sh
@@ -60,7 +70,7 @@ cd samuride-*-linux-x86_64
 ./jetpack_client
 ```
 
-Windows and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
+Windows, macOS and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
 
 ## Build
 
@@ -74,7 +84,8 @@ make tests               # protocol, map streaming & generator self-checks
 
 SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
 `tools/package_release.sh` builds the same self-contained archive as the Releases page, and
-`tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath).
+`tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath),
+and `tools/package_macos.sh` builds the macOS one on a Mac.
 
 ## Play
 

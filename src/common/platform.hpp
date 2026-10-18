@@ -15,7 +15,8 @@ namespace Platform {
     // Folder of the running executable: the assets sit next to it
     std::filesystem::path executableDirectory();
 
-    // Where settings and the best run are kept: ~/.local/share/samuride, or %APPDATA%\Samuride
+    // Where settings and the best run are kept: ~/.local/share/samuride,
+    // ~/Library/Application Support/Samuride on macOS, %APPDATA%\Samuride on Windows
     std::filesystem::path dataDirectory();
 }
 

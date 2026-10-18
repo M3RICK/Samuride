@@ -12,13 +12,22 @@ WINDOWS_LIBS = -lws2_32
 CLIENT_WINDOWS = -mwindows
 endif
 
+# macOS: libc++ needs 13.3 or newer for std::format
+ifeq ($(shell uname -s),Darwin)
+MACOS = 1
+CFLAGS += -mmacosx-version-min=13.3
+endif
+
 # Set SFML_DIR if SFML 3 is not installed system-wide.
-# RPATH is where the binaries look for it at run time ('$$ORIGIN/lib' for a relocatable release).
+# RPATH is where the binaries look for it at run time: '$$ORIGIN/lib' for a relocatable Linux
+# release, '@executable_path/lib' on macOS.
 ifdef SFML_DIR
 RPATH ?= $(SFML_DIR)/lib
 CFLAGS += -I$(SFML_DIR)/include
 LDFLAGS += -L$(SFML_DIR)/lib
-ifneq ($(TARGET),windows)
+ifdef MACOS
+LDFLAGS += -Wl,-rpath,'$(RPATH)'
+else ifneq ($(TARGET),windows)
 LDFLAGS += -Wl,--disable-new-dtags,-rpath,'$(RPATH)'
 endif
 endif
