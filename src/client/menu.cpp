@@ -17,6 +17,7 @@ MenuChoice Menu::run(Renderer &renderer)
     MenuChoice choice = {MenuChoice::Mode::Quit, "", 0, 0, -1};
 
     audio = &renderer.getAudio();
+    audio->greet();
     state.screen = MenuState::Screen::Main;
     state.best_distance = loadBestDistance();
 
