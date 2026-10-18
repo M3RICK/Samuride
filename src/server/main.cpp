@@ -6,58 +6,65 @@
  */
 
 #include "server.hpp"
-#include "../common/debug.hpp"
 #include <iostream>
-#include <cstring>
 #include <cstdlib>
 #include <unistd.h>
 
 void printUsage(const char  *programme)
 {
-    std::cerr << "Usage: " << programme << " -p <port> -m <map> [-d]" << std::endl;
+    std::cerr << "Usage: " << programme << " -p <port> [-m <map>] [-s] [-d]" << std::endl;
     std::cerr << "  -p <port>   Port to listen on" << std::endl;
-    std::cerr << "  -m <map>    Path to map file" << std::endl;
+    std::cerr << "  -m <map>    Start the run on this map, then keep going procedurally" << std::endl;
+    std::cerr << "  -s          Solo run (one player, localhost only)" << std::endl;
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 
-int main(int argc, char** argv)
-{
+struct Options {
     int port = -1;
-    int opt;
     std::string map_path;
+    bool solo = false;
     bool debug_mode = false;
+};
 
+static bool parseOptions(int argc, char **argv, Options &options)
+{
+    int opt;
 
-    while ((opt = getopt(argc, argv, "p:m:d")) != -1) {
+    while ((opt = getopt(argc, argv, "p:m:sd")) != -1) {
         switch (opt) {
             case 'p':
-                port = std::atoi(optarg);
+                options.port = std::atoi(optarg);
                 break;
             case 'm':
-                map_path = optarg;
+                options.map_path = optarg;
+                break;
+            case 's':
+                options.solo = true;
                 break;
             case 'd':
-                debug_mode = true;
+                options.debug_mode = true;
                 break;
             default:
-                printUsage(argv[0]);
-                return 1;
+                return false;
         }
     }
+    return options.port > 0;
+}
 
-    if (port <= 0 || map_path.empty()) {
+int main(int argc, char **argv)
+{
+    Options options;
+
+    if (!parseOptions(argc, argv, options)) {
         printUsage(argv[0]);
         return 1;
     }
 
-    Server server(port, map_path, debug_mode);
+    Server server(options.port, options.map_path, options.solo, options.debug_mode);
 
-    if (!server.initialize()) {
-        std::cerr << "Something aint right with the server." << std::endl;
+    if (!server.initialize())
         return 1;
-    }
 
     server.run();
-
     return 0;
 }

@@ -1,0 +1,38 @@
+name: release
+
+# Push a tag like v1.0 to publish a downloadable Linux build on the Releases page
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    # Built on Ubuntu 24.04: runs on any distro with glibc 2.39 or newer
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git \
+            libx11-dev libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev \
+            libfreetype-dev libharfbuzz-dev libflac-dev libvorbis-dev libogg-dev
+
+      - name: Build the package
+        run: tools/package_release.sh "${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samuride-linux
+          path: dist/*.tar.gz
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz

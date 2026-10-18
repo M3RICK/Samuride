@@ -19,6 +19,8 @@ class Logger {
         bool debug_mode;
         std::mutex log_mutex;
 
+        void writeTimestamp();
+
     public:
         Logger(bool debug = false);
 

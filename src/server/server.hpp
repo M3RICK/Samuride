@@ -11,30 +11,71 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <thread>
-#include <chrono>
+#include <set>
+#include <random>
 #include <poll.h>
-#include <netinet/in.h>
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
-
-class Player;
+#include "../common/cyberpsycho.hpp"
+#include "player.hpp"
 
 class Server {
 private:
+    enum class Phase { Waiting, Countdown, Running, Over };
+
+    static constexpr int TICK_RATE = 60;
+    static constexpr float TICK_DT = 1.0f / TICK_RATE;
+    static constexpr int COUNTDOWN_SECONDS = 3;
+
+    // Endless run: the map is generated CHUNK_WIDTH columns at a time, LOOKAHEAD columns ahead of the leader
+    static constexpr size_t MAP_HEIGHT = 10;
+    static constexpr size_t CHUNK_WIDTH = 40;
+    static constexpr size_t SAFE_START = 14;
+    static constexpr float LOOKAHEAD = 40;
+    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 12;
+
+    // Run speed in tiles per second, ramps up over time
+    static constexpr float START_SPEED = 7.0f;
+    static constexpr float MAX_SPEED = 16.0f;
+    static constexpr float ACCELERATION = 0.12f;
+
+    struct Projectile {
+        int owner_fd;
+        float x;
+        float y;
+        float speed;
+        float max_x;
+    };
+
     int server_fd;
     int port;
     std::string map_path;
+    bool solo;
     bool debug_mode;
+    size_t required_players;
 
     Map game_map;
-    bool game_started;
+    std::mt19937 rng;
+    int chunks_generated;
+    float run_speed;
+
+    Phase phase;
+    int countdown;
+    int countdown_ticks;
+    std::set<int> ready_clients;
+
+    // Picked by the first player in the lobby: the host
+    uint8_t district;
+    GameMode mode;
+
+    std::set<std::pair<int, int>> destroyed_drones;
+    std::vector<Projectile> projectiles;
 
     std::vector<pollfd> poll_fds;
-    std::map<int, Player*> players;
+    std::map<int, Player> players;
 
-    static const size_t BUFFER_SIZE = 1024;
-    char recv_buffer[BUFFER_SIZE];
+    // More unparsed bytes than this from a client is garbage
+    static constexpr size_t MAX_PENDING_BYTES = 1024;
 
     //===========================================================================
     // Server Initialization
@@ -42,13 +83,13 @@ private:
 
     bool initializeServer();
 
-    bool loadGameMap();
+    bool resetMap();
+
+    void extendMap(float leader_x);
 
     bool setSocketOptions();
 
     bool bindSocket();
-
-    void setNonBlocking(int fd);
 
     //===========================================================================
     // Client Connection Management
@@ -68,17 +109,9 @@ private:
 
     void handleClientData(int client_fd);
 
-    void handleReceiveError(int client_fd, ssize_t bytes_read);
+    void processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
 
-    bool parseMessageHeader(int client_fd, ssize_t bytes_read, MessageHeader &header);
-
-    void handleConnectMessage(int client_fd);
-
-    void handlePlayerInputMessage(int client_fd, const MessageHeader &header);
-
-    void logPlayerInput(int client_fd, bool jet_activated);
-
-    void processClientMessage(int client_fd, ssize_t bytes_read);
+    void handleConnect(int client_fd, const std::vector<uint8_t> &payload);
 
     //===========================================================================
     // Socket Event Processing
@@ -100,40 +133,46 @@ private:
     // Game Logic
     //===========================================================================
 
-    void initializePlayerPositions();
+    void startGame();
 
-    void checkGameState();
+    void handleReady(int client_fd);
 
-    void checkGameOverConditions();
+    void updateCountdown();
 
-    void constrainPlayerToMap(Player *player);
+    void updatePlayers();
 
-    bool checkPlayerCollisions(int client_fd, Player *player);
+    bool checkPlayerCollisions(Player &player);
 
-    void updateAndSendGameState();
+    void sendGameState();
 
-    void addPlayerStateToPacket(std::vector<uint8_t> &data, Player *player);
+    void handlePlayerInput(int client_fd, bool jet_activated);
+
+    void notifyCollision(char collision_type, const Player &player, int x, int y);
+
+    void endGame(int winner_number);
+
+    //===========================================================================
+    // CYBERPSYCHO (combat.cpp)
+    //===========================================================================
+
+    void handleAttack(int client_fd);
+
+    void strike(int client_fd, const Player &player, float reach);
+
+    void updateProjectiles();
+
+    bool isLiveDrone(int x, int y) const;
+
+    void destroyDrone(int owner_fd, int x, int y);
 
 public:
-    Server(int port, const std::string& map_path, bool debug_mode);
+    Server(int port, const std::string& map_path, bool solo, bool debug_mode);
 
     ~Server();
 
     bool initialize();
 
     void run();
-
-    Map &getMap()
-    {
-        return game_map;
-    }
-
-    void handlePlayerInput(int client_fd, bool jet_activated);
-    void notifyCollision(int client_fd, char collision_type, int x, int y);
-
-    void startGame();
-
-    void endGame(int winner_fd);
 };
 
 #endif

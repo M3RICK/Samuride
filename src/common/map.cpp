@@ -7,8 +7,9 @@
 
 #include "map.hpp"
 #include "debug.hpp"
+#include "protocol.hpp"
+#include "cyberpsycho.hpp"
 #include <fstream>
-#include <iostream>
 
 Map::Map() : width(0), height(0)
 {}
@@ -20,104 +21,97 @@ bool Map::loadFromFile(const std::string& filename)
     if (!file.is_open())
         return false;
 
-    mapData.clear();
+    std::vector<std::string> rows;
     std::string line;
 
     while (std::getline(file, line)) {
-        if (!line.empty()) {
-            mapData.push_back(line);
-        }
+        if (!line.empty())
+            rows.push_back(line);
     }
 
-    if (mapData.empty()) {
+    if (rows.empty()) {
         DEBUG_LOG("Error: Map file is empty");
         return false;
     }
 
-    height = mapData.size();
-    width = mapData[0].length();
-
-    for (const auto& line : mapData) {
-        if (line.length() != width) {
+    for (const auto& row : rows) {
+        if (row.length() != rows[0].length()) {
             DEBUG_LOG("Inconsistent line lengths");
             return false;
         }
 
-        for (char c : line) {
-            if (c != '_' && c != 'c' && c != 'e')
+        for (char c : row) {
+            if (c != '_' && c != 'c' && c != 'e' && c != DRONE_TILE)
                 return false;
         }
     }
+
+    clear();
+    return appendChunk(rows);
+}
+
+void Map::clear()
+{
+    mapData.clear();
+    width = 0;
+    height = 0;
+}
+
+bool Map::appendChunk(const std::vector<std::string> &rows)
+{
+    if (rows.empty() || (height != 0 && rows.size() != height))
+        return false;
+
+    if (height == 0) {
+        height = rows.size();
+        mapData.assign(height, "");
+    }
+
+    for (size_t y = 0; y < height; y++)
+        mapData[y] += rows[y];
+    width = mapData[0].length();
     return true;
 }
 
-std::vector<uint8_t> Map::serialize() const
+std::vector<uint8_t> Map::serialize(size_t from_x) const
 {
     std::vector<uint8_t> data;
+    size_t chunk_width = width > from_x ? width - from_x : 0;
 
-    data.push_back((width >> 24) & 0xFF);
-    data.push_back((width >> 16) & 0xFF);
-    data.push_back((width >> 8) & 0xFF);
-    data.push_back(width & 0xFF);
+    Protocol::pushU32(data, from_x);
+    Protocol::pushU32(data, chunk_width);
+    Protocol::pushU32(data, height);
 
-    data.push_back((height >> 24) & 0xFF);
-    data.push_back((height >> 16) & 0xFF);
-    data.push_back((height >> 8) & 0xFF);
-    data.push_back(height & 0xFF);
-
-    for (const auto& line : mapData) {
-        for (char c : line) {
-            data.push_back(static_cast<uint8_t>(c));
-        }
-    }
-
-    DEBUG_LOG("Serialized map: " + std::to_string(data.size()) + " bytes");
+    for (const auto& row : mapData)
+        data.insert(data.end(), row.begin() + from_x, row.begin() + from_x + chunk_width);
     return data;
 }
 
-bool Map::loadFromData(const std::vector<uint8_t>& data)
+bool Map::applyData(const std::vector<uint8_t>& data)
 {
-    if (data.size() < 8) {
-        DEBUG_LOG("Error: Insufficient data to deserialize map");
+    if (data.size() < 12)
         return false;
-    }
 
-    size_t w = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-    size_t h = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
+    size_t offset = Protocol::readU32(data.data());
+    size_t w = Protocol::readU32(data.data() + 4);
+    size_t h = Protocol::readU32(data.data() + 8);
 
-    if (data.size() != 8 + (w * h)) {
-        DEBUG_LOG("Error: Map data size mismatch");
+    if (h == 0 || data.size() != 12 + w * h || (offset != 0 && (offset != width || h != height)))
         return false;
-    }
 
-    mapData.clear();
-    width = w;
-    height = h;
+    std::vector<std::string> rows;
+    for (size_t y = 0; y < h; y++)
+        rows.emplace_back(data.begin() + 12 + y * w, data.begin() + 12 + (y + 1) * w);
 
-    for (size_t y = 0; y < h; y++) {
-        std::string line;
-        for (size_t x = 0; x < w; x++) {
-            size_t idx = 8 + y * w + x;
-            line.push_back(static_cast<char>(data[idx]));
-        }
-        mapData.push_back(line);
-    }
-
-    DEBUG_LOG("Deserialized map: " + std::to_string(width) + "x" + std::to_string(height));
-    return true;
+    if (offset == 0)
+        clear();
+    return appendChunk(rows);
 }
 
 char Map::getTile(size_t x, size_t y) const
 {
-    if (y >= mapData.size() || x >= mapData[y].length())
+    if (y >= height || x >= width)
         return '_';
 
     return mapData[y][x];
-}
-
-void Map::printMap() const
-{
-    for (const auto& line : mapData) {
-        std::cout << line << std::endl;
-    }
 }

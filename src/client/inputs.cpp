@@ -7,27 +7,33 @@
 
 #include "inputs.hpp"
 #include "client.hpp"
-#include <SFML/Window/Event.hpp>
 
-InputManager::InputManager(Client* client, sf::Window* window)
-    : client(client), window(window), jet_active(false), exit_requested(false) {
+InputManager::InputManager(Client *client, sf::Window *window)
+    : client(client), window(window), jet_active(false),
+      close_requested(false), back_requested(false), confirm_pressed(false) {
 }
 
 void InputManager::processInputs()
 {
-    sf::Event event;
+    back_requested = false;
+    confirm_pressed = false;
 
-    while (window->pollEvent(event)) {
-
-        if (event.type == sf::Event::Closed)
-            exit_requested = true;
-        if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::Escape)
-                exit_requested = true;
+    while (const std::optional event = window->pollEvent()) {
+        if (event->is<sf::Event::Closed>())
+            close_requested = true;
+        else if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
+            if (key->code == sf::Keyboard::Key::Escape)
+                back_requested = true;
+            if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
+                confirm_pressed = true;
+            // CYBERPSYCHO; the server ignores it in CLASSIC
+            if (key->code == sf::Keyboard::Key::F)
+                client->sendAttack();
         }
     }
 
-    bool space_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+    // Focus check: two clients on the same machine must not share the space bar
+    bool space_pressed = window->hasFocus() && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 
     if (space_pressed != jet_active) {
         jet_active = space_pressed;

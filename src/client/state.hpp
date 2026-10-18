@@ -10,49 +10,79 @@
 
 #include <map>
 #include <mutex>
+#include <set>
+#include <utility>
+#include <cstdint>
 #include <vector>
-#include "../common/map.hpp"
+#include "../common/cyberpsycho.hpp"
+
+enum class Phase { Waiting, Countdown, Running, Over };
 
 struct PlayerState {
+    float x = 0;
+    float y = 0;
+    int score = 0;
+    bool jet_active = false;
+};
+
+// Someone attacked in CYBERPSYCHO
+struct ShotEvent {
+    int player;
+    Weapon weapon;
+};
+
+struct CollisionEffect {
+    char type;
+    int player;
     int x;
     int y;
-    int score;
-    bool jet_active;
-
-    PlayerState() : x(0), y(0), score(0), jet_active(false){}
 };
 
+// Written by the network thread, read by the render thread
 class GameState {
-public: //DUCP on a pas d animations ca sert a r
-    struct CollisionEffect {
-        char type;
-        int x;
-        int y;
-        int lifetime;
-
-        CollisionEffect(char type, int x, int y)
-            : type(type), x(x), y(y), lifetime(20) {}
-    };
-
 private:
-    std::map<int, PlayerState> players;
-    std::mutex state_mutex;
-    int winner;
+    mutable std::mutex state_mutex;
 
-    std::vector<CollisionEffect> effects;
+    Phase phase = Phase::Waiting;
+    int countdown = 0;
+    int my_player_number = -1;
+    int winner = -1;
+
+    std::map<int, PlayerState> players;
+    std::map<int, int> characters;
+    int district = 0;
+    GameMode mode = GameMode::Classic;
+    std::set<std::pair<int, int>> destroyed_drones;
+    std::vector<ShotEvent> pending_shots;
+    std::set<std::pair<int, int>> my_coins;
+    std::vector<CollisionEffect> pending_effects;
+    std::vector<std::vector<uint8_t>> pending_map_data;
+    bool rematch_requested = false;
 
 public:
-    GameState();
-
-    void updatePlayer(int player_number, int x, int y, int score, bool jet_active);
-    void handleCollision(char type, int x, int y);
+    void startCountdown(int my_number, const std::map<int, int> &roster, int district, GameMode mode);
+    void pushShot(ShotEvent shot);
+    void setCountdown(int value);
+    void updatePlayer(int player_number, float x, float y, int score, bool jet_active);
+    void handleCollision(char type, int player, int x, int y);
     void setWinner(int player_number);
+    void pushMapData(std::vector<uint8_t> data);
+    bool requestRematch();
+
+    Phase getPhase() const;
+    int getCountdown() const;
+    int getMyPlayerNumber() const;
     int getWinner() const;
-
-    // mutex
-    std::map<int, PlayerState> getPlayers();
-    std::vector<CollisionEffect> getEffects();
-
-    void updateEffects();
+    std::map<int, PlayerState> getPlayers() const;
+    std::map<int, int> getCharacters() const;
+    int getDistrict() const;
+    GameMode getMode() const;
+    std::set<std::pair<int, int>> getDestroyedDrones() const;
+    std::vector<ShotEvent> takeShots();
+    std::set<std::pair<int, int>> getCollectedCoins() const;
+    std::vector<CollisionEffect> takeEffects();
+    std::vector<std::vector<uint8_t>> takeMapData();
+    bool isRematchRequested() const;
 };
+
 #endif

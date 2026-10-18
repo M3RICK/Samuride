@@ -1,0 +1,10 @@
+name DAVID
+sheet sheet.png
+portrait portrait.png
+frame 104 171
+feet 162
+body 158
+run 0 4 10 loop
+rise 1 4 12 loop
+hover 2 4 12 loop
+fall 3 1 1 loop

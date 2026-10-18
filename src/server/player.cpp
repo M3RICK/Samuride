@@ -10,25 +10,40 @@
 
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false) {
+      score(0), jet_active(false), character(0), attack_cooldown(0) {
 }
 
-// Tout les defines se retrouvent dans le hpp
-
-void Player::moveForward()
+void Player::reset(int number, float spawn_y)
 {
-    x += static_cast<int>(FORWARD_SPEED);
+    player_number = number;
+    x = 0;
+    y = spawn_y;
+    y_velocity = 0;
+    score = 0;
+    attack_cooldown = 0;
+    collected_coins.clear();
 }
 
-void Player::applyPhysics()
+// Coins stay on the map for the other player, each one only counts once per player
+bool Player::collectCoin(int tile_x, int tile_y)
 {
-    if (jet_active) {
-        y_velocity += JET_POWER;
-    } else {
-        y_velocity += GRAVITY;
+    if (!collected_coins.insert({tile_x, tile_y}).second)
+        return false;
+    score++;
+    return true;
+}
+
+void Player::update(float dt, float forward_speed, float max_y)
+{
+    x += forward_speed * dt;
+    attack_cooldown = std::max(0.0f, attack_cooldown - dt);
+
+    y_velocity += (jet_active ? JET_POWER : GRAVITY) * dt;
+    y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
+    y += y_velocity * dt;
+
+    if (y < 0 || y > max_y) {
+        y = std::clamp(y, 0.0f, max_y);
+        y_velocity = 0;
     }
-
-    y_velocity = std::max(-MAX_VELOCITY, std::min(y_velocity, MAX_VELOCITY));
-
-    y += static_cast<int>(y_velocity);
 }

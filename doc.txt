@@ -1,4 +1,4 @@
-SAMURIDE, TONY THIERRY AYMERIC
+SAMURIDE, AYMERIC
 
 Introduction
 --------
@@ -40,40 +40,68 @@ Type    Name                Direction           Description
 5       MSG_GAME_STATE      Server to Client    Game state update
 6       MSG_COLLISION       Server to Client    Collision notification
 7       MSG_GAME_END        Server to Client    Game over notification
+8       MSG_COUNTDOWN       Server to Client    Countdown before the run
+9       MSG_READY           Client to Server    Rematch request after a game
+10      MSG_ATTACK          Client to Server    CYBERPSYCHO attack
+11      MSG_SHOT            Server to Client    CYBERPSYCHO: a player attacked
 
 
 MSG_CONNECT
 --------
 
 Sent by the client to initiate a connection with the server. This is the first message a client sends after establishing a TCP connection.
-Payload: None (0 bytes)
+Payload Format:
+
+Character (1 byte, optional): the character the player picked, 0 if absent
+District (1 byte, optional): the scenery, only taken from the first player in the lobby (the host).
+          0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun,
+          5 Both Worlds (corridor and Worlds Collide alternating every 250 tiles)
+Mode (1 byte, optional): 0 CLASSIC, 1 CYBERPSYCHO, also only taken from the host.
+          The map already sent is regenerated (with drones for CYBERPSYCHO) and sent again.
 After receiving this message, the server assigns a player number to the client and sends the map data using MSG_MAP_DATA.
 
 
 MSG_MAP_DATA
 --------
 
-Sent by the server to the client to transmit the game map.
+Sent by the server to transmit map columns. The run is endless: the whole map is sent
+on connection and before each game, then new columns are streamed while players advance.
 Payload Format:
-|                         Map Width                             |
-|                         Map Height                            |
-|                         Map Data                              |
 
-Map Width (4 bytes)
+Offset (4 bytes): first column of this chunk. 0 replaces the client's map,
+                  any other value must equal the client's current map width (append).
+Chunk Width (4 bytes)
 Map Height (4 bytes)
-Map Data (Width × Height bytes): One byte per tile, representing the tile type at each position. See Section 4 for tile types.
-
-The map is stored in row-major order, from top to bottom and left to right.
+Tiles (Chunk Width × Map Height bytes): one byte per tile, row-major order,
+      from top to bottom and left to right. See Map Tile Types.
 
 
 MSG_GAME_START
 --------
 
 
-Sent by the server to all clients when the game is about to start.
-This occurs after at least two players have connected.
-Payload: None (0 bytes)
-Upon receiving this message, clients should transition from the waiting screen to the game screen and prepare to receive game state updates.
+Sent by the server to each client when the game is about to start.
+This occurs once two players have connected (one in solo mode), and again on a rematch.
+Payload Format:
+
+Player Number (1 byte): The number assigned to the receiving client
+Player Count (1 byte)
+Then, for each player:
+    Player Number (1 byte)
+    Character (1 byte)
+District (1 byte)
+Mode (1 byte)
+
+Upon receiving this message, clients should transition from the waiting screen to the game screen and prepare to receive countdown and game state updates.
+
+
+MSG_COUNTDOWN
+--------
+
+Sent by the server to all clients once per second after MSG_GAME_START.
+Payload Format:
+
+Seconds Left (1 byte): 3, 2, 1, then 0 when the run starts
 
 
 MSG_PLAYER_INPUT
@@ -94,12 +122,12 @@ MSG_GAME_STATE
 Sent by the server to all clients to update the game state. This message contains the positions, scores, and jetpack states of all players.
 
 Player Number (1 byte): The player's identifier
-X Position (2 bytes)
-Y Position (2 bytes)
+X Position (4 bytes): in hundredths of a tile, also the distance run
+Y Position (2 bytes): in hundredths of a tile, top of the player's 2-tile-tall body, 0 is the top row
 Score (2 bytes)
 Jet (1 byte) 1 if jetpack is active, 0 if inactive
 
-The payload contains a sequence of these 8-byte player records, one for each player in the game.
+The payload contains a sequence of these 10-byte player records, one for each player in the game.
 
 
 MSG_COLLISION
@@ -109,9 +137,11 @@ Sent by the server to all clients when a player collides with a game element (co
 Payload Format:
 
 Collision Type (1 byte): Character representing the collision type:
-'c' for coin, 'e' for electric hazard
-X Position (2 bytes)
-Y Position (2 bytes)
+'c' for coin, 'e' for electric hazard (zapper or drone contact),
+'d' for a drone destroyed in CYBERPSYCHO (the player gets 5 eddies)
+Player Number (1 byte): The player who hit it
+X Position (4 bytes): tile column
+Y Position (2 bytes): tile row
 
 This message is used to synchronize the game state when elements are collected or when collisions occur.
 
@@ -126,13 +156,40 @@ Payload Format:
 
 Winner Number (1 byte): The player number of the winner, or 0xFF if there is no winner.
 
-The game can end in the following scenarios:
-    o A player reaches the end of the map
-    o A player collides with an electric hazard
-    o All players disconnect
+The run never ends on its own. The game ends when:
+    o A player collides with an electric hazard: the other player wins
+    o Both players get zapped on the same tick: no winner
+    o A player disconnects: the remaining one wins
+In solo mode the winner is always 0xFF, the score is the distance run.
 
-If a player reaches the end of the map, the player with the highest score wins.
-If a player collides with a hazard, the other player wins.
+
+MSG_ATTACK
+--------
+
+Sent by a client to attack (CYBERPSYCHO only, ignored otherwise).
+Payload: None (0 bytes)
+The server enforces the weapon cooldown. Guns and rockets fire a projectile flying ahead at
+run speed + weapon speed for up to 22 tiles; the blade destroys every drone within 2.5 tiles ahead.
+Weapons: Johnny and David have guns, Jinx rockets, Mikasa a blade.
+
+
+MSG_SHOT
+--------
+
+Sent by the server to all clients when an attack goes off, so they can animate it.
+Payload Format:
+
+Player Number (1 byte)
+Weapon (1 byte): 0 gun, 1 rockets, 2 blade
+
+
+MSG_READY
+--------
+
+Sent by a client after MSG_GAME_END to ask for a rematch.
+Payload: None (0 bytes)
+Once every connected player is ready, the server sends a fresh MSG_MAP_DATA (offset 0)
+and MSG_GAME_START to everyone.
 
 
 Map Format
@@ -182,13 +239,15 @@ Waiting for Players
 --------
 
 
-The server waits until at least 2 players have connected before starting the game.
+The server waits until 2 players have connected (1 when started with -s) before starting the game.
+Extra clients are refused.
 During this time, clients display a waiting screen.
 
 Game Start
 --------
 
-MSG_GAME_START--->(All clients)
+MSG_GAME_START--->(Each client, with its player number)
+MSG_COUNTDOWN--->(All clients, 3 2 1 0)
 
 
 GAMEPLAY
@@ -196,11 +255,12 @@ GAMEPLAY
 
 During gameplay, the following message exchanges occur continuously:
 
-MSG_PLAYER_INPUT--->(When input changes)<---MSG_GAME_STATE (Regular updates)<---MSG_COLLISION (When applicable)
+MSG_PLAYER_INPUT--->(When input changes)<---MSG_GAME_STATE (60 times per second)<---MSG_COLLISION (When applicable)
 
 The server continuously updates the game state by:
-    o players forward automatically
+    o players forward automatically, faster and faster
     o physics (gravity or jetpack thrust)
+    o generating random map chunks ahead of the leader (zapper beams, coin patterns)
     o checking for collisions with map elements
     o sending updated positions to all clients
 
@@ -210,6 +270,8 @@ Game End
 
 Server                              Clients
 MSG_GAME_END           --->         (All clients)
+                       <---         MSG_READY (each client, for a rematch)
+MSG_MAP_DATA, MSG_GAME_START --->   (All clients, once everyone is ready)
 
 
 
@@ -217,7 +279,7 @@ MSG_GAME_END           --->         (All clients)
 Security Considerations
 --------
 
-The Jetpack Game Protocol is designed for a controlled environment and does not implement strong security measures because the animations broke me.
+The Jetpack Game Protocol is designed for a controlled environment and does not implement strong security measures.
 
 The following security considerations should be noted:
 

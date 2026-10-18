@@ -20,6 +20,15 @@ bool Logger::isDebugMode() const
     return debug_mode;
 }
 
+// "[HH:MM:SS] ", the start of every log line
+void Logger::writeTimestamp()
+{
+    auto now = std::time(nullptr);
+    auto tm = *std::localtime(&now);
+
+    std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] ";
+}
+
 void Logger::log(const std::string &message)
 {
     if (!debug_mode)
@@ -27,10 +36,8 @@ void Logger::log(const std::string &message)
 
     std::lock_guard<std::mutex> lock(log_mutex);
 
-    auto now = std::time(nullptr);
-    auto tm = *std::localtime(&now);
-
-    std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] " << message << std::endl;
+    writeTimestamp();
+    std::cout << message << std::endl;
 }
 
 void Logger::logPacket(const std::string &direction, const char *data, size_t size)
@@ -40,10 +47,8 @@ void Logger::logPacket(const std::string &direction, const char *data, size_t si
 
     std::lock_guard<std::mutex> lock(log_mutex);
 
-    auto now = std::time(nullptr);
-    auto tm = *std::localtime(&now);
-
-    std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] " << direction << " packet: ";
+    writeTimestamp();
+    std::cout << direction << " packet: ";
 
     for (size_t i = 0; i < std::min(size, static_cast<size_t>(16)); i++) {
         std::cout << std::hex << std::setw(2) << std::setfill('0')

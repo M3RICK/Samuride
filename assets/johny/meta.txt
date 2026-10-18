@@ -1,0 +1,10 @@
+name JOHNNY
+sheet sheet.png
+portrait portrait.png
+frame 119 171
+feet 156
+body 152
+run 0 4 10 loop
+rise 1 4 12 loop
+hover 2 4 12 loop
+fall 3 1 1 loop

@@ -6,22 +6,21 @@
  */
 
 #include "render.hpp"
-#include "client.hpp"
+#include "menu.hpp"
 #include "state.hpp"
 #include "../common/debug.hpp"
-#include <sstream>
-#include <iomanip>
+#include <algorithm>
+#include <cstdlib>
 
-
-Renderer::Renderer(Client* client)
-    : client(client), camera_x(0), show_countdown(false), countdown_value(3),
-      background_offset(1.0f), scroll_speed(0.5f) {
+float randf(float min, float max)
+{
+    return min + (max - min) * (std::rand() / static_cast<float>(RAND_MAX));
 }
 
-Renderer::~Renderer() {
-    if (window.isOpen()) {
-        window.close();
-    }
+Renderer::Renderer()
+    : shown_backdrop(-1), heard_countdown(-1), camera_x(0), tile_size(96), shake(0), drones_down(0),
+      best_distance(0), new_record(false),
+      last_phase(Phase::Waiting), scanlines(sf::PrimitiveType::Lines) {
 }
 
 //=============================================================================
@@ -30,449 +29,185 @@ Renderer::~Renderer() {
 
 bool Renderer::initialize()
 {
-    if (!createWindow())
+    createWindow();
+    if (!window.isOpen())
         return false;
 
     loadAssets();
-    loadAudio();
+
+    for (float y = 0; y < SCREEN_HEIGHT; y += 4) {
+        scanlines.append({{0, y}, sf::Color(0, 0, 0, 45)});
+        scanlines.append({{SCREEN_WIDTH, y}, sf::Color(0, 0, 0, 45)});
+    }
     return true;
 }
 
-bool Renderer::createWindow()
+// Everything is drawn in a fixed 1920x1080 space, the window just scales it to fit the screen
+void Renderer::createWindow()
 {
-    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Jetpack Game"); // A MODIF DANS HPP
+    sf::Vector2u desktop = sf::VideoMode::getDesktopMode().size;
+    float fit = std::min({1.0f, desktop.x * 0.9f / SCREEN_WIDTH, desktop.y * 0.9f / SCREEN_HEIGHT});
+    sf::Vector2u size(SCREEN_WIDTH * fit, SCREEN_HEIGHT * fit);
+
+    window.create(sf::VideoMode(size), "Samuride", sf::Style::Titlebar | sf::Style::Close);
     window.setFramerateLimit(60);
-    return window.isOpen();
 }
 
+void Renderer::loadAssets()
+{
+    loadBackdrops();
+    loadCharacters();
+    loadFonts();
 
-// ENLEVER X POUR GOOD PATH (!FALLBACK)
-void Renderer::loadAssets() {
-    loadTexture(background_texture, "assets/background/Resized.png", "background");
-    loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png", "waiting_screen");
-    loadTexture(johny_texture, "assets/johny/johny.png", "player");
-    loadTexture(david_texture, "assets/david/david.png", "player2");
-    loadTexture(coin_texture, "assets/coins/coin.png", "coin");
-    loadTexture(electric_texture, "assets/electric/zap.png", "electric");
-
-    loadFont();
+    loadTexture(waiting_screen_texture, "assets/waiting_screen/Samuride.png");
+    loadTexture(coin_texture, "assets/coins/coin.png");
+    loadTexture(electric_texture, "assets/electric/zap.png");
+    // Pixel art: scaled up without smoothing
+    loadTexture(drone_texture, "assets/drone/drone.png");
+    drone_texture.setSmooth(false);
 }
 
-void Renderer::loadTexture(sf::Texture &texture, const std::string &path, const std::string &name)
+// The corridor scrolls as one layer; the others run on the Worlds Collide walkway, a panorama far behind
+void Renderer::loadBackdrops()
+{
+    const sf::Texture *corridor = sharedTexture("assets/background/Resized.png");
+    const sf::Texture *walkway = sharedTexture("assets/background/worlds_collide.png");
+    const sf::Texture *citadel = sharedTexture("assets/background/neon_citadel.png");
+
+    // neon_citadel.png stacks three panoramas, each cut just above its own (blurry) walkway
+    int citadel_width = citadel->getSize().x;
+    Backdrop::Segment night_city = {citadel, sf::IntRect({0, 0}, {citadel_width, 260})};
+    Backdrop::Segment walls = {citadel, sf::IntRect({0, 283}, {citadel_width, 209})};
+    Backdrop::Segment zaun = {citadel, sf::IntRect({0, 513}, {citadel_width, 180})};
+
+    auto onWalkway = [&](const std::string &name, const std::string &tagline,
+                         std::vector<Backdrop::Segment> far, float parallax) {
+        // Dimmed a little: the neons would swallow the coins and zappers
+        return Backdrop{name, tagline, walkway, 0.05f, 0.825f, sf::Color(200, 200, 215),
+                        {{0, 0.8f, parallax, far}, {0.8f, 1, 1, {}}}};
+    };
+
+    backdrops = {
+        {"THE CORRIDOR", "Arasaka sublevel 3", corridor, 0.20f, 0.79f, sf::Color::White, {{0, 1, 0.4f, {}}}},
+        // The three panoramas back to back, a bit faster so a run goes through them
+        onWalkway("WORLDS COLLIDE", "Night City, the Walls & Zaun", {night_city, walls, zaun}, 0.25f),
+        onWalkway("NIGHT CITY", "Neon towers at sunset", {night_city}, 0.2f),
+        onWalkway("THE WALLS", "Dusk along the Walls", {walls}, 0.2f),
+        onWalkway("ZAUN", "The undercity never sleeps", {zaun}, 0.2f),
+    };
+}
+
+// Pixel art: character textures stay unsmoothed so they stay crisp when scaled up
+void Renderer::loadCharacters()
+{
+    characters.resize(CHARACTER_DIRS.size());
+
+    for (size_t i = 0; i < CHARACTER_DIRS.size(); i++) {
+        if (!characters[i].load("assets/" + CHARACTER_DIRS[i]))
+            DEBUG_LOG("Failed to load character: " + CHARACTER_DIRS[i]);
+    }
+}
+
+void Renderer::loadFonts()
+{
+    if (!font.openFromFile("assets/font/jetpack_font.ttf") || !fallback_font.openFromFile("assets/font/Rajdhani-Bold.ttf"))
+        DEBUG_LOG("Failed to load fonts, text will not be displayed");
+
+    for (char32_t c = '!'; c <= '~'; c++) {
+        if (font.getGlyph(c, 32, false).bounds.size.x == 0)
+            missing_glyphs += static_cast<char>(c);
+    }
+}
+
+void Renderer::loadTexture(sf::Texture &texture, const std::string &path)
 {
     if (!texture.loadFromFile(path)) {
-        DEBUG_LOG("Failed to load " + name + " texture, using fallback");
-    }
-}
-
-void Renderer::loadFont()
-{
-    if (!font.loadFromFile("assets/font/jetpack_font.ttf")) {
-        if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
-            DEBUG_LOG("Failed to load font, text may not be displayed properly");
-        }
-    }
-}
-
-//=============================================================================
-// Main Render Loop
-//=============================================================================
-
-void Renderer::render()
-{
-    if (!client)
+        DEBUG_LOG("Failed to load texture: " + path);
         return;
+    }
+    texture.setSmooth(true);
+}
 
+const sf::Texture *Renderer::sharedTexture(const std::string &path)
+{
+    auto [it, inserted] = textures.try_emplace(path);
+
+    if (inserted)
+        loadTexture(it->second, path);
+    return &it->second;
+}
+
+//=============================================================================
+// Frame Lifecycle
+//=============================================================================
+
+void Renderer::beginFrame(bool in_game)
+{
+    audio.playMusic(in_game);
+    if (!in_game)
+        audio.setJetpack(false);
+
+    window.setView(screenView());
     window.clear(sf::Color::Black);
+}
 
-    GameState *state = client->getGameState();
-
-    if (!state)
-        return;
-
-    updateCamera(state);
-
-    if (client->isGameStarted()) {
-        renderGameScreen(state);
-    } else {
-        renderWaitingScreen();
-    }
-
+void Renderer::endFrame()
+{
+    window.setView(screenView());
+    window.draw(scanlines);
     window.display();
 }
 
-void Renderer::updateCamera(GameState* state)
+void Renderer::onPhaseChange(GameState &state, Phase phase)
 {
-    auto players = state->getPlayers();
-    int my_player_num = client->getPlayerNumber();
+    Phase previous = last_phase;
 
-    if (players.count(my_player_num) > 0) {
-        float target_x = players[my_player_num].x - SCREEN_WIDTH / (2 * TILE_SIZE);
-        camera_x += (target_x - camera_x) * 0.1f;
-        if (camera_x < 0)
-            camera_x = 0;
+    last_phase = phase;
+    phase_clock.restart();
+
+    // A run starts with its countdown, or straight away if the countdown went unseen
+    if (phase == Phase::Countdown || (phase == Phase::Running && previous != Phase::Countdown))
+        resetRun();
+    if (phase == Phase::Running && previous == Phase::Countdown)
+        audio.play(Audio::Sfx::Go);
+    if (phase == Phase::Over) {
+        recordSoloDistance(state);
+        audio.play(Audio::Sfx::GameOver);
     }
 }
 
-void Renderer::renderGameScreen(GameState *state)
+// New run (first one or rematch): forget the previous one
+void Renderer::resetRun()
 {
-    if (background_music.getStatus() != sf::Music::Playing) {
-        waiting_music.stop();
-        background_music.play();
-    }
-
-    renderMap(client->getMap());
-    renderPlayers(state);
-    renderEffects(state);
-    renderHUD(state);
-
-    if (client->isGameOver()) {
-        renderGameOver(state);
-    }
+    display_positions.clear();
+    particles.clear();
+    effects.clear();
+    player_anims.clear();
+    death_clocks.clear();
+    shown_backdrop = -1;
+    heard_countdown = -1;
+    shots.clear();
+    attack_clocks.clear();
+    drones_down = 0;
+    shake = 0;
+    new_record = false;
+    best_distance = loadBestDistance();
 }
 
-void Renderer::renderWaitingScreen()
+// Solo runs chase the personal best
+void Renderer::recordSoloDistance(GameState &state)
 {
-    if (waiting_music.getStatus() != sf::Music::Playing) {
-        background_music.stop();
-        waiting_music.play();
-    }
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
 
-    if (waiting_screen_texture.getSize().x > 0) {
-        sf::Sprite waitingScreenSprite(waiting_screen_texture);
-
-        float scale_x = static_cast<float>(SCREEN_WIDTH) / waiting_screen_texture.getSize().x;
-        float scale_y = static_cast<float>(SCREEN_HEIGHT) / waiting_screen_texture.getSize().y;
-        float scale = std::min(scale_x, scale_y);
-
-        waitingScreenSprite.setScale(scale, scale);
-
-        float x_pos = (SCREEN_WIDTH - (waiting_screen_texture.getSize().x * scale)) / 2;
-        float y_pos = (SCREEN_HEIGHT - (waiting_screen_texture.getSize().y * scale)) / 2;
-
-        waitingScreenSprite.setPosition(x_pos, y_pos);
-        window.draw(waitingScreenSprite);
-
-        sf::Text waitText;
-        setupText(waitText, "Wake the fuck up...", 80, sf::Color::Red);
-        centerText(waitText, SCREEN_WIDTH / 2, SCREEN_HEIGHT/ 11);
-        window.draw(waitText);
-    }
-}
-
-//=============================================================================
-// Map Rendering
-//=============================================================================
-
-void Renderer::renderMap(const Map &map)
-{
-    renderBackground();
-    renderMapTiles(map);
-}
-
-void Renderer::renderBackground()
-{
-    if (background_texture.getSize().x == 0)
+    if (players.size() != 1 || mine == players.end())
         return;
 
-    background_offset = camera_x * scroll_speed;
-
-    float bg_width = static_cast<float>(background_texture.getSize().x);
-    int repetitions = static_cast<int>(SCREEN_WIDTH / bg_width) + 2;
-
-    for (int i = 0; i < repetitions; i++) {
-        sf::Sprite background(background_texture);
-
-        float x_pos = i * bg_width - fmodf(background_offset, bg_width);
-        background.setPosition(x_pos, 0);
-
-        float scale_y = static_cast<float>(SCREEN_HEIGHT) / background_texture.getSize().y;
-        background.setScale(1.0f, scale_y);
-
-        window.draw(background);
-    }
-}
-
-void Renderer::renderMapTiles(const Map &map)
-{
-    int start_x = static_cast<int>(camera_x);
-    int end_x = start_x + SCREEN_WIDTH / TILE_SIZE + 1;
-
-    size_t map_width = map.getWidth();
-    size_t map_height = map.getHeight();
-
-    if (static_cast<size_t>(end_x) > map_width)
-        end_x = static_cast<int>(map_width);
-
-    for (size_t y = 0; y < map_height; y++) {
-        for (int x = start_x; x < end_x; x++) {
-            char tile = map.getTile(x, y);
-            renderTile(tile, x, y);
-        }
-    }
-}
-
-void Renderer::renderTile(char tile, int x, int y)
-{
-    float screen_x = (x - camera_x) * TILE_SIZE;
-    float screen_y = y * TILE_SIZE;
-
-    switch (tile) {
-        case 'c':
-            renderCoin(screen_x, screen_y);
-            break;
-        case 'e':
-            renderElectric(screen_x, screen_y);
-            break;
-        default:
-            break;
-    }
-}
-
-void Renderer::renderCoin(float x, float y)
-{
-    sf::Sprite coin(coin_texture);
-    coin.setPosition(x, y);
-    float scale = static_cast<float>(TILE_SIZE) / coin_texture.getSize().x;
-    coin.setScale(scale, scale);
-    window.draw(coin);
-
-}
-
-void Renderer::renderElectric(float x, float y)
-{
-    sf::Sprite electric(electric_texture);
-    electric.setPosition(x, y);
-    float scale = static_cast<float>(TILE_SIZE) / electric_texture.getSize().x;
-    electric.setScale(scale, scale);
-    window.draw(electric);
-}
-
-//=============================================================================
-// Player Rendering
-//=============================================================================
-
-void Renderer::renderPlayers(GameState *state)
-{
-    auto players = state->getPlayers();
-    int my_player_num = client->getPlayerNumber();
-
-    for (auto& pair : players) {
-        int player_num = pair.first;
-        const PlayerState& player = pair.second;
-
-        float x = (player.x - camera_x) * TILE_SIZE;
-        float y = player.y * TILE_SIZE;
-
-        renderPlayer(player, player_num, x, y, my_player_num);
-
-        if (player.jet_active) {
-            renderJetpack(x, y);
-        }
-    }
-}
-
-void Renderer::renderPlayer(const PlayerState& player, int player_num, float x, float y, int my_player_num)
-{
-    renderPlayerSprite(player, player_num, x, y, my_player_num);
-}
-
-//=============================================================================================
-//  ANIMATIONS
-//=============================================================================================
-
-void Renderer::renderPlayerSprite(const PlayerState &player, int player_num, float x, float y, int my_player_num)
-{
-    sf::Texture &playerTexture = (player_num == 0) ? johny_texture : david_texture;
-    sf::Sprite playerSprite(playerTexture);
-
-    const int SPRITE_WIDTH = playerTexture.getSize().x / 4;
-    const int SPRITE_HEIGHT = playerTexture.getSize().y / 3;
-
-    if (playerTexture.getSize().x == 0)
-        return;
-
-
-    int row = 0;
-    int frame = getCurrentAnimationFrame(player.jet_active);
-
-    if (player.jet_active) {
-        row = 2;
-    } else {
-        row = 0;
-    }
-
-    playerSprite.setTextureRect(sf::IntRect(
-        frame *SPRITE_WIDTH,
-        row *SPRITE_HEIGHT,
-        SPRITE_WIDTH,
-        SPRITE_HEIGHT
-    ));
-
-    playerSprite.setPosition(x, y - (SPRITE_HEIGHT - TILE_SIZE));
-    float scale = static_cast<float>(TILE_SIZE) / SPRITE_WIDTH;
-    playerSprite.setScale(scale, scale);
-
-    window.draw(playerSprite);
-}
-
-void Renderer::renderPlayerFallback(int player_num, float x, float y, int my_player_num)
-{
-    sf::RectangleShape playerShape;
-
-    playerShape.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-    playerShape.setPosition(x, y);
-    playerShape.setFillColor(player_num == my_player_num ? sf::Color(0, 255, 0) : sf::Color(255, 0, 0));
-
-    window.draw(playerShape);
-}
-
-void Renderer::renderJetpack(float x, float y)
-{
-    // c est compris dans le sprite original
-}
-
-//=============================================================================
-// Effects Rendering
-//=============================================================================
-
-void Renderer::renderEffects(GameState *state)
-{
-    // Pareil hein
-}
-
-void Renderer::renderEffect(const GameState::CollisionEffect& effect, float x, float y)
-{
-    // J aurais pas le tps
-}
-
-//=============================================================================
-// HUD and UI Rendering
-//=============================================================================
-
-void Renderer::renderHUD(GameState *state)
-{
-    auto players = state->getPlayers();
-    int my_player_number = client->getPlayerNumber();
-    int y_offset = 10;
-
-    for (const auto& player_pair : players) {
-        int player_num = player_pair.first;
-        const PlayerState& player = player_pair.second;
-
-        sf::Text score_text;
-        score_text.setFont(font);
-
-        std::string player_label = (player_num == my_player_number) ? "You" : "Player " + std::to_string(player_num);
-        score_text.setString(player_label + ": " + std::to_string(player.score));
-        score_text.setCharacterSize(24);
-
-        if (player_num == my_player_number) {
-            score_text.setFillColor(sf::Color::White);
-            score_text.setStyle(sf::Text::Bold);
-        } else {
-            score_text.setFillColor(sf::Color::Yellow);
-        }
-
-        score_text.setPosition(10, y_offset);
-        window.draw(score_text);
-        y_offset += 30;
-    }
-}
-
-void Renderer::renderGameOver(GameState *state)
-{
-    renderGameOverBackground();
-    renderGameOverTitle();
-    renderWinnerText(state);
-    renderFinalScores(state);
-    renderExitInstructions();
-}
-
-void Renderer::renderGameOverBackground()
-{
-    sf::RectangleShape overlay(sf::Vector2f(SCREEN_WIDTH, SCREEN_HEIGHT));
-    overlay.setFillColor(sf::Color(0, 0, 0, 180));
-    window.draw(overlay);
-}
-
-void Renderer::renderGameOverTitle()
-{
-    sf::Text game_over_text;
-
-    setupText(game_over_text, "THIS IS THE END", 50, sf::Color::White);
-    centerText(game_over_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50);
-
-    window.draw(game_over_text);
-}
-
-void Renderer::renderWinnerText(GameState *state)
-{
-    int winner = state->getWinner();
-    sf::Text winner_text;
-
-    if (winner == client->getPlayerNumber()) {
-        setupText(winner_text, "You Win!", 30, sf::Color::Green);
-    } else if (winner >= 0) {
-        setupText(winner_text, "Player " + std::to_string(winner) + " Wins!", 30, sf::Color::Red);
-    } else {
-        setupText(winner_text, "No Winner", 30, sf::Color::Yellow);
-    }
-
-    centerText(winner_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 20);
-    window.draw(winner_text);
-}
-
-void Renderer::renderFinalScores(GameState *state)
-{
-    int player_num;
-    sf::Text scores_text;
-    scores_text.setFont(font);
-
-    std::string score_string = "Final Scores:";
-    auto players = state->getPlayers();
-
-    for (const auto& player_pair : players) {
-        player_num = player_pair.first;
-        const PlayerState &player = player_pair.second;
-
-        std::string player_label = (player_num == client->getPlayerNumber()) ? "You" : "Player " + std::to_string(player_num);
-        score_string += "\n" + player_label + ": " + std::to_string(player.score);
-    }
-
-    setupText(scores_text, score_string, 20, sf::Color::White);
-    centerText(scores_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 80);
-    window.draw(scores_text);
-}
-
-void Renderer::renderExitInstructions()
-{
-    sf::Text exit_text;
-
-    setupText(exit_text, "Press ESC to get the fuck out of here, you fucking loser", 75, sf::Color::Red);
-    centerText(exit_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 150);
-
-    window.draw(exit_text);
-}
-
-//=============================================================================
-// AUDIO
-//=============================================================================
-
-void Renderer::loadAudio()
-{
-    if (!waiting_music.openFromFile("assets/music/waiting_screen.wav")) {
-        DEBUG_LOG("Failed to load waiting music");
-    } else {
-        waiting_music.setLoop(false);
-        waiting_music.setVolume(50);
-    }
-
-    if (!background_music.openFromFile("assets/music/ingame.wav")) {
-        DEBUG_LOG("Failed to load background music");
-    } else {
-        background_music.setLoop(true);
-        background_music.setVolume(40);
+    int distance = static_cast<int>(mine->second.x);
+    new_record = distance > best_distance;
+    if (new_record) {
+        best_distance = distance;
+        saveBestDistance(distance);
     }
 }
 
@@ -480,33 +215,115 @@ void Renderer::loadAudio()
 // Helper Functions
 //=============================================================================
 
-void Renderer::setCountdown(int value)
+bool Renderer::blink() const
 {
-    show_countdown = (value > 0);
-    countdown_value = value;
-    countdown_time = std::chrono::steady_clock::now();
+    return static_cast<int>(animation_clock.getElapsedTime().asSeconds() * 2) % 2 == 0;
 }
 
-int Renderer::getCurrentAnimationFrame(bool jet_active) const
+sf::Text Renderer::makeText(const std::string &content, unsigned int size, sf::Color color,
+                            sf::Vector2f pos, sf::Vector2f anchor)
 {
-    float elapsed = animation_clock.getElapsedTime().asSeconds();
-    float frame_duration = jet_active ? 0.08f : 0.15f;
-    int num_frames = 4;
+    bool needs_fallback = content.find_first_of(missing_glyphs) != std::string::npos;
+    sf::Text text(needs_fallback ? fallback_font : font, content, size);
+    sf::FloatRect bounds = text.getLocalBounds();
 
-    return static_cast<int>((elapsed / frame_duration)) % num_frames;
-}
-
-void Renderer::setupText(sf::Text &text, const std::string &content, unsigned int size, const sf::Color &color)
-{
-    text.setFont(font);
-    text.setString(content);
-    text.setCharacterSize(size);
     text.setFillColor(color);
+    text.setOutlineColor(sf::Color(0, 0, 0, color.a));
+    text.setOutlineThickness(size / 16.f);
+    text.setOrigin(bounds.position + bounds.size.componentWiseMul(anchor));
+    text.setPosition(pos);
+    return text;
 }
 
-void Renderer::centerText(sf::Text& text, float x, float y)
+// Chromatic split, with the odd jolt
+void Renderer::drawGlitchText(const std::string &content, unsigned int size, sf::Color color, sf::Vector2f pos)
 {
-    sf::FloatRect textRect = text.getLocalBounds();
-    text.setOrigin(textRect.left + textRect.width/2.0f, textRect.top + textRect.height/2.0f);
-    text.setPosition(x, y);
+    float offset = size / 30.f * (std::rand() % 25 == 0 ? 4 : 1);
+    sf::Text text = makeText(content, size, color, pos);
+
+    text.setOutlineThickness(0);
+    text.setFillColor(withAlpha(NEON_CYAN, 170));
+    text.setPosition(pos + sf::Vector2f(-offset, 0));
+    window.draw(text);
+
+    text.setFillColor(withAlpha(NEON_RED, 170));
+    text.setPosition(pos + sf::Vector2f(offset, 0));
+    window.draw(text);
+
+    window.draw(makeText(content, size, color, pos));
+}
+
+sf::Color Renderer::withAlpha(sf::Color color, uint8_t alpha)
+{
+    color.a = alpha;
+    return color;
+}
+
+// The fixed 1920x1080 space everything is drawn in
+sf::View Renderer::screenView() const
+{
+    return sf::View(sf::FloatRect({0, 0}, {SCREEN_WIDTH, SCREEN_HEIGHT}));
+}
+
+void Renderer::drawOverlay(uint8_t alpha)
+{
+    sf::RectangleShape overlay({SCREEN_WIDTH, SCREEN_HEIGHT});
+
+    overlay.setFillColor(sf::Color(0, 0, 0, alpha));
+    window.draw(overlay);
+}
+
+// Dark panel used by the selection screens, outlined in yellow when selected
+void Renderer::drawCard(sf::FloatRect box, bool selected)
+{
+    sf::RectangleShape card(box.size);
+
+    card.setPosition(box.position);
+    card.setFillColor(sf::Color(10, 8, 20, 235));
+    card.setOutlineColor(selected ? NEON_YELLOW : withAlpha(NEON_CYAN, 90));
+    card.setOutlineThickness(selected ? 5 : 2);
+    window.draw(card);
+}
+
+// Additive glow disc
+void Renderer::drawHalo(sf::Vector2f center, float radius, sf::Color color)
+{
+    sf::CircleShape halo(radius);
+
+    halo.setOrigin({radius, radius});
+    halo.setPosition(center);
+    halo.setFillColor(color);
+    window.draw(halo, sf::BlendAdd);
+}
+
+// A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)
+void Renderer::drawImage(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color)
+{
+    sf::Vector2f size(texture.getSize());
+
+    if (size.y == 0)
+        return;
+
+    sf::Sprite sprite(texture);
+    float scale = height / size.y;
+
+    sprite.setOrigin(size.componentWiseMul(anchor));
+    sprite.setScale({scale, scale});
+    sprite.setPosition(pos);
+    sprite.setColor(color);
+    window.draw(sprite);
+}
+
+std::string Renderer::playerLabel(int player_num, int me) const
+{
+    return player_num == me ? "YOU" : "CHOOM";
+}
+
+// Unknown or missing ids fall back to the first character
+const Character &Renderer::characterOf(int player_num) const
+{
+    auto it = roster.find(player_num);
+    int id = it != roster.end() ? it->second : player_num;
+
+    return characters[std::clamp(id, 0, static_cast<int>(characters.size()) - 1)];
 }
