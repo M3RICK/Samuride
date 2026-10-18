@@ -70,6 +70,7 @@ private:
     Map game_map;
     std::mt19937 rng;
     int chunks_generated;
+    int last_orb_chunk;     // chunk of the last Attack Titan orb
     float run_speed;
 
     Phase phase;

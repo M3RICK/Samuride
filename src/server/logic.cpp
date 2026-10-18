@@ -18,6 +18,7 @@ bool Server::resetMap()
 {
     game_map.clear();
     chunks_generated = 0;
+    last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;
     destroyed_drones.clear();
     projectiles.clear();
     resetTitans();
