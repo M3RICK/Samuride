@@ -32,6 +32,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.
+- **Eddies are money**: every run's eddies go to your wallet. Johnny is free, then buy David (100), Jinx (250) and Mikasa (500), in that order.
 - After a game, hit `Space` for an instant rematch.
 
 | Key | Action |

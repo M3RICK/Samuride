@@ -10,6 +10,7 @@
 struct MenuState;
 struct Sprites;
 struct Character;
+struct Wallet;
 
 class MenuScreens {
 private:
@@ -27,8 +28,9 @@ private:
     void drawJoinField(const MenuState &menu);
 
     void drawCharacterSelect(const MenuState &menu);
-    void drawCharacterCard(int index, bool selected, float time);
-    void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time);
+    void drawCharacterCard(int index, bool selected, const Wallet &wallet, float time);
+    void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint, float time);
+    void drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet);
 
     void drawOptions(const MenuState &menu);
     void drawOptionRow(int index, const MenuState &menu);

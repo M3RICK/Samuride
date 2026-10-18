@@ -121,6 +121,7 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
     else
         drawVersusResults(players, state.getWinner(), me);
 
+    canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 160));
     if (phase_clock.getElapsedTime().asSeconds() >= PROMPT_DELAY)
         drawRematchPrompt(state, solo);
 }

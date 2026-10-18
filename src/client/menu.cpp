@@ -20,6 +20,7 @@ MenuChoice Menu::run(Renderer &renderer)
     audio->greet();
     state.screen = MenuState::Screen::Main;
     state.best_distance = loadBestDistance();
+    state.wallet = Wallet::load();
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
@@ -249,12 +250,18 @@ bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
     auto box = [count](int index) { return MenuLayout::cardBox(index, count); };
 
     if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.error.clear();
         state.screen = MenuState::Screen::Main;
         return false;
     }
     if (!navigate(event, state.character, count, count, box))
         return false;
+    if (!state.wallet.isUnlocked(state.character)) {
+        buyCharacter();
+        return false;
+    }
 
+    state.error.clear();
     pending.character = state.character;
 
     // Whoever joins plays in the host's district
@@ -265,6 +272,22 @@ bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
     }
     state.screen = MenuState::Screen::Mode;
     return false;
+}
+
+// Confirming a locked character buys it, if it's the next one and the eddies are there
+void Menu::buyCharacter()
+{
+    Wallet &wallet = state.wallet;
+
+    if (wallet.buy(state.character)) {
+        wallet.save();
+        state.error.clear();
+        audio->play(Audio::Sfx::Coin);
+    } else if (state.character > wallet.unlocked) {
+        state.error = "UNLOCK THE RUNNERS IN ORDER";
+    } else {
+        state.error = "NOT ENOUGH EDDIES";
+    }
 }
 
 void Menu::handleModeEvent(const sf::Event &event)

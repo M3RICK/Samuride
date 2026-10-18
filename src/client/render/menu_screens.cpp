@@ -3,6 +3,7 @@
 #include "menu_screens.hpp"
 #include "sprites.hpp"
 #include "../menu.hpp"
+#include "../wallet.hpp"
 #include "../../common/cyberpsycho.hpp"
 #include <algorithm>
 #include <cmath>
@@ -98,7 +99,8 @@ void MenuScreens::drawMain(const MenuState &menu)
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter());
     if (menu.best_distance > 0)
-        canvas.text(std::format("BEST RUN  {} M", menu.best_distance), 32, NEON_YELLOW, {x, 960});
+        canvas.text(std::format("BEST RUN  {} M     {} EDDIES", menu.best_distance, menu.wallet.eddies),
+                    32, NEON_YELLOW, {x, 960});
 
     canvas.text("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", 22, HINT_GREY, {x, 1030});
 }
@@ -169,34 +171,57 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
     float time = canvas.time();
 
     canvas.glitchText("CHOOSE YOUR RUNNER", 80, NEON_YELLOW, {Screen::WIDTH / 2, 150});
+    canvas.text(std::format("{} EDDIES", menu.wallet.eddies), 36, NEON_PINK, {Screen::WIDTH / 2, 235});
 
     for (int i = 0; i < static_cast<int>(sprites.characters.size()); i++)
-        drawCharacterCard(i, i == menu.character, time);
+        drawCharacterCard(i, i == menu.character, menu.wallet, time);
+
+    if (!menu.error.empty())
+        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 975});
 
     canvas.text("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
-// Portrait, name, and the runner itself: running, then flying when selected
-void MenuScreens::drawCharacterCard(int index, bool selected, float time)
+// Portrait, name, and the runner itself: running, then flying when selected.
+// A locked runner is a dark silhouette with its price.
+void MenuScreens::drawCharacterCard(int index, bool selected, const Wallet &wallet, float time)
 {
     const Character &character = sprites.characters[index];
     sf::FloatRect box = MenuLayout::cardBox(index, sprites.characters.size());
     float center_x = box.getCenter().x;
     float top = box.position.y;
+    bool locked = !wallet.isUnlocked(index);
+    sf::Color tint = locked ? sf::Color(25, 20, 40) : selected ? sf::Color::White : FADED;
 
     canvas.card(box, selected);
-    canvas.image(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, selected ? sf::Color::White : FADED);
+    canvas.image(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, tint);
 
     if (selected)
         canvas.glitchText(character.name, 46, NEON_YELLOW, {center_x, top + 215});
     else
         canvas.text(character.name, 40, DIM_WHITE, {center_x, top + 215});
 
-    drawCharacterPreview(character, box, selected, time);
+    drawCharacterPreview(character, box, selected && !locked, tint, time);
+    if (locked)
+        drawPriceTag(index, box, wallet);
+}
+
+// "LOCKED" and the price, lit up when it's the next one and you can afford it
+void MenuScreens::drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet)
+{
+    int price = CHARACTER_PRICES[index];
+    bool affordable = index == wallet.unlocked && wallet.eddies >= price;
+    sf::Vector2f center = box.getCenter() + sf::Vector2f(0, 90);
+
+    canvas.text("LOCKED", 34, DIM_WHITE, center);
+    canvas.text(std::format("{} EDDIES", price), 30, affordable ? NEON_YELLOW : HINT_GREY, center + sf::Vector2f(0, 45));
+    if (affordable)
+        canvas.text("[ENTER] BUY", 24, NEON_CYAN, center + sf::Vector2f(0, 85));
 }
 
 // Standing at the bottom of the card; the selected one runs, then flies
-void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time)
+void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint,
+                                       float time)
 {
     if (character.sheet.getSize().x == 0)
         return;
@@ -211,7 +236,7 @@ void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
-    sprite.setColor(selected ? sf::Color::White : FADED);
+    sprite.setColor(tint);
     canvas.draw(sprite);
 }
 

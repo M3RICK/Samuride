@@ -5,6 +5,7 @@
 #include "sprites.hpp"
 #include "../audio.hpp"
 #include "../settings.hpp"
+#include "../wallet.hpp"
 #include <algorithm>
 #include <format>
 
@@ -49,6 +50,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
         recordSoloDistance(state);
+        bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
 }
@@ -84,6 +86,18 @@ void GameScreen::recordSoloDistance(GameState &state)
         best_distance = distance;
         saveBestDistance(distance);
     }
+}
+
+// The run's eddies go to the wallet, to buy runners with
+void GameScreen::bankEddies(GameState &state)
+{
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
+
+    if (mine == players.end())
+        return;
+    Wallet::earn(mine->second.score);
+    wallet = Wallet::load().eddies;
 }
 
 //=============================================================================

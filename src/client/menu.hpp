@@ -7,6 +7,7 @@
 #include <functional>
 #include <string>
 #include "settings.hpp"
+#include "wallet.hpp"
 
 class Renderer;
 class Audio;
@@ -36,6 +37,7 @@ struct MenuState {
     std::string address = "127.0.0.1:4242";
     std::string error;
     int best_distance = 0;
+    Wallet wallet;
 };
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)
@@ -116,6 +118,7 @@ private:
     void leaveOptions();
     void handleJoinEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
+    void buyCharacter();
     void handleModeEvent(const sf::Event &event);
     bool handleDistrictEvent(const sf::Event &event, MenuChoice &choice);
 

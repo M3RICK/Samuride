@@ -4,6 +4,7 @@
 #include "protocol.hpp"
 #include "../server/generator.hpp"
 #include "../server/player.hpp"
+#include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
 #include <cassert>
 #include <iostream>
@@ -123,6 +124,18 @@ static void testPowerUps()
     assert(drops[0] > 300 && drops[1] > 300);
 }
 
+// Runners are bought in order, with enough eddies
+static void testWallet()
+{
+    Wallet wallet;
+    wallet.eddies = 120;
+    assert(!wallet.buy(2) && !wallet.buy(0));
+    assert(wallet.buy(1) && wallet.eddies == 20 && wallet.isUnlocked(1));
+    assert(!wallet.buy(2) && !wallet.isUnlocked(2));
+    wallet.eddies = 1000;
+    assert(wallet.buy(2) && wallet.buy(3) && !wallet.buy(4));
+}
+
 int main()
 {
     testPacketFraming();
@@ -130,6 +143,7 @@ int main()
     testMapChunks();
     testGenerator();
     testPowerUps();
+    testWallet();
     std::cout << "All tests passed" << std::endl;
     return 0;
 }
