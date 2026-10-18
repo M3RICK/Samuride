@@ -84,7 +84,7 @@ Plain text, one character per tile, all lines the same length:
 
 ## Crew
 
-Tony, Thierry, Aymeric — Epitech, B-NWP jetpack project.
+Aymeric — started as an Epitech project (B-NWP jetpack).
 
 Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
 
