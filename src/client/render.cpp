@@ -85,13 +85,13 @@ void Renderer::loadBackdrops()
 
     auto onWalkway = [&](const std::string &name, const std::string &tagline,
                          std::vector<Backdrop::Segment> far, float parallax) {
-        // Dimmed a little: the neons would swallow the coins and zappers
-        return Backdrop{name, tagline, walkway, 0.05f, 0.825f, sf::Color(200, 200, 215),
+        // Dimmed: the neons would swallow the coins, zappers and drones
+        return Backdrop{name, tagline, walkway, 0.05f, 0.825f, sf::Color(165, 160, 185),
                         {{0, 0.8f, parallax, far}, {0.8f, 1, 1, {}}}};
     };
 
     backdrops = {
-        {"THE CORRIDOR", "Arasaka sublevel 3", corridor, 0.20f, 0.79f, sf::Color::White, {{0, 1, 0.4f, {}}}},
+        {"THE CORRIDOR", "Arasaka sublevel 3", corridor, 0.20f, 0.79f, sf::Color(215, 215, 215), {{0, 1, 0.4f, {}}}},
         // The three panoramas back to back, a bit faster so a run goes through them
         onWalkway("WORLDS COLLIDE", "Night City, the Walls & Zaun", {night_city, walls, zaun}, 0.25f),
         onWalkway("NIGHT CITY", "Neon towers at sunset", {night_city}, 0.2f),
@@ -312,6 +312,19 @@ void Renderer::drawHalo(sf::Vector2f center, float radius, sf::Color color)
     halo.setPosition(center);
     halo.setFillColor(color);
     window.draw(halo, sf::BlendAdd);
+}
+
+// Dark disc with a neon ring: keeps a pickup or an enemy readable on any background
+void Renderer::drawBacking(sf::Vector2f center, float radius, sf::Color ring)
+{
+    sf::CircleShape disc(radius);
+
+    disc.setOrigin({radius, radius});
+    disc.setPosition(center);
+    disc.setFillColor(sf::Color(8, 6, 16, 170));
+    disc.setOutlineColor(ring);
+    disc.setOutlineThickness(3);
+    window.draw(disc);
 }
 
 // A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)

@@ -84,9 +84,11 @@ void Renderer::renderShots(const std::set<std::pair<int, int>> &destroyed)
 void Renderer::renderDrone(int x, int y, float time)
 {
     sf::Vector2f center = toScreen({x + 0.5f, y + 0.5f + std::sin(time * 3 + x) * 0.08f});
+    float pulse = 0.5f + 0.5f * std::sin(time * 8 + x);
 
-    drawHalo(center, tile_size * 0.45f, withAlpha(NEON_RED, 50));
-    drawDroneSprite(center, tile_size * 1.1f, static_cast<int>(time * 12 + x) % DRONE_FRAMES);
+    drawHalo(center, tile_size * (0.6f + 0.1f * pulse), withAlpha(NEON_RED, 70));
+    drawBacking(center, tile_size * 0.55f, withAlpha(NEON_RED, 150 + 100 * pulse));
+    drawDroneSprite(center, tile_size * 1.3f, static_cast<int>(time * 12 + x) % DRONE_FRAMES);
 }
 
 // The drone sheet is DRONE_FRAMES frames side by side, scaled up without smoothing

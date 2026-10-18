@@ -228,6 +228,7 @@ private:
     void drawOverlay(uint8_t alpha);
     void drawCard(sf::FloatRect box, bool selected);
     void drawHalo(sf::Vector2f center, float radius, sf::Color color);
+    void drawBacking(sf::Vector2f center, float radius, sf::Color ring);
     void drawImage(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
     std::string playerLabel(int player_num, int me) const;
     const Character &characterOf(int player_num) const;

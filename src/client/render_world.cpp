@@ -233,12 +233,25 @@ void Renderer::renderMapTiles(const std::set<std::pair<int, int>> &collected, co
 }
 
 // Bobbing coin with a soft pink halo
+// Bobbing, spinning coin on a dark disc ringed in yellow: the pink coin alone vanishes on neon skylines
 void Renderer::renderCoin(int x, int y, float time)
 {
-    sf::Vector2f world(x, y + std::sin(time * 4 + x) * 0.06f);
+    sf::Vector2f size(coin_texture.getSize());
+    sf::Vector2f center = toScreen({x + 0.5f, y + 0.5f + std::sin(time * 4 + x) * 0.06f});
 
-    drawHalo(toScreen(world + sf::Vector2f(0.5f, 0.5f)), tile_size * 0.32f, withAlpha(NEON_PINK, 40));
-    drawTileSprite(coin_texture, world, 0.55f, sf::Color::White);
+    drawHalo(center, tile_size * 0.45f, withAlpha(NEON_YELLOW, 45));
+    drawBacking(center, tile_size * 0.36f, withAlpha(NEON_YELLOW, 220));
+
+    if (size.y == 0)
+        return;
+
+    float scale = tile_size * 0.6f / size.y;
+    float spin = std::max(0.25f, std::abs(std::cos(time * 3 + x * 0.7f)));
+    sf::Sprite coin(coin_texture);
+    coin.setOrigin(size / 2.f);
+    coin.setScale({scale * spin, scale});
+    coin.setPosition(center);
+    window.draw(coin);
 }
 
 // Jetpack Joyride zapper: neighbouring nodes are linked by a live beam
@@ -424,7 +437,7 @@ void Renderer::renderPlayerSprite(int player_num, const PlayerState &player, boo
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
     else if (!is_me)
-        sprite.setColor(sf::Color(255, 255, 255, 140));
+        sprite.setColor(sf::Color(255, 255, 255, 215));
     window.draw(sprite);
 
     if (shocked && std::rand() % 2)
