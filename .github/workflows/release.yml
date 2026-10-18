@@ -10,8 +10,26 @@ permissions:
   contents: write
 
 jobs:
+  notes:
+    # The release description is the version's section of CHANGELOG.md: no patch notes, no release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract the patch notes
+        run: tools/release_notes.sh "${{ github.ref_name }}" > notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: notes.md
+
   linux:
     # Built on Ubuntu 24.04: runs on any distro with glibc 2.39 or newer
+    # The builds wait for the notes, and still run without them when started by hand
+    needs: notes
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +57,8 @@ jobs:
 
   windows:
     # Cross-compiled with MinGW, the same way tools/package_windows.sh is tested locally under Wine
+    needs: notes
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +84,8 @@ jobs:
 
   macos:
     # Apple Silicon runner; the package runs on macOS 13.3 or newer
+    needs: notes
+    if: ${{ !failure() && !cancelled() }}
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4

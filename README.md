@@ -50,7 +50,7 @@ Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/
 
 ## Download
 
-Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install.
+Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install. What changed in each version: [patch notes](CHANGELOG.md).
 
 **Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `Samuride.exe`.
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
@@ -87,6 +87,8 @@ SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/
 `tools/package_release.sh` builds the same self-contained archive as the Releases page, and
 `tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath),
 and `tools/package_macos.sh` builds the macOS one on a Mac.
+To publish a version, add its `## vX.Y` section to [CHANGELOG.md](CHANGELOG.md), then push the `vX.Y` tag:
+the release workflow builds the three archives and uses that section as the release description.
 
 ## Play
 
