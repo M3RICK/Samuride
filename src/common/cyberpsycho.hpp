@@ -20,10 +20,12 @@ constexpr float PROJECTILE_RANGE = 22;
 
 enum class Weapon : uint8_t { Gun, Rockets, Blade, Hack };
 
-// Lucy's hack: the first zapper or drone within HACK_RANGE tiles ahead goes quiet, for one charge of RAM.
+// Lucy's hack: the first zapper or drone in her way goes quiet, for one charge of RAM. Her way is
+// HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
 // A hacked zapper is off for HACK_TIME, a hacked drone goes down like a shot one.
 constexpr char ZAPPER_HACK = 'h';   // collision type: a zapper was hacked, at one of its nodes
 constexpr float HACK_RANGE = 7;
+constexpr int HACK_LANE = 1;
 constexpr float HACK_TIME = 1.2f;
 constexpr int RAM_MAX = 2;
 constexpr float RAM_RECHARGE = 6.0f;    // seconds to get one charge back

@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
+#include <cmath>
 
 // CYBERPSYCHO: attacks, projectiles and drones
 
@@ -52,29 +53,38 @@ void Server::strike(int client_fd, const Player &player, float reach)
     }
 }
 
-// The first live drone or zapper ahead, column by column: a drone goes down, a zapper's beams go off
+// The live drone or zapper in her way: the nearest column first, then the closest to her middle.
+// A drone goes down, a zapper's beams go off.
 bool Server::hack(int client_fd, Player &player)
 {
     int front = static_cast<int>(player.getX() + 0.5f);
+    int top = std::max(0, static_cast<int>(player.getY()) - HACK_LANE);
+    int bottom = std::min(static_cast<int>(game_map.getHeight()) - 1,
+                          static_cast<int>(player.getY() + Player::HEIGHT) + HACK_LANE);
+    float middle = player.getY() + Player::HEIGHT / 2;
 
     if (player.getRam() == 0)
         return false;
 
     for (int x = front; x <= front + HACK_RANGE; x++) {
-        for (int y = 0; y < static_cast<int>(game_map.getHeight()); y++) {
-            if (isLiveDrone(x, y)) {
-                player.spendRam();
-                destroyDrone(client_fd, x, y);
-                return true;
-            }
-            if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
-                player.spendRam();
-                for (std::pair<int, int> node : zapperNodes(game_map, x, y))
-                    hacked_zappers[node] = HACK_TIME;
-                notifyCollision(ZAPPER_HACK, player, x, y);
-                return true;
-            }
+        int target = -1;
+        for (int y = top; y <= bottom; y++) {
+            bool live = isLiveDrone(x, y) || (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y}));
+            if (live && (target < 0 || std::abs(y + 0.5f - middle) < std::abs(target + 0.5f - middle)))
+                target = y;
         }
+        if (target < 0)
+            continue;
+
+        player.spendRam();
+        if (isLiveDrone(x, target)) {
+            destroyDrone(client_fd, x, target);
+            return true;
+        }
+        for (std::pair<int, int> node : zapperNodes(game_map, x, target))
+            hacked_zappers[node] = HACK_TIME;
+        notifyCollision(ZAPPER_HACK, player, x, target);
+        return true;
     }
     return false;
 }
