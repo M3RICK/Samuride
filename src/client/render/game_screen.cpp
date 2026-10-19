@@ -257,6 +257,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         shots.land(effect.player);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == ZAPPER_HACK) {
+        // The whole zapper goes off: sparks on its nodes, nothing drawn over the screen (the shot plays the sound)
+        for (std::pair<int, int> node : zapperNodes(run.map, effect.x, effect.y)) {
+            run.hacked_zappers[node].restart();
+            particles.emit({node.first + 0.5f, node.second + 0.5f}, 10, NEON_PURPLE, 4, 0.4f, 0);
+        }
+        return;
     } else if (isPowerUp(effect.type)) {
         bool shield = effect.type == SHIELD_TILE;
         if (effect.player == me)

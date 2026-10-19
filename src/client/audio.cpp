@@ -169,6 +169,9 @@ void Audio::synthesize()
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // Lucy's hack: a glitchy data chirp
+    buffers[Sfx::Hack] = toBuffer(concat(tone(Wave::Square, 2400, 800, 0.06f, 0.12f),
+                                         tone(Wave::Square, 600, 1800, 0.1f, 0.12f)));
     // Attack Titan: a growl rising out of the smoke, then the steam burst when it ends
     buffers[Sfx::Roar] = toBuffer(mix(tone(Wave::Saw, 80, 140, 1.2f, 0.3f), burst(1.2f, 0.2f, 0.08f)));
     buffers[Sfx::Steam] = toBuffer(burst(0.7f, 0.4f, 0.5f));

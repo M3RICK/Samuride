@@ -6,7 +6,7 @@
 #include <vector>
 
 // Price of each CHARACTER_DIRS entry: Johnny is free, the others are bought in order
-inline const std::vector<int> CHARACTER_PRICES = {0, 100, 250, 500};
+inline const std::vector<int> CHARACTER_PRICES = {0, 100, 250, 500, 750};
 
 struct Wallet {
     int eddies = 0;

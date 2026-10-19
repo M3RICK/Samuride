@@ -3,6 +3,14 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.4
+
+### New
+- **Lucy**, the netrunner, rides in on her drone (750 eddies, after Mikasa). In CYBERPSYCHO she
+  doesn't shoot, she hacks: the first zapper ahead goes off for 1.2 seconds, or the first drone
+  ahead goes down. Each hack takes one of her 2 charges of RAM, and a charge comes back every
+  6 seconds: her RAM shows next to her eddies.
+
 ## v2.3
 
 ### New

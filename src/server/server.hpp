@@ -80,6 +80,7 @@ private:
 
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
+    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
@@ -175,6 +176,8 @@ private:
     void handleAttack(int client_fd);
 
     void strike(int client_fd, const Player &player, float reach);
+
+    bool hack(int client_fd, Player &player);
 
     void updateProjectiles();
 

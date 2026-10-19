@@ -15,7 +15,8 @@ void Server::handleAttack(int client_fd)
     Weapon weapon = weaponOf(player.getCharacter());
     WeaponStats stats = statsOf(weapon);
 
-    if (!player.canAttack())
+    // Lucy only hacks when there is something to hack and RAM to do it
+    if (!player.canAttack() || (weapon == Weapon::Hack && !hack(client_fd, player)))
         return;
     player.startCooldown(stats.cooldown);
 
@@ -27,6 +28,8 @@ void Server::handleAttack(int client_fd)
         slashTitans(client_fd, player, stats.reach);
         return;
     }
+    if (weapon == Weapon::Hack)
+        return;
 
     // Fired from the hip, flying ahead of the shooter
     float x = player.getX() + 0.9f;
@@ -47,6 +50,33 @@ void Server::strike(int client_fd, const Player &player, float reach)
                 destroyDrone(client_fd, x, y);
         }
     }
+}
+
+// The first live drone or zapper ahead, column by column: a drone goes down, a zapper's beams go off
+bool Server::hack(int client_fd, Player &player)
+{
+    int front = static_cast<int>(player.getX() + 0.5f);
+
+    if (player.getRam() == 0)
+        return false;
+
+    for (int x = front; x <= front + HACK_RANGE; x++) {
+        for (int y = 0; y < static_cast<int>(game_map.getHeight()); y++) {
+            if (isLiveDrone(x, y)) {
+                player.spendRam();
+                destroyDrone(client_fd, x, y);
+                return true;
+            }
+            if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
+                player.spendRam();
+                for (std::pair<int, int> node : zapperNodes(game_map, x, y))
+                    hacked_zappers[node] = HACK_TIME;
+                notifyCollision(ZAPPER_HACK, player, x, y);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void Server::updateProjectiles()

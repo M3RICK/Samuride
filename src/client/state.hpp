@@ -24,6 +24,7 @@ struct PlayerState {
     Form form = Form::Normal;
     bool shielded = false;
     bool sprinting = false;     // Sandevistan
+    int ram = 0;                // Lucy's hack charges
 };
 
 // Someone attacked in CYBERPSYCHO

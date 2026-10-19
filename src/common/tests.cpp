@@ -124,6 +124,30 @@ static void testPowerUps()
     assert(drops[0] > 300 && drops[1] > 300);
 }
 
+// Lucy's hack turns off a whole zapper and nothing else, and her RAM comes back one charge at a time
+static void testHack()
+{
+    Map map;
+    map.appendChunk({"e___", "_e_e", "__e_", "____"});
+    std::vector<std::pair<int, int>> nodes = zapperNodes(map, 0, 0);
+    assert(nodes.size() == 4);
+    assert(zapperNodes(map, 3, 1).size() == 4);
+
+    Player lucy(-1);
+    lucy.reset(0, 0);
+    lucy.spendRam();
+    lucy.spendRam();
+    assert(lucy.getRam() == 0);
+    lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
+    assert(lucy.getRam() == 0);
+    lucy.update(0.2f, 10, 8);
+    assert(lucy.getRam() == 1);
+    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    assert(lucy.getRam() == RAM_MAX);
+    assert(weaponOf(4) == Weapon::Hack);
+}
+
 // Runners are bought in order, with enough eddies
 static void testWallet()
 {
@@ -143,6 +167,7 @@ int main()
     testMapChunks();
     testGenerator();
     testPowerUps();
+    testHack();
     testWallet();
     std::cout << "All tests passed" << std::endl;
     return 0;

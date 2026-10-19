@@ -30,7 +30,7 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
     }
 
     for (const auto &[player_num, player] : players) {
-        drawHUDLine(player_num, player, me, y);
+        drawHUDLine(player_num, player, me, y, cyberpsycho);
         y += 44;
     }
 
@@ -38,8 +38,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
 }
 
-// Portrait, then "YOU   12 EDDIES", and a hexagon while shielded
-void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, float y)
+// Portrait, then "YOU   12 EDDIES", a hexagon while shielded, and Lucy's RAM in CYBERPSYCHO
+void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, float y, bool cyberpsycho)
 {
     std::string line = playerLabel(player_num, me) + "   " + std::to_string(player.score) + " EDDIES";
     sf::Text text = canvas.makeText(line, 28, player_num == me ? NEON_YELLOW : NEON_CYAN, {70, y}, {0, 0});
@@ -50,6 +50,20 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
     if (player.shielded) {
         sf::FloatRect bounds = text.getGlobalBounds();
         canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, NEON_CYAN, 0);
+    }
+
+    if (!cyberpsycho || weaponOf(run.characterOf(player_num)) != Weapon::Hack)
+        return;
+
+    sf::FloatRect bounds = text.getGlobalBounds();
+    float x = bounds.position.x + bounds.size.x + (player.shielded ? 52 : 20);
+    for (int i = 0; i < RAM_MAX; i++) {
+        sf::RectangleShape chip({14, 14});
+        chip.setPosition({x + i * 22, bounds.getCenter().y - 7});
+        chip.setFillColor(i < player.ram ? NEON_PURPLE : sf::Color::Transparent);
+        chip.setOutlineColor(NEON_PURPLE);
+        chip.setOutlineThickness(2);
+        canvas.draw(chip);
     }
 }
 

@@ -1,0 +1,12 @@
+name LUCY
+sheet sheet.png
+portrait portrait.png
+frame 120 106
+feet 100
+body 84
+exhaust 190 70 255
+run 0 7 12 loop
+rise 1 6 12 loop
+hover 2 6 10 loop
+fall 3 6 12 loop
+attack 4 7 16 once

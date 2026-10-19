@@ -92,6 +92,15 @@ CHARACTERS = {
         "death":   animation((750, 795, 1536, 877), 10, mode="once"),
         "attack":  animation((795, 505, 1536, 615), 16, mode="once", effects_ahead=True, splits=[1168]),
     }),
+    # She rides a drone: no takeoff nor death of her own, the game electrocutes her
+    "lucy": ("sources/lucy.png", (15, 15, 180, 180), {
+        "run":    animation((640, 228, 1515, 340), 12, ground=True),
+        "rise":   animation((20, 372, 815, 527), 12, frames=[1, 2, 3, 4, 5, 6]),
+        "hover":  animation((20, 228, 620, 340), 10),
+        "fall":   animation((835, 385, 1515, 527), 12),
+        "attack": animation((20, 575, 758, 690), 16, mode="once"),
+    # Her white hair would pass for smoke; a jump frame's head reaches the "JUMP" label's height
+    }, {"effects": False, "erase": [(18, 358, 250, 382)]}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
@@ -141,7 +150,7 @@ def label_blobs(mask):
     return labels, count
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 
 
 def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):

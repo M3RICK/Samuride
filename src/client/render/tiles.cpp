@@ -30,7 +30,9 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
             if (tile == DRONE_TILE && destroyed.count({x, y}))
                 tile = droneDrop(x, y);
 
-            if (tile == 'e')
+            if (tile == 'e' && run.hackLeft(x, y) > 0)
+                drawHackedZapper(x, y, run.hackLeft(x, y));
+            else if (tile == 'e')
                 drawZapper(x, y, time);
             else if (tile == DRONE_TILE)
                 drawDrone(x, y, time);
@@ -95,6 +97,15 @@ void Tiles::drawZapper(int x, int y, float time)
 
     sf::Color flicker(255, 255, 255, std::rand() % 8 ? 255 : 140);
     drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, flicker);
+}
+
+// Lucy hacked it: a dead purple node, blinking just before the beams come back
+void Tiles::drawHackedZapper(int x, int y, float left)
+{
+    bool waking = left < 0.3f && std::rand() % 2;
+    sf::Color color = waking ? sf::Color::White : withAlpha(NEON_PURPLE, std::rand() % 8 ? 120 : 200);
+
+    drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, color);
 }
 
 void Tiles::drawBeam(sf::Vector2f from, sf::Vector2f to)
