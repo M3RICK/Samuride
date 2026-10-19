@@ -74,6 +74,7 @@ void Server::run()
             updateGameState();
             next_tick += tick;
         }
+        flushClients();
     }
 }
 
@@ -114,13 +115,6 @@ void Server::acceptNewClient()
     players.try_emplace(client_fd, client_fd);
 
     announce("Player connected (" + std::to_string(players.size()) + "/" + std::to_string(required_players) + ")");
-
-    sendMapToClient(client_fd);
-}
-
-void Server::sendMapToClient(int client_fd)
-{
-    sendToClient(client_fd, Protocol::createPacket(MSG_MAP_DATA, game_map.serialize()));
 }
 
 void Server::removeClient(int client_fd)
@@ -143,6 +137,17 @@ void Server::handlePlayerDisconnection()
 
     if (in_game)
         endGame(players.size() == 1 && !config.solo ? players.begin()->second.getPlayerNumber() : -1);
+    if (phase == Phase::Over)
+        reopenLobby();
+}
+
+// Someone left: no rematch can come, whoever stays waits for a new choom (the map goes out at the start)
+void Server::reopenLobby()
+{
+    resetMap();
+    ready_clients.clear();
+    phase = Phase::Waiting;
+    announce("Lobby open");
 }
 
 //=============================================================================
@@ -203,31 +208,66 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
 
 // Optional payload: the character the player picked, then the district and the mode.
 // District and mode are the first player's call: the host, who launched the server.
+// Only heard in the lobby: sent again during a run, it would rebuild the map under the players.
 void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
 {
     DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
 
+    if (phase != Phase::Waiting)
+        return;
     players.at(client_fd).setCharacter(payload.empty() ? 0 : payload[0]);
     if (players.size() != 1)
         return;
     if (payload.size() >= 2)
         district = payload[1];
 
-    // The map went out on accept: CYBERPSYCHO needs one with drones
-    GameMode wanted = payload.size() >= 3 ? static_cast<GameMode>(payload[2]) : GameMode::Classic;
+    // CYBERPSYCHO needs a map with drones
+    GameMode wanted = payload.size() >= 3 && payload[2] == 1 ? GameMode::Cyberpsycho : GameMode::Classic;
     if (wanted != mode) {
         mode = wanted;
         resetMap();
-        sendMapToClient(client_fd);
     }
 }
 
 //=============================================================================
 //=============================================================================
 
+// Queued, then sent as far as the socket takes it: a packet cut in half would scramble the stream
 void Server::sendToClient(int client_fd, const std::vector<uint8_t> &data)
 {
-    Socket::send(client_fd, data);
+    auto it = players.find(client_fd);
+
+    if (it == players.end())
+        return;
+
+    std::vector<uint8_t> &out = it->second.getSendBuffer();
+    out.insert(out.end(), data.begin(), data.end());
+    flush(it->second);
+}
+
+void Server::flush(Player &player)
+{
+    std::vector<uint8_t> &out = player.getSendBuffer();
+    int sent = out.empty() ? 0 : Socket::send(player.getClientFd(), out);
+
+    if (sent > 0)
+        out.erase(out.begin(), out.begin() + sent);
+}
+
+// Every tick: what the sockets couldn't take earlier goes out, and clients too far behind are dropped
+void Server::flushClients()
+{
+    std::vector<int> lagging;
+
+    for (auto &[client_fd, player] : players) {
+        flush(player);
+        if (player.getSendBuffer().size() > MAX_SEND_BACKLOG)
+            lagging.push_back(client_fd);
+    }
+    for (int client_fd : lagging) {
+        DEBUG_LOG("Client " + std::to_string(client_fd) + " can't keep up, dropping");
+        removeClient(client_fd);
+    }
 }
 
 void Server::broadcastToAllClients(const std::vector<uint8_t>& data)

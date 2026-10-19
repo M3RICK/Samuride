@@ -15,6 +15,8 @@ public:
     Audio();
 
     void playMusic(bool in_game);
+    // Johnny's greeting, played once each time the main menu opens
+    void greet();
     void play(Sfx sfx);
     // Thrust rumble, looping while the jetpack is on
     void setJetpack(bool on);

@@ -145,8 +145,9 @@ Audio::Audio()
 
 void Audio::loadMusic()
 {
-    if (menu_music.openFromFile("assets/music/waiting_screen.wav"))
-        menu_music.setLooping(true);
+    // Johnny's greeting: once per visit to the menu, see greet()
+    if (!menu_music.openFromFile("assets/music/waiting_screen.wav"))
+        DEBUG_LOG("Failed to load the menu music");
 
     if (game_music.openFromFile("assets/music/ingame.wav"))
         game_music.setLooping(true);
@@ -183,15 +184,22 @@ void Audio::synthesize()
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
 }
 
+// The in-game track loops during runs; out of them only the menu greeting plays
 void Audio::playMusic(bool in_game)
 {
-    sf::Music &wanted = in_game ? game_music : menu_music;
-    sf::Music &other = in_game ? menu_music : game_music;
-
-    if (wanted.getStatus() != sf::SoundSource::Status::Playing) {
-        other.stop();
-        wanted.play();
+    if (!in_game) {
+        game_music.stop();
+        return;
     }
+    menu_music.stop();
+    if (game_music.getStatus() != sf::SoundSource::Status::Playing)
+        game_music.play();
+}
+
+void Audio::greet()
+{
+    menu_music.stop();
+    menu_music.play();
 }
 
 void Audio::play(Sfx sfx)

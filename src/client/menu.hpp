@@ -7,6 +7,7 @@
 #include <functional>
 #include <string>
 #include "settings.hpp"
+#include "wallet.hpp"
 
 class Renderer;
 class Audio;
@@ -36,6 +37,7 @@ struct MenuState {
     std::string address = "127.0.0.1:4242";
     std::string error;
     int best_distance = 0;
+    Wallet wallet;
 };
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)
@@ -47,7 +49,7 @@ namespace MenuLayout {
     constexpr float SPACING = 85;
 
     // Options rows
-    enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_BACK, OPTION_COUNT };
+    enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_FULLSCREEN, OPTION_BACK, OPTION_COUNT };
     constexpr float WIDTH = 620;
     constexpr float HEIGHT = 80;
 
@@ -79,7 +81,15 @@ namespace MenuLayout {
 
     inline sf::FloatRect optionBox(int index)
     {
-        return centeredBox({960, 330 + index * 110.0f}, {1000, 90});
+        return centeredBox({960, 300 + index * 105.0f}, {1000, 90});
+    }
+
+    // Segment i (0-9) of the volume bar on an option row, lit up to the volume
+    inline sf::FloatRect volumeSegment(int row, int i)
+    {
+        sf::FloatRect box = optionBox(row);
+        float right = box.position.x + box.size.x - 40;
+        return {{right - 120 - (10 - i) * 28, box.getCenter().y - 15}, {22, 30}};
     }
 
     inline sf::FloatRect itemBox(int index)
@@ -106,16 +116,19 @@ private:
     sf::RenderWindow &window;
     MenuState state;
     MenuChoice pending;
-    Audio *audio = nullptr;     // the renderer's, set by run()
+    Renderer *renderer = nullptr;   // set by run()
+    Audio *audio = nullptr;         // the renderer's
 
     bool handleEvent(const sf::Event &event, MenuChoice &choice);
     bool handleMainEvent(const sf::Event &event, MenuChoice &choice);
     void handleOptionsEvent(const sf::Event &event);
     void changeVolume(int delta);
+    bool pointVolume(const sf::Event &event);
     void bindKey(sf::Keyboard::Key key);
     void leaveOptions();
     void handleJoinEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
+    void buyCharacter();
     void handleModeEvent(const sf::Event &event);
     bool handleDistrictEvent(const sf::Event &event, MenuChoice &choice);
 

@@ -43,7 +43,7 @@ SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
 CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/inputs.cpp src/client/state.cpp \
-              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp \
+              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp src/client/wallet.cpp \
               $(wildcard src/client/render/*.cpp)
 CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
@@ -55,8 +55,8 @@ CLIENT_OBJS = $(CLIENT_SRCS:.cpp=.o)
 ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) src/common/tests.o
 
 # Executables
-SERVER_BIN = jetpack_server$(EXE)
-CLIENT_BIN = jetpack_client$(EXE)
+SERVER_BIN = Samuride_server$(EXE)
+CLIENT_BIN = Samuride$(EXE)
 
 # Rules
 all: server client
@@ -74,7 +74,7 @@ $(CLIENT_BIN): $(CLIENT_OBJS) $(SERVER_CORE_OBJS) $(COMMON_OBJS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tests: src/common/tests.o src/server/generator.o src/server/player.o $(COMMON_OBJS)
+tests: src/common/tests.o src/server/generator.o src/server/player.o src/client/wallet.o $(COMMON_OBJS)
 	$(CC) $(CFLAGS) -o run_tests $^ $(LDFLAGS)
 	./run_tests
 

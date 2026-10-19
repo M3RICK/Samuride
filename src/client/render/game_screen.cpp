@@ -5,6 +5,7 @@
 #include "sprites.hpp"
 #include "../audio.hpp"
 #include "../settings.hpp"
+#include "../wallet.hpp"
 #include <algorithm>
 #include <format>
 
@@ -49,6 +50,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
         recordSoloDistance(state);
+        bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
 }
@@ -84,6 +86,18 @@ void GameScreen::recordSoloDistance(GameState &state)
         best_distance = distance;
         saveBestDistance(distance);
     }
+}
+
+// The run's eddies go to the wallet, to buy runners with
+void GameScreen::bankEddies(GameState &state)
+{
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
+
+    if (mine == players.end())
+        return;
+    Wallet::earn(mine->second.score);
+    wallet = Wallet::load().eddies;
 }
 
 //=============================================================================
@@ -140,7 +154,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     runners.draw(players, me, phase == Phase::Running);
-    shots.draw(destroyed);
+    shots.draw();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -240,6 +254,7 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         audio.play(Audio::Sfx::Explosion);
         run.shakeAtLeast(0.15f);
         drones_down += effect.player == me;
+        shots.land(effect.player);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
     } else if (isPowerUp(effect.type)) {

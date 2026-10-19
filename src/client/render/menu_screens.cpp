@@ -3,6 +3,7 @@
 #include "menu_screens.hpp"
 #include "sprites.hpp"
 #include "../menu.hpp"
+#include "../wallet.hpp"
 #include "../../common/cyberpsycho.hpp"
 #include <algorithm>
 #include <cmath>
@@ -98,7 +99,8 @@ void MenuScreens::drawMain(const MenuState &menu)
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter());
     if (menu.best_distance > 0)
-        canvas.text(std::format("BEST RUN  {} M", menu.best_distance), 32, NEON_YELLOW, {x, 960});
+        canvas.text(std::format("BEST RUN  {} M     {} EDDIES", menu.best_distance, menu.wallet.eddies),
+                    32, NEON_YELLOW, {x, 960});
 
     canvas.text("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", 22, HINT_GREY, {x, 1030});
 }
@@ -169,34 +171,57 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
     float time = canvas.time();
 
     canvas.glitchText("CHOOSE YOUR RUNNER", 80, NEON_YELLOW, {Screen::WIDTH / 2, 150});
+    canvas.text(std::format("{} EDDIES", menu.wallet.eddies), 36, NEON_PINK, {Screen::WIDTH / 2, 235});
 
     for (int i = 0; i < static_cast<int>(sprites.characters.size()); i++)
-        drawCharacterCard(i, i == menu.character, time);
+        drawCharacterCard(i, i == menu.character, menu.wallet, time);
+
+    if (!menu.error.empty())
+        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 975});
 
     canvas.text("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
-// Portrait, name, and the runner itself: running, then flying when selected
-void MenuScreens::drawCharacterCard(int index, bool selected, float time)
+// Portrait, name, and the runner itself: running, then flying when selected.
+// A locked runner is a dark silhouette with its price.
+void MenuScreens::drawCharacterCard(int index, bool selected, const Wallet &wallet, float time)
 {
     const Character &character = sprites.characters[index];
     sf::FloatRect box = MenuLayout::cardBox(index, sprites.characters.size());
     float center_x = box.getCenter().x;
     float top = box.position.y;
+    bool locked = !wallet.isUnlocked(index);
+    sf::Color tint = locked ? sf::Color(25, 20, 40) : selected ? sf::Color::White : FADED;
 
     canvas.card(box, selected);
-    canvas.image(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, selected ? sf::Color::White : FADED);
+    canvas.image(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, tint);
 
     if (selected)
         canvas.glitchText(character.name, 46, NEON_YELLOW, {center_x, top + 215});
     else
         canvas.text(character.name, 40, DIM_WHITE, {center_x, top + 215});
 
-    drawCharacterPreview(character, box, selected, time);
+    drawCharacterPreview(character, box, selected && !locked, tint, time);
+    if (locked)
+        drawPriceTag(index, box, wallet);
+}
+
+// "LOCKED" and the price, lit up when it's the next one and you can afford it
+void MenuScreens::drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet)
+{
+    int price = CHARACTER_PRICES[index];
+    bool affordable = index == wallet.unlocked && wallet.eddies >= price;
+    sf::Vector2f center = box.getCenter() + sf::Vector2f(0, 90);
+
+    canvas.text("LOCKED", 34, DIM_WHITE, center);
+    canvas.text(std::format("{} EDDIES", price), 30, affordable ? NEON_YELLOW : HINT_GREY, center + sf::Vector2f(0, 45));
+    if (affordable)
+        canvas.text("[ENTER] BUY", 24, NEON_CYAN, center + sf::Vector2f(0, 85));
 }
 
 // Standing at the bottom of the card; the selected one runs, then flies
-void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, float time)
+void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint,
+                                       float time)
 {
     if (character.sheet.getSize().x == 0)
         return;
@@ -211,7 +236,7 @@ void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
-    sprite.setColor(selected ? sf::Color::White : FADED);
+    sprite.setColor(tint);
     canvas.draw(sprite);
 }
 
@@ -226,14 +251,14 @@ void MenuScreens::drawOptions(const MenuState &menu)
     for (int i = 0; i < MenuLayout::OPTION_COUNT; i++)
         drawOptionRow(i, menu);
 
-    canvas.text("[UP / DOWN] SELECT     [LEFT / RIGHT] VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
+    canvas.text("[UP / DOWN] SELECT     [LEFT / RIGHT] OR CLICK THE BAR: VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
                 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // Label on the left, value on the right: a volume bar or a key
 void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 {
-    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "BACK"};
+    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "FULLSCREEN", "BACK"};
     const Settings &settings = menu.settings;
     sf::FloatRect box = MenuLayout::optionBox(index);
     bool selected = index == menu.option;
@@ -250,7 +275,11 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
     canvas.text(labels[index], 36, color, left, {0, 0.5f});
 
     if (index == MenuLayout::OPTION_MUSIC || index == MenuLayout::OPTION_SFX) {
-        drawVolumeBar(index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        drawVolumeBar(index, index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        return;
+    }
+    if (index == MenuLayout::OPTION_FULLSCREEN) {
+        canvas.text(settings.fullscreen ? "ON" : "OFF", 36, color, right, {1, 0.5f});
         return;
     }
 
@@ -261,13 +290,12 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 }
 
 // Ten segments lit up to the volume, then the percentage
-void MenuScreens::drawVolumeBar(int volume, sf::Vector2f right, bool selected)
+void MenuScreens::drawVolumeBar(int row, int volume, sf::Vector2f right, bool selected)
 {
-    sf::RectangleShape segment({22, 30});
-
-    segment.setOrigin({0, 15});
     for (int i = 0; i < 10; i++) {
-        segment.setPosition(right - sf::Vector2f(120 + (10 - i) * 28, 0));
+        sf::FloatRect box = MenuLayout::volumeSegment(row, i);
+        sf::RectangleShape segment(box.size);
+        segment.setPosition(box.position);
         segment.setFillColor(i < volume / 10 ? NEON_CYAN : sf::Color(255, 255, 255, 40));
         canvas.draw(segment);
     }

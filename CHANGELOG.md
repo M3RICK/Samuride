@@ -1,0 +1,71 @@
+# Patch notes
+
+Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
+taken from this file. Players on different versions can't play together: update both sides.
+
+## v2.3
+
+### New
+- **Eddies are money.** Every run's eddies go to your wallet. Johnny is free, then unlock David
+  (100), Jinx (250) and Mikasa (500), in that order, from the character select.
+- **Fullscreen**, in Options. Black bars keep the picture whole on screens that aren't 16:9.
+- The titan warning is now a red column as tall as the titan coming, instead of a small `!`.
+
+### Balance
+- No titan before 300 m (was 150 m).
+- Jinx's rockets are bigger, and rockets and bullets hit drones slightly above or below their line:
+  they hit what they look like they hit.
+
+### Fixes
+- Jinx's head vanished while she was climbing.
+- A shot kept flying through a drone it had just destroyed.
+- Johnny's greeting looped in the menu and the lobby: it now plays once, when the main menu opens.
+- With the mouse, the volume could only go up. Click the bar to set it, left of it to mute, or use
+  the wheel.
+- A slow connection could scramble a versus game for good.
+- Joining an address where nobody answers froze the game for minutes: it now gives up after
+  3 seconds.
+- When your choom left after a game, you waited forever for a rematch: the next choom who joins
+  now plays you.
+
+### Other
+- The game is now called `Samuride` and the dedicated server `Samuride_server`
+  (were `jetpack_client` and `jetpack_server`).
+
+## v2.2 — 2026-10-19
+
+### New
+- **Subdermal shield**: takes one deadly hit for you (zapper, drone or titan), then gives you a
+  second to get clear.
+- **Sandevistan**: a 3-second sprint nothing can hurt, leaving afterimages behind.
+- In CYBERPSYCHO, one drone in three drops a shield or a Sandevistan when shot down.
+
+### Fixes
+- The character and district you picked were sometimes ignored (Johnny in the corridor).
+- Rockets and bullets followed your jetpack up and down after being fired.
+
+## v2.1.3 — 2026-10-19
+- macOS: the game ships as `Samuride.app` and no longer opens a terminal.
+
+## v2.1.1 — 2026-10-19
+- macOS: fixed the package build.
+
+## v2.1 — 2026-10-19
+
+### New
+- **macOS build** (Apple Silicon, macOS 13.3 or newer).
+
+### Balance
+- The Attack Titan orb is rarer and the titan form lasts 4 seconds.
+
+## v2.0 — 2026-10-18
+
+The first public release: a two-player Jetpack Joyride in Night City.
+
+- Endless run, solo or versus over the network, chasing your best distance.
+- Four runners: Johnny, David, Jinx and Mikasa.
+- Five districts, or two of them taking turns.
+- **CYBERPSYCHO** mode: gun down Arasaka drones for bounty.
+- **Titans** charge along the floor, and the **Attack Titan** orb lets you run as Eren's titan.
+- Options: volumes and keys.
+- Linux and Windows builds.

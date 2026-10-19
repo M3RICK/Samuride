@@ -28,10 +28,11 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Subdermal shield**: the cyan hexagon takes one deadly hit for you (zapper, drone or titan), then gives you a second to get clear.
 - **Sandevistan**: the green chevrons send you into a 3-second sprint nothing can hurt, leaving afterimages behind.
 - In CYBERPSYCHO, **one drone in three drops a shield or a Sandevistan** when you shoot it down.
-- **Titans** charge along the floor past 150 m: a blinking `!` warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
+- **Titans** charge along the floor past 300 m: a blinking red column warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Four runners**: Johnny, David, Jinx on her shark rocket and Mikasa, each with their own run, take-off, flight and death animations.
+- **Eddies are money**: every run's eddies go to your wallet. Johnny is free, then buy David (100), Jinx (250) and Mikasa (500), in that order.
 - After a game, hit `Space` for an instant rematch.
 
 | Key | Action |
@@ -40,7 +41,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 | `F` | Attack in CYBERPSYCHO (default) |
 | `Esc` | Back to menu |
 
-Keys and volumes can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
+Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
 | Arrows / mouse + `Enter` | Menu |
 
 <p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>
@@ -49,9 +50,9 @@ Keys and volumes can be changed in **Options**; they are kept in `~/.local/share
 
 ## Download
 
-Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install.
+Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install. What changed in each version: [patch notes](CHANGELOG.md).
 
-**Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `jetpack_client.exe`.
+**Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `Samuride.exe`.
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
 - To host a run, allow the game when the firewall asks, or your friend won't be able to join.
 
@@ -67,7 +68,7 @@ Grab the archive for your system from the [Releases](../../releases) page. Every
 ```sh
 tar xzf samuride-*-linux-x86_64.tar.gz
 cd samuride-*-linux-x86_64
-./jetpack_client
+./Samuride
 ```
 
 Windows, macOS and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
@@ -78,7 +79,7 @@ Linux, a C++20 compiler and **SFML 3**.
 
 ```sh
 sudo pacman -S sfml      # Arch / CachyOS
-make                     # jetpack_server + jetpack_client
+make                     # Samuride_server + Samuride
 make tests               # protocol, map streaming & generator self-checks
 ```
 
@@ -86,11 +87,13 @@ SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/
 `tools/package_release.sh` builds the same self-contained archive as the Releases page, and
 `tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath),
 and `tools/package_macos.sh` builds the macOS one on a Mac.
+To publish a version, add its `## vX.Y` section to [CHANGELOG.md](CHANGELOG.md), then push the `vX.Y` tag:
+the release workflow builds the three archives and uses that section as the release description.
 
 ## Play
 
 ```sh
-./jetpack_client
+./Samuride
 ```
 
 That's it: **Solo** and **Host** start a server in the background for you. To play with a friend on your network, one picks **Host a run**, the other **Join a run** and types the address shown on the host's screen.
@@ -98,8 +101,8 @@ That's it: **Solo** and **Host** start a server in the background for you. To pl
 A dedicated server and direct connection are available too:
 
 ```sh
-./jetpack_server -p 4242 [-m maps/small_good.txt] [-s] [-d]
-./jetpack_client -h 127.0.0.1 -p 4242 [-c 2] [-d]
+./Samuride_server -p 4242 [-m maps/small_good.txt] [-s] [-d]
+./Samuride -h 127.0.0.1 -p 4242 [-c 2] [-d]
 ```
 
 `-c` picks the character (0 Johnny, 1 David, 2 Jinx, 3 Mikasa), `-m` starts the run on a hand-made map before going procedural, `-s` is solo mode, `-d` prints debug logs (packets, inputs).

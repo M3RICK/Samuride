@@ -51,7 +51,8 @@ void Titans::drawTitan(const TitanState &titan, float time)
     canvas.draw(body);
 }
 
-// A blinking "!" on the right edge, at the titan's height, while it's still off screen
+// While a titan is still off screen, a blinking red column as tall as it stands on the right
+// edge, where it will burst in
 void Titans::drawWarnings(const std::vector<TitanState> &titans)
 {
     if (!canvas.blink())
@@ -63,9 +64,19 @@ void Titans::drawWarnings(const std::vector<TitanState> &titans)
         if (run.toScreen({titan.x, 0}).x <= Screen::WIDTH)
             continue;
 
-        sf::Vector2f pos(Screen::WIDTH - 70, run.toScreen({0, run.floor() - stats.height / 2}).y);
-        canvas.halo(pos, 55, withAlpha(NEON_RED, 120));
-        canvas.glitchText("!", 90, sf::Color::White, pos);
-        canvas.text("TITAN", 24, NEON_RED, pos + sf::Vector2f(0, 70));
+        float top = run.toScreen({0, run.floor() - stats.height}).y;
+        float bottom = run.toScreen({0, run.floor()}).y;
+        sf::Vector2f center(Screen::WIDTH - 80, (top + bottom) / 2);
+
+        sf::RectangleShape column({140, bottom - top});
+        column.setOrigin({70, 0});
+        column.setPosition({center.x, top});
+        column.setFillColor(withAlpha(NEON_RED, 70));
+        column.setOutlineColor(NEON_RED);
+        column.setOutlineThickness(4);
+        canvas.draw(column);
+
+        canvas.glitchText("!", (bottom - top) * 0.6f, sf::Color::White, center - sf::Vector2f(0, 30));
+        canvas.text("TITAN", 30, sf::Color::White, {center.x, bottom - 35});
     }
 }

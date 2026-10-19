@@ -30,7 +30,7 @@ make -C "$ROOT" -j"$(nproc)" SFML_DIR="$SFML_DIR" RPATH='$$ORIGIN/lib'
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE/lib"
-cp "$ROOT/jetpack_client" "$ROOT/jetpack_server" "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
+cp "$ROOT/Samuride" "$ROOT/Samuride_server" "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
 cp -a "$SFML_DIR"/lib/libsfml-*.so* "$STAGE/lib/"
 
 # SFML's own dependencies (FreeType, HarfBuzz, FLAC, Vorbis...) change versions between distros:

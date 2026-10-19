@@ -57,6 +57,8 @@ private:
 public:
     // Opens the window and loads the fonts
     bool open();
+    // Recreates the window, covering the whole screen or not
+    void setFullscreen(bool fullscreen);
 
     sf::RenderWindow &target() { return window; }
     void draw(const sf::Drawable &drawable, const sf::RenderStates &states = sf::RenderStates::Default);

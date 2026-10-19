@@ -20,6 +20,7 @@ struct WeaponStats {
     float cooldown;     // seconds between two attacks
     float speed;        // projectile speed in tiles per second, on top of the run speed; 0 for melee
     float reach;        // how far ahead a melee strike lands, in tiles
+    float radius;       // a projectile hits drones this close above or below its line, in tiles
 };
 
 // Character ids follow the client's CHARACTER_DIRS: johny, david, jinx, mikasa
@@ -36,11 +37,11 @@ inline WeaponStats statsOf(Weapon weapon)
 {
     switch (weapon) {
         case Weapon::Rockets:
-            return {0.6f, 18, 0};
+            return {0.6f, 18, 0, 0.9f};
         case Weapon::Blade:
-            return {0.45f, 0, 2.5f};
+            return {0.45f, 0, 2.5f, 0};
         default:
-            return {0.25f, 30, 0};
+            return {0.25f, 30, 0, 0.4f};
     }
 }
 

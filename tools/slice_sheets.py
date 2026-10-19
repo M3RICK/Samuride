@@ -76,12 +76,13 @@ CHARACTERS = {
     "jinx": ("sources/jinx.png", (1105, 929, 1185, 1005), {
         "run":     animation((665, 42, 1200, 140), 12, ground=True),
         "takeoff": animation((665, 185, 1536, 299), 16, mode="once"),
-        "rise":    animation((0, 476, 765, 592), 12),
+        "rise":    animation((0, 440, 765, 592), 12),
         "hover":   animation((0, 345, 1536, 420), 14),
         "fall":    animation((770, 476, 1536, 592), 12),
         "death":   animation((680, 779, 1480, 874), 10, mode="hide"),
         "attack":  animation((780, 640, 1255, 732), 16, mode="once", effects_ahead=True),
-    }),
+    # The rising heads reach past the "MONTEE" label's top
+    }, {"erase": [(10, 446, 98, 477)]}),
     "mikasa": ("sources/mikasa.png", (1140, 925, 1212, 1000), {
         "run":     animation((655, 40, 1240, 144), 12, ground=True),
         "takeoff": animation((0, 182, 640, 308), 16, mode="once"),

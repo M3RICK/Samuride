@@ -7,7 +7,6 @@
     #define SHOTS_HPP
 
 #include <SFML/System.hpp>
-#include <set>
 #include <vector>
 #include "../state.hpp"
 
@@ -39,7 +38,9 @@ public:
     void clear() { trails.clear(); }
     // Starts the attacks the server reported
     void handle(GameState &state);
-    void draw(const std::set<std::pair<int, int>> &destroyed);
+    // The server says one of `player`'s shots took a drone down: their oldest one in flight ends
+    void land(int player);
+    void draw();
 };
 
 #endif

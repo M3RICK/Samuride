@@ -12,6 +12,7 @@ struct Settings {
     int sfx_volume = 70;        // percent
     sf::Keyboard::Key jetpack_key = sf::Keyboard::Key::Space;
     sf::Keyboard::Key attack_key = sf::Keyboard::Key::F;
+    bool fullscreen = false;
 
     static Settings load();
     void save() const;

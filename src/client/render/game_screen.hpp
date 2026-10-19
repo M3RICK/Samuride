@@ -61,6 +61,7 @@ private:
 
     int best_distance = 0;
     bool new_record = false;
+    int wallet = 0;     // eddies saved, once this run's are in
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -69,6 +70,7 @@ private:
     void onPhaseChange(GameState &state, Phase phase);
     void resetRun();
     void recordSoloDistance(GameState &state);
+    void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);

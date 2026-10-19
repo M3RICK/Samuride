@@ -30,7 +30,7 @@ void Server::handleAttack(int client_fd)
 
     // Fired from the hip, flying ahead of the shooter
     float x = player.getX() + 0.9f;
-    projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE});
+    projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius});
 }
 
 // Every live drone within reach in front of the player goes down
@@ -52,16 +52,31 @@ void Server::strike(int client_fd, const Player &player, float reach)
 void Server::updateProjectiles()
 {
     for (Projectile &shot : projectiles) {
-        shot.x += shot.speed * TICK_DT;
+        float from_x = shot.x;
 
-        int tile_x = static_cast<int>(shot.x);
-        int tile_y = static_cast<int>(shot.y);
-        if (isLiveDrone(tile_x, tile_y)) {
-            destroyDrone(shot.owner_fd, tile_x, tile_y);
+        shot.x += shot.speed * TICK_DT;
+        if (projectileHit(shot, from_x))
             shot.x = shot.max_x;
-        }
     }
     std::erase_if(projectiles, [](const Projectile &shot) { return shot.x >= shot.max_x; });
+}
+
+// The first live drone the shot went through this tick, within its radius of its line.
+// Every column crossed is checked: a fast shot can't skip over a drone.
+bool Server::projectileHit(const Projectile &shot, float from_x)
+{
+    int top = static_cast<int>(shot.y - shot.radius);
+    int bottom = static_cast<int>(shot.y + shot.radius);
+
+    for (int x = static_cast<int>(from_x); x <= static_cast<int>(shot.x); x++) {
+        for (int y = std::max(0, top); y <= bottom; y++) {
+            if (isLiveDrone(x, y)) {
+                destroyDrone(shot.owner_fd, x, y);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool Server::isLiveDrone(int x, int y) const

@@ -25,22 +25,28 @@ Client::~Client()
         Socket::close(client_fd);
 }
 
-// Retries for a couple of seconds: a server we just launched may not be listening yet
+// Keeps trying for a few seconds: a server we just launched may not be listening yet.
+// An address nobody answers at gives up then, instead of freezing the game.
 bool Client::initialize()
 {
+    using clock = std::chrono::steady_clock;
+    auto deadline = clock::now() + std::chrono::seconds(3);
+
     if (!Socket::startup())
         return false;
-    for (int attempt = 0; attempt < 40; attempt++) {
-        if (connectToServer())
+    while (true) {
+        auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - clock::now()).count();
+        if (left <= 0)
+            return false;
+        if (connectToServer(left))
             return true;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    return false;
 }
 
-bool Client::connectToServer()
+bool Client::connectToServer(int timeout_ms)
 {
-    client_fd = Socket::connect(server_ip, server_port);
+    client_fd = Socket::connect(server_ip, server_port, timeout_ms);
     if (client_fd < 0)
         return false;
 

@@ -35,7 +35,7 @@ make -C "$ROOT" CC=clang++ SFML_DIR="$SFML_DIR" tests
 APP="$STAGE/Samuride.app/Contents"
 rm -rf "$STAGE"
 mkdir -p "$APP/MacOS/lib" "$APP/Resources"
-cp "$ROOT/jetpack_client" "$ROOT/jetpack_server" "$APP/MacOS/"
+cp "$ROOT/Samuride" "$ROOT/Samuride_server" "$APP/MacOS/"
 cp -a "$SFML_DIR"/lib/libsfml-*.dylib "$APP/MacOS/lib/"
 cp -r "$ROOT/maps" "$ROOT/assets" "$APP/Resources/"
 # The sprite sheet sources are only needed to regenerate the characters
@@ -50,7 +50,7 @@ cat > "$APP/Info.plist" <<PLIST
     <key>CFBundleName</key>                 <string>Samuride</string>
     <key>CFBundleDisplayName</key>          <string>Samuride</string>
     <key>CFBundleIdentifier</key>           <string>io.github.m3rick.samuride</string>
-    <key>CFBundleExecutable</key>           <string>jetpack_client</string>
+    <key>CFBundleExecutable</key>           <string>Samuride</string>
     <key>CFBundlePackageType</key>          <string>APPL</string>
     <key>CFBundleShortVersionString</key>   <string>${VERSION#v}</string>
     <key>LSMinimumSystemVersion</key>       <string>13.3</string>
@@ -60,14 +60,14 @@ PLIST
 
 # Everything must load from the package or the system, never from this build machine.
 # otool prints each file's own path as a header: only its indented dependency lines count.
-if otool -L "$APP/MacOS/jetpack_client" "$APP"/MacOS/lib/*.dylib | grep -E '^[[:space:]]' | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
+if otool -L "$APP/MacOS/Samuride" "$APP"/MacOS/lib/*.dylib | grep -E '^[[:space:]]' | grep -E "$ROOT|/opt/homebrew|/usr/local"; then
     echo "A binary depends on a library outside the package" >&2
     exit 1
 fi
 
 # Apple Silicon only runs signed code: ad-hoc signatures, no Apple account involved.
 # Inner code first, then the app as a whole.
-codesign --force --sign - "$APP"/MacOS/lib/*.dylib "$APP/MacOS/jetpack_server"
+codesign --force --sign - "$APP"/MacOS/lib/*.dylib "$APP/MacOS/Samuride_server"
 codesign --force --sign - "$STAGE/Samuride.app"
 
 (cd "$ROOT/dist" && rm -f "$PACKAGE.zip" && zip -qry "$PACKAGE.zip" "$PACKAGE")

@@ -38,12 +38,7 @@ sf::Vector2f WorldView::toScreen(sf::Vector2f world) const
 
 bool Canvas::open()
 {
-    sf::Vector2u desktop = sf::VideoMode::getDesktopMode().size;
-    float fit = std::min({1.0f, desktop.x * 0.9f / Screen::WIDTH, desktop.y * 0.9f / Screen::HEIGHT});
-    sf::Vector2u size(Screen::WIDTH * fit, Screen::HEIGHT * fit);
-
-    window.create(sf::VideoMode(size), "Samuride", sf::Style::Titlebar | sf::Style::Close);
-    window.setFramerateLimit(60);
+    setFullscreen(false);
 
     if (!font.openFromFile("assets/font/jetpack_font.ttf") || !fallback_font.openFromFile("assets/font/Rajdhani-Bold.ttf"))
         DEBUG_LOG("Failed to load fonts, text will not be displayed");
@@ -53,6 +48,21 @@ bool Canvas::open()
             missing_glyphs += static_cast<char>(c);
     }
     return window.isOpen();
+}
+
+// Windowed, the 1920x1080 space shrinks to fit the screen; fullscreen takes the desktop's resolution
+void Canvas::setFullscreen(bool fullscreen)
+{
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+
+    if (fullscreen) {
+        window.create(desktop, "Samuride", sf::State::Fullscreen);
+    } else {
+        float fit = std::min({1.0f, desktop.size.x * 0.9f / Screen::WIDTH, desktop.size.y * 0.9f / Screen::HEIGHT});
+        sf::Vector2u size(Screen::WIDTH * fit, Screen::HEIGHT * fit);
+        window.create(sf::VideoMode(size), "Samuride", sf::Style::Titlebar | sf::Style::Close);
+    }
+    window.setFramerateLimit(60);
 }
 
 void Canvas::draw(const sf::Drawable &drawable, const sf::RenderStates &states)
@@ -70,9 +80,17 @@ bool Canvas::blink() const
     return static_cast<int>(time() * 2) % 2 == 0;
 }
 
+// Black bars keep the 16:9 picture whole on screens of another shape
 sf::View Canvas::screenView() const
 {
-    return sf::View(sf::FloatRect({0, 0}, {Screen::WIDTH, Screen::HEIGHT}));
+    sf::View view(sf::FloatRect({0, 0}, {Screen::WIDTH, Screen::HEIGHT}));
+    sf::Vector2f size(window.getSize());
+    float scale = std::min(size.x / Screen::WIDTH, size.y / Screen::HEIGHT);
+    sf::Vector2f used = sf::Vector2f(Screen::WIDTH, Screen::HEIGHT) * scale;
+
+    view.setViewport(sf::FloatRect({(size.x - used.x) / 2 / size.x, (size.y - used.y) / 2 / size.y},
+                                   {used.x / size.x, used.y / size.y}));
+    return view;
 }
 
 //=============================================================================

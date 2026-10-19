@@ -43,8 +43,8 @@ Positions travel in hundredths of a tile.
 | 1, optional | Mode: 0 CLASSIC, 1 CYBERPSYCHO |
 
 District and mode are only taken from the first player in the lobby, the host; whoever joins
-sends only a character. When the mode differs from the map already sent, the server regenerates
-the map (with drones for CYBERPSYCHO) and sends it again.
+sends only a character. A game only starts once every player in the lobby sent theirs, and
+`MSG_CONNECT` is ignored outside the lobby.
 
 ### `MSG_MAP_DATA`
 
@@ -56,7 +56,7 @@ the map (with drones for CYBERPSYCHO) and sends it again.
 | width × height | Tiles, one byte each, row by row from the top |
 
 An offset of 0 replaces the client's map; any other offset must equal the client's current width,
-and the chunk is appended. The whole map is sent on connection and before each game, then new
+and the chunk is appended. The whole map is sent right before each `MSG_GAME_START`, then new
 chunks are streamed while the players advance.
 
 Tiles:
@@ -171,24 +171,27 @@ up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles a
 | 1 | Count |
 | 5 per titan | Type (0 Female, 4.5 tiles tall and fast; 1 Armored, 4 tiles tall and slower), X of its left edge |
 
-Titans stand on the floor and run at the players. The first one comes past 150 tiles, then one
+Titans stand on the floor and run at the players. The first one comes past 300 tiles, then one
 every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 
 ## A game, step by step
 
-1. The client connects and sends `MSG_CONNECT`; the server answers with `MSG_MAP_DATA`.
-2. Once the lobby is full (extra clients are refused), the server sends `MSG_GAME_START` to each
-   client, then `MSG_COUNTDOWN` once per second: 3, 2, 1, 0.
+1. The client connects and sends `MSG_CONNECT`.
+2. Once the lobby is full (extra clients are refused) and everyone sent `MSG_CONNECT`, the server
+   sends the map (`MSG_MAP_DATA`) and `MSG_GAME_START` to each client, then `MSG_COUNTDOWN` once
+   per second: 3, 2, 1, 0.
 3. During the run the server ticks 60 times per second: players move forward, faster and faster,
    gravity or thrust applies, new map chunks are generated ahead of the leader, collisions are
    checked. It sends `MSG_GAME_STATE` and `MSG_TITANS` every tick, `MSG_COLLISION` and `MSG_SHOT`
    when they happen, and `MSG_MAP_DATA` for each new chunk. Clients send `MSG_PLAYER_INPUT` and
    `MSG_ATTACK`.
 4. At the first death the server sends `MSG_GAME_END`. Clients answer `MSG_READY` for a rematch,
-   and the game starts again from step 2 with a new map.
+   and the game starts again from step 2 with a new map. If someone leaves instead, the lobby
+   reopens: whoever stays plays the next choom who joins.
 
 ## Security
 
 The protocol is meant for friends on a local network or a VPN. There is no authentication or
 encryption. The server never trusts clients with the game itself: they only send inputs, and it
-drops any client sending more than 1 KB of unparsable data.
+drops any client sending more than 1 KB of unparsable data, or no longer reading what it sends.
+What a slow connection can't take right away is queued, never cut, so packets always arrive whole.

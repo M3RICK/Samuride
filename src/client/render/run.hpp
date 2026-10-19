@@ -5,7 +5,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <map>
-#include <set>
 #include "canvas.hpp"
 #include "../state.hpp"
 #include "../../common/map.hpp"
@@ -48,7 +47,6 @@ struct Run {
     sf::Vector2f toScreen(sf::Vector2f world) const { return view.toScreen(world); }
     float floor() const { return map.getHeight(); }
     int characterOf(int player_num) const;
-    bool isLiveDrone(int x, int y, const std::set<std::pair<int, int>> &destroyed) const;
     void shakeAtLeast(float amount);
 
 private:

@@ -55,6 +55,7 @@ private:
         float y;
         float speed;
         float max_x;
+        float radius;
     };
 
     ServerConfig config;
@@ -88,6 +89,8 @@ private:
 
     // More unparsed bytes than this from a client is garbage
     static constexpr size_t MAX_PENDING_BYTES = 1024;
+    // A client this far behind on what we send (minutes of game state) isn't reading anymore
+    static constexpr size_t MAX_SEND_BACKLOG = 1 << 20;
 
     //===========================================================================
     // Server Initialization
@@ -103,8 +106,6 @@ private:
     //===========================================================================
 
     void acceptNewClient();
-
-    void sendMapToClient(int client_fd);
 
     void removeClient(int client_fd);
 
@@ -136,6 +137,10 @@ private:
 
     void sendToClient(int client_fd, const std::vector<uint8_t> &data);
 
+    void flush(Player &player);
+
+    void flushClients();
+
     void broadcastToAllClients(const std::vector<uint8_t> &data);
 
     //===========================================================================
@@ -144,6 +149,8 @@ private:
 
     bool lobbyReady() const;
     void startGame();
+
+    void reopenLobby();
 
     void handleReady(int client_fd);
 
@@ -170,6 +177,8 @@ private:
     void strike(int client_fd, const Player &player, float reach);
 
     void updateProjectiles();
+
+    bool projectileHit(const Projectile &shot, float from_x);
 
     bool isLiveDrone(int x, int y) const;
 
