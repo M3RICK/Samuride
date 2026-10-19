@@ -15,6 +15,7 @@ void Sprites::load()
     loadTexture(zapper, "assets/electric/zap.png");
     // Pixel art: scaled up without smoothing
     loadTexture(drone, "assets/drone/drone.png", false);
+    loadTexture(hack_target, "assets/lucy/target.png");
 
     characters.resize(CHARACTER_DIRS.size());
     for (size_t i = 0; i < CHARACTER_DIRS.size(); i++) {

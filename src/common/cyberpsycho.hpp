@@ -2,6 +2,7 @@
     #define CYBERPSYCHO_HPP
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -79,6 +80,31 @@ inline std::vector<std::pair<int, int>> zapperNodes(const Map &map, int x, int y
         }
     }
     return nodes;
+}
+
+// Where Lucy's hack lands, for a body `height` tall with its top-left corner at (x, y): the nearest
+// column of her way first, then the closest to her middle. {-1, -1} when nothing is in her way.
+// off(x, y): that drone is already down, or that zapper already hacked.
+template <typename Off>
+std::pair<int, int> hackTarget(const Map &map, float x, float y, float height, Off off)
+{
+    int front = static_cast<int>(x + 0.5f);
+    int top = std::max(0, static_cast<int>(y) - HACK_LANE);
+    int bottom = std::min(static_cast<int>(map.getHeight()) - 1, static_cast<int>(y + height) + HACK_LANE);
+    float middle = y + height / 2;
+
+    for (int col = front; col <= front + HACK_RANGE; col++) {
+        int target = -1;
+        for (int row = top; row <= bottom; row++) {
+            char tile = map.getTile(col, row);
+            bool live = (tile == DRONE_TILE || tile == 'e') && !off(col, row);
+            if (live && (target < 0 || std::abs(row + 0.5f - middle) < std::abs(target + 0.5f - middle)))
+                target = row;
+        }
+        if (target >= 0)
+            return {col, target};
+    }
+    return {-1, -1};
 }
 
 #endif

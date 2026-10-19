@@ -133,6 +133,13 @@ static void testHack()
     assert(nodes.size() == 4);
     assert(zapperNodes(map, 3, 1).size() == 4);
 
+    // A drone far above her is out of her way, the one level with her is hit even behind a closer column's
+    Map lane;
+    lane.appendChunk({"__d___", "______", "______", "______", "____d_", "______", "______"});
+    auto none = [](int, int) { return false; };
+    assert(hackTarget(lane, 0, 4, 2, none) == std::make_pair(4, 4));
+    assert(hackTarget(lane, 0, 4, 2, [](int x, int) { return x == 4; }) == std::make_pair(-1, -1));
+
     Player lucy(-1);
     lucy.reset(0, 0);
     lucy.spendRam();

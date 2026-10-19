@@ -151,6 +151,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     tiles.draw(state.getCollectedCoins(), destroyed);
+    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
+        drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     runners.draw(players, me, phase == Phase::Running);
@@ -170,6 +172,26 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     // Leave time to watch the zap before the curtain falls
     if (phase == Phase::Over && phase_clock.getElapsedTime().asSeconds() > GAME_OVER_DELAY)
         drawGameOver(state, players, me);
+}
+
+// Playing Lucy with RAM left: a pulsing ring on what F would hack, worked out like the server does
+void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int me,
+                                const std::set<std::pair<int, int>> &destroyed)
+{
+    auto mine = players.find(me);
+    auto pos = run.display_positions.find(me);
+
+    if (mine == players.end() || pos == run.display_positions.end() || mine->second.ram == 0 ||
+        mine->second.form != Form::Normal || run.death_clocks.count(me) ||
+        weaponOf(run.characterOf(me)) != Weapon::Hack)
+        return;
+
+    auto [x, y] = hackTarget(run.map, pos->second.x, pos->second.y, Run::PLAYER_HEIGHT, [&](int x, int y) {
+        return destroyed.count({x, y}) || run.hackLeft(x, y) > 0;
+    });
+    if (x >= 0)
+        tiles.drawSprite(sprites.hack_target, {static_cast<float>(x), static_cast<float>(y)},
+                         1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
 }
 
 // "ENTERING <district>" each time the scenery changes
