@@ -151,6 +151,9 @@ void Server::updatePlayers()
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
+        // Berserk attacks on its own, as soon as the cooldown allows
+        if (player.isBerserk())
+            handleAttack(client_fd);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());
     }

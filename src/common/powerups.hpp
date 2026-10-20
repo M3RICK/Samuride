@@ -8,7 +8,7 @@
 constexpr char SHIELD_TILE = 'a';
 // Sandevistan: a few seconds of sprint nothing can hurt
 constexpr char SANDEVISTAN_TILE = 'v';
-// Berserk (CYBERPSYCHO only): a few seconds of attacking twice as often, Lucy's RAM coming back faster
+// Berserk (CYBERPSYCHO only): a few seconds of attacking on your own, twice as often, Lucy's RAM coming back faster
 constexpr char BERSERK_TILE = 'r';
 // Collision type: a shield took a hit
 constexpr char SHIELD_BREAK = 'b';
