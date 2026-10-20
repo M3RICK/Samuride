@@ -1,8 +1,8 @@
+// CYBERPSYCHO: attacks, projectiles and drones. The ultimates are in ultimates.cpp.
+
 #include "server.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
-
-// CYBERPSYCHO: attacks, projectiles and drones. The ultimates are in ultimates.cpp.
 
 void Server::handleAttack(int client_fd)
 {

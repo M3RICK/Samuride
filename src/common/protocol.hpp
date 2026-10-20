@@ -11,9 +11,9 @@ enum MessageType : uint8_t {
     MSG_CONNECT = 1,      // Client connecting
     MSG_MAP_DATA = 2,     // map columns, sent again as the run grows
     MSG_GAME_START = 3,   // game is starting, payload = your player number
-    MSG_PLAYER_INPUT = 4, // input (space pressed/released)
+    MSG_PLAYER_INPUT = 4, // jetpack on (1) or off (0)
     MSG_GAME_STATE = 5,   // positions, scores, etc.
-    MSG_COLLISION = 6,    // collision
+    MSG_COLLISION = 6,    // something happened on a tile: a coin taken, a death, a drone down... (type, player, x, y)
     MSG_GAME_END = 7,     // game is over
     MSG_COUNTDOWN = 8,    // countdown before game starts, 0 = go
     MSG_READY = 9,        // client wants a rematch

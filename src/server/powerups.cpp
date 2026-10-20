@@ -24,10 +24,12 @@ void Server::placePowerUp(std::vector<std::string> &rows)
 
     if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= POWERUP_CHANCE)
         return;
-    // Berserk is no use without attacks: CYBERPSYCHO only
-    std::vector<char> kinds = {SHIELD_TILE, SANDEVISTAN_TILE};
-    if (mode == GameMode::Cyberpsycho)
-        kinds.push_back(BERSERK_TILE);
+    // Any power-up, but Berserk is no use without attacks: CYBERPSYCHO only
+    std::vector<char> kinds;
+    for (char tile : POWER_UPS) {
+        if (tile != BERSERK_TILE || mode == GameMode::Cyberpsycho)
+            kinds.push_back(tile);
+    }
     placeInFreeTile(rows, kinds[std::uniform_int_distribution<size_t>(0, kinds.size() - 1)(rng)]);
 }
 

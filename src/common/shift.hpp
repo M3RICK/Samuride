@@ -1,10 +1,10 @@
+// The Attack Titan power-up: grab the orb, stop while the smoke rises, then run as Eren's
+// titan for a few seconds, invincible, before bursting back out of the smoke.
+
 #ifndef SHIFT_HPP
     #define SHIFT_HPP
 
 #include <cstdint>
-
-// The Attack Titan power-up: grab the orb, stop while the smoke rises, then run as Eren's
-// titan for a few seconds, invincible, before bursting back out of the smoke.
 
 enum class Form : uint8_t { Normal, Shifting, Titan, Emerging };
 

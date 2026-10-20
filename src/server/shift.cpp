@@ -1,6 +1,6 @@
-#include "server.hpp"
-
 // The Attack Titan power-up: orbs placed in the map, and what the titan form smashes
+
+#include "server.hpp"
 
 // Now and then an orb floats in an empty tile of a new chunk
 void Server::placeShiftOrb(std::vector<std::string> &rows)
