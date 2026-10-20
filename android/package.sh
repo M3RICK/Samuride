@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds an Android APK: SFML and the game with the NDK, packed with the SDK's build tools, signed with a
 # local debug key. No Gradle, no Java code: Android's NativeActivity runs the game.
-# For arm64 phones, and x86_64 for the emulator on a PC (see emulator.sh): each device picks its own.
+# For arm64 phones: nearly every Android phone of the last ten years.
 # Writes dist/samuride-<version>-android.apk
 #
 # Usage: android/package.sh [version]
@@ -15,7 +15,7 @@ set -euo pipefail
 
 VERSION="${1:-dev}"
 SFML_VERSION="3.1.0"
-ABIS=(arm64-v8a x86_64)
+ABIS=(arm64-v8a)     # add x86_64 to run it in Android's emulator on a PC
 MIN_SDK=26
 TARGET_SDK=34
 NDK_VERSION="27.2.12479018"
