@@ -157,9 +157,10 @@ void GameScreen::drawFlashAndCallout()
     float t = run.callout_clock.getElapsedTime().asSeconds() / CALLOUT_TIME;
     if (run.callout.empty() || t > 1)
         return;
-    // Slams in big, settles, then fades
-    float size = 150 - 40 * std::min(1.0f, t * 6);
-    canvas.glitchText(run.callout, static_cast<unsigned>(size), withAlpha(run.callout_color, static_cast<uint8_t>(255 * (1 - t * t))),
+    // Slams in big, then settles and fades. A few fixed sizes: each new font size renders its letters
+    // again, which a size changing every frame made phones stutter on.
+    unsigned int size = t < 0.06f ? 150 : t < 0.12f ? 130 : 110;
+    canvas.glitchText(run.callout, size, withAlpha(run.callout_color, static_cast<uint8_t>(255 * (1 - t * t))),
                       Screen::CENTER + sf::Vector2f(0, -120));
 }
 
