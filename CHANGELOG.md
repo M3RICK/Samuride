@@ -3,6 +3,28 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.7
+
+### New
+- **Upgrades**, in a new shop from the main menu. They apply to every runner, and they cost a lot on
+  purpose: a reward for playing a lot. **Sandevistan** +0.5 s per level, **Ultimate** charges 10
+  eddies sooner per level, **Eddie magnet** picks up eddies 1 tile further per level (3 levels each:
+  1000, 2500 and 5000 eddies), and **Subdermal armor** starts every run with a shield (5000 eddies).
+
+- **Hits you can feel.** When Mikasa's blade cuts a drone down, the world catches for a blink, the cut
+  flashes across the drone and the screen jolts. Every bullet of Jinx's Pow-Pow kicks, and the screen shakes
+  harder or lighter depending on the hit.
+
+- **Fishbones is a real shark rocket now**, with the blue flame and trail of Arcane.
+
+### Balance
+- **Fishbones charges, then kicks**: Jinx stops dead in the air for 0.6 s while the rocket charges
+  (nothing protects her meanwhile), then the recoil throws her back and she picks her pace up again.
+
+### Fixes
+- Taking a whole row of eddies at once no longer slows phones down: the eddies count up on a single
+  "+N" instead of one "+1" each, and the sounds don't pile up.
+
 ## v2.6
 
 ### New

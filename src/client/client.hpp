@@ -11,14 +11,16 @@
 #include <vector>
 
 #include "../common/protocol.hpp"
+#include "../common/upgrades.hpp"
 
 class GameState;
 
 // What the player brings to the server. District and mode: -1 when joining, the host picks.
 struct Loadout {
     int character = 0;
-    int district = -1;
+    int district = -1;      // -1 when joining: the host picks, like the mode
     int mode = -1;
+    UpgradeLevels upgrades{};
 };
 
 class Renderer;

@@ -74,6 +74,9 @@ bool Menu::handleEvent(const sf::Event &event, MenuChoice &choice)
         case MenuState::Screen::Options:
             handleOptionsEvent(event);
             return false;
+        case MenuState::Screen::Upgrades:
+            handleUpgradesEvent(event);
+            return false;
         case MenuState::Screen::Character:
             return handleCharacterEvent(event, choice);
         case MenuState::Screen::Mode:
@@ -166,6 +169,9 @@ bool Menu::activate(MenuChoice &choice)
             if (Touch::ENABLED)
                 sf::Keyboard::setVirtualKeyboardVisible(true);
             return false;
+        case MenuLayout::ITEM_UPGRADES:
+            state.screen = MenuState::Screen::Upgrades;
+            return false;
         case MenuLayout::ITEM_OPTIONS:
             state.option = 0;
             state.screen = MenuState::Screen::Options;
@@ -182,6 +188,33 @@ bool Menu::activate(MenuChoice &choice)
     pending = {choice.mode, "", 0, 0, -1};
     state.screen = MenuState::Screen::Character;
     return false;
+}
+
+//=============================================================================
+// Upgrades
+//=============================================================================
+
+// Confirming an upgrade buys its next level
+void Menu::handleUpgradesEvent(const sf::Event &event)
+{
+    if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.error.clear();
+        state.screen = MenuState::Screen::Main;
+        return;
+    }
+    if (!navigate(event, state.upgrade, UPGRADE_COUNT, UPGRADE_COUNT, MenuLayout::upgradeBox))
+        return;
+
+    Wallet &wallet = state.wallet;
+    if (wallet.buyUpgrade(state.upgrade)) {
+        wallet.save();
+        state.error.clear();
+        audio->play(Audio::Sfx::Coin);
+    } else if (wallet.upgrades[state.upgrade] >= UPGRADES[state.upgrade].max_level) {
+        state.error = "MAXED OUT";
+    } else {
+        state.error = "NOT ENOUGH EDDIES";
+    }
 }
 
 //=============================================================================

@@ -32,6 +32,9 @@ private:
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint, float time);
     void drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet);
 
+    void drawUpgrades(const MenuState &menu);
+    void drawUpgradeCard(int index, bool selected, const Wallet &wallet);
+
     void drawOptions(const MenuState &menu);
     void drawOptionRow(int index, const MenuState &menu);
     void drawVolumeBar(int row, int volume, sf::Vector2f right, bool selected);

@@ -21,6 +21,7 @@ struct PlayerAnim {
     sf::Clock sprint_clock; // time since the Sandevistan kicked in
     bool berserk = false;
     sf::Clock berserk_clock;
+    sf::Clock shot_clock;   // since the last shot: Jinx's sprite kicks back on each bullet
 };
 
 struct Run {
@@ -36,7 +37,9 @@ struct Run {
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> attack_clocks;
+    // Camera shake: seconds left, and how far it throws the view, in pixels
     float shake = 0;
+    float shake_strength = 0;
 
     // Zappers switched off, the way the server has them: hacked for a while, or burnt for good
     struct Hack {
@@ -70,7 +73,8 @@ struct Run {
     sf::Vector2f toScreen(sf::Vector2f world) const { return view.toScreen(world); }
     float floor() const { return map.getHeight(); }
     int characterOf(int player_num) const;
-    void shakeAtLeast(float amount);
+    // The stronger of the current shake and this one: a light one doesn't cut a big one short
+    void shakeAtLeast(float seconds, float strength = 12);
 
     // Seconds before a hacked zapper node is live again, 0 when it is
     float hackLeft(int x, int y) const;

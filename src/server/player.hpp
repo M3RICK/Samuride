@@ -10,6 +10,7 @@
 #include "../common/shift.hpp"
 #include "../common/powerups.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/upgrades.hpp"
 
 class Player {
 private:
@@ -28,6 +29,7 @@ private:
     bool jet_active;
     int character;
     bool introduced;            // sent MSG_CONNECT: the character is the one picked
+    UpgradeLevels upgrades;     // bought in the shop, sent with MSG_CONNECT
     float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
     Form form;
     float form_timer;           // seconds left in the current form
@@ -37,8 +39,10 @@ private:
     float grace_timer;          // seconds of invincibility left after a shield broke
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
-    int ultimate_charge;        // eddies earned since the last ultimate, up to ULTIMATE_CHARGE
+    int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)
     int spears;                 // Mikasa's thunder spears left
+    float charge_timer;         // seconds left charging Fishbones: standing still in the air
+    float recoil_timer;         // seconds of Fishbones' recoil left
     int burst_left;             // Pow-Pow bullets still to come in this burst
     float burst_timer;          // seconds before the next one
     std::set<std::pair<int, int>> collected_coins;
@@ -83,8 +87,12 @@ public:
     void startShift();
     void addScore(int points);
     int getUltimateCharge() const { return ultimate_charge; }
-    bool ultimateReady() const { return ultimate_charge >= ULTIMATE_CHARGE; }
+    bool ultimateReady() const { return ultimate_charge >= ultimateCharge(upgrades); }
+    // The gauge, in percent of what this player needs
+    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(upgrades); }
     void spendUltimate() { ultimate_charge = 0; }
+    // Charges, then the recoil once it fires
+    void startFishbones() { charge_timer = FISHBONES_CHARGE_TIME; }
     void startBurst(int bullets) { burst_left = bullets; burst_timer = MINIGUN_BURST_GAP; }
     // True when the next bullet of the burst is due this tick
     bool burstShotDue(float dt);
@@ -99,6 +107,8 @@ public:
 
     int getCharacter() const { return character; }
     void setCharacter(int id) { character = id; introduced = true; }
+    void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
+    const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
 
     bool isJetActive() const { return jet_active; }

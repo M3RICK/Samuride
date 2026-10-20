@@ -47,6 +47,13 @@ constexpr float FISHBONES_SPEED = 40;       // tiles per second, not on top of t
 constexpr float FISHBONES_RANGE = 30;       // tiles from where it was fired
 constexpr float FISHBONES_HALF_HEIGHT = 2.5f;   // tiles razed above and below its line
 
+// She stops dead and hangs in the air while it charges, then fires: its recoil throws her back, she
+// runs backward at FISHBONES_RECOIL_PUSH times the run speed, then picks her pace back up over
+// FISHBONES_RECOIL_TIME. Nothing protects her while she charges.
+constexpr float FISHBONES_CHARGE_TIME = 0.6f;
+constexpr float FISHBONES_RECOIL_TIME = 0.5f;
+constexpr float FISHBONES_RECOIL_PUSH = 0.8f;
+
 // Rows of the band Fishbones razes, around its line at y
 inline std::pair<int, int> fishbonesRows(float y)
 {

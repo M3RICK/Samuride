@@ -205,9 +205,49 @@ static void testUltimate()
         fired += jinx.burstShotDue(1 / 60.f);
     assert(fired == MINIGUN_BURST - 1);
 
+    // Fishbones: Jinx stands still while it charges, its recoil throws her back, then she runs again
+    Player thrown(-1);
+    thrown.reset(2, 4);
+    thrown.startFishbones();
+    thrown.update(FISHBONES_CHARGE_TIME / 2, 10, 8);
+    assert(thrown.getX() == 0 && thrown.getY() == 4);
+    thrown.update(FISHBONES_CHARGE_TIME / 2 + 0.01f, 10, 8);
+    thrown.update(0.1f, 10, 8);
+    assert(thrown.getX() < 0);
+    thrown.update(FISHBONES_RECOIL_TIME, 10, 8);
+    float before = thrown.getX();
+    thrown.update(0.1f, 10, 8);
+    assert(thrown.getX() > before + 0.99f);
+
     // Fishbones razes 5 rows around its line
     auto [top, bottom] = fishbonesRows(5);
     assert(top == 2 && bottom == 7);
+}
+
+// Upgrades: bought level by level up to their max, and felt by the player once sent to the server
+static void testUpgrades()
+{
+    Wallet wallet;
+    wallet.eddies = 3600;
+    assert(wallet.buyUpgrade(UPGRADE_SANDEVISTAN) && wallet.buyUpgrade(UPGRADE_SANDEVISTAN));
+    assert(wallet.eddies == 100 && wallet.upgrades[UPGRADE_SANDEVISTAN] == 2);
+    assert(!wallet.buyUpgrade(UPGRADE_SANDEVISTAN) && !wallet.buyUpgrade(UPGRADE_COUNT));
+    wallet.eddies = 100000;
+    assert(wallet.buyUpgrade(UPGRADE_SHIELD) && !wallet.buyUpgrade(UPGRADE_SHIELD));
+
+    UpgradeLevels levels{};
+    levels[UPGRADE_SANDEVISTAN] = 2;
+    levels[UPGRADE_ULTIMATE] = 3;
+    levels[UPGRADE_SHIELD] = 1;
+    Player player(-1);
+    player.setUpgrades(levels);
+    player.reset(0, 0);
+    assert(player.hasShield());
+    player.powerUp(SANDEVISTAN_TILE);
+    player.update(SANDEVISTAN_TIME + 0.5f, 10, 8);
+    assert(player.isSprinting());
+    player.addScore(ULTIMATE_CHARGE - 3 * ULTIMATE_CHARGE_PER_LEVEL);
+    assert(player.ultimateReady() && player.ultimatePercent() == 100);
 }
 
 // Runners are bought in order, with enough eddies
@@ -239,6 +279,7 @@ int main()
     testHack();
     testUltimate();
     testWallet();
+    testUpgrades();
     std::cout << "All tests passed" << std::endl;
     return 0;
 }

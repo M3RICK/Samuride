@@ -1,10 +1,11 @@
 // Eddies earned over every run, spent on unlocking the runners one after the other (their prices are in
-// common/runners.hpp), and the districts
+// common/runners.hpp), the districts, and the upgrades (common/upgrades.hpp)
 
 #ifndef WALLET_HPP
     #define WALLET_HPP
 
 #include <vector>
+#include "../common/upgrades.hpp"
 
 // Price of each district, in MenuLayout order: The Corridor, Worlds Collide, Night City, The Walls, Zaun,
 // Both Worlds. 0 is free; the others are bought in any order.
@@ -14,6 +15,7 @@ struct Wallet {
     int eddies = 0;
     int unlocked = 1;   // the first `unlocked` characters are playable
     int districts = 0;  // bit i: district i was bought
+    UpgradeLevels upgrades{};
 
     // Kept in the platform's data directory, next to the settings
     static Wallet load();
@@ -28,6 +30,9 @@ struct Wallet {
     bool hasDistrict(int district) const;
     // Returns whether it was bought
     bool buyDistrict(int district);
+
+    // The next level, when it isn't maxed and the eddies are there; returns whether it was bought
+    bool buyUpgrade(int upgrade);
 };
 
 #endif

@@ -71,6 +71,7 @@ private:
         float speed;
         int top;
         int bottom;
+        float delay = 0;    // seconds before it sets off: Fishbones charges first
     };
 
     // David's nuke, falling
@@ -185,6 +186,8 @@ private:
     void updatePlayers();
 
     bool checkPlayerCollisions(Player &player);
+
+    void attractCoins(Player &player);
 
     void sendGameState();
 

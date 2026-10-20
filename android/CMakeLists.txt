@@ -27,5 +27,10 @@ target_link_libraries(samuride PRIVATE SFML::Graphics SFML::Audio android log)
 # SFML::Main's ANativeActivity_onCreate must end up in the library: it is what Android calls
 target_link_libraries(samuride PUBLIC -Wl,--whole-archive SFML::Main -Wl,--no-whole-archive)
 
+# SHOW_FPS=1 android/docker.sh: a frame counter in a corner, for performance checks
+if(SHOW_FPS)
+    target_compile_definitions(samuride PRIVATE SAMURIDE_SHOW_FPS)
+endif()
+
 # Android 15 devices can use 16 KB pages
 target_link_options(samuride PRIVATE "-Wl,-z,max-page-size=16384")

@@ -33,7 +33,9 @@ void Server::handleUltimate(int client_fd)
             break;
         case Ultimate::Fishbones: {
             auto [top, bottom] = fishbonesRows(line);
-            sweeps.push_back({client_fd, start, start, FISHBONES_RANGE, FISHBONES_SPEED, top, bottom});
+            sweeps.push_back({client_fd, start, start, FISHBONES_RANGE, FISHBONES_SPEED, top, bottom,
+                              FISHBONES_CHARGE_TIME});
+            player.startFishbones();
             break;
         }
         case Ultimate::Nuke:
@@ -54,6 +56,10 @@ void Server::handleUltimate(int client_fd)
 void Server::updateUltimates()
 {
     for (Sweep &sweep : sweeps) {
+        if (sweep.delay > 0) {
+            sweep.delay -= TICK_DT;
+            continue;
+        }
         float front = std::min(sweep.start + sweep.range, sweep.front + sweep.speed * TICK_DT);
         scorch(sweep.owner_fd, sweep.front, front, sweep.start - 1, sweep.top, sweep.bottom);
         sweep.front = front;

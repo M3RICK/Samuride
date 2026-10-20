@@ -15,7 +15,7 @@ public:
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
         Stomp, Roar, Steam,                                         // titans and the Attack Titan
         Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
-        FireWave, Nuke, Breach, UltimateReady,                      // ultimates
+        FireWave, Nuke, Breach, Charge, UltimateReady,              // ultimates
     };
 
     Audio();
@@ -39,6 +39,9 @@ private:
     std::map<Sfx, sf::SoundBuffer> buffers;
     std::vector<sf::Sound> voices;     // played round-robin so effects can overlap
     size_t next_voice = 0;
+    // A sound started again within this is skipped: twenty coins in one frame ring as one
+    static constexpr float REPEAT_GAP = 0.04f;
+    std::map<Sfx, sf::Clock> last_played;
 
     sf::SoundBuffer jet_buffer;
     std::optional<sf::Sound> jet;

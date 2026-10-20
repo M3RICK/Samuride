@@ -348,7 +348,30 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         preview.save(Path(debug_dir) / f"{name}_grid.png")
 
 
+# Single pictures drawn on a black background: (source, destination, height in pixels, mirror)
+PICTURES = [
+    # Jinx's Fishbones, nose to the right like it flies
+    ("sources/fishbones.png", "jinx/fishbones.png", 96, True),
+]
+
+
+def prepare_picture(source, destination, height, mirror):
+    """Black background made transparent (softly, to keep dark edges), cropped, scaled without smoothing."""
+    px = np.array(Image.open(ROOT / source).convert("RGBA")).astype(int)
+    brightness = px[..., :3].max(axis=2)
+    px[..., 3] = np.clip((brightness - 25) * 255 // 35, 0, 255)
+    picture = Image.fromarray(px.astype(np.uint8))
+    picture = picture.crop(picture.getchannel("A").point(lambda a: 255 if a > ALPHA else 0).getbbox())
+    if mirror:
+        picture = ImageOps.mirror(picture)
+    width = round(picture.width * height / picture.height)
+    picture.resize((width, height), Image.NEAREST).save(ROOT / destination)
+    print(f"{destination}: {width}x{height}")
+
+
 if __name__ == "__main__":
+    for source, destination, height, mirror in PICTURES:
+        prepare_picture(source, destination, height, mirror)
     debug = sys.argv[1] if len(sys.argv) > 1 else None
     for name, (sheet, portrait, anims, *options) in CHARACTERS.items():
         slice_character(name, sheet, portrait, anims, options[0] if options else {}, debug)

@@ -53,6 +53,18 @@ private:
     std::vector<SpeedLine> speed_lines;
     std::vector<ActiveEffect> effects;
     int drones_down = 0;
+    // Mikasa's blade biting: the world freezes for a blink (hit-stop) and the cut shows on the drone
+    static constexpr float HIT_STOP = 0.035f;   // felt, not seen: longer breaks the run's rhythm
+    static constexpr float CUT_TIME = 0.25f;
+    float hit_stop = 0;         // seconds of freeze left
+    struct Cut {
+        sf::Vector2f pos;       // in tiles
+        sf::Clock age;
+    };
+    std::vector<Cut> cuts;
+    int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
+    sf::Clock coin_clock;       // since the last one
+    sf::Vector2f last_coin;     // where it was, in tiles
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes
@@ -66,6 +78,7 @@ private:
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
+    float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -84,6 +97,7 @@ private:
     void drawSpeedLines();
     void addEffect(const CollisionEffect &effect, int me);
     void drawEffects();
+    void drawCuts();
 
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);

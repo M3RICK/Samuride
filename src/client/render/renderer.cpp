@@ -1,6 +1,8 @@
 // Everything drawn on screen: owns the window and the assets, hands each frame to the menu or the run
 
 #include "renderer.hpp"
+#include <algorithm>
+#include <format>
 
 Renderer::Renderer()
     : menu_screens(canvas, sprites, backdrops), game_screen(canvas, sprites, backdrops, audio),
@@ -61,5 +63,22 @@ void Renderer::endFrame()
 
     window.setView(canvas.screenView());
     window.draw(scanlines);
+#ifdef SAMURIDE_SHOW_FPS
+    drawFrameStats();
+#endif
     window.display();
+}
+
+void Renderer::drawFrameStats()
+{
+    stats_frames++;
+    stats_worst = std::max(stats_worst, stats_frame.restart().asSeconds());
+
+    if (stats_second.getElapsedTime().asSeconds() >= 1) {
+        stats_label = std::format("{} FPS   SLOWEST {} MS", stats_frames, static_cast<int>(stats_worst * 1000));
+        stats_frames = 0;
+        stats_worst = 0;
+        stats_second.restart();
+    }
+    canvas.text(stats_label, 26, Palette::NEON_GREEN, {24, Screen::HEIGHT - 20}, {0, 1});
 }

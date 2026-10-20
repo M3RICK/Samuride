@@ -5,14 +5,18 @@
 #include "canvas.hpp"
 #include "particles.hpp"
 #include "run.hpp"
+#include "sprites.hpp"
 #include "../audio.hpp"
 #include <algorithm>
 #include <cmath>
 
 using namespace Palette;
 
-Ultimates::Ultimates(Canvas &canvas, Run &run, Audio &audio, Particles &particles)
-    : canvas(canvas), run(run), audio(audio), particles(particles) {
+// Fishbones' flame and trail: the blue of Arcane
+static const sf::Color FISHBONES_BLUE(40, 150, 255);
+
+Ultimates::Ultimates(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio, Particles &particles)
+    : canvas(canvas), sprites(sprites), run(run), audio(audio), particles(particles) {
 }
 
 void Ultimates::clear()
@@ -48,9 +52,9 @@ void Ultimates::start(const UltimateEvent &ultimate)
         particles.emit(body + sf::Vector2f(0.8f, 0), 30, NEON_YELLOW, 8, 0.3f, 0);
         nukes.push_back({ultimate.x, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::Fishbones) {
-        audio.play(Audio::Sfx::Rocket);
-        run.flashScreen(NEON_PINK, 0.25f);
-        rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, sf::Clock()});
+        // She charges it first, standing still: it fires in drawRockets
+        audio.play(Audio::Sfx::Charge);
+        rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::ThunderSpears) {
         audio.play(Audio::Sfx::Thunder);
         run.flashScreen(NEON_CYAN, 0.25f);
@@ -188,18 +192,43 @@ void Ultimates::drawNukes()
     });
 }
 
-// A big shark rocket along Jinx's line, leaving a razed pink band behind, and a blast at the end
+// Jinx's shark rocket along her line, in the blue of Arcane, leaving a razed band behind and a blast
+// at the end
 void Ultimates::drawRockets()
 {
     static constexpr float FADE_TIME = 0.6f;
+    static constexpr float ROCKET_HEIGHT = 0.75f;   // in tiles: the shark is about 4 tiles long
     float tile_size = run.view.tile_size;
 
     for (Rocket &rocket : rockets) {
         float front = rocket.front();
         auto [top, bottom] = fishbonesRows(rocket.y);
         float flight = FISHBONES_RANGE / FISHBONES_SPEED;
-        float t = rocket.age.getElapsedTime().asSeconds();
+        float t = rocket.flying();
         float fade = std::clamp(1 - (t - flight) / FADE_TIME, 0.0f, 1.0f);
+
+        // Charging: a pink glow swelling at the muzzle, sparks pulled into it, the screen shaking harder
+        if (t < 0) {
+            float k = 1 + t / FISHBONES_CHARGE_TIME;
+            sf::Vector2f muzzle(rocket.start, rocket.y);
+            canvas.halo(run.toScreen(muzzle), tile_size * (0.3f + 0.9f * k), withAlpha(FISHBONES_BLUE, static_cast<uint8_t>(90 + 120 * k)));
+            canvas.halo(run.toScreen(muzzle), tile_size * 0.35f * k, withAlpha(sf::Color::White, 200));
+            for (int i = 0; i < 3; i++) {
+                float angle = randf(0, 6.2832f);
+                sf::Vector2f from = muzzle + sf::Vector2f(std::cos(angle), std::sin(angle)) * 1.6f;
+                particles.emit(from, 1, i ? FISHBONES_BLUE : sf::Color::White, 0.5f, 0.25f, 0, (muzzle - from) * 4.f);
+            }
+            run.shakeAtLeast(0.05f, 3 + 12 * k);
+            continue;
+        }
+        // Fired: the flash, the big jolt of the recoil throwing her back (server's Player::update)
+        if (!rocket.launched) {
+            rocket.launched = true;
+            audio.play(Audio::Sfx::Rocket);
+            run.flashScreen(FISHBONES_BLUE, 0.3f);
+            run.shakeAtLeast(0.6f, 28);
+            particles.emit({rocket.start, rocket.y}, 40, FISHBONES_BLUE, 9, 0.4f, 0);
+        }
 
         run.burnZappers(rocket.burnt_to, front, top, bottom);
         rocket.burnt_to = front;
@@ -209,28 +238,34 @@ void Ultimates::drawRockets()
         sf::Vector2f to = run.toScreen({front, static_cast<float>(bottom + 1)});
         sf::RectangleShape band(to - from);
         band.setPosition(from);
-        band.setFillColor(withAlpha(NEON_PINK, static_cast<uint8_t>(35 * fade)));
+        band.setFillColor(withAlpha(FISHBONES_BLUE, static_cast<uint8_t>(35 * fade)));
         canvas.draw(band, sf::BlendAdd);
 
         if (t < flight) {
+            // The shark itself, nose first, its blue flame trailing; sparks and a glow behind it
             sf::Vector2f nose = run.toScreen({front, rocket.y});
-            sf::RectangleShape body({tile_size * 2.4f, tile_size * 0.8f});
-            body.setOrigin({body.getSize().x, body.getSize().y / 2});
-            body.setPosition(nose);
-            body.setFillColor(NEON_PINK);
-            canvas.draw(body);
-            canvas.halo(nose, tile_size * 0.9f, withAlpha(NEON_PINK, 120));
-            particles.emit({front - 2.4f, rocket.y}, 4, NEON_ORANGE, 3, 0.4f, 0);
+            sf::Vector2f size(sprites.fishbones.getSize());
+            if (size.y > 0) {
+                float scale = tile_size * ROCKET_HEIGHT / size.y;
+                sf::Sprite shark(sprites.fishbones);
+                shark.setOrigin({size.x, size.y / 2});
+                shark.setScale({scale, scale});
+                shark.setPosition(nose + sf::Vector2f(0, randf(-2, 2)));
+                canvas.draw(shark);
+            }
+            float tail = front - ROCKET_HEIGHT * size.x / std::max(1.0f, size.y);
+            canvas.halo(run.toScreen({tail, rocket.y}), tile_size * 1.1f, withAlpha(FISHBONES_BLUE, 110));
+            particles.emit({tail, rocket.y}, 4, FISHBONES_BLUE, 3, 0.4f, 0);
         } else if (!rocket.blown) {
             rocket.blown = true;
             audio.play(Audio::Sfx::Explosion);
             run.shakeAtLeast(0.4f);
-            particles.emit({front, rocket.y}, 60, NEON_PINK, 10, 0.7f, 0);
-            particles.emit({front, rocket.y}, 30, NEON_ORANGE, 8, 0.6f, 0);
+            particles.emit({front, rocket.y}, 60, FISHBONES_BLUE, 10, 0.7f, 0);
+            particles.emit({front, rocket.y}, 30, sf::Color::White, 8, 0.6f, 0);
         }
     }
     std::erase_if(rockets, [](const Rocket &rocket) {
-        return rocket.age.getElapsedTime().asSeconds() > FISHBONES_RANGE / FISHBONES_SPEED + FADE_TIME;
+        return rocket.flying() > FISHBONES_RANGE / FISHBONES_SPEED + FADE_TIME;
     });
 }
 

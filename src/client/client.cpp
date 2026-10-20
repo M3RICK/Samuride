@@ -56,15 +56,16 @@ bool Client::connectToServer(int timeout_ms)
     return true;
 }
 
+// [runner][district][mode][upgrade levels...]; when joining, the host's district and mode apply
 void Client::sendConnectMessage()
 {
-    std::vector<uint8_t> payload = { static_cast<uint8_t>(loadout.character) };
+    bool joining = loadout.district < 0 || loadout.mode < 0;
+    std::vector<uint8_t> payload = {static_cast<uint8_t>(loadout.character),
+                                    joining ? NOT_PICKED : static_cast<uint8_t>(loadout.district),
+                                    joining ? NOT_PICKED : static_cast<uint8_t>(loadout.mode)};
 
-    // Nothing more when joining: the host's district and mode apply
-    if (loadout.district >= 0 && loadout.mode >= 0) {
-        payload.push_back(loadout.district);
-        payload.push_back(loadout.mode);
-    }
+    for (int level : loadout.upgrades)
+        payload.push_back(level);
     sendToServer(Protocol::createPacket(MSG_CONNECT, payload));
 }
 

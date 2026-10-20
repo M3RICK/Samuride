@@ -17,6 +17,7 @@ void Sprites::load()
     // Pixel art: scaled up without smoothing
     loadTexture(drone, "assets/drone/drone.png", false);
     loadTexture(hack_target, "assets/lucy/target.png");
+    loadTexture(fishbones, "assets/jinx/fishbones.png", false);
 
     characters.resize(RUNNER_COUNT);
     for (int i = 0; i < RUNNER_COUNT; i++) {

@@ -195,6 +195,7 @@ bool Server::checkPlayerCollisions(Player &player)
     }
     if (player.getForm() == Form::Shifting)
         return false;
+    attractCoins(player);
 
     for (float dy : {0.3f, 1.0f, 1.7f}) {
         float py = player.getY() + dy;
@@ -227,6 +228,23 @@ bool Server::checkPlayerCollisions(Player &player)
     return false;
 }
 
+// The eddie magnet upgrade: eddies within its reach of the body are picked up too
+void Server::attractCoins(Player &player)
+{
+    int reach = magnetReach(player.getUpgrades());
+    int left = static_cast<int>(player.getX()) - reach;
+    int right = static_cast<int>(player.getX() + 1) + reach;
+    int top = std::max(0, static_cast<int>(player.getY()) - reach);
+    int bottom = static_cast<int>(player.getY() + Player::HEIGHT) + reach;
+
+    for (int x = std::max(0, left); reach > 0 && x <= right; x++) {
+        for (int y = top; y <= bottom; y++) {
+            if (game_map.getTile(x, y) == COIN_TILE && player.collectCoin(x, y))
+                notifyCollision(COIN_TILE, player, x, y);
+        }
+    }
+}
+
 void Server::sendGameState()
 {
     std::vector<uint8_t> state_data;
@@ -241,7 +259,7 @@ void Server::sendGameState()
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
                              player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
-        state_data.push_back(player.getUltimateCharge() * 100 / ULTIMATE_CHARGE);
+        state_data.push_back(player.ultimatePercent());
         state_data.push_back(player.getSpears());
     }
 

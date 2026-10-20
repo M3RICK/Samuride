@@ -15,7 +15,7 @@ GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
       titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
-      ultimates(canvas, run, audio, particles) {
+      ultimates(canvas, sprites, run, audio, particles) {
 }
 
 void GameScreen::draw(GameState &state, Phase phase, bool connected, float dt)
@@ -69,10 +69,14 @@ void GameScreen::resetRun()
     shown_backdrop = -1;
     heard_countdown = -1;
     drones_down = 0;
+    hit_stop = 0;
+    cuts.clear();
+    coin_streak = 0;
     new_record = false;
     best_distance = loadBestDistance();
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
+    sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
 // Solo runs chase the personal best
@@ -111,9 +115,13 @@ void GameScreen::bankEddies(GameState &state)
 void GameScreen::update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
 {
     run.roster = state.getCharacters();
-    run.follow(players, me, dt);
-    updateSpeedLines(dt);
-    particles.update(dt);
+
+    // A hit-stop freezes the world: the runners, the sparks and the wind hold still for a blink
+    float world_dt = hit_stop > 0 ? 0 : dt;
+    hit_stop -= dt;
+    run.follow(players, me, world_dt);
+    updateSpeedLines(world_dt);
+    particles.update(world_dt);
 
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
@@ -143,11 +151,12 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     update(state, players, me, dt);
     updateSounds(state, phase, players, me);
 
-    // World view shakes when someone gets zapped, the HUD doesn't
+    // The world view shakes on hits and blasts, the HUD doesn't. It eases out over its last 0.15 s.
     sf::View ui_view = canvas.screenView();
     sf::View world_view = ui_view;
     if (run.shake > 0) {
-        world_view.move({randf(-12, 12), randf(-12, 12)});
+        float strength = run.shake_strength * std::min(1.0f, run.shake / 0.15f);
+        world_view.move({randf(-strength, strength), randf(-strength, strength)});
         run.shake -= dt;
     }
 
@@ -163,6 +172,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     runners.draw(players, me, phase == Phase::Running);
     ultimates.draw();
     shots.draw();
+    drawCuts();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -263,13 +273,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 
     if (effect.type == ZAPPER_TILE) {
         audio.play(Audio::Sfx::Zap);
-        run.shake = 0.5f;
+        run.shakeAtLeast(0.5f, 18);
         run.death_clocks.try_emplace(effect.player);
         particles.emit(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.type == TITAN_HIT) {
         audio.play(Audio::Sfx::Stomp);
-        run.shake = 0.6f;
+        run.shakeAtLeast(0.6f, 22);
         run.death_clocks.try_emplace(effect.player);
         particles.emit(tile_center, 40, NEON_RED, 9, 0.7f, 12);
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
@@ -281,8 +291,17 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center + sf::Vector2f(0, -3), 20, NEON_RED, 6, 0.6f, 8);
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
-        run.shakeAtLeast(0.15f);
         drones_down += effect.player == me;
+        // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
+        if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
+            hit_stop = HIT_STOP;
+            cuts.push_back({tile_center, sf::Clock()});
+            run.shakeAtLeast(0.15f, 16);
+            particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
+        } else {
+            run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
+        }
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
@@ -313,13 +332,37 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
     } else if (effect.player == me) {
+        // A row of eddies taken at once counts up on one "+N", where the last one was
+        if (coin_clock.getElapsedTime().asSeconds() > EFFECT_DURATION)
+            coin_streak = 0;
+        coin_streak++;
+        coin_clock.restart();
+        last_coin = tile_center;
         audio.play(Audio::Sfx::Coin);
-        particles.emit(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
-        particles.emit(tile_center, 6, NEON_YELLOW, 3, 0.35f, 0);
+        particles.emit(tile_center, 6, NEON_PINK, 5, 0.45f, 0);
+        particles.emit(tile_center, 2, NEON_YELLOW, 3, 0.35f, 0);
     } else {
         return;
     }
     effects.push_back({effect, sf::Clock(), effect.player == me});
+}
+
+// The cut of Mikasa's blade across a drone: a white slash that stretches out, then thins and fades
+void GameScreen::drawCuts()
+{
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(cuts, [](const Cut &cut) { return cut.age.getElapsedTime().asSeconds() > CUT_TIME; });
+    for (const Cut &cut : cuts) {
+        float t = cut.age.getElapsedTime().asSeconds() / CUT_TIME;
+        sf::RectangleShape slash({tile_size * (1.0f + 1.2f * std::min(1.0f, t * 4)), tile_size * 0.12f * (1 - t)});
+        slash.setOrigin(slash.getSize() / 2.f);
+        slash.setPosition(run.toScreen(cut.pos));
+        slash.setRotation(sf::degrees(-30));
+        slash.setFillColor(withAlpha(sf::Color::White, static_cast<uint8_t>(255 * (1 - t))));
+        canvas.draw(slash, sf::BlendAdd);
+        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(NEON_CYAN, static_cast<uint8_t>(120 * (1 - t))));
+    }
 }
 
 void GameScreen::drawEffects()
@@ -328,15 +371,20 @@ void GameScreen::drawEffects()
         return e.clock.getElapsedTime().asSeconds() > EFFECT_DURATION;
     });
 
+    // Your eddies: one "+N" floating up, not a text per coin (dozens of them made phones stutter)
+    float since_coin = coin_clock.getElapsedTime().asSeconds() / EFFECT_DURATION;
+    if (coin_streak > 0 && since_coin < 1)
+        canvas.text(std::format("+{}", coin_streak), 34, withAlpha(NEON_CYAN, static_cast<uint8_t>(255 * (1 - since_coin))),
+                    run.toScreen(last_coin + sf::Vector2f(0, -0.5f - since_coin)));
+
     for (const ActiveEffect &active : effects) {
         float t = active.clock.getElapsedTime().asSeconds() / EFFECT_DURATION;
         auto alpha = static_cast<uint8_t>(255 * (1 - t));
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
         if (active.effect.type == COIN_TILE) {
-            // Coin pops: swells and fades out while +1 floats up
+            // Coin pops: swells and fades out
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
-            canvas.text("+1", 30, withAlpha(NEON_CYAN, alpha), run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
             // Blast ring, and the bounty for whoever took it down
             bool titan = active.effect.type == TITAN_KILL;

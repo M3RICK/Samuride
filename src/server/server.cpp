@@ -212,19 +212,28 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
     }
 }
 
-// Optional payload: the character the player picked, then the district and the mode.
-// District and mode are the first player's call: the host, who launched the server.
-// Only heard in the lobby: sent again during a run, it would rebuild the map under the players.
+// Payload: the runner picked, the district and the mode (NOT_PICKED when joining: the host picks),
+// then the upgrade levels (see docs/PROTOCOL.md). District and mode are the first player's call: the
+// host, who launched the server. Only heard in the lobby: sent again during a run, it would rebuild
+// the map under the players.
 void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
 {
     DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
 
     if (phase != Phase::Waiting)
         return;
-    players.at(client_fd).setCharacter(payload.empty() ? 0 : payload[0]);
+    Player &player = players.at(client_fd);
+    player.setCharacter(payload.empty() ? 0 : payload[0]);
+
+    // The upgrade levels, each kept within what the shop sells
+    UpgradeLevels levels{};
+    for (int i = 0; i < UPGRADE_COUNT && 3 + i < static_cast<int>(payload.size()); i++)
+        levels[i] = std::min<int>(payload[3 + i], UPGRADES[i].max_level);
+    player.setUpgrades(levels);
+
     if (players.size() != 1)
         return;
-    if (payload.size() >= 2)
+    if (payload.size() >= 2 && payload[1] != NOT_PICKED)
         district = payload[1];
 
     // CYBERPSYCHO needs a map with drones
