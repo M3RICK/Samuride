@@ -76,7 +76,7 @@ cd samuride-*-linux-x86_64
 ./Samuride
 ```
 
-Windows, macOS and Linux players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
+Windows, macOS, Linux and Android players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
 
 ## Build
 

@@ -113,7 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The SDK, the NDK and SFML built for Android: half an hour of work, done once
+      # The SDK, the NDK and SFML built for Android: the long part, done once
       - uses: actions/cache@v4
         with:
           path: build/android/sdk
