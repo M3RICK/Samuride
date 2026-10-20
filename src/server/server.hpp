@@ -71,6 +71,7 @@ private:
         float speed;
         int top;
         int bottom;
+        float delay = 0;    // seconds before it sets off: Fishbones charges first
     };
 
     // David's nuke, falling

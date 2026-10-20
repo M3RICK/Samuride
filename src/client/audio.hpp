@@ -15,7 +15,7 @@ public:
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
         Stomp, Roar, Steam,                                         // titans and the Attack Titan
         Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
-        FireWave, Nuke, Breach, UltimateReady,                      // ultimates
+        FireWave, Nuke, Breach, Charge, UltimateReady,              // ultimates
     };
 
     Audio();

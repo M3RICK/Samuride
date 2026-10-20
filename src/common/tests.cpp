@@ -205,10 +205,13 @@ static void testUltimate()
         fired += jinx.burstShotDue(1 / 60.f);
     assert(fired == MINIGUN_BURST - 1);
 
-    // Fishbones' recoil throws Jinx back, then she runs again
+    // Fishbones: Jinx stands still while it charges, its recoil throws her back, then she runs again
     Player thrown(-1);
-    thrown.reset(2, 0);
-    thrown.startRecoil();
+    thrown.reset(2, 4);
+    thrown.startFishbones();
+    thrown.update(FISHBONES_CHARGE_TIME / 2, 10, 8);
+    assert(thrown.getX() == 0 && thrown.getY() == 4);
+    thrown.update(FISHBONES_CHARGE_TIME / 2 + 0.01f, 10, 8);
     thrown.update(0.1f, 10, 8);
     assert(thrown.getX() < 0);
     thrown.update(FISHBONES_RECOIL_TIME, 10, 8);

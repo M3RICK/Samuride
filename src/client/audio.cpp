@@ -2,6 +2,7 @@
 
 #include "audio.hpp"
 #include "../common/debug.hpp"
+#include "../common/ultimates.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -181,6 +182,9 @@ void Audio::synthesize()
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Johnny's fire wave: a roaring blast
     buffers[Sfx::FireWave] = toBuffer(mix(burst(1.0f, 0.5f, 0.15f), tone(Wave::Saw, 160, 50, 0.9f, 0.25f)));
+    // Fishbones charging: a whine climbing for as long as the charge lasts
+    buffers[Sfx::Charge] = toBuffer(mix(tone(Wave::Saw, 180, 1400, FISHBONES_CHARGE_TIME, 0.18f),
+                                        tone(Wave::Square, 90, 700, FISHBONES_CHARGE_TIME, 0.08f)));
     // David's nuke: a deep, long blast
     buffers[Sfx::Nuke] = toBuffer(mix(burst(1.4f, 0.6f, 0.05f), tone(Wave::Sine, 90, 25, 1.4f, 0.5f)));
     // Mikasa's thunder spears: a sharp crack, then the rumble

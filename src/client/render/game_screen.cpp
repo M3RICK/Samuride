@@ -69,6 +69,8 @@ void GameScreen::resetRun()
     shown_backdrop = -1;
     heard_countdown = -1;
     drones_down = 0;
+    hit_stop = 0;
+    cuts.clear();
     coin_streak = 0;
     new_record = false;
     best_distance = loadBestDistance();
@@ -113,9 +115,13 @@ void GameScreen::bankEddies(GameState &state)
 void GameScreen::update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
 {
     run.roster = state.getCharacters();
-    run.follow(players, me, dt);
-    updateSpeedLines(dt);
-    particles.update(dt);
+
+    // A hit-stop freezes the world: the runners, the sparks and the wind hold still for a blink
+    float world_dt = hit_stop > 0 ? 0 : dt;
+    hit_stop -= dt;
+    run.follow(players, me, world_dt);
+    updateSpeedLines(world_dt);
+    particles.update(world_dt);
 
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
@@ -166,6 +172,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     runners.draw(players, me, phase == Phase::Running);
     ultimates.draw();
     shots.draw();
+    drawCuts();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -287,8 +294,11 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         drones_down += effect.player == me;
         // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
         if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
-            run.shakeAtLeast(0.2f, 20);
-            particles.emit(tile_center, 18, sf::Color::White, 10, 0.3f, 0);
+            hit_stop = HIT_STOP;
+            cuts.push_back({tile_center, sf::Clock()});
+            run.flashScreen(sf::Color(110, 110, 110), 0.08f);    // a blink, not a glare: she cuts often
+            run.shakeAtLeast(0.25f, 28);
+            particles.emit(tile_center, 24, sf::Color::White, 12, 0.3f, 0);
         } else {
             run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
         }
@@ -335,6 +345,24 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         return;
     }
     effects.push_back({effect, sf::Clock(), effect.player == me});
+}
+
+// The cut of Mikasa's blade across a drone: a white slash that stretches out, then thins and fades
+void GameScreen::drawCuts()
+{
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(cuts, [](const Cut &cut) { return cut.age.getElapsedTime().asSeconds() > CUT_TIME; });
+    for (const Cut &cut : cuts) {
+        float t = cut.age.getElapsedTime().asSeconds() / CUT_TIME;
+        sf::RectangleShape slash({tile_size * (1.2f + 1.6f * std::min(1.0f, t * 4)), tile_size * 0.16f * (1 - t)});
+        slash.setOrigin(slash.getSize() / 2.f);
+        slash.setPosition(run.toScreen(cut.pos));
+        slash.setRotation(sf::degrees(-30));
+        slash.setFillColor(withAlpha(sf::Color::White, static_cast<uint8_t>(255 * (1 - t))));
+        canvas.draw(slash, sf::BlendAdd);
+        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(NEON_CYAN, static_cast<uint8_t>(120 * (1 - t))));
+    }
 }
 
 void GameScreen::drawEffects()

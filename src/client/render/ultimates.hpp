@@ -29,10 +29,12 @@ private:
         float start;        // in tiles
         float y;            // its line
         float burnt_to;     // the zappers of its band are out up to here
+        bool launched = false;
         bool blown = false;
-        sf::Clock age;
+        sf::Clock age;      // charging first, then flying
 
-        float front() const { return start + std::min(FISHBONES_RANGE, FISHBONES_SPEED * age.getElapsedTime().asSeconds()); }
+        float flying() const { return age.getElapsedTime().asSeconds() - FISHBONES_CHARGE_TIME; }
+        float front() const { return start + std::clamp(FISHBONES_SPEED * flying(), 0.0f, FISHBONES_RANGE); }
     };
 
     // David's ultimate on screen: the shell flying, then the blast

@@ -48,10 +48,9 @@ void Ultimates::start(const UltimateEvent &ultimate)
         particles.emit(body + sf::Vector2f(0.8f, 0), 30, NEON_YELLOW, 8, 0.3f, 0);
         nukes.push_back({ultimate.x, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::Fishbones) {
-        audio.play(Audio::Sfx::Rocket);
-        run.flashScreen(NEON_PINK, 0.25f);
-        run.shakeAtLeast(0.6f, 26);   // the recoil throws her back (server's Player::update)
-        rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, sf::Clock()});
+        // She charges it first, standing still: it fires in drawRockets
+        audio.play(Audio::Sfx::Charge);
+        rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::ThunderSpears) {
         audio.play(Audio::Sfx::Thunder);
         run.flashScreen(NEON_CYAN, 0.25f);
@@ -199,8 +198,31 @@ void Ultimates::drawRockets()
         float front = rocket.front();
         auto [top, bottom] = fishbonesRows(rocket.y);
         float flight = FISHBONES_RANGE / FISHBONES_SPEED;
-        float t = rocket.age.getElapsedTime().asSeconds();
+        float t = rocket.flying();
         float fade = std::clamp(1 - (t - flight) / FADE_TIME, 0.0f, 1.0f);
+
+        // Charging: a pink glow swelling at the muzzle, sparks pulled into it, the screen shaking harder
+        if (t < 0) {
+            float k = 1 + t / FISHBONES_CHARGE_TIME;
+            sf::Vector2f muzzle(rocket.start, rocket.y);
+            canvas.halo(run.toScreen(muzzle), tile_size * (0.3f + 0.9f * k), withAlpha(NEON_PINK, static_cast<uint8_t>(90 + 120 * k)));
+            canvas.halo(run.toScreen(muzzle), tile_size * 0.35f * k, withAlpha(sf::Color::White, 200));
+            for (int i = 0; i < 3; i++) {
+                float angle = randf(0, 6.2832f);
+                sf::Vector2f from = muzzle + sf::Vector2f(std::cos(angle), std::sin(angle)) * 1.6f;
+                particles.emit(from, 1, i ? NEON_PINK : sf::Color::White, 0.5f, 0.25f, 0, (muzzle - from) * 4.f);
+            }
+            run.shakeAtLeast(0.05f, 3 + 12 * k);
+            continue;
+        }
+        // Fired: the flash, the big jolt of the recoil throwing her back (server's Player::update)
+        if (!rocket.launched) {
+            rocket.launched = true;
+            audio.play(Audio::Sfx::Rocket);
+            run.flashScreen(NEON_PINK, 0.3f);
+            run.shakeAtLeast(0.6f, 28);
+            particles.emit({rocket.start, rocket.y}, 40, NEON_PINK, 9, 0.4f, 0);
+        }
 
         run.burnZappers(rocket.burnt_to, front, top, bottom);
         rocket.burnt_to = front;
@@ -231,7 +253,7 @@ void Ultimates::drawRockets()
         }
     }
     std::erase_if(rockets, [](const Rocket &rocket) {
-        return rocket.age.getElapsedTime().asSeconds() > FISHBONES_RANGE / FISHBONES_SPEED + FADE_TIME;
+        return rocket.flying() > FISHBONES_RANGE / FISHBONES_SPEED + FADE_TIME;
     });
 }
 

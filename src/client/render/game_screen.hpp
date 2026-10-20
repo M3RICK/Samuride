@@ -53,6 +53,15 @@ private:
     std::vector<SpeedLine> speed_lines;
     std::vector<ActiveEffect> effects;
     int drones_down = 0;
+    // Mikasa's blade biting: the world freezes for a blink (hit-stop) and the cut shows on the drone
+    static constexpr float HIT_STOP = 0.08f;
+    static constexpr float CUT_TIME = 0.25f;
+    float hit_stop = 0;         // seconds of freeze left
+    struct Cut {
+        sf::Vector2f pos;       // in tiles
+        sf::Clock age;
+    };
+    std::vector<Cut> cuts;
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
@@ -88,6 +97,7 @@ private:
     void drawSpeedLines();
     void addEffect(const CollisionEffect &effect, int me);
     void drawEffects();
+    void drawCuts();
 
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
