@@ -229,7 +229,7 @@ void Client::handleUltimate(const std::vector<uint8_t> &payload)
 
 void Client::handleGameState(const std::vector<uint8_t> &payload)
 {
-    for (size_t pos = 0; pos + 12 <= payload.size(); pos += 12) {
+    for (size_t pos = 0; pos + 13 <= payload.size(); pos += 13) {
         const uint8_t *p = payload.data() + pos;
 
         // Last byte: bit 0 jetpack, bits 1-2 form, bit 3 shield, bit 4 Sandevistan, bits 5-6 RAM, bit 7 Berserk
@@ -244,7 +244,8 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
             (p[9] >> 5) & 3,
             (p[9] & 128) != 0,
             p[10],
-            p[11]});
+            p[11],
+            (p[12] & 1) != 0});
     }
 }
 

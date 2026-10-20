@@ -107,7 +107,7 @@ Sent when the input changes, not every frame.
 
 ### `MSG_GAME_STATE`
 
-A 12-byte record per player, 60 times per second:
+A 13-byte record per player, 60 times per second:
 
 | Bytes | Field |
 | --- | --- |
@@ -118,6 +118,7 @@ A 12-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan |
 
 ### `MSG_COLLISION`
 

@@ -262,6 +262,8 @@ void Server::sendGameState()
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
         state_data.push_back(player.getSpears());
+        // bit 0: a second of grace (shield broken, Sandevistan or titan over)
+        state_data.push_back(player.isGracing() ? 1 : 0);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

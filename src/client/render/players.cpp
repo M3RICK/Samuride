@@ -132,6 +132,8 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
+    else if (player.grace && std::fmod(canvas.time(), 0.16f) < 0.08f)
+        sprite.setColor(sf::Color(255, 255, 255, 60));
     else if (!is_me)
         sprite.setColor(sf::Color(255, 255, 255, 215));
     canvas.draw(sprite);

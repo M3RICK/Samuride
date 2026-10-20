@@ -12,6 +12,7 @@ taken from this file. Players on different versions can't play together: update 
   after bursting out of the titan.
 
 ### Other
+- **You blink while you can't be hurt**, for the second after a broken shield, the Sandevistan or the titan.
 - **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
   were.
 

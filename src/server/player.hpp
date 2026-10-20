@@ -79,6 +79,7 @@ public:
     Form getForm() const { return form; }
     bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
     bool hasShield() const { return shield; }
+    bool isGracing() const { return grace_timer > 0; }
     bool isSprinting() const { return sprint_timer > 0; }
     bool isBerserk() const { return berserk_timer > 0; }
     void powerUp(char tile);
