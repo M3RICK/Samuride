@@ -33,9 +33,9 @@ void InputManager::processInputs()
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
             fingers[touch->finger] = pos;
             confirm_pressed = true;     // a tap is a rematch, once a game is over
-            if (Touch::on(Touch::ATTACK, pos))
+            if (onButton(Touch::ATTACK, pos))
                 pressAttack();
-            else if (Touch::on(Touch::ULTIMATE, pos))
+            else if (onButton(Touch::ULTIMATE, pos))
                 client->sendUltimate();
         } else if (const auto *moved = event->getIf<sf::Event::TouchMoved>()) {
             fingers[moved->finger] = window->mapPixelToCoords(moved->position);
@@ -73,9 +73,15 @@ void InputManager::pressAttack()
 void InputManager::pollTouches(bool &thrust, bool &attack_down) const
 {
     for (const auto &[finger, pos] : fingers) {
-        if (Touch::on(Touch::ATTACK, pos))
+        if (onButton(Touch::ATTACK, pos))
             attack_down = true;
-        else if (!Touch::on(Touch::ULTIMATE, pos))
+        else if (!onButton(Touch::ULTIMATE, pos))
             thrust = true;
     }
+}
+
+// The buttons are only there in CYBERPSYCHO on phones: elsewhere their spot is the jetpack too
+bool InputManager::onButton(sf::Vector2f button, sf::Vector2f pos) const
+{
+    return Touch::ENABLED && client->combatRun() && Touch::on(button, pos);
 }

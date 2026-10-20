@@ -282,6 +282,11 @@ void Client::sendAttack(bool pressed)
     sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
 }
 
+bool Client::combatRun() const
+{
+    return game_state.getMode() == GameMode::Cyberpsycho;
+}
+
 void Client::sendUltimate()
 {
     sendToServer(Protocol::createPacket(MSG_ULTIMATE, {}));

@@ -18,6 +18,12 @@ namespace Touch {
     constexpr sf::Vector2f ATTACK{1920 - 160, 1080 - 170};
     constexpr sf::Vector2f ULTIMATE{1920 - 160, 1080 - 400};
 
+    // A help line: the keys on desktop, the gestures on phones (where the back button is Escape)
+    inline const char *hint(const char *keyboard, const char *touch)
+    {
+        return ENABLED ? touch : keyboard;
+    }
+
     // A little more than the drawn circle: fingers are fat
     inline bool on(sf::Vector2f button, sf::Vector2f pos)
     {

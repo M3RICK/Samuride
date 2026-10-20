@@ -32,6 +32,7 @@ public:
 private:
     void pressAttack();
     void pollTouches(bool &thrust, bool &attack_down) const;
+    bool onButton(sf::Vector2f button, sf::Vector2f pos) const;
 
 public:
 

@@ -218,6 +218,8 @@ void Menu::handleOptionsEvent(const sf::Event &event)
 
     if (state.option == MenuLayout::OPTION_BACK) {
         leaveOptions();
+    } else if (Touch::ENABLED && !on_volume) {
+        // Keys and fullscreen mean nothing on a phone
     } else if (state.option == MenuLayout::OPTION_FULLSCREEN) {
         state.settings.fullscreen = !state.settings.fullscreen;
         renderer->setFullscreen(state.settings.fullscreen);

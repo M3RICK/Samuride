@@ -96,14 +96,14 @@ void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
     float gauge_w = box.size.x - 116 - 20;
 
     if (player.spears > 0) {
-        canvas.text(std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
+        canvas.text(Touch::ENABLED ? std::string(look.name) : std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
         for (int i = 0; i < THUNDER_SPEARS; i++)
             drawSpearIcon(gauge_pos + sf::Vector2f(20 + i * 50, 0), 40, i < player.spears);
         return;
     }
 
     if (ready) {
-        canvas.glitchText(std::format("[{}]  {}", ultimate_key, look.name), 30, look.color,
+        canvas.glitchText(Touch::ENABLED ? std::string(look.name) + " READY" : std::format("[{}]  {}", ultimate_key, look.name), 30, look.color,
                           text_pos + sf::Vector2f(gauge_w / 2, 0));
     } else {
         canvas.text(look.name, 28, DIM_WHITE, text_pos, {0, 0.5f});
@@ -316,7 +316,9 @@ void GameScreen::drawRematchPrompt(GameState &state, bool solo)
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
     else
-        canvas.text(solo ? "[SPACE] RUN AGAIN     [ESC] MENU" : "[SPACE] REMATCH     [ESC] MENU", 32, NEON_YELLOW, pos);
+        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP: RUN AGAIN     [BACK] MENU")
+                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP: REMATCH     [BACK] MENU"),
+                    32, NEON_YELLOW, pos);
 }
 
 void GameScreen::drawConnectionLost()
@@ -325,5 +327,5 @@ void GameScreen::drawConnectionLost()
     canvas.overlay(200);
 
     canvas.glitchText("CONNECTION LOST", 110, NEON_RED, Screen::CENTER + sf::Vector2f(0, -40));
-    canvas.text("[ESC] BACK TO MENU", 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
+    canvas.text(Touch::hint("[ESC] BACK TO MENU", "[BACK] BACK TO MENU"), 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
 }
