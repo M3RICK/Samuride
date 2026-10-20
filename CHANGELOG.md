@@ -3,6 +3,25 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.5
+
+### New
+- **Ultimates** (CYBERPSYCHO). Every eddy you earn charges your ultimate, shown at the top right;
+  once it's full, it lights up and `E` (set it in Options) fires it, its name across the screen. First one: **Johnny** palms
+  his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
+  way. **David** fires his arm cannon at the ground ahead: half a second later a mini-nuke razes
+  16 tiles from floor to ceiling. **Lucy** breaches the network: every drone on screen goes down and
+  every zapper on screen goes off for 3 seconds. **Mikasa** gets 3 thunder spears, shown over her head: her next attacks
+  fly ahead, stick in the first drone or titan and blow up in a lightning column from floor to
+  ceiling. **Jinx** fires Fishbones: a big shark rocket razes a band of the corridor at her height,
+  and she can fly through it.
+
+### Balance
+- **Jinx swaps her rockets for Pow-Pow**, her minigun: bursts of three small fast bullets, and a
+  steady spray while Berserk. The rockets became her ultimate.
+- **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
+  the menu, once Johnny's greeting is over.
+
 ## v2.4
 
 ### New

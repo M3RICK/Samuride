@@ -2,6 +2,7 @@
 
 #include "game_screen.hpp"
 #include "sprites.hpp"
+#include "../audio.hpp"
 #include <algorithm>
 #include <format>
 
@@ -36,6 +37,100 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
 
     if (cyberpsycho)
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
+    if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
+        drawUltimatePanel(players.at(me), me);
+}
+
+// Top right: your portrait, your ultimate's name and a segmented gauge in its colour. Full, it lights up
+// and says which key fires it. Mikasa's thunder spears show there while she has some.
+void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
+{
+    static constexpr int SEGMENTS = 10;
+    UltimateLook look = ultimateLook(ultimateOf(run.characterOf(me)));
+    bool ready = player.ultimate >= 100;
+    float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 8);
+    sf::FloatRect box({Screen::WIDTH - 24 - 520, 20}, {520, 110});
+
+    if (ready && !ultimate_was_ready)
+        audio.play(Audio::Sfx::UltimateReady);
+    ultimate_was_ready = ready;
+
+    canvas.card(box, ready);
+    if (ready)
+        canvas.halo(box.getCenter(), 300, withAlpha(look.color, static_cast<uint8_t>(25 + 30 * pulse)));
+    canvas.image(sprites.character(run.characterOf(me)).portrait, box.position + sf::Vector2f(12, 12), 86, {0, 0},
+                 sf::Color::White);
+
+    sf::Vector2f text_pos = box.position + sf::Vector2f(116, 30);
+    sf::Vector2f gauge_pos = box.position + sf::Vector2f(116, 62);
+    float gauge_w = box.size.x - 116 - 20;
+
+    if (player.spears > 0) {
+        canvas.text(std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
+        for (int i = 0; i < THUNDER_SPEARS; i++)
+            drawSpearIcon(gauge_pos + sf::Vector2f(20 + i * 50, 0), 40, i < player.spears);
+        return;
+    }
+
+    if (ready) {
+        canvas.glitchText(std::format("[{}]  {}", ultimate_key, look.name), 30, look.color,
+                          text_pos + sf::Vector2f(gauge_w / 2, 0));
+    } else {
+        canvas.text(look.name, 28, DIM_WHITE, text_pos, {0, 0.5f});
+        canvas.text(std::format("{}%", player.ultimate), 24, HINT_GREY, box.position + sf::Vector2f(box.size.x - 20, 30),
+                    {1, 0.5f});
+    }
+
+    float segment_w = gauge_w / SEGMENTS;
+    for (int i = 0; i < SEGMENTS; i++) {
+        bool lit = player.ultimate >= (i + 1) * 100 / SEGMENTS;
+        sf::RectangleShape segment({segment_w - 6, 30});
+        segment.setPosition(gauge_pos + sf::Vector2f(i * segment_w, 0));
+        segment.setFillColor(lit ? withAlpha(look.color, ready ? static_cast<uint8_t>(170 + 85 * pulse) : 220)
+                                 : sf::Color(255, 255, 255, 30));
+        canvas.draw(segment);
+    }
+}
+
+// A thunder spear standing up: shaft and head, hollow once thrown
+void GameScreen::drawSpearIcon(sf::Vector2f pos, float height, bool loaded)
+{
+    sf::Color color = loaded ? NEON_CYAN : sf::Color(255, 255, 255, 50);
+
+    sf::RectangleShape shaft({6, height * 0.7f});
+    shaft.setPosition(pos + sf::Vector2f(-3, height * 0.3f));
+    shaft.setFillColor(color);
+    canvas.draw(shaft);
+
+    sf::ConvexShape head(3);
+    head.setPoint(0, pos);
+    head.setPoint(1, pos + sf::Vector2f(-9, height * 0.32f));
+    head.setPoint(2, pos + sf::Vector2f(9, height * 0.32f));
+    head.setFillColor(loaded ? sf::Color::White : color);
+    canvas.draw(head);
+    if (loaded)
+        canvas.halo(pos + sf::Vector2f(0, height / 2), height * 0.6f, withAlpha(NEON_CYAN, 50));
+}
+
+// An ultimate's screen flash, and its name across the middle of the screen for a moment
+void GameScreen::drawFlashAndCallout()
+{
+    static constexpr float CALLOUT_TIME = 1.3f;
+    float flash = 1 - run.flash.clock.getElapsedTime().asSeconds() / run.flash.duration;
+
+    if (flash > 0 && run.flash.color.a > 0) {
+        sf::RectangleShape cover({Screen::WIDTH, Screen::HEIGHT});
+        cover.setFillColor(withAlpha(run.flash.color, static_cast<uint8_t>(200 * flash)));
+        canvas.draw(cover, sf::BlendAdd);
+    }
+
+    float t = run.callout_clock.getElapsedTime().asSeconds() / CALLOUT_TIME;
+    if (run.callout.empty() || t > 1)
+        return;
+    // Slams in big, settles, then fades
+    float size = 150 - 40 * std::min(1.0f, t * 6);
+    canvas.glitchText(run.callout, static_cast<unsigned>(size), withAlpha(run.callout_color, static_cast<uint8_t>(255 * (1 - t * t))),
+                      Screen::CENTER + sf::Vector2f(0, -120));
 }
 
 // Portrait, then "YOU   12 EDDIES", a hexagon while shielded, and Lucy's RAM in CYBERPSYCHO

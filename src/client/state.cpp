@@ -13,6 +13,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     mode = run_mode;
     destroyed_drones.clear();
     pending_shots.clear();
+    pending_ultimates.clear();
     titans.clear();
     phase = Phase::Countdown;
     countdown = 0;
@@ -118,6 +119,13 @@ void GameState::pushShot(ShotEvent shot)
     pending_shots.push_back(shot);
 }
 
+void GameState::pushUltimate(UltimateEvent ultimate)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    pending_ultimates.push_back(ultimate);
+}
+
 void GameState::setTitans(std::vector<TitanState> list)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
@@ -151,6 +159,13 @@ std::vector<ShotEvent> GameState::takeShots()
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return std::exchange(pending_shots, {});
+}
+
+std::vector<UltimateEvent> GameState::takeUltimates()
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return std::exchange(pending_ultimates, {});
 }
 
 int GameState::getDistrict() const

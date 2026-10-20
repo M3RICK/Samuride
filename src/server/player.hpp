@@ -37,6 +37,10 @@ private:
     float grace_timer;          // seconds of invincibility left after a shield broke
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
+    int ultimate_charge;        // eddies earned since the last ultimate, up to ULTIMATE_CHARGE
+    int spears;                 // Mikasa's thunder spears left
+    int burst_left;             // Pow-Pow bullets still to come in this burst
+    float burst_timer;          // seconds before the next one
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
@@ -77,7 +81,16 @@ public:
     // Returns true when the shield took the hit
     bool absorbHit();
     void startShift();
-    void addScore(int points) { score += points; }
+    void addScore(int points);
+    int getUltimateCharge() const { return ultimate_charge; }
+    bool ultimateReady() const { return ultimate_charge >= ULTIMATE_CHARGE; }
+    void spendUltimate() { ultimate_charge = 0; }
+    void startBurst(int bullets) { burst_left = bullets; burst_timer = MINIGUN_BURST_GAP; }
+    // True when the next bullet of the burst is due this tick
+    bool burstShotDue(float dt);
+    int getSpears() const { return spears; }
+    void giveSpears() { spears = THUNDER_SPEARS; }
+    void useSpear() { spears--; }
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }

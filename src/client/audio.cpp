@@ -146,10 +146,12 @@ Audio::Audio()
 void Audio::loadMusic()
 {
     // Johnny's greeting: once per visit to the menu, see greet()
-    if (!menu_music.openFromFile("assets/music/waiting_screen.wav"))
-        DEBUG_LOG("Failed to load the menu music");
+    if (!greeting.openFromFile("assets/music/waiting_screen.wav"))
+        DEBUG_LOG("Failed to load Johnny's greeting");
 
-    if (game_music.openFromFile("assets/music/ingame.wav"))
+    if (menu_music.openFromFile("assets/music/menu.wav"))
+        menu_music.setLooping(true);
+    if (game_music.openFromFile("assets/music/run.mp3"))
         game_music.setLooping(true);
 }
 
@@ -167,10 +169,26 @@ void Audio::synthesize()
 
     // CYBERPSYCHO weapons and drones
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
+    // Ultimate ready: a bright rising arpeggio
+    buffers[Sfx::UltimateReady] = toBuffer(concat(concat(tone(Wave::Square, 660, 660, 0.08f, 0.18f),
+                                                         tone(Wave::Square, 880, 880, 0.08f, 0.18f)),
+                                                  tone(Wave::Square, 1320, 1320, 0.2f, 0.18f)));
+    // Pow-Pow: short and sharp, it fires 8 times a second
+    buffers[Sfx::Minigun] = toBuffer(tone(Wave::Square, 900, 450, 0.04f, 0.1f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
     // Berserk: a low growl revving up
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
+    // Johnny's fire wave: a roaring blast
+    buffers[Sfx::FireWave] = toBuffer(mix(burst(1.0f, 0.5f, 0.15f), tone(Wave::Saw, 160, 50, 0.9f, 0.25f)));
+    // David's nuke: a deep, long blast
+    buffers[Sfx::Nuke] = toBuffer(mix(burst(1.4f, 0.6f, 0.05f), tone(Wave::Sine, 90, 25, 1.4f, 0.5f)));
+    // Mikasa's thunder spears: a sharp crack, then the rumble
+    buffers[Sfx::Thunder] = toBuffer(concat(burst(0.08f, 0.6f, 0.95f), mix(burst(0.6f, 0.35f, 0.1f),
+                                                                             tone(Wave::Saw, 140, 45, 0.6f, 0.2f))));
+    // Lucy's breach: a long stuttering sweep of data
+    buffers[Sfx::Breach] = toBuffer(concat(tone(Wave::Square, 300, 2400, 0.25f, 0.15f),
+                                           mix(tone(Wave::Square, 2400, 200, 0.4f, 0.12f), burst(0.4f, 0.2f, 0.9f))));
     // Lucy's hack: a glitchy data chirp
     buffers[Sfx::Hack] = toBuffer(concat(tone(Wave::Square, 2400, 800, 0.06f, 0.12f),
                                          tone(Wave::Square, 600, 1800, 0.1f, 0.12f)));
@@ -189,22 +207,26 @@ void Audio::synthesize()
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
 }
 
-// The in-game track loops during runs; out of them only the menu greeting plays
+// One track loops in the runs, another out of them once Johnny's greeting is over
 void Audio::playMusic(bool in_game)
 {
-    if (!in_game) {
-        game_music.stop();
+    sf::Music &wanted = in_game ? game_music : menu_music;
+    sf::Music &other = in_game ? menu_music : game_music;
+
+    other.stop();
+    if (in_game)
+        greeting.stop();
+    else if (greeting.getStatus() == sf::SoundSource::Status::Playing)
         return;
-    }
-    menu_music.stop();
-    if (game_music.getStatus() != sf::SoundSource::Status::Playing)
-        game_music.play();
+    if (wanted.getStatus() != sf::SoundSource::Status::Playing)
+        wanted.play();
 }
 
 void Audio::greet()
 {
     menu_music.stop();
-    menu_music.play();
+    greeting.stop();
+    greeting.play();
 }
 
 void Audio::play(Sfx sfx)
@@ -216,10 +238,11 @@ void Audio::play(Sfx sfx)
     voice.play();
 }
 
-// The in-game track and the jetpack sit a little under the rest of their group
+// The tracks and the jetpack sit a little under the rest of their group
 void Audio::setVolumes(int music, int sfx)
 {
-    menu_music.setVolume(music);
+    greeting.setVolume(music);
+    menu_music.setVolume(music * 0.8f);
     game_music.setVolume(music * 0.8f);
 
     for (sf::Sound &voice : voices)

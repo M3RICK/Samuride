@@ -56,6 +56,7 @@ private:
         float speed;
         float max_x;
         float radius;
+        bool spear = false;     // Mikasa's: blows up where it stops
     };
 
     ServerConfig config;
@@ -80,7 +81,28 @@ private:
 
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
-    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again
+    // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
+    struct Sweep {
+        int owner_fd;
+        float start;    // in tiles
+        float front;
+        float range;
+        float speed;
+        int top;
+        int bottom;
+    };
+
+    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
+    std::vector<Sweep> sweeps;
+
+    // David's ultimate, falling
+    struct Nuke {
+        int owner_fd;
+        float impact;   // x where it lands, in tiles
+        float timer;    // seconds before it does
+    };
+
+    std::vector<Nuke> nukes;
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
@@ -175,6 +197,8 @@ private:
 
     void handleAttack(int client_fd);
 
+    void fireProjectile(int client_fd, const Player &player, Weapon weapon);
+
     void strike(int client_fd, const Player &player, float reach);
 
     bool hack(int client_fd, Player &player);
@@ -183,9 +207,21 @@ private:
 
     bool projectileHit(const Projectile &shot, float from_x);
 
+    float spearHit(const Projectile &shot, float from_x) const;
+
+    void spearBlast(int owner_fd, float x);
+
     bool isLiveDrone(int x, int y) const;
 
     void destroyDrone(int owner_fd, int x, int y);
+
+    void handleUltimate(int client_fd);
+
+    void updateUltimates();
+
+    void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
+
+    void breach(int owner_fd, float start);
 
     //===========================================================================
     // Titans (titans.cpp)

@@ -39,6 +39,8 @@ Settings Settings::load()
             settings.jetpack_key = static_cast<sf::Keyboard::Key>(value);
         else if (key == "attack_key")
             settings.attack_key = static_cast<sf::Keyboard::Key>(value);
+        else if (key == "ultimate_key")
+            settings.ultimate_key = static_cast<sf::Keyboard::Key>(value);
         else if (key == "fullscreen")
             settings.fullscreen = value != 0;
     }
@@ -52,6 +54,7 @@ void Settings::save() const
               "sfx_volume " + std::to_string(sfx_volume) + "\n" +
               "jetpack_key " + std::to_string(static_cast<int>(jetpack_key)) + "\n" +
               "attack_key " + std::to_string(static_cast<int>(attack_key)) + "\n" +
+              "ultimate_key " + std::to_string(static_cast<int>(ultimate_key)) + "\n" +
               "fullscreen " + std::to_string(fullscreen ? 1 : 0) + "\n");
 }
 

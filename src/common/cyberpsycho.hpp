@@ -19,7 +19,12 @@ constexpr int DRONE_BOUNTY = 5;
 // Projectiles vanish this many tiles ahead of where they were fired
 constexpr float PROJECTILE_RANGE = 22;
 
-enum class Weapon : uint8_t { Gun, Rockets, Blade, Hack };
+enum class Weapon : uint8_t { Gun, Minigun, Blade, Hack, Spear };
+
+// Jinx's Pow-Pow fires bursts of three; only in Berserk does it spray, one bullet at a time
+constexpr int MINIGUN_BURST = 3;
+constexpr float MINIGUN_BURST_GAP = 0.08f;      // seconds between the bullets of a burst
+constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berserk, before its speed-up
 
 // Lucy's hack: the first zapper or drone in her way goes quiet, for one charge of RAM. Her way is
 // HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
@@ -42,7 +47,7 @@ struct WeaponStats {
 inline Weapon weaponOf(int character)
 {
     if (character == 2)
-        return Weapon::Rockets;
+        return Weapon::Minigun;
     if (character == 3)
         return Weapon::Blade;
     if (character == 4)
@@ -53,15 +58,70 @@ inline Weapon weaponOf(int character)
 inline WeaponStats statsOf(Weapon weapon)
 {
     switch (weapon) {
-        case Weapon::Rockets:
-            return {0.6f, 18, 0, 0.9f};
+        case Weapon::Minigun:
+            return {0.6f, 32, 0, 0.35f};
         case Weapon::Blade:
             return {0.45f, 0, 2.5f, 0};
         case Weapon::Hack:
             return {0.45f, 0, HACK_RANGE, 0};
+        case Weapon::Spear:
+            return {0.45f, 28, 0, 0.6f};
         default:
             return {0.25f, 30, 0, 0.4f};
     }
+}
+
+// Ultimates (CYBERPSYCHO only): every eddy you earn charges the gauge, a full one fires your runner's.
+// None of them makes you invincible: they act on the scenery, you still steer and can die.
+enum class Ultimate : uint8_t { None, FireWave, Nuke, Breach, ThunderSpears, Fishbones };
+
+constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
+
+// Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
+constexpr float FIRE_WAVE_SPEED = 45;   // tiles per second, not on top of the run speed
+constexpr float FIRE_WAVE_RANGE = 25;   // tiles from where it started
+
+// David's arm cannon: a shell fired at the ground ahead, razing everything from floor to ceiling around
+// where it lands. Measured from where it was fired: he runs into the blast, it doesn't spare him.
+constexpr float NUKE_DELAY = 0.5f;      // seconds before it lands
+constexpr float NUKE_DISTANCE = 10;     // tiles ahead of where it was fired
+constexpr float NUKE_RADIUS = 8;        // tiles razed on each side of the impact
+
+// Lucy's network breach: every drone on screen ahead goes down, every zapper there goes off a while
+constexpr float BREACH_AHEAD = 15;      // tiles ahead of where it starts: the rest of the screen
+constexpr float BREACH_TIME = 3.0f;
+
+// Mikasa's thunder spears: her next attacks are spears, flying ahead until they stick in a drone or a
+// titan (or reach their range), then blowing up in a lightning column from floor to ceiling
+constexpr int THUNDER_SPEARS = 3;
+constexpr float SPEAR_BLAST_RADIUS = 1;     // tiles on each side of the impact
+constexpr char SPEAR_BLAST = 'l';           // collision type: a spear blew up at that column
+
+// Jinx's Fishbones: a big rocket at her height, razing a band of the corridor she can then fly through
+constexpr float FISHBONES_SPEED = 40;       // tiles per second, not on top of the run speed
+constexpr float FISHBONES_RANGE = 30;       // tiles from where it was fired
+constexpr float FISHBONES_HALF_HEIGHT = 2.5f;   // tiles razed above and below its line
+
+// Rows of the band Fishbones razes, around its line at y
+inline std::pair<int, int> fishbonesRows(float y)
+{
+    return {static_cast<int>(y - FISHBONES_HALF_HEIGHT), static_cast<int>(y + FISHBONES_HALF_HEIGHT)};
+}
+
+// Character ids follow the client's CHARACTER_DIRS; runners without one yet get None
+inline Ultimate ultimateOf(int character)
+{
+    if (character == 0)
+        return Ultimate::FireWave;
+    if (character == 1)
+        return Ultimate::Nuke;
+    if (character == 2)
+        return Ultimate::Fishbones;
+    if (character == 3)
+        return Ultimate::ThunderSpears;
+    if (character == 4)
+        return Ultimate::Breach;
+    return Ultimate::None;
 }
 
 // Every node of the zapper that has one at (x, y): the nodes linked to it, the way its beams are drawn

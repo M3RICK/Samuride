@@ -49,7 +49,7 @@ namespace MenuLayout {
     constexpr float SPACING = 85;
 
     // Options rows
-    enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_FULLSCREEN, OPTION_BACK, OPTION_COUNT };
+    enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_ULTIMATE, OPTION_FULLSCREEN, OPTION_BACK, OPTION_COUNT };
     constexpr float WIDTH = 620;
     constexpr float HEIGHT = 80;
 

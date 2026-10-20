@@ -26,12 +26,22 @@ struct PlayerState {
     bool sprinting = false;     // Sandevistan
     int ram = 0;                // Lucy's hack charges
     bool berserk = false;
+    int ultimate = 0;           // gauge, in percent
+    int spears = 0;             // Mikasa's thunder spears left
 };
 
 // Someone attacked in CYBERPSYCHO
 struct ShotEvent {
     int player;
     Weapon weapon;
+};
+
+// Someone fired their ultimate
+struct UltimateEvent {
+    int player;
+    Ultimate ultimate;
+    float x;    // where it starts, in tiles
+    float y;    // the line it follows, for Fishbones
 };
 
 struct TitanState {
@@ -62,6 +72,7 @@ private:
     GameMode mode = GameMode::Classic;
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<ShotEvent> pending_shots;
+    std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
@@ -71,6 +82,7 @@ private:
 public:
     void startCountdown(int my_number, const std::map<int, int> &roster, int district, GameMode mode);
     void pushShot(ShotEvent shot);
+    void pushUltimate(UltimateEvent ultimate);
     void setTitans(std::vector<TitanState> list);
     void setCountdown(int value);
     void updatePlayer(int player_number, const PlayerState &player);
@@ -89,6 +101,7 @@ public:
     GameMode getMode() const;
     std::set<std::pair<int, int>> getDestroyedDrones() const;
     std::vector<ShotEvent> takeShots();
+    std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();

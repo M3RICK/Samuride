@@ -271,16 +271,19 @@ void Menu::changeVolume(int delta)
     audio->play(Audio::Sfx::MenuMove);
 }
 
-// A key already used by the other action swaps with it
+// A key already used by another action swaps with it
 void Menu::bindKey(sf::Keyboard::Key key)
 {
     Settings &settings = state.settings;
-    sf::Keyboard::Key &target = state.option == MenuLayout::OPTION_JETPACK ? settings.jetpack_key : settings.attack_key;
-    sf::Keyboard::Key &other = state.option == MenuLayout::OPTION_JETPACK ? settings.attack_key : settings.jetpack_key;
+    // Same order as the option rows
+    sf::Keyboard::Key *keys[] = {&settings.jetpack_key, &settings.attack_key, &settings.ultimate_key};
+    sf::Keyboard::Key *target = keys[state.option - MenuLayout::OPTION_JETPACK];
 
-    if (key == other)
-        other = target;
-    target = key;
+    for (sf::Keyboard::Key *other : keys) {
+        if (other != target && *other == key)
+            *other = *target;
+    }
+    *target = key;
     state.waiting_for_key = false;
     audio->play(Audio::Sfx::MenuConfirm);
 }

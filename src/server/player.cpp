@@ -6,7 +6,7 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), burst_left(0), burst_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -25,6 +25,9 @@ void Player::reset(int number, float spawn_y)
     grace_timer = 0;
     ram = RAM_MAX;
     ram_timer = RAM_RECHARGE;
+    ultimate_charge = 0;
+    spears = 0;
+    burst_left = 0;
     collected_coins.clear();
 }
 
@@ -38,8 +41,15 @@ bool Player::collectCoin(int tile_x, int tile_y)
 {
     if (!takePickup(tile_x, tile_y))
         return false;
-    score++;
+    addScore(1);
     return true;
+}
+
+// Every eddy earned charges the ultimate
+void Player::addScore(int points)
+{
+    score += points;
+    ultimate_charge = std::min(ULTIMATE_CHARGE, ultimate_charge + points);
 }
 
 void Player::startShift()
@@ -119,4 +129,13 @@ void Player::update(float dt, float forward_speed, float max_y)
         y = std::clamp(y, 0.0f, max_y);
         y_velocity = 0;
     }
+}
+
+bool Player::burstShotDue(float dt)
+{
+    if (burst_left == 0 || (burst_timer -= dt) > 0)
+        return false;
+    burst_left--;
+    burst_timer = MINIGUN_BURST_GAP;
+    return true;
 }

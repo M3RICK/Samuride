@@ -30,7 +30,9 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
             if (tile == DRONE_TILE && destroyed.count({x, y}))
                 tile = droneDrop(x, y);
 
-            if (tile == 'e' && run.hackLeft(x, y) > 0)
+            if (tile == 'e' && run.burnt_zappers.count({x, y}))
+                drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.5f, sf::Color(70, 50, 45, 170));
+            else if (tile == 'e' && run.hackLeft(x, y) > 0)
                 drawHackedZapper(x, y, run.hackLeft(x, y));
             else if (tile == 'e')
                 drawZapper(x, y, time);

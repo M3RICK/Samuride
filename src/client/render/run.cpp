@@ -10,6 +10,13 @@ void Run::reset()
     death_clocks.clear();
     attack_clocks.clear();
     hacked_zappers.clear();
+    fire_waves.clear();
+    nukes.clear();
+    rockets.clear();
+    breaches.clear();
+    flash = {};
+    callout.clear();
+    burnt_zappers.clear();
     shake = 0;
     run_speed = 0;
     last_x = -1;
@@ -75,5 +82,35 @@ float Run::hackLeft(int x, int y) const
 
     if (hacked == hacked_zappers.end())
         return 0;
-    return std::max(0.0f, HACK_TIME - hacked->second.getElapsedTime().asSeconds());
+    return std::max(0.0f, hacked->second.duration - hacked->second.since.getElapsedTime().asSeconds());
+}
+
+void Run::burnZappers(float from, float to, int top, int bottom)
+{
+    bottom = std::min(bottom, static_cast<int>(map.getHeight()) - 1);
+    for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
+        for (int y = std::max(0, top); y <= bottom; y++) {
+            if (map.getTile(x, y) == 'e' && !burnt_zappers.count({x, y})) {
+                for (std::pair<int, int> node : zapperNodes(map, x, y))
+                    burnt_zappers.insert(node);
+            }
+        }
+    }
+}
+
+void Run::hackZappers(float from, float to, float duration)
+{
+    for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
+        for (int y = 0; y < static_cast<int>(map.getHeight()); y++) {
+            if (map.getTile(x, y) == 'e' && hackLeft(x, y) < duration)
+                hacked_zappers[{x, y}] = {sf::Clock(), duration};
+        }
+    }
+}
+
+void Run::announce(const UltimateLook &look)
+{
+    callout = look.name;
+    callout_color = look.color;
+    callout_clock.restart();
 }

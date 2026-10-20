@@ -198,7 +198,13 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
             break;
 
         case MSG_ATTACK:
-            handleAttack(client_fd);
+            // The key coming back up (0) doesn't attack
+            if (payload.empty() || payload[0] != 0)
+                handleAttack(client_fd);
+            break;
+
+        case MSG_ULTIMATE:
+            handleUltimate(client_fd);
             break;
 
         default:

@@ -171,6 +171,43 @@ static void testHack()
     assert(weaponOf(4) == Weapon::Hack);
 }
 
+// Every eddy charges the ultimate, up to full, and firing it empties the gauge
+static void testUltimate()
+{
+    Player johnny(-1);
+    johnny.reset(0, 0);
+    for (int i = 0; i < 3; i++)
+        johnny.collectCoin(i, 0);
+    johnny.addScore(DRONE_BOUNTY);
+    assert(johnny.getUltimateCharge() == 3 + DRONE_BOUNTY && !johnny.ultimateReady());
+    johnny.addScore(ULTIMATE_CHARGE);
+    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ULTIMATE_CHARGE);
+    johnny.spendUltimate();
+    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
+    assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::Breach);
+    assert(ultimateOf(3) == Ultimate::ThunderSpears && ultimateOf(2) == Ultimate::Fishbones && ultimateOf(9) == Ultimate::None);
+
+    Player mikasa(-1);
+    mikasa.reset(3, 0);
+    mikasa.giveSpears();
+    for (int i = 0; i < THUNDER_SPEARS; i++)
+        mikasa.useSpear();
+    assert(mikasa.getSpears() == 0);
+
+    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
+    Player jinx(-1);
+    jinx.reset(2, 0);
+    jinx.startBurst(MINIGUN_BURST - 1);
+    int fired = 0;
+    for (int tick = 0; tick < 60; tick++)
+        fired += jinx.burstShotDue(1 / 60.f);
+    assert(fired == MINIGUN_BURST - 1);
+
+    // Fishbones razes 5 rows around its line
+    auto [top, bottom] = fishbonesRows(5);
+    assert(top == 2 && bottom == 7);
+}
+
 // Runners are bought in order, with enough eddies
 static void testWallet()
 {
@@ -198,6 +235,7 @@ int main()
     testGenerator();
     testPowerUps();
     testHack();
+    testUltimate();
     testWallet();
     std::cout << "All tests passed" << std::endl;
     return 0;

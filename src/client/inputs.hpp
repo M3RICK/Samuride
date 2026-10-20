@@ -1,4 +1,4 @@
-// Keyboard: jetpack, attack, confirm and back
+// Keyboard: jetpack, attack, ultimate, confirm and back
 
 #ifndef INPUTS_HPP
     #define INPUTS_HPP
@@ -14,7 +14,9 @@ private:
     sf::Window *window;
     sf::Keyboard::Key jetpack_key;
     sf::Keyboard::Key attack_key;
+    sf::Keyboard::Key ultimate_key;
     bool jet_active;
+    bool attack_held;
 
     // Set for the frame they happened in
     bool close_requested;
