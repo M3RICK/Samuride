@@ -11,8 +11,8 @@ taken from this file. Players on different versions can't play together: update 
   eddies sooner per level, **Eddie magnet** picks up eddies 1 tile further per level (3 levels each:
   1000, 2500 and 5000 eddies), and **Subdermal armor** starts every run with a shield (5000 eddies).
 
-- **Hits you can feel.** When Mikasa's blade cuts a drone down, the world freezes for a blink, the cut
-  flashes across it and the screen jolts. Every bullet of Jinx's Pow-Pow kicks, and the screen shakes
+- **Hits you can feel.** When Mikasa's blade cuts a drone down, the world catches for a blink, the cut
+  flashes across the drone and the screen jolts. Every bullet of Jinx's Pow-Pow kicks, and the screen shakes
   harder or lighter depending on the hit.
 
 ### Balance

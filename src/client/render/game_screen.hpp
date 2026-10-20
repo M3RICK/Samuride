@@ -54,7 +54,7 @@ private:
     std::vector<ActiveEffect> effects;
     int drones_down = 0;
     // Mikasa's blade biting: the world freezes for a blink (hit-stop) and the cut shows on the drone
-    static constexpr float HIT_STOP = 0.08f;
+    static constexpr float HIT_STOP = 0.035f;   // felt, not seen: longer breaks the run's rhythm
     static constexpr float CUT_TIME = 0.25f;
     float hit_stop = 0;         // seconds of freeze left
     struct Cut {

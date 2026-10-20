@@ -294,11 +294,11 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         drones_down += effect.player == me;
         // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
         if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
             hit_stop = HIT_STOP;
             cuts.push_back({tile_center, sf::Clock()});
-            run.flashScreen(sf::Color(110, 110, 110), 0.08f);    // a blink, not a glare: she cuts often
-            run.shakeAtLeast(0.25f, 28);
-            particles.emit(tile_center, 24, sf::Color::White, 12, 0.3f, 0);
+            run.shakeAtLeast(0.15f, 16);
+            particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
         } else {
             run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
         }
@@ -355,7 +355,7 @@ void GameScreen::drawCuts()
     std::erase_if(cuts, [](const Cut &cut) { return cut.age.getElapsedTime().asSeconds() > CUT_TIME; });
     for (const Cut &cut : cuts) {
         float t = cut.age.getElapsedTime().asSeconds() / CUT_TIME;
-        sf::RectangleShape slash({tile_size * (1.2f + 1.6f * std::min(1.0f, t * 4)), tile_size * 0.16f * (1 - t)});
+        sf::RectangleShape slash({tile_size * (1.0f + 1.2f * std::min(1.0f, t * 4)), tile_size * 0.12f * (1 - t)});
         slash.setOrigin(slash.getSize() / 2.f);
         slash.setPosition(run.toScreen(cut.pos));
         slash.setRotation(sf::degrees(-30));
