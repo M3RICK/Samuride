@@ -98,6 +98,7 @@ void Player::updateForm(float dt)
         y_velocity = -MAX_VELOCITY;
     } else {
         form = Form::Normal;
+        grace_timer = END_GRACE;
     }
 }
 
@@ -125,7 +126,10 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
     if (form != Form::Shifting && !charging)
         x += forward_speed * pace * dt;
-    sprint_timer = std::max(0.0f, sprint_timer - dt);
+    if (sprint_timer > 0 && (sprint_timer -= dt) <= 0) {
+        sprint_timer = 0;
+        grace_timer = END_GRACE;
+    }
     berserk_timer = std::max(0.0f, berserk_timer - dt);
     if (form == Form::Titan) {
         y = max_y;

@@ -36,7 +36,7 @@ private:
     bool shield;
     float sprint_timer;         // seconds of Sandevistan left
     float berserk_timer;        // seconds of Berserk left
-    float grace_timer;          // seconds of invincibility left after a shield broke
+    float grace_timer;          // seconds of invincibility left after a shield broke, a sprint or a titan
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
     int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)

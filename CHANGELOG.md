@@ -5,6 +5,12 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v2.8
 
+### Balance
+- **The eddie magnet reaches less**: half a tile per level instead of one, all around you. At level 3 it
+  used to sweep almost the whole height of the screen; now it grabs the eddies you graze.
+- **A second to get clear**: you stay invincible for 1 s after the Sandevistan wears off, and 1 s more
+  after bursting out of the titan.
+
 ### Other
 - **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
   were.

@@ -24,7 +24,7 @@ struct UpgradeInfo {
 inline constexpr UpgradeInfo UPGRADES[UPGRADE_COUNT] = {
     {"SANDEVISTAN",     "+0.5 S OF SPRINT",             3, {1000, 2500, 5000}},
     {"ULTIMATE",        "CHARGES 10 EDDIES SOONER",     3, {1000, 2500, 5000}},
-    {"EDDIE MAGNET",    "PULLS EDDIES 1 TILE FURTHER",  3, {1000, 2500, 5000}},
+    {"EDDIE MAGNET",    "PULLS EDDIES 0.5 TILE FURTHER",3, {1000, 2500, 5000}},
     {"SUBDERMAL ARMOR", "START EVERY RUN SHIELDED",     1, {5000}},
 };
 
@@ -33,6 +33,7 @@ using UpgradeLevels = std::array<int, UPGRADE_COUNT>;
 
 constexpr float SANDEVISTAN_PER_LEVEL = 0.5f;
 constexpr int ULTIMATE_CHARGE_PER_LEVEL = 10;
+constexpr float MAGNET_PER_LEVEL = 0.5f;
 
 inline float sandevistanTime(const UpgradeLevels &levels)
 {
@@ -45,10 +46,10 @@ inline int ultimateCharge(const UpgradeLevels &levels)
     return ULTIMATE_CHARGE - ULTIMATE_CHARGE_PER_LEVEL * levels[UPGRADE_ULTIMATE];
 }
 
-// Eddies this many tiles away from the body are picked up too
-inline int magnetReach(const UpgradeLevels &levels)
+// Eddies whose center is this many tiles from the body are picked up too
+inline float magnetReach(const UpgradeLevels &levels)
 {
-    return levels[UPGRADE_MAGNET];
+    return MAGNET_PER_LEVEL * levels[UPGRADE_MAGNET];
 }
 
 #endif

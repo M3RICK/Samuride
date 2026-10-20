@@ -228,18 +228,19 @@ bool Server::checkPlayerCollisions(Player &player)
     return false;
 }
 
-// The eddie magnet upgrade: eddies within its reach of the body are picked up too
+// The eddie magnet upgrade: eddies whose center is within its reach of the body are picked up too.
+// A round reach, so it grabs what you graze, not the whole column.
 void Server::attractCoins(Player &player)
 {
-    int reach = magnetReach(player.getUpgrades());
-    int left = static_cast<int>(player.getX()) - reach;
-    int right = static_cast<int>(player.getX() + 1) + reach;
-    int top = std::max(0, static_cast<int>(player.getY()) - reach);
-    int bottom = static_cast<int>(player.getY() + Player::HEIGHT) + reach;
+    float reach = magnetReach(player.getUpgrades());
+    float left = player.getX();
+    float top = player.getY();
 
-    for (int x = std::max(0, left); reach > 0 && x <= right; x++) {
-        for (int y = top; y <= bottom; y++) {
-            if (game_map.getTile(x, y) == COIN_TILE && player.collectCoin(x, y))
+    for (int x = std::max(0, static_cast<int>(left - reach)); reach > 0 && x <= left + 1 + reach; x++) {
+        for (int y = std::max(0, static_cast<int>(top - reach)); y <= top + Player::HEIGHT + reach; y++) {
+            float dx = std::max({left - x - 0.5f, x + 0.5f - left - 1, 0.0f});
+            float dy = std::max({top - y - 0.5f, y + 0.5f - top - Player::HEIGHT, 0.0f});
+            if (dx * dx + dy * dy <= reach * reach && game_map.getTile(x, y) == COIN_TILE && player.collectCoin(x, y))
                 notifyCollision(COIN_TILE, player, x, y);
         }
     }
