@@ -81,5 +81,6 @@ if [ ! -f "$KEYSTORE" ]; then
 fi
 mkdir -p "$ROOT/dist"
 "$TOOLS/zipalign" -f -p 4 "$BUILD/unaligned.apk" "$BUILD/aligned.apk"
-"$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --out "$ROOT/dist/$PACKAGE.apk" "$BUILD/aligned.apk"
+# No .idsig next to the APK: that v4 signature only serves adb's incremental installs
+"$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --v4-signing-enabled false --out "$ROOT/dist/$PACKAGE.apk" "$BUILD/aligned.apk"
 echo "Packed dist/$PACKAGE.apk"
