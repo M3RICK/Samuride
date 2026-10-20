@@ -79,11 +79,12 @@ void GameScreen::drawTouchButtons(const PlayerState &player, int me)
 // the ring shows one notch per spear.
 void GameScreen::drawRunnerPanel(const PlayerState &player, int me, bool ultimate)
 {
-    static constexpr float FACE = 70;
-    static constexpr float RING = 84;
+    static constexpr float FACE = 56;
+    static constexpr float RING = 68;
     UltimateLook look = ultimateLook(ultimateOf(run.characterOf(me)));
     bool ready = player.ultimate >= 100;
-    sf::Vector2f center(Screen::WIDTH / 2, Screen::HEIGHT - 24 - RING);
+    // Low, mostly in the strip under the play area: it must not hide a trap on the floor
+    sf::Vector2f center(Screen::WIDTH / 2, Screen::HEIGHT - 6 - RING);
 
     // Fired: the gauge empties, or a spear leaves
     if ((ultimate_was_ready && !ready) || player.spears < spears_shown)
@@ -114,7 +115,7 @@ void GameScreen::drawRunnerPanel(const PlayerState &player, int me, bool ultimat
 // Cut into notches when there is more than one segment.
 void GameScreen::drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing)
 {
-    static constexpr float THICKNESS = 12;
+    static constexpr float THICKNESS = 10;
     float gap = segments > 1 ? 6 : 0;
     float span = 360.f / segments;
     float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 8);
