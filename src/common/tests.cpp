@@ -194,6 +194,15 @@ static void testUltimate()
         mikasa.useSpear();
     assert(mikasa.getSpears() == 0);
 
+    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
+    Player jinx(-1);
+    jinx.reset(2, 0);
+    jinx.startBurst(MINIGUN_BURST - 1);
+    int fired = 0;
+    for (int tick = 0; tick < 60; tick++)
+        fired += jinx.burstShotDue(1 / 60.f);
+    assert(fired == MINIGUN_BURST - 1);
+
     // Fishbones razes 5 rows around its line
     auto [top, bottom] = fishbonesRows(5);
     assert(top == 2 && bottom == 7);

@@ -4,17 +4,6 @@
 
 // CYBERPSYCHO: attacks, projectiles and drones
 
-// Pressing attacks once; holding only matters to Pow-Pow, which keeps firing (see updatePlayers)
-void Server::holdAttack(int client_fd, bool held)
-{
-    auto it = players.find(client_fd);
-
-    if (it == players.end())
-        return;
-    it->second.setAttackHeld(held);
-    if (held)
-        handleAttack(client_fd);
-}
 
 void Server::handleAttack(int client_fd)
 {
@@ -30,7 +19,18 @@ void Server::handleAttack(int client_fd)
     // Lucy only hacks when there is something to hack and RAM to do it
     if (!player.canAttack() || (weapon == Weapon::Hack && !hack(client_fd, player)))
         return;
-    player.startCooldown(stats.cooldown);
+    // Pow-Pow: a burst, the rest of it fired over the next ticks (see updatePlayers); a spray in Berserk
+    bool spray = weapon == Weapon::Minigun && player.isBerserk();
+    player.startCooldown(spray ? MINIGUN_SPRAY_COOLDOWN : stats.cooldown);
+    if (weapon == Weapon::Minigun && !spray)
+        player.startBurst(MINIGUN_BURST - 1);
+
+    if (weapon != Weapon::Blade && weapon != Weapon::Hack) {
+        if (weapon == Weapon::Spear)
+            player.useSpear();
+        fireProjectile(client_fd, player, weapon);
+        return;
+    }
 
     std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
     broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
@@ -40,13 +40,16 @@ void Server::handleAttack(int client_fd)
         slashTitans(client_fd, player, stats.reach);
         return;
     }
-    if (weapon == Weapon::Hack)
-        return;
-    if (weapon == Weapon::Spear)
-        player.useSpear();
+}
 
-    // Fired from the hip, flying ahead of the shooter
+// Fired from the hip, flying ahead of the shooter
+void Server::fireProjectile(int client_fd, const Player &player, Weapon weapon)
+{
+    WeaponStats stats = statsOf(weapon);
     float x = player.getX() + 0.9f;
+    std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
+
+    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
     projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
                            weapon == Weapon::Spear});
 }

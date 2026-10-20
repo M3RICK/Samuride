@@ -19,8 +19,12 @@ constexpr int DRONE_BOUNTY = 5;
 // Projectiles vanish this many tiles ahead of where they were fired
 constexpr float PROJECTILE_RANGE = 22;
 
-// Jinx's Pow-Pow fires as long as the attack key is held
 enum class Weapon : uint8_t { Gun, Minigun, Blade, Hack, Spear };
+
+// Jinx's Pow-Pow fires bursts of three; only in Berserk does it spray, one bullet at a time
+constexpr int MINIGUN_BURST = 3;
+constexpr float MINIGUN_BURST_GAP = 0.08f;      // seconds between the bullets of a burst
+constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berserk, before its speed-up
 
 // Lucy's hack: the first zapper or drone in her way goes quiet, for one charge of RAM. Her way is
 // HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
@@ -55,7 +59,7 @@ inline WeaponStats statsOf(Weapon weapon)
 {
     switch (weapon) {
         case Weapon::Minigun:
-            return {0.12f, 32, 0, 0.35f};
+            return {0.6f, 32, 0, 0.35f};
         case Weapon::Blade:
             return {0.45f, 0, 2.5f, 0};
         case Weapon::Hack:

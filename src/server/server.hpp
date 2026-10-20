@@ -197,7 +197,7 @@ private:
 
     void handleAttack(int client_fd);
 
-    void holdAttack(int client_fd, bool held);
+    void fireProjectile(int client_fd, const Player &player, Weapon weapon);
 
     void strike(int client_fd, const Player &player, float reach);
 

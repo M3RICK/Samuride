@@ -17,8 +17,8 @@ taken from this file. Players on different versions can't play together: update 
   and she can fly through it.
 
 ### Balance
-- **Jinx swaps her rockets for Pow-Pow**, her minigun: small fast bullets, and it keeps firing for
-  as long as you hold the attack key. The rockets became her ultimate.
+- **Jinx swaps her rockets for Pow-Pow**, her minigun: bursts of three small fast bullets, and a
+  steady spray while Berserk. The rockets became her ultimate.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
   the menu, once Johnny's greeting is over.
 

@@ -159,9 +159,9 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 
 ### `MSG_ATTACK`
 
-One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up. CYBERPSYCHO
-only (ignored otherwise). Pressing attacks once; holding keeps Jinx's minigun firing. The server
-enforces the weapon cooldown. Johnny and David shoot guns, Jinx her minigun: a projectile flies ahead at run speed plus the weapon's speed, for
+One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up, which the
+server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
+and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
 feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
