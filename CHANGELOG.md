@@ -21,7 +21,7 @@ taken from this file. Players on different versions can't play together: update 
   after bursting out of the titan.
 
 ### Other
-- **Lucy's RAM shows over her head**, where you can read it without looking away from the run.
+- **Lucy's RAM shows over her head**, as red bars like in Cyberpunk 2077, where you can read it without looking away from the run.
 - **Lucy's hack lands with a bang**: a crackling bolt from her hand to the drone (and on to the next one when
   it jumps), the drone glitching apart in purple, and a jolt of the screen.
 - **Mikasa throws her thunder spears with `E`** (the SPEAR button on phones), the key that called them: her

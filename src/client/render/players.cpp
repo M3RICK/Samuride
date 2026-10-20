@@ -144,16 +144,20 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
 
-    // Lucy's RAM, over her head where it can be read without looking away from the run
+    // Lucy's RAM, over her head where it can be read without looking away from the run: thin red bars,
+    // like the RAM units of Cyberpunk 2077, lit while loaded, hollow once spent
     if (run.cyberpsycho && weaponOf(run.characterOf(player_num)) == Weapon::Hack) {
         for (int i = 0; i < RAM_MAX; i++) {
-            sf::RectangleShape chip({20, 20});
-            chip.setOrigin({10, 10});
-            chip.setPosition(tag_pos + sf::Vector2f((i - (RAM_MAX - 1) / 2.f) * 30, -40));
-            chip.setFillColor(i < player.ram ? NEON_PURPLE : sf::Color(0, 0, 0, 120));
-            chip.setOutlineColor(i < player.ram ? sf::Color::White : NEON_PURPLE);
-            chip.setOutlineThickness(2);
-            canvas.draw(chip);
+            bool loaded = i < player.ram;
+            sf::RectangleShape unit({9, 26});
+            unit.setOrigin({4.5f, 13});
+            unit.setPosition(tag_pos + sf::Vector2f((i - (RAM_MAX - 1) / 2.f) * 15, -40));
+            unit.setFillColor(loaded ? NEON_RED : sf::Color(0, 0, 0, 120));
+            unit.setOutlineColor(withAlpha(NEON_RED, loaded ? 255 : 140));
+            unit.setOutlineThickness(2);
+            canvas.draw(unit);
+            if (loaded)
+                canvas.draw(unit, sf::BlendAdd);
         }
     }
 
