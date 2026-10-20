@@ -66,6 +66,7 @@ private:
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
+    float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;

@@ -73,6 +73,7 @@ void GameScreen::resetRun()
     best_distance = loadBestDistance();
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
+    sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
 // Solo runs chase the personal best

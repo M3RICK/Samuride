@@ -5,7 +5,7 @@
 
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0),
+      score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
       shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), burst_left(0), burst_timer(0) {
 }
 
@@ -19,7 +19,7 @@ void Player::reset(int number, float spawn_y)
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
-    shield = false;
+    shield = upgrades[UPGRADE_SHIELD] > 0;
     sprint_timer = 0;
     berserk_timer = 0;
     grace_timer = 0;
@@ -49,7 +49,7 @@ bool Player::collectCoin(int tile_x, int tile_y)
 void Player::addScore(int points)
 {
     score += points;
-    ultimate_charge = std::min(ULTIMATE_CHARGE, ultimate_charge + points);
+    ultimate_charge = std::min(ultimateCharge(upgrades), ultimate_charge + points);
 }
 
 void Player::startShift()
@@ -63,7 +63,7 @@ void Player::powerUp(char tile)
     if (tile == SHIELD_TILE)
         shield = true;
     else if (tile == SANDEVISTAN_TILE)
-        sprint_timer = SANDEVISTAN_TIME;
+        sprint_timer = sandevistanTime(upgrades);
     else if (tile == BERSERK_TILE)
         berserk_timer = BERSERK_TIME;
 }

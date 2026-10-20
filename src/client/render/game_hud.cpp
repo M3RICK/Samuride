@@ -206,7 +206,7 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
-        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME, y);
+        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / sandevistan_time, y);
         y += 80;
     }
     if (player.berserk)

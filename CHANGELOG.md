@@ -3,6 +3,14 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.7
+
+### New
+- **Upgrades**, in a new shop from the main menu. They apply to every runner, and they cost a lot on
+  purpose: a reward for playing a lot. **Sandevistan** +0.5 s per level, **Ultimate** charges 10
+  eddies sooner per level, **Eddie magnet** picks up eddies 1 tile further per level (3 levels each:
+  1000, 2500 and 5000 eddies), and **Subdermal armor** starts every run with a shield (5000 eddies).
+
 ## v2.6
 
 ### New

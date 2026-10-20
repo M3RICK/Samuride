@@ -39,12 +39,13 @@ Positions travel in hundredths of a tile.
 
 | Bytes | Field |
 | --- | --- |
-| 1, optional | Character: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy |
-| 1, optional | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds |
-| 1, optional | Mode: 0 CLASSIC, 1 CYBERPSYCHO |
+| 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy (the order of `src/common/runners.hpp`) |
+| 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
+| 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
+| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, ultimate, eddie magnet, subdermal armor |
 
 District and mode are only taken from the first player in the lobby, the host; whoever joins
-sends only a character. A game only starts once every player in the lobby sent theirs, and
+sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
 `MSG_CONNECT` is ignored outside the lobby.
 
 ### `MSG_MAP_DATA`

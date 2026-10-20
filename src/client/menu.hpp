@@ -1,4 +1,4 @@
-// Menu logic: navigation, options, character, mode and district select
+// Menu logic: navigation, options, upgrades shop, character, mode and district select
 
 #ifndef MENU_HPP
     #define MENU_HPP
@@ -24,7 +24,7 @@ struct MenuChoice {
 };
 
 struct MenuState {
-    enum class Screen { Main, Join, Options, Character, Mode, District };
+    enum class Screen { Main, Join, Options, Upgrades, Character, Mode, District };
 
     Screen screen = Screen::Main;
     int selected = 0;
@@ -32,6 +32,7 @@ struct MenuState {
     int game_mode = 0;
     int district = 0;
     int option = 0;
+    int upgrade = 0;
     bool waiting_for_key = false;   // options: the next key pressed gets bound
     Settings settings;
     std::string address = "127.0.0.1:4242";
@@ -42,11 +43,11 @@ struct MenuState {
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)
 namespace MenuLayout {
-    constexpr const char *ITEMS[] = {"SOLO RUN", "HOST A RUN", "JOIN A RUN", "OPTIONS", "JACK OUT"};
-    enum Item { ITEM_SOLO, ITEM_HOST, ITEM_JOIN, ITEM_OPTIONS, ITEM_QUIT, ITEM_COUNT };
+    constexpr const char *ITEMS[] = {"SOLO RUN", "HOST A RUN", "JOIN A RUN", "UPGRADES", "OPTIONS", "JACK OUT"};
+    enum Item { ITEM_SOLO, ITEM_HOST, ITEM_JOIN, ITEM_UPGRADES, ITEM_OPTIONS, ITEM_QUIT, ITEM_COUNT };
     constexpr float X = 1380;
-    constexpr float Y = 440;
-    constexpr float SPACING = 85;
+    constexpr float Y = 410;
+    constexpr float SPACING = 80;
 
     // Options rows
     enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_ULTIMATE, OPTION_FULLSCREEN, OPTION_BACK, OPTION_COUNT };
@@ -103,6 +104,12 @@ namespace MenuLayout {
         return centeredBox({x, CARD_Y}, {CARD_WIDTH, CARD_HEIGHT});
     }
 
+    // Upgrades shop: one card each, in a row
+    inline sf::FloatRect upgradeBox(int index)
+    {
+        return centeredBox({960 + (index - 1.5f) * 440, 580}, {400, 480});
+    }
+
     inline sf::FloatRect districtBox(int index)
     {
         float x = 960 + (index % DISTRICT_COLUMNS - 1) * 490.0f;
@@ -127,6 +134,7 @@ private:
     void bindKey(sf::Keyboard::Key key);
     void leaveOptions();
     void handleJoinEvent(const sf::Event &event);
+    void handleUpgradesEvent(const sf::Event &event);
     bool handleCharacterEvent(const sf::Event &event, MenuChoice &choice);
     void buyCharacter();
     void handleModeEvent(const sf::Event &event);

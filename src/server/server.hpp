@@ -186,6 +186,8 @@ private:
 
     bool checkPlayerCollisions(Player &player);
 
+    void attractCoins(Player &player);
+
     void sendGameState();
 
     void handlePlayerInput(int client_fd, bool jet_activated);

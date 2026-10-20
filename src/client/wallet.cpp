@@ -28,6 +28,11 @@ Wallet Wallet::load()
             wallet.unlocked = std::clamp(value, 1, RUNNER_COUNT);
         else if (key == "districts")
             wallet.districts = value;
+        // "upgrade_<n> <level>"
+        for (int i = 0; i < UPGRADE_COUNT; i++) {
+            if (key == "upgrade_" + std::to_string(i))
+                wallet.upgrades[i] = std::clamp(value, 0, UPGRADES[i].max_level);
+        }
     }
     return wallet;
 }
@@ -37,7 +42,11 @@ void Wallet::save() const
     std::error_code ec;
 
     std::filesystem::create_directories(walletPath().parent_path(), ec);
-    std::ofstream(walletPath()) << "eddies " << eddies << "\nunlocked " << unlocked << "\ndistricts " << districts << "\n";
+    std::ofstream file(walletPath());
+
+    file << "eddies " << eddies << "\nunlocked " << unlocked << "\ndistricts " << districts << "\n";
+    for (int i = 0; i < UPGRADE_COUNT; i++)
+        file << "upgrade_" << i << " " << upgrades[i] << "\n";
 }
 
 void Wallet::earn(int amount)
@@ -72,5 +81,20 @@ bool Wallet::buyDistrict(int district)
 
     eddies -= DISTRICT_PRICES[district];
     districts |= 1 << district;
+    return true;
+}
+
+bool Wallet::buyUpgrade(int upgrade)
+{
+    if (upgrade < 0 || upgrade >= UPGRADE_COUNT)
+        return false;
+
+    int &level = upgrades[upgrade];
+    const UpgradeInfo &info = UPGRADES[upgrade];
+    if (level >= info.max_level || eddies < info.prices[level])
+        return false;
+
+    eddies -= info.prices[level];
+    level++;
     return true;
 }

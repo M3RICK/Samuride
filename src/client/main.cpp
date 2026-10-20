@@ -154,7 +154,7 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
         bool hosting = choice.mode == MenuChoice::Mode::Host;
         renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + Socket::lanAddress() + ":" + std::to_string(HOST_PORT) : "");
 
-        Loadout loadout = {choice.character, choice.district, choice.game_mode};
+        Loadout loadout = {choice.character, choice.district, choice.game_mode, Wallet::load().upgrades};
         if (play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected)
             == Client::RunResult::Quit)
             return;

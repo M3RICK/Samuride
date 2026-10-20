@@ -30,6 +30,9 @@ struct MessageHeader {
     uint8_t payload_size[3];
 };
 
+// MSG_CONNECT: no district nor mode, when joining someone else's run
+constexpr uint8_t NOT_PICKED = 0xFF;
+
 // Positions travel in 1/100th of a tile
 constexpr float POSITION_SCALE = 100.0f;
 
