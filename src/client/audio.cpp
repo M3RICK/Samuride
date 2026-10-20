@@ -146,10 +146,12 @@ Audio::Audio()
 void Audio::loadMusic()
 {
     // Johnny's greeting: once per visit to the menu, see greet()
-    if (!menu_music.openFromFile("assets/music/waiting_screen.wav"))
-        DEBUG_LOG("Failed to load the menu music");
+    if (!greeting.openFromFile("assets/music/waiting_screen.wav"))
+        DEBUG_LOG("Failed to load Johnny's greeting");
 
-    if (game_music.openFromFile("assets/music/ingame.wav"))
+    if (menu_music.openFromFile("assets/music/menu.wav"))
+        menu_music.setLooping(true);
+    if (game_music.openFromFile("assets/music/run.mp3"))
         game_music.setLooping(true);
 }
 
@@ -189,22 +191,23 @@ void Audio::synthesize()
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
 }
 
-// The in-game track loops during runs; out of them only the menu greeting plays
+// One track loops in the runs, another out of them, under Johnny's greeting
 void Audio::playMusic(bool in_game)
 {
-    if (!in_game) {
-        game_music.stop();
-        return;
-    }
-    menu_music.stop();
-    if (game_music.getStatus() != sf::SoundSource::Status::Playing)
-        game_music.play();
+    sf::Music &wanted = in_game ? game_music : menu_music;
+    sf::Music &other = in_game ? menu_music : game_music;
+
+    other.stop();
+    if (in_game)
+        greeting.stop();
+    if (wanted.getStatus() != sf::SoundSource::Status::Playing)
+        wanted.play();
 }
 
 void Audio::greet()
 {
-    menu_music.stop();
-    menu_music.play();
+    greeting.stop();
+    greeting.play();
 }
 
 void Audio::play(Sfx sfx)
@@ -216,10 +219,11 @@ void Audio::play(Sfx sfx)
     voice.play();
 }
 
-// The in-game track and the jetpack sit a little under the rest of their group
+// The tracks and the jetpack sit a little under the rest of their group; the menu track under Johnny
 void Audio::setVolumes(int music, int sfx)
 {
-    menu_music.setVolume(music);
+    greeting.setVolume(music);
+    menu_music.setVolume(music * 0.5f);
     game_music.setVolume(music * 0.8f);
 
     for (sf::Sound &voice : voices)

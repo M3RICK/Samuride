@@ -26,8 +26,9 @@ public:
 private:
     static constexpr size_t VOICES = 12;
 
-    sf::Music menu_music;
-    sf::Music game_music;
+    sf::Music greeting;     // Johnny's line, once per visit to the menu
+    sf::Music menu_music;   // loops out of the runs
+    sf::Music game_music;   // loops during the runs
 
     std::map<Sfx, sf::SoundBuffer> buffers;
     std::vector<sf::Sound> voices;     // played round-robin so effects can overlap

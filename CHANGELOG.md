@@ -3,6 +3,12 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.5
+
+### New
+- **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
+  the menu, under Johnny's greeting.
+
 ## v2.4
 
 ### New
