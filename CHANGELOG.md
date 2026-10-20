@@ -12,6 +12,8 @@ taken from this file. Players on different versions can't play together: update 
   after bursting out of the titan.
 
 ### Other
+- **Mikasa throws her thunder spears with `E`** (the SPEAR button on phones), the key that called them: her
+  blade stays on the attack key, so Berserk keeps slashing while she holds spears.
 - **You blink while you can't be hurt**, for the second after a broken shield, the Sandevistan or the titan.
 - **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
   were.

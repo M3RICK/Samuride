@@ -153,8 +153,8 @@ void Server::updatePlayers()
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
-        // Berserk attacks on its own, as soon as the cooldown allows; Mikasa's spears are hers to aim
-        if (player.isBerserk() && player.getSpears() == 0)
+        // Berserk attacks on its own, as soon as the cooldown allows
+        if (player.isBerserk())
             handleAttack(client_fd);
         // The rest of a Pow-Pow burst
         if (player.burstShotDue(TICK_DT) && mode == GameMode::Cyberpsycho)

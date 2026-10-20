@@ -4,7 +4,7 @@
 #include "server.hpp"
 #include <algorithm>
 
-// Only with a full gauge, out of the Attack Titan's forms
+// Only with a full gauge, out of the Attack Titan's forms. While Mikasa has thunder spears, the key throws one.
 void Server::handleUltimate(int client_fd)
 {
     auto it = players.find(client_fd);
@@ -15,6 +15,11 @@ void Server::handleUltimate(int client_fd)
     Player &player = it->second;
     Ultimate ultimate = ultimateOf(player.getCharacter());
 
+    if (player.getSpears() > 0) {
+        if (player.throwSpear())
+            fireProjectile(client_fd, player, Weapon::Spear);
+        return;
+    }
     if (ultimate == Ultimate::None || !player.ultimateReady() || player.getForm() != Form::Normal)
         return;
     player.spendUltimate();
@@ -45,7 +50,7 @@ void Server::handleUltimate(int client_fd)
             breach(client_fd, start);
             break;
         case Ultimate::ThunderSpears:
-            player.giveSpears();    // thrown with the attack key, see handleAttack in combat.cpp
+            player.giveSpears();    // thrown with this same key, see the top of this function
             break;
         case Ultimate::None:
             break;

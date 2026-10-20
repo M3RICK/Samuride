@@ -41,6 +41,7 @@ private:
     float ram_timer;            // seconds before the next charge comes back
     int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)
     int spears;                 // Mikasa's thunder spears left
+    float spear_cooldown;       // seconds before she can throw the next one
     float charge_timer;         // seconds left charging Fishbones: standing still in the air
     float recoil_timer;         // seconds of Fishbones' recoil left
     int burst_left;             // Pow-Pow bullets still to come in this burst
@@ -99,7 +100,7 @@ public:
     bool burstShotDue(float dt);
     int getSpears() const { return spears; }
     void giveSpears() { spears = THUNDER_SPEARS; }
-    void useSpear() { spears--; }
+    bool throwSpear();
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }

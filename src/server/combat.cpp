@@ -13,7 +13,7 @@ void Server::handleAttack(int client_fd)
         return;
 
     Player &player = it->second;
-    Weapon weapon = player.getSpears() > 0 ? Weapon::Spear : weaponOf(player.getCharacter());
+    Weapon weapon = weaponOf(player.getCharacter());
     WeaponStats stats = statsOf(weapon);
 
     if (!player.canAttack())
@@ -37,9 +37,7 @@ void Server::handleAttack(int client_fd)
             fireProjectile(client_fd, player, weapon);
             break;
         case Weapon::Spear:
-            player.useSpear();
-            fireProjectile(client_fd, player, weapon);
-            break;
+            break;  // thrown with the ultimate key, see handleUltimate in ultimates.cpp
         case Weapon::Blade:
             announceShot(player, weapon);
             strike(client_fd, player, stats.reach);

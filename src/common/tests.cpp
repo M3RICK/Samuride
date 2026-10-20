@@ -192,9 +192,14 @@ static void testUltimate()
     Player mikasa(-1);
     mikasa.reset(3, 0);
     mikasa.giveSpears();
-    for (int i = 0; i < THUNDER_SPEARS; i++)
-        mikasa.useSpear();
-    assert(mikasa.getSpears() == 0);
+    // One spear per press, their own cooldown between two, none left after the last
+    assert(mikasa.throwSpear() && !mikasa.throwSpear());
+    for (int i = 1; i < THUNDER_SPEARS; i++) {
+        mikasa.update(1, 0, 8);
+        assert(mikasa.throwSpear());
+    }
+    mikasa.update(1, 0, 8);
+    assert(mikasa.getSpears() == 0 && !mikasa.throwSpear());
 
     // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
     Player jinx(-1);

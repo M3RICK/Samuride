@@ -65,8 +65,9 @@ void GameScreen::drawTouchButtons(const PlayerState &player, int me)
     button(Touch::ATTACK, NEON_RED, true, "ATTACK");
     if (ultimate != Ultimate::None) {
         sf::Color color = ultimateLook(ultimate).color;
-        button(Touch::ULTIMATE, color, ready, ready ? "ULT" : std::format("{}%", player.ultimate));
-        if (ready)
+        bool spears = player.spears > 0;
+        button(Touch::ULTIMATE, color, ready || spears, spears ? "SPEAR" : ready ? "ULT" : std::format("{}%", player.ultimate));
+        if (ready || spears)
             canvas.halo(Touch::ULTIMATE, Touch::BUTTON_RADIUS * (1.2f + 0.2f * pulse), withAlpha(color, 60));
     }
 }
@@ -96,7 +97,7 @@ void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
     float gauge_w = box.size.x - 116 - 20;
 
     if (player.spears > 0) {
-        canvas.text(Touch::ENABLED ? std::string(look.name) : std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
+        canvas.text(Touch::ENABLED ? std::string(look.name) : std::format("[{}]  {}", ultimate_key, look.name), 28, look.color, text_pos, {0, 0.5f});
         for (int i = 0; i < THUNDER_SPEARS; i++)
             drawSpearIcon(gauge_pos + sf::Vector2f(20 + i * 50, 0), 40, i < player.spears);
         return;
