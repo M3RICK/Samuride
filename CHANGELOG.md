@@ -3,12 +3,19 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
-## v2.5
+## v2.6
 
 ### New
 - **Android.** Samuride now runs on Android phones: `samuride-<version>-android.apk` on the Releases
   page. Hold anywhere on the screen for the jetpack; in CYBERPSYCHO, buttons at the bottom right
   attack and fire your ultimate. Android 8 or newer, on any phone of the last ten years.
+
+### Fixes
+- Explosions and ultimates draw much faster: fewer slowdowns when the screen fills with sparks.
+
+## v2.5
+
+### New
 - **Ultimates** (CYBERPSYCHO). Every eddy you earn charges your ultimate, shown at the top right;
   once it's full, it lights up and `E` (set it in Options) fires it, its name across the screen. First one: **Johnny** palms
   his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
@@ -18,9 +25,6 @@ taken from this file. Players on different versions can't play together: update 
   fly ahead, stick in the first drone or titan and blow up in a lightning column from floor to
   ceiling. **Jinx** fires Fishbones: a big shark rocket razes a band of the corridor at her height,
   and she can fly through it.
-
-### Fixes
-- Explosions and ultimates draw much faster: fewer slowdowns when the screen fills with sparks.
 
 ### Balance
 - **Jinx swaps her rockets for Pow-Pow**, her minigun: bursts of three small fast bullets, and a
