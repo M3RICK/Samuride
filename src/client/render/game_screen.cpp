@@ -238,10 +238,11 @@ void GameScreen::drawDistrict(int district)
 // Speed Lines
 //=============================================================================
 
-// Streaks start past 7 tiles/s and thicken up to top speed
+// Streaks start past 7 tiles/s and thicken up to top speed: about 20 of them there, more washed the
+// screen out into a blur
 void GameScreen::updateSpeedLines(float dt)
 {
-    size_t wanted = std::clamp(static_cast<int>((run.run_speed - 7) * 4), 0, 60);
+    size_t wanted = std::clamp(static_cast<int>((run.run_speed - 7) * 2), 0, 30);
 
     while (speed_lines.size() < wanted) {
         float speed = run.run_speed * run.view.tile_size * randf(1.5f, 2.5f);
@@ -264,7 +265,7 @@ void GameScreen::drawSpeedLines()
     for (const SpeedLine &streak : speed_lines) {
         line.setSize({streak.length, 3});
         line.setPosition(streak.pos);
-        line.setFillColor(withAlpha(sf::Color::White, 70));
+        line.setFillColor(withAlpha(sf::Color::White, 45));
         canvas.draw(line, sf::BlendAdd);
 
         line.setSize({streak.length * 0.25f, 3});

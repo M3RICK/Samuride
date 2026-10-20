@@ -20,6 +20,10 @@ taken from this file. Players on different versions can't play together: update 
 - **A second to get clear**: you stay invincible for 1 s after the Sandevistan wears off, and 1 s more
   after bursting out of the titan.
 
+### Fixes
+- **No more haze at top speed**: past ~800 m the speed streaks were so many they blurred the screen. Half
+  as many now, and fainter.
+
 ### Other
 - **Lucy's RAM shows over her head**, as red bars like in Cyberpunk 2077, where you can read it without looking away from the run.
 - **Lucy's hack lands with a bang**: a crackling bolt from her hand to the drone (and on to the next one when
