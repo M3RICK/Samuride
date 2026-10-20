@@ -10,7 +10,8 @@ taken from this file. Players on different versions can't play together: update 
   once it's full, `E` (set it in Options) fires your runner's ultimate. First one: **Johnny** palms
   his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
   way. **David** fires his arm cannon at the ground ahead: half a second later a mini-nuke razes
-  16 tiles from floor to ceiling. The other runners get theirs in the next updates.
+  16 tiles from floor to ceiling. **Lucy** breaches the network: every drone on screen goes down and
+  every zapper on screen goes off for 3 seconds. The other runners get theirs in the next updates.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
   the menu, once Johnny's greeting is over.
 

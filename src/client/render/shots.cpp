@@ -57,6 +57,15 @@ void Shots::startUltimate(const UltimateEvent &ultimate)
     } else if (ultimate.ultimate == Ultimate::Nuke) {
         audio.play(Audio::Sfx::Rocket);
         run.nukes.push_back({ultimate.x, false, sf::Clock()});
+    } else if (ultimate.ultimate == Ultimate::Breach) {
+        audio.play(Audio::Sfx::Breach);
+        run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
+        run.breaches.emplace_back();
+        // Sparks on the zappers it just turned off
+        for (const auto &[node, hack] : run.hacked_zappers) {
+            if (run.hackLeft(node.first, node.second) > BREACH_TIME - 0.1f)
+                particles.emit({node.first + 0.5f, node.second + 0.5f}, 6, NEON_PURPLE, 4, 0.5f, 0);
+        }
     }
 }
 
@@ -148,11 +157,36 @@ void Shots::drawNukes()
     });
 }
 
+// The whole screen glitches purple for a moment
+void Shots::drawBreaches()
+{
+    static constexpr float GLITCH_TIME = 0.7f;
+
+    for (const sf::Clock &breach : run.breaches) {
+        float t = breach.getElapsedTime().asSeconds() / GLITCH_TIME;
+        auto alpha = static_cast<uint8_t>(110 * (1 - t));
+
+        sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
+        tint.setFillColor(withAlpha(NEON_PURPLE, alpha / 2));
+        canvas.draw(tint, sf::BlendAdd);
+        for (int i = 0; i < 8; i++) {
+            sf::RectangleShape band({Screen::WIDTH, randf(4, 30)});
+            band.setPosition({randf(-60, 60), randf(0, Screen::HEIGHT)});
+            band.setFillColor(withAlpha(i % 2 ? NEON_PURPLE : NEON_CYAN, alpha));
+            canvas.draw(band, sf::BlendAdd);
+        }
+        canvas.glitchText("SYSTEM BREACH", 110, withAlpha(NEON_PURPLE, static_cast<uint8_t>(255 * (1 - t))),
+                          Screen::CENTER);
+    }
+    std::erase_if(run.breaches, [](const sf::Clock &breach) { return breach.getElapsedTime().asSeconds() > GLITCH_TIME; });
+}
+
 // A shot ends out of range, or when the server says it hit (land)
 void Shots::draw()
 {
     drawFireWaves();
     drawNukes();
+    drawBreaches();
 
     float tile_size = run.view.tile_size;
 

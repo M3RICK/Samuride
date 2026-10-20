@@ -12,6 +12,7 @@ void Run::reset()
     hacked_zappers.clear();
     fire_waves.clear();
     nukes.clear();
+    breaches.clear();
     burnt_zappers.clear();
     shake = 0;
     run_speed = 0;
@@ -78,7 +79,7 @@ float Run::hackLeft(int x, int y) const
 
     if (hacked == hacked_zappers.end())
         return 0;
-    return std::max(0.0f, HACK_TIME - hacked->second.getElapsedTime().asSeconds());
+    return std::max(0.0f, hacked->second.duration - hacked->second.since.getElapsedTime().asSeconds());
 }
 
 void Run::burnZappers(float from, float to)
@@ -89,6 +90,16 @@ void Run::burnZappers(float from, float to)
                 for (std::pair<int, int> node : zapperNodes(map, x, y))
                     burnt_zappers.insert(node);
             }
+        }
+    }
+}
+
+void Run::hackZappers(float from, float to, float duration)
+{
+    for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
+        for (int y = 0; y < static_cast<int>(map.getHeight()); y++) {
+            if (map.getTile(x, y) == 'e' && hackLeft(x, y) < duration)
+                hacked_zappers[{x, y}] = {sf::Clock(), duration};
         }
     }
 }

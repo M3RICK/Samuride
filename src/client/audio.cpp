@@ -177,6 +177,9 @@ void Audio::synthesize()
     buffers[Sfx::FireWave] = toBuffer(mix(burst(1.0f, 0.5f, 0.15f), tone(Wave::Saw, 160, 50, 0.9f, 0.25f)));
     // David's nuke: a deep, long blast
     buffers[Sfx::Nuke] = toBuffer(mix(burst(1.4f, 0.6f, 0.05f), tone(Wave::Sine, 90, 25, 1.4f, 0.5f)));
+    // Lucy's breach: a long stuttering sweep of data
+    buffers[Sfx::Breach] = toBuffer(concat(tone(Wave::Square, 300, 2400, 0.25f, 0.15f),
+                                           mix(tone(Wave::Square, 2400, 200, 0.4f, 0.12f), burst(0.4f, 0.2f, 0.9f))));
     // Lucy's hack: a glitchy data chirp
     buffers[Sfx::Hack] = toBuffer(concat(tone(Wave::Square, 2400, 800, 0.06f, 0.12f),
                                          tone(Wave::Square, 600, 1800, 0.1f, 0.12f)));

@@ -210,6 +210,8 @@ private:
 
     void scorch(int owner_fd, float from, float to, float titans_from);
 
+    void breach(int owner_fd, float start);
+
     //===========================================================================
     // Titans (titans.cpp)
     //===========================================================================

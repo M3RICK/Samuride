@@ -66,7 +66,7 @@ inline WeaponStats statsOf(Weapon weapon)
 
 // Ultimates (CYBERPSYCHO only): every eddy you earn charges the gauge, a full one fires your runner's.
 // None of them makes you invincible: they act on the scenery, you still steer and can die.
-enum class Ultimate : uint8_t { None, FireWave, Nuke };
+enum class Ultimate : uint8_t { None, FireWave, Nuke, Breach };
 
 constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
 
@@ -80,6 +80,10 @@ constexpr float NUKE_DELAY = 0.5f;      // seconds before it lands
 constexpr float NUKE_DISTANCE = 10;     // tiles ahead of where it was fired
 constexpr float NUKE_RADIUS = 8;        // tiles razed on each side of the impact
 
+// Lucy's network breach: every drone on screen ahead goes down, every zapper there goes off a while
+constexpr float BREACH_AHEAD = 15;      // tiles ahead of where it starts: the rest of the screen
+constexpr float BREACH_TIME = 3.0f;
+
 // Character ids follow the client's CHARACTER_DIRS; runners without one yet get None
 inline Ultimate ultimateOf(int character)
 {
@@ -87,6 +91,8 @@ inline Ultimate ultimateOf(int character)
         return Ultimate::FireWave;
     if (character == 1)
         return Ultimate::Nuke;
+    if (character == 4)
+        return Ultimate::Breach;
     return Ultimate::None;
 }
 

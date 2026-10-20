@@ -34,6 +34,7 @@ private:
     void startUltimate(const UltimateEvent &ultimate);
     void drawFireWaves();
     void drawNukes();
+    void drawBreaches();
 
 public:
     Shots(Canvas &canvas, Run &run, Audio &audio, Particles &particles);

@@ -52,13 +52,21 @@ struct Run {
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> attack_clocks;
-    std::map<std::pair<int, int>, sf::Clock> hacked_zappers;    // node -> since Lucy hacked it
+    struct Hack {
+        sf::Clock since;
+        float duration;
+    };
+
+    std::map<std::pair<int, int>, Hack> hacked_zappers;         // node -> Lucy's hack on it
     std::vector<FireWave> fire_waves;
     std::vector<Nuke> nukes;
+    std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
     std::set<std::pair<int, int>> burnt_zappers;                // out for the rest of the run
 
     // The zappers in these columns go out, like on the server
-    void burnZappers(float from, float to);    float shake = 0;
+    void burnZappers(float from, float to);
+    // ... or go off for a while
+    void hackZappers(float from, float to, float duration);    float shake = 0;
 
     // Speed feel: measured from your own movement, no extra network data
     float run_speed = 0;    // tiles per second

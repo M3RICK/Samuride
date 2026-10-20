@@ -150,6 +150,8 @@ void Server::handleUltimate(int client_fd)
         fire_waves.push_back({client_fd, start, start});
     else if (ultimate == Ultimate::Nuke)
         nukes.push_back({client_fd, start + NUKE_DISTANCE, NUKE_DELAY});
+    else if (ultimate == Ultimate::Breach)
+        breach(client_fd, start);
 }
 
 // The fire wave sweeps on, the nukes land
@@ -194,4 +196,20 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from)
         notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);
         return true;
     });
+}
+
+// From just behind her to the end of the screen: drones go down, zappers go off for BREACH_TIME
+// (the burnt ones stay out)
+void Server::breach(int owner_fd, float start)
+{
+    for (int x = std::max(0, static_cast<int>(start - 2)); x <= static_cast<int>(start + BREACH_AHEAD); x++) {
+        for (int y = 0; y < static_cast<int>(game_map.getHeight()); y++) {
+            if (isLiveDrone(x, y)) {
+                destroyDrone(owner_fd, x, y);
+            } else if (game_map.getTile(x, y) == 'e') {
+                float &left = hacked_zappers[{x, y}];
+                left = std::max(left, BREACH_TIME);
+            }
+        }
+    }
 }

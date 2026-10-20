@@ -184,7 +184,7 @@ static void testUltimate()
     assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ULTIMATE_CHARGE);
     johnny.spendUltimate();
     assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
-    assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::None);
+    assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::Breach);
 }
 
 // Runners are bought in order, with enough eddies

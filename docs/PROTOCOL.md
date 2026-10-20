@@ -178,7 +178,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy) |
 | 4 | X where it starts |
 
 The fire wave sweeps 25 tiles ahead at 45 tiles per second: every column it crosses burns from
@@ -187,6 +187,9 @@ Clients burn the zappers themselves from the start and the speed.
 
 The nuke lands 0.5 s after it is fired, 10 tiles ahead of X, and razes 8 tiles on each side the same
 way, all at once.
+
+The breach covers 2 tiles behind X to 15 tiles ahead, at once: drones go down (`d`), zappers go off
+for 3 s (burnt ones stay out). Clients turn the zappers off themselves from X.
 
 ### `MSG_TITANS`
 
