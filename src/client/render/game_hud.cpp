@@ -78,16 +78,21 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
         canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
     }
 
-    if (!cyberpsycho || weaponOf(run.characterOf(player_num)) != Weapon::Hack)
+    // Lucy's RAM, or Mikasa's thunder spears while she has some
+    bool lucy = weaponOf(run.characterOf(player_num)) == Weapon::Hack;
+    if (!cyberpsycho || (!lucy && player.spears == 0))
         return;
 
+    int count = lucy ? player.ram : player.spears;
+    int max = lucy ? RAM_MAX : THUNDER_SPEARS;
+    sf::Color color = lucy ? NEON_PURPLE : NEON_CYAN;
     sf::FloatRect bounds = text.getGlobalBounds();
     float x = bounds.position.x + bounds.size.x + (player.shielded ? 52 : 20);
-    for (int i = 0; i < RAM_MAX; i++) {
-        sf::RectangleShape chip({14, 14});
-        chip.setPosition({x + i * 22, bounds.getCenter().y - 7});
-        chip.setFillColor(i < player.ram ? NEON_PURPLE : sf::Color::Transparent);
-        chip.setOutlineColor(NEON_PURPLE);
+    for (int i = 0; i < max; i++) {
+        sf::RectangleShape chip(lucy ? sf::Vector2f(14, 14) : sf::Vector2f(8, 24));
+        chip.setPosition({x + i * 22, bounds.getCenter().y - chip.getSize().y / 2});
+        chip.setFillColor(i < count ? color : sf::Color::Transparent);
+        chip.setOutlineColor(color);
         chip.setOutlineThickness(2);
         canvas.draw(chip);
     }

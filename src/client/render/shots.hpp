@@ -42,8 +42,8 @@ public:
     void clear() { trails.clear(); }
     // Starts the attacks the server reported
     void handle(GameState &state);
-    // The server says one of `player`'s shots took a drone down: their oldest one in flight ends
-    void land(int player);
+    // The server says one of `player`'s shots hit at x: their one in flight there ends
+    void land(int player, float x);
     void draw();
 };
 

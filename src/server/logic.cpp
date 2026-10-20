@@ -153,8 +153,8 @@ void Server::updatePlayers()
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
-        // Berserk attacks on its own, as soon as the cooldown allows
-        if (player.isBerserk())
+        // Berserk attacks on its own, as soon as the cooldown allows; Mikasa's spears are hers to aim
+        if (player.isBerserk() && player.getSpears() == 0)
             handleAttack(client_fd);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());
@@ -236,8 +236,9 @@ void Server::sendGameState()
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
                              player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
-        // Ultimate gauge, in percent
+        // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.getUltimateCharge() * 100 / ULTIMATE_CHARGE);
+        state_data.push_back(player.getSpears());
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

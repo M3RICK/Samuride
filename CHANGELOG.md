@@ -11,7 +11,9 @@ taken from this file. Players on different versions can't play together: update 
   his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
   way. **David** fires his arm cannon at the ground ahead: half a second later a mini-nuke razes
   16 tiles from floor to ceiling. **Lucy** breaches the network: every drone on screen goes down and
-  every zapper on screen goes off for 3 seconds. The other runners get theirs in the next updates.
+  every zapper on screen goes off for 3 seconds. **Mikasa** gets 3 thunder spears: her next attacks
+  fly ahead, stick in the first drone or titan and blow up in a lightning column from floor to
+  ceiling. Jinx gets hers in the next update.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
   the menu, once Johnny's greeting is over.
 

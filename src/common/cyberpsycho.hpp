@@ -19,7 +19,7 @@ constexpr int DRONE_BOUNTY = 5;
 // Projectiles vanish this many tiles ahead of where they were fired
 constexpr float PROJECTILE_RANGE = 22;
 
-enum class Weapon : uint8_t { Gun, Rockets, Blade, Hack };
+enum class Weapon : uint8_t { Gun, Rockets, Blade, Hack, Spear };
 
 // Lucy's hack: the first zapper or drone in her way goes quiet, for one charge of RAM. Her way is
 // HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
@@ -59,6 +59,8 @@ inline WeaponStats statsOf(Weapon weapon)
             return {0.45f, 0, 2.5f, 0};
         case Weapon::Hack:
             return {0.45f, 0, HACK_RANGE, 0};
+        case Weapon::Spear:
+            return {0.45f, 28, 0, 0.6f};
         default:
             return {0.25f, 30, 0, 0.4f};
     }
@@ -66,7 +68,7 @@ inline WeaponStats statsOf(Weapon weapon)
 
 // Ultimates (CYBERPSYCHO only): every eddy you earn charges the gauge, a full one fires your runner's.
 // None of them makes you invincible: they act on the scenery, you still steer and can die.
-enum class Ultimate : uint8_t { None, FireWave, Nuke, Breach };
+enum class Ultimate : uint8_t { None, FireWave, Nuke, Breach, ThunderSpears };
 
 constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
 
@@ -84,6 +86,12 @@ constexpr float NUKE_RADIUS = 8;        // tiles razed on each side of the impac
 constexpr float BREACH_AHEAD = 15;      // tiles ahead of where it starts: the rest of the screen
 constexpr float BREACH_TIME = 3.0f;
 
+// Mikasa's thunder spears: her next attacks are spears, flying ahead until they stick in a drone or a
+// titan (or reach their range), then blowing up in a lightning column from floor to ceiling
+constexpr int THUNDER_SPEARS = 3;
+constexpr float SPEAR_BLAST_RADIUS = 1;     // tiles on each side of the impact
+constexpr char SPEAR_BLAST = 'l';           // collision type: a spear blew up at that column
+
 // Character ids follow the client's CHARACTER_DIRS; runners without one yet get None
 inline Ultimate ultimateOf(int character)
 {
@@ -91,6 +99,8 @@ inline Ultimate ultimateOf(int character)
         return Ultimate::FireWave;
     if (character == 1)
         return Ultimate::Nuke;
+    if (character == 3)
+        return Ultimate::ThunderSpears;
     if (character == 4)
         return Ultimate::Breach;
     return Ultimate::None;

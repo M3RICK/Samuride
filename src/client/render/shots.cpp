@@ -30,6 +30,11 @@ void Shots::handle(GameState &state)
                 audio.play(Audio::Sfx::Hack);
                 particles.emit(muzzle, 8, NEON_PURPLE, 3, 0.3f, 0);
                 break;
+            case Weapon::Spear:
+                audio.play(Audio::Sfx::Rocket);
+                particles.emit(muzzle, 8, sf::Color::White, 4, 0.3f, 0);
+                trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
+                break;
             case Weapon::Rockets:
                 audio.play(Audio::Sfx::Rocket);
                 particles.emit(muzzle, 8, NEON_PINK, 4, 0.3f, 0);
@@ -57,6 +62,9 @@ void Shots::startUltimate(const UltimateEvent &ultimate)
     } else if (ultimate.ultimate == Ultimate::Nuke) {
         audio.play(Audio::Sfx::Rocket);
         run.nukes.push_back({ultimate.x, false, sf::Clock()});
+    } else if (ultimate.ultimate == Ultimate::ThunderSpears) {
+        audio.play(Audio::Sfx::Thunder);
+        particles.emit(run.display_positions[ultimate.player] + sf::Vector2f(0.5f, 1), 30, NEON_CYAN, 6, 0.5f, 0);
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -78,12 +86,23 @@ sf::Vector2f Shots::positionOf(const Trail &trail) const
     return {shooter_x + 0.9f + travelled, trail.y};
 }
 
-void Shots::land(int player)
+// The player's shot drawn closest to where the server says one hit, if one is close enough: a blast
+// that also downs a drone, or an ultimate's kills, must not take another shot still flying
+void Shots::land(int player, float x)
 {
-    auto oldest = std::find_if(trails.begin(), trails.end(), [&](const Trail &trail) { return trail.player == player; });
+    static constexpr float MAX_GAP = 4;     // tiles: what the network lag can put between the two
+    auto closest = trails.end();
+    float gap = MAX_GAP;
 
-    if (oldest != trails.end())
-        trails.erase(oldest);
+    for (auto it = trails.begin(); it != trails.end(); ++it) {
+        float distance = std::abs(positionOf(*it).x - x);
+        if (it->player == player && distance < gap) {
+            gap = distance;
+            closest = it;
+        }
+    }
+    if (closest != trails.end())
+        trails.erase(closest);
 }
 
 // A wall of fire from floor to ceiling; the zappers it went over are out, like on the server
@@ -196,9 +215,10 @@ void Shots::draw()
 
     for (const Trail &trail : trails) {
         bool rocket = trail.weapon == Weapon::Rockets;
-        sf::Color color = rocket ? NEON_PINK : NEON_YELLOW;
+        bool spear = trail.weapon == Weapon::Spear;
+        sf::Color color = rocket ? NEON_PINK : spear ? sf::Color(200, 250, 255) : NEON_YELLOW;
         sf::Vector2f pos = positionOf(trail);
-        sf::Vector2f size(tile_size * (rocket ? 1.1f : 0.5f), rocket ? 26 : 6);
+        sf::Vector2f size(tile_size * (rocket ? 1.1f : spear ? 1.3f : 0.5f), rocket ? 26 : spear ? 8 : 6);
 
         sf::RectangleShape bolt(size);
         bolt.setOrigin(size / 2.f);
@@ -209,5 +229,7 @@ void Shots::draw()
 
         if (rocket)
             particles.emit(pos - sf::Vector2f(0.55f, 0), 2, NEON_PINK, 1.5f, 0.3f, 0);
+        if (spear)
+            particles.emit(pos - sf::Vector2f(0.65f, 0), 1, NEON_CYAN, 1, 0.2f, 0);
     }
 }

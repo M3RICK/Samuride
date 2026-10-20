@@ -56,6 +56,7 @@ private:
         float speed;
         float max_x;
         float radius;
+        bool spear = false;     // Mikasa's: blows up where it stops
     };
 
     ServerConfig config;
@@ -199,6 +200,10 @@ private:
     void updateProjectiles();
 
     bool projectileHit(const Projectile &shot, float from_x);
+
+    float spearHit(const Projectile &shot, float from_x) const;
+
+    void spearBlast(int owner_fd, float x);
 
     bool isLiveDrone(int x, int y) const;
 

@@ -106,7 +106,7 @@ Sent when the input changes, not every frame.
 
 ### `MSG_GAME_STATE`
 
-An 11-byte record per player, 60 times per second:
+A 12-byte record per player, 60 times per second:
 
 | Bytes | Field |
 | --- | --- |
@@ -116,6 +116,7 @@ An 11-byte record per player, 60 times per second:
 | 2 | Score |
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
+| 1 | Mikasa's thunder spears left |
 
 ### `MSG_COLLISION`
 
@@ -137,6 +138,7 @@ An 11-byte record per player, 60 times per second:
 | `a` | Shield taken |
 | `v` | Sandevistan taken: the sprint starts |
 | `r` | Berserk taken: 8 s of attacking on your own, twice as often |
+| `l` | One of Mikasa's thunder spears blew up at that column: everything 1 tile around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 1.2 s |
 | `b` | A shield took a deadly hit (zapper, drone or titan) instead of the player, who gets 1 s of invincibility |
 
@@ -168,7 +170,7 @@ feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 rockets, 2 blade, 3 hack |
+| 1 | Weapon: 0 gun, 1 rockets, 2 blade, 3 hack, 4 thunder spear |
 
 ### `MSG_ULTIMATE`
 
@@ -178,7 +180,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa) |
 | 4 | X where it starts |
 
 The fire wave sweeps 25 tiles ahead at 45 tiles per second: every column it crosses burns from
@@ -190,6 +192,9 @@ way, all at once.
 
 The breach covers 2 tiles behind X to 15 tiles ahead, at once: drones go down (`d`), zappers go off
 for 3 s (burnt ones stay out). Clients turn the zappers off themselves from X.
+
+The thunder spears replace Mikasa's next 3 attacks: each flies like a projectile (run speed + 28) until
+it sticks in a drone or a titan, or reaches 22 tiles, then blows up (`l`).
 
 ### `MSG_TITANS`
 

@@ -185,6 +185,14 @@ static void testUltimate()
     johnny.spendUltimate();
     assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
     assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::Breach);
+    assert(ultimateOf(3) == Ultimate::ThunderSpears && ultimateOf(2) == Ultimate::None);
+
+    Player mikasa(-1);
+    mikasa.reset(3, 0);
+    mikasa.giveSpears();
+    for (int i = 0; i < THUNDER_SPEARS; i++)
+        mikasa.useSpear();
+    assert(mikasa.getSpears() == 0);
 }
 
 // Runners are bought in order, with enough eddies

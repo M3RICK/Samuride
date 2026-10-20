@@ -277,9 +277,16 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         audio.play(Audio::Sfx::Explosion);
         run.shakeAtLeast(0.15f);
         drones_down += effect.player == me;
-        shots.land(effect.player);
+        shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == SPEAR_BLAST) {
+        audio.play(Audio::Sfx::Thunder);
+        run.shakeAtLeast(0.35f);
+        shots.land(effect.player, tile_center.x);
+        run.burnZappers(effect.x - SPEAR_BLAST_RADIUS, effect.x + SPEAR_BLAST_RADIUS);
+        for (int i = 0; i < 4; i++)
+            particles.emit({effect.x + 0.5f, randf(0, run.floor())}, 10, i % 2 ? NEON_CYAN : sf::Color::White, 6, 0.5f, 0);
     } else if (effect.type == ZAPPER_HACK) {
         // The whole zapper goes off: sparks on its nodes, nothing drawn over the screen (the shot plays the sound)
         for (std::pair<int, int> node : zapperNodes(run.map, effect.x, effect.y)) {
@@ -332,6 +339,17 @@ void GameScreen::drawEffects()
             if (active.mine)
                 canvas.text(std::format("+{}", titan ? TITAN_BOUNTY : DRONE_BOUNTY), titan ? 48 : 34,
                             withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
+        } else if (active.effect.type == SPEAR_BLAST) {
+            // Lightning from floor to ceiling, a column as wide as the blast
+            float width = run.view.tile_size * (2 * SPEAR_BLAST_RADIUS + 1) * (1 - t * 0.5f);
+            sf::Vector2f top = run.toScreen({active.effect.x + 0.5f, 0});
+            float height = run.toScreen({0, run.floor()}).y - top.y;
+            for (auto [scale, color] : {std::pair{1.0f, NEON_CYAN}, {0.35f, sf::Color::White}}) {
+                sf::RectangleShape column({width * scale, height});
+                column.setPosition({top.x - width * scale / 2, top.y});
+                column.setFillColor(withAlpha(color, alpha));
+                canvas.draw(column, sf::BlendAdd);
+            }
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
             if (active.mine)

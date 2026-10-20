@@ -12,7 +12,7 @@ void Server::handleAttack(int client_fd)
         return;
 
     Player &player = it->second;
-    Weapon weapon = weaponOf(player.getCharacter());
+    Weapon weapon = player.getSpears() > 0 ? Weapon::Spear : weaponOf(player.getCharacter());
     WeaponStats stats = statsOf(weapon);
 
     // Lucy only hacks when there is something to hack and RAM to do it
@@ -30,10 +30,13 @@ void Server::handleAttack(int client_fd)
     }
     if (weapon == Weapon::Hack)
         return;
+    if (weapon == Weapon::Spear)
+        player.useSpear();
 
     // Fired from the hip, flying ahead of the shooter
     float x = player.getX() + 0.9f;
-    projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius});
+    projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
+                           weapon == Weapon::Spear});
 }
 
 // Every live drone within reach in front of the player goes down
@@ -79,8 +82,15 @@ void Server::updateProjectiles()
         float from_x = shot.x;
 
         shot.x += shot.speed * TICK_DT;
-        if (projectileHit(shot, from_x))
+        if (shot.spear) {
+            float hit = spearHit(shot, from_x);
+            if (hit >= 0 || shot.x >= shot.max_x) {
+                spearBlast(shot.owner_fd, hit >= 0 ? hit : shot.max_x);
+                shot.x = shot.max_x;
+            }
+        } else if (projectileHit(shot, from_x)) {
             shot.x = shot.max_x;
+        }
     }
     std::erase_if(projectiles, [](const Projectile &shot) { return shot.x >= shot.max_x; });
 }
@@ -101,6 +111,36 @@ bool Server::projectileHit(const Projectile &shot, float from_x)
         }
     }
     return false;
+}
+
+// Where a spear sticks this tick: the first live drone near its line, or a titan tall enough
+// to stand in its way. -1 when it flies on.
+float Server::spearHit(const Projectile &shot, float from_x) const
+{
+    float floor = game_map.getHeight();
+
+    for (int x = static_cast<int>(from_x); x <= static_cast<int>(shot.x); x++) {
+        for (int y = std::max(0, static_cast<int>(shot.y - shot.radius)); y <= static_cast<int>(shot.y + shot.radius); y++) {
+            if (isLiveDrone(x, y))
+                return x + 0.5f;
+        }
+        for (const Titan &titan : titans) {
+            TitanStats stats = titanStats(titan.type);
+            if (x + 1 > titan.x && x < titan.x + stats.width && shot.y > floor - stats.height)
+                return x + 0.5f;
+        }
+    }
+    return -1;
+}
+
+// A lightning column from floor to ceiling: the drones, zappers and titans in it go down
+void Server::spearBlast(int owner_fd, float x)
+{
+    auto owner = players.find(owner_fd);
+
+    if (owner != players.end())
+        notifyCollision(SPEAR_BLAST, owner->second, x, 0);
+    scorch(owner_fd, x - SPEAR_BLAST_RADIUS, x + SPEAR_BLAST_RADIUS, x - SPEAR_BLAST_RADIUS - 2);
 }
 
 bool Server::isLiveDrone(int x, int y) const
@@ -152,6 +192,8 @@ void Server::handleUltimate(int client_fd)
         nukes.push_back({client_fd, start + NUKE_DISTANCE, NUKE_DELAY});
     else if (ultimate == Ultimate::Breach)
         breach(client_fd, start);
+    else if (ultimate == Ultimate::ThunderSpears)
+        player.giveSpears();
 }
 
 // The fire wave sweeps on, the nukes land

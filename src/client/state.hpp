@@ -27,6 +27,7 @@ struct PlayerState {
     int ram = 0;                // Lucy's hack charges
     bool berserk = false;
     int ultimate = 0;           // gauge, in percent
+    int spears = 0;             // Mikasa's thunder spears left
 };
 
 // Someone attacked in CYBERPSYCHO

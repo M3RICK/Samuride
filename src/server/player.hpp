@@ -38,6 +38,7 @@ private:
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
     int ultimate_charge;        // eddies earned since the last ultimate, up to ULTIMATE_CHARGE
+    int spears;                 // Mikasa's thunder spears left
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
@@ -82,6 +83,9 @@ public:
     int getUltimateCharge() const { return ultimate_charge; }
     bool ultimateReady() const { return ultimate_charge >= ULTIMATE_CHARGE; }
     void spendUltimate() { ultimate_charge = 0; }
+    int getSpears() const { return spears; }
+    void giveSpears() { spears = THUNDER_SPEARS; }
+    void useSpear() { spears--; }
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }
