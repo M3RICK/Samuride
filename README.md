@@ -55,6 +55,8 @@ Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/
 
 Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install. What changed in each version: [patch notes](CHANGELOG.md).
 
+**Android** (8 or newer): download `samuride-<version>-android.apk` on the phone and open it. Android asks once to allow installing apps from that source (the browser or the files app). An update installs over the previous version and keeps your eddies.
+
 **Windows**: unzip `samuride-<version>-windows-x86_64.zip` and run `Samuride.exe`.
 - The game isn't signed, so the first launch shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
 - To host a run, allow the game when the firewall asks, or your friend won't be able to join.
