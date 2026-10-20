@@ -1,9 +1,10 @@
-// Keyboard: jetpack, attack, ultimate, confirm and back
+// Keyboard or touch screen: jetpack, attack, ultimate, confirm and back
 
 #include "inputs.hpp"
 #include "client.hpp"
+#include "touch.hpp"
 
-InputManager::InputManager(Client *client, sf::Window *window, const Settings &settings)
+InputManager::InputManager(Client *client, sf::RenderWindow *window, const Settings &settings)
     : client(client), window(window), jetpack_key(settings.jetpack_key), attack_key(settings.attack_key),
       ultimate_key(settings.ultimate_key),
       jet_active(false), attack_held(false),
@@ -23,20 +24,36 @@ void InputManager::processInputs()
                 back_requested = true;
             if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
                 confirm_pressed = true;
-            // CYBERPSYCHO; the server ignores it in CLASSIC. Key repeats don't count, holding does.
-            if (key->code == attack_key && !attack_held) {
-                attack_held = true;
-                client->sendAttack(true);
-            }
+            if (key->code == attack_key)
+                pressAttack();
             if (key->code == ultimate_key)
                 client->sendUltimate();
+        } else if (const auto *touch = event->getIf<sf::Event::TouchBegan>()) {
+            // The screen view the HUD was last drawn with, buttons included
+            sf::Vector2f pos = window->mapPixelToCoords(touch->position);
+            fingers[touch->finger] = pos;
+            // Once a game is over, the menu button goes back, a tap anywhere else is a rematch
+            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos))
+                back_requested = true;
+            else
+                confirm_pressed = true;
+            if (onButton(Touch::ATTACK, pos))
+                pressAttack();
+            else if (onButton(Touch::ULTIMATE, pos))
+                client->sendUltimate();
+        } else if (const auto *moved = event->getIf<sf::Event::TouchMoved>()) {
+            fingers[moved->finger] = window->mapPixelToCoords(moved->position);
+        } else if (const auto *ended = event->getIf<sf::Event::TouchEnded>()) {
+            fingers.erase(ended->finger);
         }
     }
 
     // Focus check: two clients on the same machine must not share the keyboard
     bool thrust = window->hasFocus() && sf::Keyboard::isKeyPressed(jetpack_key);
+    bool attack_down = window->hasFocus() && sf::Keyboard::isKeyPressed(attack_key);
+    pollTouches(thrust, attack_down);
 
-    if (attack_held && !(window->hasFocus() && sf::Keyboard::isKeyPressed(attack_key))) {
+    if (attack_held && !attack_down) {
         attack_held = false;
         client->sendAttack(false);
     }
@@ -45,4 +62,30 @@ void InputManager::processInputs()
         jet_active = thrust;
         client->sendPlayerInput(jet_active);
     }
+}
+
+// CYBERPSYCHO; the server ignores it in CLASSIC. Key repeats don't count, holding does.
+void InputManager::pressAttack()
+{
+    if (attack_held)
+        return;
+    attack_held = true;
+    client->sendAttack(true);
+}
+
+// Fingers down: on the attack button it's held, anywhere off the buttons it's the jetpack
+void InputManager::pollTouches(bool &thrust, bool &attack_down) const
+{
+    for (const auto &[finger, pos] : fingers) {
+        if (onButton(Touch::ATTACK, pos))
+            attack_down = true;
+        else if (!onButton(Touch::ULTIMATE, pos))
+            thrust = true;
+    }
+}
+
+// The buttons are only there in CYBERPSYCHO on phones: elsewhere their spot is the jetpack too
+bool InputManager::onButton(sf::Vector2f button, sf::Vector2f pos) const
+{
+    return Touch::ENABLED && client->combatRun() && Touch::on(button, pos);
 }

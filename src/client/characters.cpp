@@ -3,8 +3,8 @@
 #include "characters.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
-#include <fstream>
 #include <map>
+#include <sstream>
 
 int Animation::frameAt(float seconds) const
 {
@@ -22,7 +22,15 @@ int Animation::frameAt(float seconds) const
 // meta.txt: one "key values..." per line, written by tools/slice_sheets.py
 bool Character::load(const std::string &dir)
 {
-    std::ifstream meta(dir + "/meta.txt");
+    // Through SFML: on Android, it reads it out of the APK
+    sf::FileInputStream file;
+    std::string text;
+    if (file.open(dir + "/meta.txt") && file.getSize()) {
+        text.resize(*file.getSize());
+        if (file.read(text.data(), text.size()) != text.size())
+            text.clear();
+    }
+    std::istringstream meta(text);
     std::map<std::string, Animation *> animations = {
         {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
         {"death", &death}, {"attack", &attack}, {"smoke", &smoke}, {"emerge", &emerge}

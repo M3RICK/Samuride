@@ -4,6 +4,7 @@
 #include "sprites.hpp"
 #include "../menu.hpp"
 #include "../wallet.hpp"
+#include "../touch.hpp"
 #include "../../common/cyberpsycho.hpp"
 #include <algorithm>
 #include <cmath>
@@ -102,7 +103,7 @@ void MenuScreens::drawMain(const MenuState &menu)
         canvas.text(std::format("BEST RUN  {} M     {} EDDIES", menu.best_distance, menu.wallet.eddies),
                     32, NEON_YELLOW, {x, 960});
 
-    canvas.text("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", 22, HINT_GREY, {x, 1030});
+    canvas.text(Touch::hint("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", "TAP TO SELECT"), 22, HINT_GREY, {x, 1030});
 }
 
 // The selected item glitches between two red markers
@@ -144,7 +145,7 @@ void MenuScreens::drawJoinField(const MenuState &menu)
     canvas.draw(field);
 
     canvas.text(menu.address + (canvas.blink() ? "_" : " "), 40, NEON_YELLOW, field_center);
-    canvas.text("[ENTER] JACK IN     [ESC] BACK", 26, DIM_WHITE, {x, MenuLayout::Y + 220});
+    canvas.text(Touch::hint("[ENTER] JACK IN     [ESC] BACK", "TAP TO TYPE     [ENTER] JACK IN     [BACK] BACK"), 26, DIM_WHITE, {x, MenuLayout::Y + 220});
 }
 
 void MenuScreens::drawLobby(const std::string &info)
@@ -159,7 +160,7 @@ void MenuScreens::drawLobby(const std::string &info)
     if (!info.empty())
         canvas.text(info, 28, NEON_CYAN, {x, 600});
 
-    canvas.text("[SPACE] JETPACK     [ESC] BACK TO MENU", 24, DIM_WHITE, {x, 1030});
+    canvas.text(Touch::hint("[SPACE] JETPACK     [ESC] BACK TO MENU", "HOLD THE SCREEN: JETPACK     [BACK] MENU"), 24, DIM_WHITE, {x, 1030});
 }
 
 //=============================================================================
@@ -179,7 +180,7 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 975});
 
-    canvas.text("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    canvas.text(Touch::hint("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // Portrait, name, and the runner itself: running, then flying when selected.
@@ -216,7 +217,7 @@ void MenuScreens::drawPriceTag(int index, sf::FloatRect box, const Wallet &walle
     canvas.text("LOCKED", 34, DIM_WHITE, center);
     canvas.text(std::format("{} EDDIES", price), 30, affordable ? NEON_YELLOW : HINT_GREY, center + sf::Vector2f(0, 45));
     if (affordable)
-        canvas.text("[ENTER] BUY", 24, NEON_CYAN, center + sf::Vector2f(0, 85));
+        canvas.text(Touch::hint("[ENTER] BUY", "TAP TO BUY"), 24, NEON_CYAN, center + sf::Vector2f(0, 85));
 }
 
 // Standing at the bottom of the card; the selected one runs, then flies
@@ -251,7 +252,8 @@ void MenuScreens::drawOptions(const MenuState &menu)
     for (int i = 0; i < MenuLayout::OPTION_COUNT; i++)
         drawOptionRow(i, menu);
 
-    canvas.text("[UP / DOWN] SELECT     [LEFT / RIGHT] OR CLICK THE BAR: VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
+    canvas.text(Touch::hint("[UP / DOWN] SELECT     [LEFT / RIGHT] OR CLICK THE BAR: VOLUME     [ENTER] CHANGE     [ESC] SAVE & BACK",
+                           "TAP THE BAR: VOLUME     [BACK] SAVE & BACK"),
                 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
@@ -277,6 +279,11 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 
     if (index == MenuLayout::OPTION_MUSIC || index == MenuLayout::OPTION_SFX) {
         drawVolumeBar(index, index == MenuLayout::OPTION_MUSIC ? settings.music_volume : settings.sfx_volume, right, selected);
+        return;
+    }
+    if (Touch::ENABLED) {
+        // No keys to bind nor window to resize on a phone
+        canvas.text("-", 36, HINT_GREY, right, {1, 0.5f});
         return;
     }
     if (index == MenuLayout::OPTION_FULLSCREEN) {
@@ -315,7 +322,7 @@ void MenuScreens::drawModeSelect(const MenuState &menu)
     for (int i = 0; i < MenuLayout::MODE_COUNT; i++)
         drawModeCard(i, i == menu.game_mode);
 
-    canvas.text("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    canvas.text(Touch::hint("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 void MenuScreens::drawModeCard(int index, bool selected)
@@ -344,7 +351,7 @@ void MenuScreens::drawModeCard(int index, bool selected)
     }
 
     std::string tagline = psycho ? "Gun down Arasaka drones for bounty" : "Dodge the zappers, grab the eddies";
-    std::string detail = psycho ? std::format("[F] ATTACK     +{} EDDIES PER DRONE", DRONE_BOUNTY) : "The original run";
+    std::string detail = psycho ? std::format("{}     +{} EDDIES PER DRONE", Touch::hint("[F] ATTACK", "ATTACK BUTTON"), DRONE_BOUNTY) : "The original run";
     canvas.text(tagline, 28, selected ? accent : HINT_GREY, center + sf::Vector2f(0, 150));
     canvas.text(detail, 24, DIM_WHITE, center + sf::Vector2f(0, 200));
 }
@@ -364,7 +371,7 @@ void MenuScreens::drawDistrictSelect(const MenuState &menu)
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 985});
 
-    canvas.text("[ARROWS] CHOOSE     [ENTER] JACK IN     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] JACK IN     [ESC] BACK", "TAP TO JACK IN     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // A locked district is dimmed, with its price instead of its tagline

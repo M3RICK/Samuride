@@ -14,6 +14,9 @@
     #include <windows.h>
 #elif defined(__APPLE__)
     #include <mach-o/dyld.h>
+#elif defined(__ANDROID__)
+    #include <SFML/System/NativeActivity.hpp>
+    #include <android/native_activity.h>
 #endif
 
 std::filesystem::path Platform::executableDirectory()
@@ -43,6 +46,9 @@ std::filesystem::path Platform::dataDirectory()
 #elif defined(__APPLE__)
     const char *home = std::getenv("HOME");
     return std::filesystem::path(home ? home : ".") / "Library/Application Support/Samuride";
+#elif defined(__ANDROID__)
+    // The app's private folder
+    return sf::getNativeActivity()->internalDataPath;
 #else
     const char *home = std::getenv("HOME");
     return std::filesystem::path(home ? home : ".") / ".local/share/samuride";

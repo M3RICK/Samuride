@@ -1,6 +1,7 @@
 // Menu logic: navigation, options, character, mode and district select
 
 #include "menu.hpp"
+#include "touch.hpp"
 #include "render/renderer.hpp"
 #include "audio.hpp"
 #include "characters.hpp"
@@ -25,7 +26,7 @@ MenuChoice Menu::run(Renderer &renderer)
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
-            if (handleEvent(*event, choice))
+            if (handleEvent(Touch::asClick(*event), choice))
                 return choice;
         }
         renderer.renderMenu(state);
@@ -146,7 +147,12 @@ void Menu::handleJoinEvent(const sf::Event &event)
         state.screen = MenuState::Screen::Main;
     } else if (isKey(event, sf::Keyboard::Key::Enter)) {
         parseAddress();
+    } else if (Touch::ENABLED && event.is<sf::Event::MouseButtonPressed>()) {
+        // A tap brings the phone's keyboard back
+        sf::Keyboard::setVirtualKeyboardVisible(true);
     }
+    if (Touch::ENABLED && state.screen != MenuState::Screen::Join)
+        sf::Keyboard::setVirtualKeyboardVisible(false);
 }
 
 bool Menu::activate(MenuChoice &choice)
@@ -156,6 +162,8 @@ bool Menu::activate(MenuChoice &choice)
     switch (state.selected) {
         case MenuLayout::ITEM_JOIN:
             state.screen = MenuState::Screen::Join;
+            if (Touch::ENABLED)
+                sf::Keyboard::setVirtualKeyboardVisible(true);
             return false;
         case MenuLayout::ITEM_OPTIONS:
             state.option = 0;
@@ -210,6 +218,8 @@ void Menu::handleOptionsEvent(const sf::Event &event)
 
     if (state.option == MenuLayout::OPTION_BACK) {
         leaveOptions();
+    } else if (Touch::ENABLED && !on_volume) {
+        // Keys and fullscreen mean nothing on a phone
     } else if (state.option == MenuLayout::OPTION_FULLSCREEN) {
         state.settings.fullscreen = !state.settings.fullscreen;
         renderer->setFullscreen(state.settings.fullscreen);

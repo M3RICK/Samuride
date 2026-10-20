@@ -73,6 +73,10 @@ public:
     void sendPlayerInput(bool jet_activated);
     void sendAttack(bool pressed);
     void sendUltimate();
+    // CYBERPSYCHO: the attack and ultimate buttons are on screen
+    bool combatRun() const;
+    // The run is over or the server is gone: the menu button is on screen
+    bool runEnded() const;
 };
 
 #endif

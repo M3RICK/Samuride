@@ -30,15 +30,17 @@ void printUsage(const char *programName)
 }
 
 // Assets live next to the binary, or in Contents/Resources inside a macOS Samuride.app,
-// so the client can be launched from anywhere
+// so the client can be launched from anywhere. On Android SFML reads them out of the APK.
 static void moveToAssetsDirectory()
 {
+#ifndef __ANDROID__
     std::filesystem::path dir = Platform::executableDirectory();
     std::error_code ec;
 
     if (!std::filesystem::exists(dir / "assets") && std::filesystem::exists(dir / "../Resources/assets"))
         dir /= "../Resources";
     std::filesystem::current_path(dir, ec);
+#endif
 }
 
 // The server for solo and host runs, in a thread of the game: it stops when the game leaves the run

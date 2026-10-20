@@ -21,7 +21,11 @@ private:
         sf::Color color;
     };
 
+    // Past this, new sparks are dropped: a nuke and a fire wave at once stay drawable
+    static constexpr size_t MAX_PARTICLES = 3000;
+
     std::vector<Particle> particles;
+    mutable sf::VertexArray vertices{sf::PrimitiveType::Triangles};  // every particle, drawn in one go
 
 public:
     // `count` particles flying out in every direction at up to `speed` tiles/s, plus `base_vel`

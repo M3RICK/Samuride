@@ -1,6 +1,6 @@
 name: release
 
-# Push a tag like v1.0 to publish downloadable Linux, Windows and macOS builds on the Releases page
+# Push a tag like v1.0 to publish downloadable Linux, Windows, macOS and Android builds on the Releases page
 on:
   push:
     tags: ['v*']
@@ -103,3 +103,40 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.zip
+
+  android:
+    # arm64 phones. Signed with the key in the ANDROID_KEYSTORE secret: an update only installs over
+    # a build signed with the same key (see android/README.md)
+    needs: notes
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # The SDK, the NDK and SFML built for Android: the long part, done once
+      - uses: actions/cache@v4
+        with:
+          path: build/android/sdk
+          key: android-sdk-${{ hashFiles('android/package.sh') }}
+
+      - name: Use the signing key
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        run: |
+          [ -n "$ANDROID_KEYSTORE" ] || { echo "The ANDROID_KEYSTORE secret is missing, see android/README.md"; exit 1; }
+          mkdir -p build/android
+          echo "$ANDROID_KEYSTORE" | base64 -d > build/android/debug.keystore
+
+      - name: Build the APK
+        run: android/package.sh "${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samuride-android
+          path: dist/*.apk
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk

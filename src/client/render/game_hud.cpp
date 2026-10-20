@@ -3,6 +3,7 @@
 #include "game_screen.hpp"
 #include "sprites.hpp"
 #include "../audio.hpp"
+#include "../touch.hpp"
 #include <algorithm>
 #include <format>
 
@@ -39,6 +40,35 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
     if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
         drawUltimatePanel(players.at(me), me);
+    if (Touch::ENABLED && cyberpsycho && players.count(me))
+        drawTouchButtons(players.at(me), me);
+}
+
+// Phones: attack, and the ultimate above it, lit in its colour once ready
+void GameScreen::drawTouchButtons(const PlayerState &player, int me)
+{
+    Ultimate ultimate = ultimateOf(run.characterOf(me));
+    bool ready = player.ultimate >= 100;
+    float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 8);
+
+    auto button = [&](sf::Vector2f center, sf::Color color, bool lit, const std::string &label) {
+        sf::CircleShape circle(Touch::BUTTON_RADIUS);
+        circle.setOrigin({Touch::BUTTON_RADIUS, Touch::BUTTON_RADIUS});
+        circle.setPosition(center);
+        circle.setFillColor(withAlpha(color, lit ? 90 : 25));
+        circle.setOutlineColor(withAlpha(color, lit ? 255 : 120));
+        circle.setOutlineThickness(4);
+        canvas.draw(circle);
+        canvas.text(label, 30, withAlpha(color, lit ? 255 : 150), center);
+    };
+
+    button(Touch::ATTACK, NEON_RED, true, "ATTACK");
+    if (ultimate != Ultimate::None) {
+        sf::Color color = ultimateLook(ultimate).color;
+        button(Touch::ULTIMATE, color, ready, ready ? "ULT" : std::format("{}%", player.ultimate));
+        if (ready)
+            canvas.halo(Touch::ULTIMATE, Touch::BUTTON_RADIUS * (1.2f + 0.2f * pulse), withAlpha(color, 60));
+    }
 }
 
 // Top right: your portrait, your ultimate's name and a segmented gauge in its colour. Full, it lights up
@@ -66,14 +96,14 @@ void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
     float gauge_w = box.size.x - 116 - 20;
 
     if (player.spears > 0) {
-        canvas.text(std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
+        canvas.text(Touch::ENABLED ? std::string(look.name) : std::format("{}  [F]", look.name), 28, look.color, text_pos, {0, 0.5f});
         for (int i = 0; i < THUNDER_SPEARS; i++)
             drawSpearIcon(gauge_pos + sf::Vector2f(20 + i * 50, 0), 40, i < player.spears);
         return;
     }
 
     if (ready) {
-        canvas.glitchText(std::format("[{}]  {}", ultimate_key, look.name), 30, look.color,
+        canvas.glitchText(Touch::ENABLED ? std::string(look.name) + " READY" : std::format("[{}]  {}", ultimate_key, look.name), 30, look.color,
                           text_pos + sf::Vector2f(gauge_w / 2, 0));
     } else {
         canvas.text(look.name, 28, DIM_WHITE, text_pos, {0, 0.5f});
@@ -127,9 +157,10 @@ void GameScreen::drawFlashAndCallout()
     float t = run.callout_clock.getElapsedTime().asSeconds() / CALLOUT_TIME;
     if (run.callout.empty() || t > 1)
         return;
-    // Slams in big, settles, then fades
-    float size = 150 - 40 * std::min(1.0f, t * 6);
-    canvas.glitchText(run.callout, static_cast<unsigned>(size), withAlpha(run.callout_color, static_cast<uint8_t>(255 * (1 - t * t))),
+    // Slams in big, then settles and fades. A few fixed sizes: each new font size renders its letters
+    // again, which a size changing every frame made phones stutter on.
+    unsigned int size = t < 0.06f ? 150 : t < 0.12f ? 130 : 110;
+    canvas.glitchText(run.callout, size, withAlpha(run.callout_color, static_cast<uint8_t>(255 * (1 - t * t))),
                       Screen::CENTER + sf::Vector2f(0, -120));
 }
 
@@ -286,7 +317,20 @@ void GameScreen::drawRematchPrompt(GameState &state, bool solo)
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
     else
-        canvas.text(solo ? "[SPACE] RUN AGAIN     [ESC] MENU" : "[SPACE] REMATCH     [ESC] MENU", 32, NEON_YELLOW, pos);
+        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP TO RUN AGAIN")
+                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP TO REMATCH"),
+                    32, NEON_YELLOW, pos);
+    drawMenuButton();
+}
+
+// Phones: the way back to the menu
+void GameScreen::drawMenuButton()
+{
+    if (!Touch::ENABLED)
+        return;
+    sf::FloatRect box(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE);
+    canvas.card(box, true);
+    canvas.text("MENU", 40, NEON_YELLOW, Touch::MENU_BUTTON);
 }
 
 void GameScreen::drawConnectionLost()
@@ -295,5 +339,8 @@ void GameScreen::drawConnectionLost()
     canvas.overlay(200);
 
     canvas.glitchText("CONNECTION LOST", 110, NEON_RED, Screen::CENTER + sf::Vector2f(0, -40));
-    canvas.text("[ESC] BACK TO MENU", 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
+    if (Touch::ENABLED)
+        drawMenuButton();
+    else
+        canvas.text("[ESC] BACK TO MENU", 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
 }
