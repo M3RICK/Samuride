@@ -40,9 +40,9 @@ constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berser
 constexpr char ZAPPER_HACK = 'h';   // collision type: a zapper was hacked, at one of its nodes
 constexpr float HACK_RANGE = 7;
 constexpr int HACK_LANE = 1;
-constexpr float HACK_TIME = 1.2f;
-constexpr int RAM_MAX = 2;
-constexpr float RAM_RECHARGE = 6.0f;    // seconds to get one charge back
+constexpr float HACK_TIME = 2.0f;
+constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
+constexpr float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 
 inline WeaponStats statsOf(Weapon weapon)
 {

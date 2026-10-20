@@ -158,15 +158,15 @@ static void testHack()
 
     Player lucy(-1);
     lucy.reset(0, 0);
-    lucy.spendRam();
-    lucy.spendRam();
+    for (int i = 0; i < RAM_MAX; i++)
+        lucy.spendRam();
     assert(lucy.getRam() == 0);
     lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
     assert(lucy.getRam() == 0);
     lucy.update(0.2f, 10, 8);
     assert(lucy.getRam() == 1);
-    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
-    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    for (int i = 0; i < RAM_MAX; i++)
+        lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
     assert(lucy.getRam() == RAM_MAX);
     assert(weaponOf(4) == Weapon::Hack);
 }
