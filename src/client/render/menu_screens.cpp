@@ -354,15 +354,21 @@ void MenuScreens::drawModeCard(int index, bool selected)
 void MenuScreens::drawDistrictSelect(const MenuState &menu)
 {
     canvas.glitchText("CHOOSE YOUR DISTRICT", 80, NEON_YELLOW, {Screen::WIDTH / 2, 110});
+    canvas.text(std::format("{} EDDIES", menu.wallet.eddies), 30, NEON_PINK, {Screen::WIDTH / 2, 180});
 
     for (int i = 0; i < MenuLayout::DISTRICT_COUNT; i++)
-        drawDistrictCard(i, i == menu.district);
+        drawDistrictCard(i, i == menu.district, menu.wallet);
+
+    if (!menu.error.empty())
+        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 985});
 
     canvas.text("[ARROWS] CHOOSE     [ENTER] JACK IN     [ESC] BACK", 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
-void MenuScreens::drawDistrictCard(int index, bool selected)
+// A locked district is dimmed, with its price instead of its tagline
+void MenuScreens::drawDistrictCard(int index, bool selected, const Wallet &wallet)
 {
+    bool locked = !wallet.hasDistrict(index);
     bool mix = index == MenuLayout::DISTRICT_MIX;
     sf::FloatRect box = MenuLayout::districtBox(index);
     float center_x = box.getCenter().x;
@@ -374,6 +380,13 @@ void MenuScreens::drawDistrictCard(int index, bool selected)
     std::vector<Backdrops::Segment> slices = backdrops.slices(index);
     for (size_t k = 0; k < slices.size(); k++)
         drawThumbnail(slices[k], thumb, k / static_cast<float>(slices.size()), (k + 1) / static_cast<float>(slices.size()));
+    if (locked) {
+        sf::RectangleShape shade(thumb.size);
+        shade.setPosition(thumb.position);
+        shade.setFillColor(sf::Color(10, 5, 20, 200));
+        canvas.draw(shade);
+        canvas.text("LOCKED", 40, DIM_WHITE, thumb.getCenter());
+    }
 
     std::string name = mix ? "BOTH WORLDS" : backdrops[index].name;
     std::string tagline = mix ? "Corridor and Worlds Collide, every 250 m" : backdrops[index].tagline;
@@ -382,7 +395,15 @@ void MenuScreens::drawDistrictCard(int index, bool selected)
         canvas.glitchText(name, 40, NEON_YELLOW, {center_x, top + 245});
     else
         canvas.text(name, 36, DIM_WHITE, {center_x, top + 245});
-    canvas.text(tagline, 24, selected ? NEON_CYAN : HINT_GREY, {center_x, top + 295});
+    if (!locked) {
+        canvas.text(tagline, 24, selected ? NEON_CYAN : HINT_GREY, {center_x, top + 295});
+        return;
+    }
+
+    int price = DISTRICT_PRICES[index];
+    bool affordable = wallet.eddies >= price;
+    std::string tag = std::format("{} EDDIES", price) + (selected && affordable ? "     [ENTER] BUY" : "");
+    canvas.text(tag, 24, affordable ? NEON_YELLOW : HINT_GREY, {center_x, top + 295});
 }
 
 // The left of a picture squeezed into the from..to slice of dest

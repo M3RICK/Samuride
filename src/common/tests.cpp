@@ -165,6 +165,13 @@ static void testWallet()
     assert(!wallet.buy(2) && !wallet.isUnlocked(2));
     wallet.eddies = 1000;
     assert(wallet.buy(2) && wallet.buy(3) && !wallet.buy(4));
+
+    // Districts: free ones are there, the others in any order
+    Wallet map_wallet;
+    map_wallet.eddies = 400;
+    assert(map_wallet.hasDistrict(0) && map_wallet.hasDistrict(2) && !map_wallet.hasDistrict(4));
+    assert(map_wallet.buyDistrict(4) && map_wallet.hasDistrict(4) && map_wallet.eddies == 100);
+    assert(!map_wallet.buyDistrict(4) && !map_wallet.buyDistrict(3) && !map_wallet.buyDistrict(0));
 }
 
 int main()

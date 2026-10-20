@@ -25,6 +25,8 @@ Wallet Wallet::load()
             wallet.eddies = std::max(0, value);
         else if (key == "unlocked")
             wallet.unlocked = std::clamp(value, 1, static_cast<int>(CHARACTER_PRICES.size()));
+        else if (key == "districts")
+            wallet.districts = value;
     }
     return wallet;
 }
@@ -34,7 +36,7 @@ void Wallet::save() const
     std::error_code ec;
 
     std::filesystem::create_directories(walletPath().parent_path(), ec);
-    std::ofstream(walletPath()) << "eddies " << eddies << "\nunlocked " << unlocked << "\n";
+    std::ofstream(walletPath()) << "eddies " << eddies << "\nunlocked " << unlocked << "\ndistricts " << districts << "\n";
 }
 
 void Wallet::earn(int amount)
@@ -53,5 +55,22 @@ bool Wallet::buy(int character)
 
     eddies -= CHARACTER_PRICES[character];
     unlocked++;
+    return true;
+}
+
+bool Wallet::hasDistrict(int district) const
+{
+    return district >= 0 && district < static_cast<int>(DISTRICT_PRICES.size()) &&
+           (DISTRICT_PRICES[district] == 0 || (districts >> district & 1));
+}
+
+bool Wallet::buyDistrict(int district)
+{
+    if (district < 0 || district >= static_cast<int>(DISTRICT_PRICES.size()) || hasDistrict(district) ||
+        eddies < DISTRICT_PRICES[district])
+        return false;
+
+    eddies -= DISTRICT_PRICES[district];
+    districts |= 1 << district;
     return true;
 }

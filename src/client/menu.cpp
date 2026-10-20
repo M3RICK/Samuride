@@ -353,12 +353,26 @@ void Menu::handleModeEvent(const sf::Event &event)
 bool Menu::handleDistrictEvent(const sf::Event &event, MenuChoice &choice)
 {
     if (isKey(event, sf::Keyboard::Key::Escape)) {
+        state.error.clear();
         state.screen = MenuState::Screen::Mode;
         return false;
     }
     if (!navigate(event, state.district, MenuLayout::DISTRICT_COUNT, MenuLayout::DISTRICT_COLUMNS,
                   MenuLayout::districtBox))
         return false;
+
+    // Confirming a locked district buys it
+    if (!state.wallet.hasDistrict(state.district)) {
+        if (state.wallet.buyDistrict(state.district)) {
+            state.wallet.save();
+            state.error.clear();
+            audio->play(Audio::Sfx::Coin);
+        } else {
+            state.error = "NOT ENOUGH EDDIES";
+        }
+        return false;
+    }
+    state.error.clear();
 
     choice = pending;
     choice.district = state.district;
