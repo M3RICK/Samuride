@@ -82,6 +82,9 @@ void GameScreen::resetRun()
     ultimate_was_ready = false;
     spears_shown = 0;
     mood = Mood::Idle;
+    kill_streak = 0;
+    head = head_target = 0;
+    head_until = 0;
     sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
@@ -179,6 +182,9 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
         drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
+        return run.toScreen({titan.x, 0}).x > Screen::WIDTH;
+    });
     run.cyberpsycho = state.getMode() == GameMode::Cyberpsycho;
     runners.draw(players, me, phase == Phase::Running);
     ultimates.draw();

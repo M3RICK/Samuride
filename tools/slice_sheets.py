@@ -153,24 +153,33 @@ def label_blobs(mask):
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
-# Faces for the HUD, Doom style: a grid of heads, 8 by 5, laid out as the game expects (game_hud.cpp)
-FACES = {"mikasa": "sources/mikasa_faces.png"}
+# Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
+FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6)}
 
 
-def slice_faces(source, out):
-    """Heads split on the transparent rows and columns between them, each set on the bottom of a uniform cell."""
+def slice_faces(source, columns, rows, out):
+    """Heads split on the transparent lines between them, each set on the bottom of a uniform cell.
+    Where two heads touch, the widest block is cut at its emptiest line until the count is right."""
     sheet = Image.open(ROOT / source).convert("RGBA")
     opaque = np.array(sheet)[..., 3] > ALPHA
 
-    def spans(filled):
-        edges = np.flatnonzero(np.diff(np.concatenate(([0], filled.astype(int), [0]))))
-        return list(zip(edges[::2], edges[1::2]))
+    def cuts(counts, n):
+        edges = np.flatnonzero(np.diff(np.concatenate(([0], (counts > 0).astype(int), [0]))))
+        spans = [list(span) for span in zip(edges[::2], edges[1::2])]
+        while len(spans) < n:
+            i = max(range(len(spans)), key=lambda k: spans[k][1] - spans[k][0])
+            start, end = spans[i]
+            third = (end - start) // 3
+            cut = start + third + int(np.argmin(counts[start + third:end - third]))
+            spans[i:i + 1] = [[start, cut], [cut, end]]
+        return [0] + [(a[1] + b[0]) // 2 for a, b in zip(spans, spans[1:])] + [len(counts)]
 
-    heads = [[sheet.crop((x0, y0, x1, y1)) for x0, x1 in spans(opaque.any(0))] for y0, y1 in spans(opaque.any(1))]
+    xs, ys = cuts(opaque.sum(0), columns), cuts(opaque.sum(1), rows)
+    heads = [[sheet.crop((xs[c], ys[r], xs[c + 1], ys[r + 1])) for c in range(columns)] for r in range(rows)]
     heads = [[head.crop(head.getbbox()) for head in row] for row in heads]
     cell_w = max(head.width for row in heads for head in row)
     cell_h = max(head.height for row in heads for head in row)
-    grid = Image.new("RGBA", (cell_w * len(heads[0]), cell_h * len(heads)))
+    grid = Image.new("RGBA", (cell_w * columns, cell_h * rows))
     for r, row in enumerate(heads):
         for c, head in enumerate(row):
             grid.alpha_composite(head, (c * cell_w + (cell_w - head.width) // 2, r * cell_h + cell_h - head.height))
@@ -349,8 +358,9 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
     if name in FACES:
-        slice_faces(FACES[name], out)
-        lines.append("faces faces.png")
+        source, columns, rows = FACES[name]
+        slice_faces(source, columns, rows, out)
+        lines.append(f"faces faces.png {columns} {rows}")
     for row, (anim, spec) in enumerate(animations.items()):
         lines.append(f"{anim} {row} {len(frames[anim])} {spec['fps']} {spec['mode']}")
     (out / "meta.txt").write_text("\n".join(lines) + "\n")

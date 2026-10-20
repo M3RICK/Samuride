@@ -172,6 +172,21 @@ void Canvas::halo(sf::Vector2f center, float radius, sf::Color color)
     window.draw(glow, sf::BlendAdd);
 }
 
+// A thick arc between two radii, from angle `from` to `to` in degrees, clockwise from the top
+void Canvas::arc(sf::Vector2f center, float inner, float outer, float from, float to, sf::Color color)
+{
+    int steps = std::max(2, static_cast<int>((to - from) / 3));
+    sf::VertexArray strip(sf::PrimitiveType::TriangleStrip);
+
+    for (int i = 0; i <= steps; i++) {
+        sf::Angle angle = sf::degrees(from + (to - from) * i / steps - 90);
+        sf::Vector2f dir(std::cos(angle.asRadians()), std::sin(angle.asRadians()));
+        strip.append({center + dir * inner, color});
+        strip.append({center + dir * outer, color});
+    }
+    window.draw(strip);
+}
+
 // Dark disc with a neon ring: keeps a pickup or an enemy readable on any background
 void Canvas::backing(sf::Vector2f center, float radius, sf::Color ring)
 {

@@ -48,6 +48,8 @@ bool Character::load(const std::string &dir)
                 DEBUG_LOG("Failed to load " + dir + "/" + file);
             // Drawn well under their size in the HUD
             texture.setSmooth(key == "faces");
+            if (key == "faces")
+                meta >> face_grid.x >> face_grid.y;
         } else if (key == "frame") {
             meta >> frame_size.x >> frame_size.y;
         } else if (key == "feet") {

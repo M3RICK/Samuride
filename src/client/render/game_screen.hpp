@@ -93,10 +93,18 @@ private:
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
-    // The HUD's face reacts for a moment to what happens to you, like Doom's
-    enum class Mood { Idle, Kill, Shout, Surprised, Pickup };
+    // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
+    // interrupts a lesser one.
+    enum class Mood { Idle, Pickup, Kill, Frenzy, Surprised, Shout };
     Mood mood = Mood::Idle;
     sf::Clock mood_clock;
+    int kill_streak = 0;        // kills in a quick row
+    // Idle, the head turns a step at a time toward a column of the faces' first row, holds, turns back
+    int head = 0;
+    int head_target = 0;
+    float head_moved = 0;       // canvas time of its last step
+    float head_until = 0;       // when it picks a new target
+    bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
 
     Phase last_phase = Phase::Waiting;
@@ -125,11 +133,12 @@ private:
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
-    void drawFace(const PlayerState &player, int me, sf::Vector2f pos, float height);
+    void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
+    void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
+    sf::Vector2i faceCell(const PlayerState &player, int me);
     void react(Mood new_mood);
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
-    void drawSpearIcon(sf::Vector2f pos, float height, bool loaded);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
