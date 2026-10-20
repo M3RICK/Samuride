@@ -3,9 +3,18 @@
 #ifndef MAP_HPP
     #define MAP_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <utility>
+
+// What a tile holds: one character each, in map files and on the network. The power-ups have their
+// own (shift.hpp, powerups.hpp).
+constexpr char EMPTY_TILE = '_';
+constexpr char COIN_TILE = 'c';         // an eddy
+constexpr char ZAPPER_TILE = 'e';       // deadly; neighbouring nodes are linked by a beam
+constexpr char DRONE_TILE = 'd';        // CYBERPSYCHO: deadly too, shot down for a bounty
 
 // Grows to the right as the run goes on: the server appends chunks, clients receive them
 class Map {
@@ -34,5 +43,23 @@ public:
     size_t getWidth() const { return width; }
     size_t getHeight() const { return height; }
 };
+
+// Every node of the zapper that has one at (x, y): the nodes linked to it, the way its beams are drawn
+inline std::vector<std::pair<int, int>> zapperNodes(const Map &map, int x, int y)
+{
+    std::vector<std::pair<int, int>> nodes = {{x, y}};
+
+    for (size_t i = 0; i < nodes.size(); i++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                std::pair<int, int> next = {nodes[i].first + dx, nodes[i].second + dy};
+                if (next.first >= 0 && next.second >= 0 && map.getTile(next.first, next.second) == ZAPPER_TILE &&
+                    std::find(nodes.begin(), nodes.end(), next) == nodes.end())
+                    nodes.push_back(next);
+            }
+        }
+    }
+    return nodes;
+}
 
 #endif

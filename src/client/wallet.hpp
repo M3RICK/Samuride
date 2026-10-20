@@ -1,12 +1,11 @@
-// Eddies earned over every run, spent on unlocking the characters one after the other, and the districts
+// Eddies earned over every run, spent on unlocking the runners one after the other (their prices are in
+// common/runners.hpp), and the districts
 
 #ifndef WALLET_HPP
     #define WALLET_HPP
 
 #include <vector>
 
-// Price of each CHARACTER_DIRS entry: Johnny is free, the others are bought in order
-inline const std::vector<int> CHARACTER_PRICES = {0, 100, 250, 500, 750};
 // Price of each district, in MenuLayout order: The Corridor, Worlds Collide, Night City, The Walls, Zaun,
 // Both Worlds. 0 is free; the others are bought in any order.
 inline const std::vector<int> DISTRICT_PRICES = {0, 500, 0, 150, 300, 750};

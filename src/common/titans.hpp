@@ -1,10 +1,10 @@
+// Titans charge along the floor from the right: fly over them.
+// Shared by the server (who moves them and checks hits) and the client (who draws them).
+
 #ifndef TITANS_HPP
     #define TITANS_HPP
 
 #include <cstdint>
-
-// Titans charge along the floor from the right: fly over them.
-// Shared by the server (who moves them and checks hits) and the client (who draws them).
 
 enum class TitanType : uint8_t { Female, Armored };
 
@@ -23,7 +23,7 @@ inline TitanStats titanStats(TitanType type)
     return {4.5f, 1.6f, 9};
 }
 
-// No titan before this distance, then one every TITAN_INTERVAL seconds or so
+// No titan before this distance, then one every TITAN_MIN_INTERVAL to TITAN_MAX_INTERVAL seconds
 constexpr float TITAN_FIRST_DISTANCE = 300;
 constexpr float TITAN_MIN_INTERVAL = 7;
 constexpr float TITAN_MAX_INTERVAL = 14;
@@ -31,7 +31,7 @@ constexpr float TITAN_MAX_INTERVAL = 14;
 // They appear this far ahead of the leader: about a second and a half of warning
 constexpr float TITAN_SPAWN_AHEAD = 40;
 
-// CYBERPSYCHO: Mikasa's blade takes the nape, for a fat bounty
+// CYBERPSYCHO: whoever takes a titan down (Mikasa's blade, an ultimate) gets a fat bounty
 constexpr int TITAN_BOUNTY = 20;
 
 // MSG_COLLISION types: a titan ran a player down, or a player cut a titan down

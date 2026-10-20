@@ -10,7 +10,7 @@ bool Server::placeInFreeTile(std::vector<std::string> &rows, char tile)
 
     for (int attempt = 0; attempt < 10; attempt++) {
         char &spot = rows[row(rng)][column(rng)];
-        if (spot == '_') {
+        if (spot == EMPTY_TILE) {
             spot = tile;
             return true;
         }
@@ -24,10 +24,12 @@ void Server::placePowerUp(std::vector<std::string> &rows)
 
     if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= POWERUP_CHANCE)
         return;
-    // Berserk is no use without attacks: CYBERPSYCHO only
-    std::vector<char> kinds = {SHIELD_TILE, SANDEVISTAN_TILE};
-    if (mode == GameMode::Cyberpsycho)
-        kinds.push_back(BERSERK_TILE);
+    // Any power-up, but Berserk is no use without attacks: CYBERPSYCHO only
+    std::vector<char> kinds;
+    for (char tile : POWER_UPS) {
+        if (tile != BERSERK_TILE || mode == GameMode::Cyberpsycho)
+            kinds.push_back(tile);
+    }
     placeInFreeTile(rows, kinds[std::uniform_int_distribution<size_t>(0, kinds.size() - 1)(rng)]);
 }
 
@@ -40,7 +42,7 @@ char Server::powerUpAt(int x, int y) const
         return tile;
     if (tile == DRONE_TILE && destroyed_drones.count({x, y}))
         return droneDrop(x, y);
-    return '_';
+    return EMPTY_TILE;
 }
 
 // A deadly hit: the shield takes it if there is one. Returns true when the player dies.

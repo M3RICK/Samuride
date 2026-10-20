@@ -1,4 +1,4 @@
-// The few paths that differ between Linux, macOS and Windows
+// The few paths that differ between Linux, macOS, Windows and Android
 
 #include "platform.hpp"
 #include <cstdint>

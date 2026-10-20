@@ -1,6 +1,7 @@
-// Eddies earned over every run, spent on unlocking the characters one after the other
+// Eddies earned over every run, spent on the runners (one after the other) and the districts
 
 #include "wallet.hpp"
+#include "../common/runners.hpp"
 #include "../common/platform.hpp"
 #include <algorithm>
 #include <filesystem>
@@ -24,7 +25,7 @@ Wallet Wallet::load()
         if (key == "eddies")
             wallet.eddies = std::max(0, value);
         else if (key == "unlocked")
-            wallet.unlocked = std::clamp(value, 1, static_cast<int>(CHARACTER_PRICES.size()));
+            wallet.unlocked = std::clamp(value, 1, RUNNER_COUNT);
         else if (key == "districts")
             wallet.districts = value;
     }
@@ -49,11 +50,10 @@ void Wallet::earn(int amount)
 
 bool Wallet::buy(int character)
 {
-    if (character != unlocked || character >= static_cast<int>(CHARACTER_PRICES.size()) ||
-        eddies < CHARACTER_PRICES[character])
+    if (character != unlocked || character >= RUNNER_COUNT || eddies < RUNNERS[character].price)
         return false;
 
-    eddies -= CHARACTER_PRICES[character];
+    eddies -= RUNNERS[character].price;
     unlocked++;
     return true;
 }

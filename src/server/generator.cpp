@@ -31,20 +31,20 @@ static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
         case 0: {
             int y = randInt(rng, 0, height - len);
             for (int i = 0; i < len; i++)
-                setTile(rows, x, y + i, 'e');
+                setTile(rows, x, y + i, ZAPPER_TILE);
             return 1;
         }
         case 1: {
             int y = randInt(rng, 0, height - 1);
             for (int i = 0; i < len; i++)
-                setTile(rows, x + i, y, 'e');
+                setTile(rows, x + i, y, ZAPPER_TILE);
             return len;
         }
         default: {
             int y = randInt(rng, 0, height - len);
             bool rising = randInt(rng, 0, 1);
             for (int i = 0; i < len; i++)
-                setTile(rows, x + i, rising ? y + len - 1 - i : y + i, 'e');
+                setTile(rows, x + i, rising ? y + len - 1 - i : y + i, ZAPPER_TILE);
             return len;
         }
     }
@@ -72,7 +72,7 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
         int y = randInt(rng, 0, height - h);
         for (int i = 0; i < w; i++)
             for (int j = 0; j < h; j++)
-                setTile(rows, x + i, y + j, 'c');
+                setTile(rows, x + i, y + j, COIN_TILE);
         return w;
     }
 
@@ -80,7 +80,7 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
     int amplitude = randInt(rng, 1, 2);
     int center = randInt(rng, amplitude, height - 1 - amplitude);
     for (int i = 0; i < w; i++)
-        setTile(rows, x + i, center + static_cast<int>(std::round(std::sin(i * 0.7) * amplitude)), 'c');
+        setTile(rows, x + i, center + static_cast<int>(std::round(std::sin(i * 0.7) * amplitude)), COIN_TILE);
     return w;
 }
 
@@ -90,7 +90,7 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
 std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t height, float difficulty,
                                        bool drones)
 {
-    Rows rows(height, std::string(width, '_'));
+    Rows rows(height, std::string(width, EMPTY_TILE));
     std::uniform_real_distribution<float> chance(0, 1);
     int x = randInt(rng, 2, 5);
 

@@ -1,4 +1,4 @@
-// CYBERPSYCHO attacks: muzzle flashes, slashes, the projectiles in flight, and the ultimates.
+// CYBERPSYCHO attacks: muzzle flashes, slashes and the projectiles in flight (the ultimates: ultimates.hpp).
 // Projectiles keep the height they were fired at, and are drawn ahead of the shooter by their age:
 // the server moves them at run speed + weapon speed, the shooter at run speed, so the gap only
 // depends on the weapon.
@@ -31,11 +31,6 @@ private:
     std::vector<Trail> trails;
 
     sf::Vector2f positionOf(const Trail &trail) const;
-    void startUltimate(const UltimateEvent &ultimate);
-    void drawFireWaves();
-    void drawNukes();
-    void drawBreaches();
-    void drawRockets();
 
 public:
     Shots(Canvas &canvas, Run &run, Audio &audio, Particles &particles);

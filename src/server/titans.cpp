@@ -1,8 +1,8 @@
-#include "server.hpp"
-#include <algorithm>
-
 // Titans: spawned on a timer once the run is long enough, moved every tick,
 // streamed to clients with MSG_TITANS
+
+#include "server.hpp"
+#include <algorithm>
 
 void Server::resetTitans()
 {

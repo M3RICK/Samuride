@@ -4,6 +4,10 @@
 #ifndef POWERUPS_HPP
     #define POWERUPS_HPP
 
+#include <algorithm>
+#include <iterator>
+#include "map.hpp"
+
 // Subdermal armor: takes one deadly hit instead of you
 constexpr char SHIELD_TILE = 'a';
 // Sandevistan: a few seconds of sprint nothing can hurt
@@ -24,22 +28,24 @@ constexpr float BERSERK_RAM_RATE = 3.0f;    // and Lucy's RAM comes back this ma
 constexpr int POWERUP_FIRST_CHUNK = 3;
 constexpr float POWERUP_CHANCE = 0.2f;
 
+// Every power-up but the Attack Titan's orb: a new one goes here too
+inline constexpr char POWER_UPS[] = {SHIELD_TILE, SANDEVISTAN_TILE, BERSERK_TILE};
+
 inline bool isPowerUp(char tile)
 {
-    return tile == SHIELD_TILE || tile == SANDEVISTAN_TILE || tile == BERSERK_TILE;
+    return std::find(std::begin(POWER_UPS), std::end(POWER_UPS), tile) != std::end(POWER_UPS);
 }
 
-// One destroyed drone in three leaves a power-up behind ('_' for none), any of the three. Picked from its
-// position, so the server and the clients agree without a word on the network.
+// One destroyed drone in three leaves a power-up behind (EMPTY_TILE for none), any of them. Picked from
+// its position, so the server and the clients agree without a word on the network.
 inline char droneDrop(int x, int y)
 {
     unsigned hash = static_cast<unsigned>(x) * 2654435761u ^ static_cast<unsigned>(y) * 40503u;
 
     hash ^= hash >> 13;
     if (hash % 3 != 0)
-        return '_';
-    static const char drops[] = {SHIELD_TILE, SANDEVISTAN_TILE, BERSERK_TILE};
-    return drops[(hash / 3) % 3];
+        return EMPTY_TILE;
+    return POWER_UPS[(hash / 3) % std::size(POWER_UPS)];
 }
 
 #endif

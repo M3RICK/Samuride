@@ -14,7 +14,8 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles) {
+      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
+      ultimates(canvas, run, audio, particles) {
 }
 
 void GameScreen::draw(GameState &state, Phase phase, bool connected, float dt)
@@ -62,6 +63,7 @@ void GameScreen::resetRun()
     particles.clear();
     titans.reset();
     shots.clear();
+    ultimates.clear();
     effects.clear();
     speed_lines.clear();
     shown_backdrop = -1;
@@ -116,6 +118,7 @@ void GameScreen::update(GameState &state, const std::map<int, PlayerState> &play
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
     shots.handle(state);
+    ultimates.handle(state);
 }
 
 // Countdown beeps, and the jetpack rumble while your thrust is on
@@ -158,6 +161,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     runners.draw(players, me, phase == Phase::Running);
+    ultimates.draw();
     shots.draw();
     particles.draw(canvas, run.view);
 
@@ -257,7 +261,7 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 {
     sf::Vector2f tile_center(effect.x + 0.5f, effect.y + 0.5f);
 
-    if (effect.type == 'e') {
+    if (effect.type == ZAPPER_TILE) {
         audio.play(Audio::Sfx::Zap);
         run.shake = 0.5f;
         run.death_clocks.try_emplace(effect.player);
@@ -329,7 +333,7 @@ void GameScreen::drawEffects()
         auto alpha = static_cast<uint8_t>(255 * (1 - t));
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
-        if (active.effect.type == 'c') {
+        if (active.effect.type == COIN_TILE) {
             // Coin pops: swells and fades out while +1 floats up
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
             canvas.text("+1", 30, withAlpha(NEON_CYAN, alpha), run.toScreen(tile + sf::Vector2f(0.5f, -t)));

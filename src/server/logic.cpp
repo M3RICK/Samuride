@@ -27,7 +27,7 @@ bool Server::resetMap()
             return false;
         }
     } else {
-        game_map.appendChunk(std::vector<std::string>(MAP_HEIGHT, std::string(SAFE_START, '_')));
+        game_map.appendChunk(std::vector<std::string>(MAP_HEIGHT, std::string(SAFE_START, EMPTY_TILE)));
     }
     extendMap(0);
     return true;
@@ -164,6 +164,7 @@ void Server::updatePlayers()
     }
 
     updateTitans(rear_x);
+    // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
     std::erase_if(hacked_zappers, [](const auto &entry) { return entry.second <= 0; });
@@ -203,9 +204,9 @@ bool Server::checkPlayerCollisions(Player &player)
 
         char power = powerUpAt(tile_x, tile_y);
 
-        if (tile == 'c' && player.collectCoin(tile_x, tile_y)) {
-            notifyCollision('c', player, tile_x, tile_y);
-        } else if (power != '_' && player.takePickup(tile_x, tile_y)) {
+        if (tile == COIN_TILE && player.collectCoin(tile_x, tile_y)) {
+            notifyCollision(COIN_TILE, player, tile_x, tile_y);
+        } else if (power != EMPTY_TILE && player.takePickup(tile_x, tile_y)) {
             player.powerUp(power);
             notifyCollision(power, player, tile_x, tile_y);
         } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
@@ -214,10 +215,10 @@ bool Server::checkPlayerCollisions(Player &player)
             return false;
         } else if (player.isInvincible()) {
             continue;
-        } else if (((tile == 'e' && !hacked_zappers.count({tile_x, tile_y})) || isLiveDrone(tile_x, tile_y)) &&
+        } else if (((tile == ZAPPER_TILE && !hacked_zappers.count({tile_x, tile_y})) || isLiveDrone(tile_x, tile_y)) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
-            return hurt(player, 'e', tile_x, tile_y);
+            return hurt(player, ZAPPER_TILE, tile_x, tile_y);
         }
     }
 

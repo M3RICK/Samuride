@@ -1,4 +1,7 @@
-// The authoritative game server, split by theme over server, logic, combat, titans and shift .cpp
+// The authoritative game server: it runs the game, the clients only send inputs and draw what it says.
+// Split by theme: server.cpp (connections, messages), logic.cpp (lobby, physics, collisions),
+// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, shift.cpp (the Attack Titan
+// power-up) and powerups.cpp (shield, Sandevistan, Berserk).
 
 #ifndef SERVER_HPP
     #define SERVER_HPP
@@ -59,28 +62,6 @@ private:
         bool spear = false;     // Mikasa's: blows up where it stops
     };
 
-    ServerConfig config;
-    int server_fd;
-    std::atomic<bool> stopping;
-    size_t required_players;
-
-    Map game_map;
-    std::mt19937 rng;
-    int chunks_generated;
-    int last_orb_chunk;     // chunk of the last Attack Titan orb
-    float run_speed;
-
-    Phase phase;
-    int countdown;
-    int countdown_ticks;
-    std::set<int> ready_clients;
-
-    // Picked by the first player in the lobby: the host
-    uint8_t district;
-    GameMode mode;
-
-    std::set<std::pair<int, int>> destroyed_drones;
-    std::vector<Projectile> projectiles;
     // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
     struct Sweep {
         int owner_fd;
@@ -92,16 +73,38 @@ private:
         int bottom;
     };
 
-    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
-    std::vector<Sweep> sweeps;
-
-    // David's ultimate, falling
+    // David's nuke, falling
     struct Nuke {
         int owner_fd;
         float impact;   // x where it lands, in tiles
         float timer;    // seconds before it does
     };
 
+    ServerConfig config;
+    int server_fd;
+    std::atomic<bool> stopping;
+    size_t required_players;
+
+    // The run
+    Map game_map;
+    std::mt19937 rng;
+    int chunks_generated;
+    int last_orb_chunk;     // chunk of the last Attack Titan orb
+    float run_speed;
+    Phase phase;
+    int countdown;
+    int countdown_ticks;
+    std::set<int> ready_clients;
+
+    // Picked by the first player in the lobby: the host
+    uint8_t district;
+    GameMode mode;
+
+    // CYBERPSYCHO
+    std::set<std::pair<int, int>> destroyed_drones;
+    std::vector<Projectile> projectiles;
+    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
+    std::vector<Sweep> sweeps;
     std::vector<Nuke> nukes;
 
     std::vector<Titan> titans;
@@ -197,6 +200,8 @@ private:
 
     void handleAttack(int client_fd);
 
+    void announceShot(const Player &player, Weapon weapon);
+
     void fireProjectile(int client_fd, const Player &player, Weapon weapon);
 
     void strike(int client_fd, const Player &player, float reach);
@@ -214,6 +219,10 @@ private:
     bool isLiveDrone(int x, int y) const;
 
     void destroyDrone(int owner_fd, int x, int y);
+
+    //===========================================================================
+    // Ultimates (ultimates.cpp)
+    //===========================================================================
 
     void handleUltimate(int client_fd);
 

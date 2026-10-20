@@ -30,17 +30,17 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
             if (tile == DRONE_TILE && destroyed.count({x, y}))
                 tile = droneDrop(x, y);
 
-            if (tile == 'e' && run.burnt_zappers.count({x, y}))
+            if (tile == ZAPPER_TILE && run.burnt_zappers.count({x, y}))
                 drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.5f, sf::Color(70, 50, 45, 170));
-            else if (tile == 'e' && run.hackLeft(x, y) > 0)
+            else if (tile == ZAPPER_TILE && run.hackLeft(x, y) > 0)
                 drawHackedZapper(x, y, run.hackLeft(x, y));
-            else if (tile == 'e')
+            else if (tile == ZAPPER_TILE)
                 drawZapper(x, y, time);
             else if (tile == DRONE_TILE)
                 drawDrone(x, y, time);
             else if (collected.count({x, y}))
                 continue;
-            else if (tile == 'c')
+            else if (tile == COIN_TILE)
                 drawCoin(x, y, time);
             else if (tile == SHIFT_TILE)
                 drawShiftOrb(x, y, time);
@@ -81,7 +81,7 @@ void Tiles::drawZapper(int x, int y, float time)
     bool linked = false;
 
     for (sf::Vector2i link : links) {
-        if (y + link.y >= 0 && run.map.getTile(x + link.x, y + link.y) == 'e') {
+        if (y + link.y >= 0 && run.map.getTile(x + link.x, y + link.y) == ZAPPER_TILE) {
             drawBeam(center, run.toScreen({x + link.x + 0.5f, y + link.y + 0.5f}));
             linked = true;
         }

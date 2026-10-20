@@ -9,8 +9,14 @@
 // Music, plus sound effects synthesized at start-up: no audio files to ship
 class Audio {
 public:
-    enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion, Stomp, Roar, Steam,
-                     Shield, ShieldBreak, Sandevistan, Hack, Berserk, FireWave, Nuke, Breach, Thunder, Minigun, UltimateReady };
+    // Each one is synthesized in Audio::synthesize()
+    enum class Sfx {
+        Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm,       // the run and the menus
+        Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
+        Stomp, Roar, Steam,                                         // titans and the Attack Titan
+        Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
+        FireWave, Nuke, Breach, UltimateReady,                      // ultimates
+    };
 
     Audio();
 

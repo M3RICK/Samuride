@@ -3,7 +3,7 @@
 
 #include <filesystem>
 
-// The few paths that differ between Linux, macOS and Windows
+// The few paths that differ between Linux, macOS, Windows and Android
 namespace Platform {
     // Folder of the running executable: the assets sit next to it
     std::filesystem::path executableDirectory();

@@ -1,14 +1,11 @@
-// A playable character: sprite sheet, portrait and animations
+// A character's looks: sprite sheet, portrait and animations, loaded from assets/<dir>/meta.txt.
+// The runners (common/runners.hpp) and the titans each have one.
 
 #ifndef CHARACTERS_HPP
     #define CHARACTERS_HPP
 
 #include <SFML/Graphics.hpp>
 #include <string>
-#include <vector>
-
-// Folders in assets/, in selection order. Their sheets come from tools/slice_sheets.py.
-inline const std::vector<std::string> CHARACTER_DIRS = {"johny", "david", "jinx", "mikasa", "lucy"};
 
 struct Animation {
     enum class Mode { Loop, Once, Hide };
