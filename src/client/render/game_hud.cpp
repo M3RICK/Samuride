@@ -6,6 +6,8 @@
 #include "../touch.hpp"
 #include <algorithm>
 #include <format>
+#include <map>
+#include <vector>
 
 using namespace Palette;
 
@@ -151,47 +153,87 @@ void GameScreen::react(Mood new_mood)
     mood_clock.restart();
 }
 
-// Which head of the faces sheet shows now, Doom style. Mikasa's sheet, by rows: her head turning from
-// facing you to profile (0, then 1), a cry closing to a frown (2), bleeding with her eyes closing (3),
-// tired (4), a smile (5).
+// A look on a faces sheet: its heads, played at `fps`, looping or held on the last
+struct FaceClip {
+    std::vector<sf::Vector2i> cells;
+    float fps = 1;
+    bool loop = false;
+
+    sf::Vector2i at(float seconds) const
+    {
+        int i = static_cast<int>(seconds * fps);
+        return cells[loop ? i % cells.size() : std::min<size_t>(i, cells.size() - 1)];
+    }
+};
+
+// Each runner's sheet has its own looks; their first row is always the head turning from facing you
+// to profile, the idle face's.
+struct FaceLooks {
+    FaceClip death, shout, frenzy, kill, surprised, pickup, rage, titan, sprint, ready;
+};
+
+static const FaceLooks *faceLooks(const std::string &name)
+{
+    static const std::map<std::string, FaceLooks> LOOKS = {
+        // A cry, a frown on a kill, a smile; bleeding with her eyes closing
+        {"MIKASA", {.death = {{{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}, {6, 3}}, 6},
+                    .shout = {{{2, 2}, {3, 2}}, 9, true},
+                    .frenzy = {{{0, 2}, {1, 2}}, 9, true},
+                    .kill = {{{6, 2}, {5, 2}}},
+                    .surprised = {{{0, 2}, {0, 1}}, 2.5f},
+                    .pickup = {{{2, 5}, {3, 5}, {4, 5}}, 8},
+                    .rage = {{{6, 2}, {6, 2}, {1, 2}}, 2, true},
+                    .titan = {{{8, 1}}}, .sprint = {{{5, 1}}}, .ready = {{{3, 0}}}}},
+        // She laughs: a grin on a kill, a mad cackle on a streak, a wink at a power-up
+        {"JINX", {.death = {{{1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}, {6, 3}}, 6},
+                  .shout = {{{3, 2}, {4, 2}}, 9, true},
+                  .frenzy = {{{1, 2}, {2, 2}, {5, 2}, {6, 2}}, 9, true},
+                  .kill = {{{0, 3}, {0, 2}}},
+                  .surprised = {{{1, 3}, {7, 3}}, 2.5f},
+                  .pickup = {{{0, 4}, {0, 3}}, 3},
+                  .rage = {{{1, 2}, {2, 2}}, 6, true},
+                  .titan = {{{8, 0}}}, .sprint = {{{5, 1}}}, .ready = {{{3, 0}}}}},
+    };
+    auto it = LOOKS.find(name);
+    return it != LOOKS.end() ? &it->second : nullptr;
+}
+
+// Which head of your faces sheet shows now, Doom style
 sf::Vector2i GameScreen::faceCell(const PlayerState &player, int me)
 {
     static constexpr float TURN_STEP = 0.05f;
     static const std::map<Mood, float> DURATION = {
         {Mood::Pickup, 1.2f}, {Mood::Kill, 0.6f}, {Mood::Frenzy, 1.0f}, {Mood::Surprised, 1.0f}, {Mood::Shout, 1.2f}};
+    const Character &character = sprites.character(run.characterOf(me));
+    const FaceLooks *looks = faceLooks(character.name);
     float now = canvas.time();
     float age = mood_clock.getElapsedTime().asSeconds();
-    // Frames `first` to `last` of a row at `fps`, held on the last
-    auto play = [](int row, int first, int last, float fps, float t) {
-        return sf::Vector2i{std::min(last, first + static_cast<int>(t * fps)), row};
-    };
-    bool flap = static_cast<int>(now * 9) % 2 == 0;     // the mouth, while she shouts
 
-    if (run.death_clocks.count(me))
-        return play(3, 0, 6, 6, run.death_clocks.at(me).getElapsedTime().asSeconds());
-    if (mood != Mood::Idle && age < DURATION.at(mood)) {
+    if (looks && run.death_clocks.count(me))
+        return looks->death.at(run.death_clocks.at(me).getElapsedTime().asSeconds());
+    if (looks && mood != Mood::Idle && age < DURATION.at(mood)) {
         switch (mood) {
-        case Mood::Shout:     return age < 0.2f ? play(2, 0, 3, 20, age) : sf::Vector2i{flap ? 3 : 2, 2};
-        case Mood::Frenzy:    return {flap ? 1 : 0, 2};
-        case Mood::Kill:      return {kill_streak % 2 ? 5 : 6, 2};
-        case Mood::Surprised: return age < 0.4f ? sf::Vector2i{0, 2} : sf::Vector2i{0, 1};
-        case Mood::Pickup:    return play(5, 2, 4, 8, age);
+        case Mood::Shout:     return looks->shout.at(age);
+        case Mood::Frenzy:    return looks->frenzy.at(age);
+        case Mood::Kill:      return looks->kill.cells[kill_streak % looks->kill.cells.size()];
+        case Mood::Surprised: return looks->surprised.at(age);
+        case Mood::Pickup:    return looks->pickup.at(age);
         case Mood::Idle:      break;
         }
     }
-    if (player.form == Form::Titan || player.berserk)
-        return {flap && static_cast<int>(now) % 3 == 0 ? 1 : 6, 2};
-    if (titan_coming)
-        return {8, 1};      // glaring at it, ahead
-    if (player.sprinting)
-        return {5, 1};
-    if (player.ultimate >= 100)
-        return {3, 0};
+    if (looks && (player.form == Form::Titan || player.berserk))
+        return looks->rage.at(now);
+    if (looks && titan_coming)
+        return looks->titan.at(0);
+    if (looks && player.sprinting)
+        return looks->sprint.at(0);
+    if (looks && player.ultimate >= 100)
+        return looks->ready.at(0);
 
     // Idle: mostly facing you, now and then a look ahead, short or all the way to profile
     if (now >= head_until && head == head_target) {
         bool look_away = head_target == 0 && randf(0, 1) < 0.6f;
-        head_target = look_away ? static_cast<int>(randf(2, 8.99f)) : 0;
+        head_target = look_away ? static_cast<int>(randf(2, character.face_grid.x - 0.01f)) : 0;
         head_until = now + (look_away ? randf(0.6f, 1.4f) : randf(1.8f, 4.f));
     }
     if (head != head_target && now - head_moved >= TURN_STEP) {

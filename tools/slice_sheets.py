@@ -154,7 +154,7 @@ DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
-FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6)}
+FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
 
 def slice_faces(source, columns, rows, out):
@@ -183,6 +183,10 @@ def slice_faces(source, columns, rows, out):
     for r, row in enumerate(heads):
         for c, head in enumerate(row):
             grid.alpha_composite(head, (c * cell_w + (cell_w - head.width) // 2, r * cell_h + cell_h - head.height))
+    # Small heads are blown up without smoothing: the game smooths them only on the way down
+    if cell_h < 150:
+        scale = -(-150 // cell_h)
+        grid = grid.resize((grid.width * scale, grid.height * scale), Image.NEAREST)
     grid.save(out / "faces.png")
 
 

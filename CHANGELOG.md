@@ -11,6 +11,8 @@ taken from this file. Players on different versions can't play together: update 
 - **Mikasa's face comes alive in the HUD**, Doom style: she turns her head to look ahead, frowns on a kill and
   cries out after three in a row, smiles at a power-up, flinches when her shield breaks, glares at an
   incoming titan, shouts her ultimate and bleeds when she falls.
+- **Jinx's face too**: a grin on every kill, a mad cackle on a streak, a wink at a power-up, a laugh as she
+  fires her ultimate.
 - **A round portrait at the bottom centre**, with your ultimate's gauge filling a ring around it (a notch per
   thunder spear while Mikasa holds them).
 
