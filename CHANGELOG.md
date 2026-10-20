@@ -11,6 +11,9 @@ taken from this file. Players on different versions can't play together: update 
   1.2 seconds, or the first drone ahead of her goes down. Each hack takes one of her 2 charges of RAM, and a charge comes back every
   6 seconds: her RAM shows next to her eddies, and a glitch ring marks what her next hack will hit.
 
+### Other
+- The shield is now green, so it no longer looks like a zapper, and the Sandevistan is now magenta.
+
 ## v2.3
 
 ### New

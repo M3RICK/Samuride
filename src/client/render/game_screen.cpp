@@ -290,11 +290,11 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         bool shield = effect.type == SHIELD_TILE;
         if (effect.player == me)
             audio.play(shield ? Audio::Sfx::Shield : Audio::Sfx::Sandevistan);
-        particles.emit(tile_center, 24, shield ? NEON_CYAN : NEON_GREEN, 6, 0.5f, 0);
+        particles.emit(tile_center, 24, shield ? SHIELD_COLOR : SANDEVISTAN_COLOR, 6, 0.5f, 0);
     } else if (effect.type == SHIELD_BREAK) {
         audio.play(Audio::Sfx::ShieldBreak);
         run.shakeAtLeast(0.3f);
-        particles.emit(tile_center, 36, NEON_CYAN, 8, 0.6f, 10);
+        particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
     } else if (effect.player == me) {
         audio.play(Audio::Sfx::Coin);
@@ -333,12 +333,12 @@ void GameScreen::drawEffects()
             // What you just grabbed floats up
             bool shield = active.effect.type == SHIELD_TILE;
             if (active.mine)
-                canvas.text(shield ? "SHIELD" : "SANDEVISTAN", 34, withAlpha(shield ? NEON_CYAN : NEON_GREEN, alpha),
+                canvas.text(shield ? "SHIELD" : "SANDEVISTAN", 34, withAlpha(shield ? SHIELD_COLOR : SANDEVISTAN_COLOR, alpha),
                             run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else {
-            // A death flashes red, a broken shield cyan
+            // A death flashes red, a broken shield green
             sf::RectangleShape flash({Screen::WIDTH, Screen::HEIGHT});
-            flash.setFillColor(withAlpha(active.effect.type == SHIELD_BREAK ? NEON_CYAN : NEON_RED, alpha / 2));
+            flash.setFillColor(withAlpha(active.effect.type == SHIELD_BREAK ? SHIELD_COLOR : NEON_RED, alpha / 2));
             canvas.draw(flash);
         }
     }

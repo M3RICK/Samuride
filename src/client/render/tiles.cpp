@@ -174,12 +174,12 @@ void Tiles::drawShiftOrb(int x, int y, float time)
     canvas.image(sprites.titan_face, center, tile_size * 0.7f, {0.5f, 0.5f}, sf::Color::White);
 }
 
-// Shield: a hexagon plate; Sandevistan: green chevrons rushing forward
+// Shield: a hexagon plate; Sandevistan: chevrons rushing forward
 void Tiles::drawPowerUp(int x, int y, char tile, float time)
 {
     float tile_size = run.view.tile_size;
     bool shield = tile == SHIELD_TILE;
-    sf::Color color = shield ? NEON_CYAN : NEON_GREEN;
+    sf::Color color = shield ? SHIELD_COLOR : SANDEVISTAN_COLOR;
     sf::Vector2f center = run.toScreen({x + 0.5f, y + 0.5f + std::sin(time * 3 + x) * 0.1f});
     float pulse = 0.5f + 0.5f * std::sin(time * 6 + x);
 

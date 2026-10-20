@@ -49,7 +49,7 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
 
     if (player.shielded) {
         sf::FloatRect bounds = text.getGlobalBounds();
-        canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, NEON_CYAN, 0);
+        canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
     }
 
     if (!cyberpsycho || weaponOf(run.characterOf(player_num)) != Weapon::Hack)
@@ -67,7 +67,7 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
     }
 }
 
-// Your timed power-ups drain a gauge; the Sandevistan also tints the screen green
+// Your timed power-ups drain a gauge; the Sandevistan also tints the screen magenta
 void GameScreen::drawPowerUps(const PlayerState &player, int me)
 {
     const PlayerAnim &anim = run.player_anims[me];
@@ -76,9 +76,9 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         drawGauge("ATTACK TITAN", NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / TITAN_TIME);
     } else if (player.sprinting) {
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
-        tint.setFillColor(withAlpha(NEON_GREEN, 22));
+        tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
-        drawGauge("SANDEVISTAN", NEON_GREEN, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME);
+        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME);
     }
 }
 

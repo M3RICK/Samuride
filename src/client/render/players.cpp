@@ -150,14 +150,14 @@ void Players::updateSprint(int player_num, const PlayerState &player)
     state.sprinting = player.sprinting;
 }
 
-// Sandevistan: ghosts of the runner trailing behind, alternating green and pink
+// Sandevistan: ghosts of the runner trailing behind, alternating magenta and white
 void Players::drawAfterimages(const sf::Sprite &sprite, float tile_size)
 {
     sf::Sprite ghost = sprite;
 
     for (int i = 4; i >= 1; i--) {
         ghost.setPosition(sprite.getPosition() - sf::Vector2f(tile_size * 0.45f * i, 0));
-        ghost.setColor(withAlpha(i % 2 ? NEON_GREEN : NEON_PINK, 230 - 40 * i));
+        ghost.setColor(withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, 230 - 40 * i));
         canvas.draw(ghost, sf::BlendAdd);
     }
 }
@@ -168,8 +168,8 @@ void Players::drawShieldBubble(sf::Vector2f center, float tile_size)
     float time = canvas.time();
     float radius = tile_size * (1.05f + 0.04f * std::sin(time * 9));
 
-    canvas.halo(center, radius, withAlpha(NEON_CYAN, 35));
-    canvas.hexagon(center, radius, withAlpha(NEON_CYAN, std::rand() % 10 ? 200 : 110), time * 25);
+    canvas.halo(center, radius, withAlpha(SHIELD_COLOR, 35));
+    canvas.hexagon(center, radius, withAlpha(SHIELD_COLOR, std::rand() % 10 ? 200 : 110), time * 25);
 }
 
 //=============================================================================

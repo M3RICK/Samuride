@@ -26,6 +26,10 @@ namespace Palette {
     constexpr sf::Color NEON_ORANGE{255, 140, 0};
     constexpr sf::Color NEON_GREEN{60, 255, 120};
     constexpr sf::Color NEON_PURPLE{190, 70, 255};
+    constexpr sf::Color NEON_MAGENTA{255, 0, 255};
+    // Power-ups keep their own colour wherever they show: not the zappers' cyan
+    constexpr sf::Color SHIELD_COLOR = NEON_GREEN;
+    constexpr sf::Color SANDEVISTAN_COLOR = NEON_MAGENTA;
     constexpr sf::Color DIM_WHITE{200, 200, 200};
     constexpr sf::Color HINT_GREY{150, 150, 150};
     constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards
