@@ -257,7 +257,7 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 {
     sf::Vector2f tile_center(effect.x + 0.5f, effect.y + 0.5f);
 
-    if (effect.type == 'e') {
+    if (effect.type == ZAPPER_TILE) {
         audio.play(Audio::Sfx::Zap);
         run.shake = 0.5f;
         run.death_clocks.try_emplace(effect.player);
@@ -329,7 +329,7 @@ void GameScreen::drawEffects()
         auto alpha = static_cast<uint8_t>(255 * (1 - t));
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
-        if (active.effect.type == 'c') {
+        if (active.effect.type == COIN_TILE) {
             // Coin pops: swells and fades out while +1 floats up
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
             canvas.text("+1", 30, withAlpha(NEON_CYAN, alpha), run.toScreen(tile + sf::Vector2f(0.5f, -t)));

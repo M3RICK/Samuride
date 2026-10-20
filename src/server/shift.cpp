@@ -23,8 +23,8 @@ void Server::titanSmash(Player &player)
 
     for (int x = left; x <= right; x++) {
         for (int y = top; y < floor; y++) {
-            if (game_map.getTile(x, y) == 'c' && player.collectCoin(x, y))
-                notifyCollision('c', player, x, y);
+            if (game_map.getTile(x, y) == COIN_TILE && player.collectCoin(x, y))
+                notifyCollision(COIN_TILE, player, x, y);
             else if (isLiveDrone(x, y))
                 destroyDrone(player.getClientFd(), x, y);
         }

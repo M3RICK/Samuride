@@ -25,7 +25,7 @@ void printUsage(const char *programName)
     std::cerr << "Usage: " << programName << " [-h <ip> -p <port> [-c <character>]] [-d]" << std::endl;
     std::cerr << "  -h <ip>     Server address, skips the menu" << std::endl;
     std::cerr << "  -p <port>   Server port" << std::endl;
-    std::cerr << "  -c <n>      Character: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa" << std::endl;
+    std::cerr << "  -c <n>      Runner, from 0, in the character select's order" << std::endl;
     std::cerr << "  -d          Enable debug mode" << std::endl;
 }
 

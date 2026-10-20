@@ -4,6 +4,8 @@
 #ifndef POWERUPS_HPP
     #define POWERUPS_HPP
 
+#include "map.hpp"
+
 // Subdermal armor: takes one deadly hit instead of you
 constexpr char SHIELD_TILE = 'a';
 // Sandevistan: a few seconds of sprint nothing can hurt
@@ -29,7 +31,7 @@ inline bool isPowerUp(char tile)
     return tile == SHIELD_TILE || tile == SANDEVISTAN_TILE || tile == BERSERK_TILE;
 }
 
-// One destroyed drone in three leaves a power-up behind ('_' for none), any of the three. Picked from its
+// One destroyed drone in three leaves a power-up behind (EMPTY_TILE for none), any of the three. Picked from its
 // position, so the server and the clients agree without a word on the network.
 inline char droneDrop(int x, int y)
 {
@@ -37,7 +39,7 @@ inline char droneDrop(int x, int y)
 
     hash ^= hash >> 13;
     if (hash % 3 != 0)
-        return '_';
+        return EMPTY_TILE;
     static const char drops[] = {SHIELD_TILE, SANDEVISTAN_TILE, BERSERK_TILE};
     return drops[(hash / 3) % 3];
 }

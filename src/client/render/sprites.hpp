@@ -17,7 +17,7 @@ struct Sprites {
     sf::Texture titan_face;     // on the power-up orb
     sf::Texture hack_target;    // Lucy's glitch ring, on what her hack will hit
 
-    std::vector<Character> characters;  // one per CHARACTER_DIRS entry
+    std::vector<Character> characters;  // one per runner, in RUNNERS order (common/runners.hpp)
     std::vector<Character> titans;      // one per TitanType
     Character shift;            // Eren's transformation: smoke and emerging
     Character eren_titan;       // Eren's titan running, sharper than the transformation sheet's

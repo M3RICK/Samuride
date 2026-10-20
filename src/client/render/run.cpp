@@ -90,7 +90,7 @@ void Run::burnZappers(float from, float to, int top, int bottom)
     bottom = std::min(bottom, static_cast<int>(map.getHeight()) - 1);
     for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
         for (int y = std::max(0, top); y <= bottom; y++) {
-            if (map.getTile(x, y) == 'e' && !burnt_zappers.count({x, y})) {
+            if (map.getTile(x, y) == ZAPPER_TILE && !burnt_zappers.count({x, y})) {
                 for (std::pair<int, int> node : zapperNodes(map, x, y))
                     burnt_zappers.insert(node);
             }
@@ -102,7 +102,7 @@ void Run::hackZappers(float from, float to, float duration)
 {
     for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
         for (int y = 0; y < static_cast<int>(map.getHeight()); y++) {
-            if (map.getTile(x, y) == 'e' && hackLeft(x, y) < duration)
+            if (map.getTile(x, y) == ZAPPER_TILE && hackLeft(x, y) < duration)
                 hacked_zappers[{x, y}] = {sf::Clock(), duration};
         }
     }

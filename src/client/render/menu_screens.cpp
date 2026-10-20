@@ -210,7 +210,7 @@ void MenuScreens::drawCharacterCard(int index, bool selected, const Wallet &wall
 // "LOCKED" and the price, lit up when it's the next one and you can afford it
 void MenuScreens::drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet)
 {
-    int price = CHARACTER_PRICES[index];
+    int price = RUNNERS[index].price;
     bool affordable = index == wallet.unlocked && wallet.eddies >= price;
     sf::Vector2f center = box.getCenter() + sf::Vector2f(0, 90);
 

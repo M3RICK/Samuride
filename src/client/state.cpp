@@ -44,7 +44,7 @@ void GameState::handleCollision(char type, int player, int x, int y)
 {
     std::lock_guard<std::mutex> lock(state_mutex);
 
-    if ((type == 'c' || type == SHIFT_TILE || isPowerUp(type)) && player == my_player_number)
+    if ((type == COIN_TILE || type == SHIFT_TILE || isPowerUp(type)) && player == my_player_number)
         my_coins.insert({x, y});
     if (type == DRONE_TILE)
         destroyed_drones.insert({x, y});

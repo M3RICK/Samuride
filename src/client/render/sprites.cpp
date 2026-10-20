@@ -3,6 +3,7 @@
 #include "sprites.hpp"
 #include "canvas.hpp"
 #include "../../common/titans.hpp"
+#include "../../common/runners.hpp"
 #include "../../common/debug.hpp"
 #include <algorithm>
 
@@ -17,10 +18,10 @@ void Sprites::load()
     loadTexture(drone, "assets/drone/drone.png", false);
     loadTexture(hack_target, "assets/lucy/target.png");
 
-    characters.resize(CHARACTER_DIRS.size());
-    for (size_t i = 0; i < CHARACTER_DIRS.size(); i++) {
-        if (!characters[i].load("assets/" + CHARACTER_DIRS[i]))
-            DEBUG_LOG("Failed to load character: " + CHARACTER_DIRS[i]);
+    characters.resize(RUNNER_COUNT);
+    for (int i = 0; i < RUNNER_COUNT; i++) {
+        if (!characters[i].load(std::string("assets/") + RUNNERS[i].dir))
+            DEBUG_LOG(std::string("Failed to load runner: ") + RUNNERS[i].dir);
     }
 
     if (!shift.load("assets/eren_shift") || !eren_titan.load("assets/titan_eren") ||

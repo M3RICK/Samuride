@@ -10,7 +10,7 @@ bool Server::placeInFreeTile(std::vector<std::string> &rows, char tile)
 
     for (int attempt = 0; attempt < 10; attempt++) {
         char &spot = rows[row(rng)][column(rng)];
-        if (spot == '_') {
+        if (spot == EMPTY_TILE) {
             spot = tile;
             return true;
         }
@@ -40,7 +40,7 @@ char Server::powerUpAt(int x, int y) const
         return tile;
     if (tile == DRONE_TILE && destroyed_drones.count({x, y}))
         return droneDrop(x, y);
-    return '_';
+    return EMPTY_TILE;
 }
 
 // A deadly hit: the shield takes it if there is one. Returns true when the player dies.

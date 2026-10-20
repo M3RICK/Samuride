@@ -248,7 +248,7 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from, int t
         for (int y = std::max(0, top); y <= bottom; y++) {
             if (isLiveDrone(x, y)) {
                 destroyDrone(owner_fd, x, y);
-            } else if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
+            } else if (game_map.getTile(x, y) == ZAPPER_TILE && !hacked_zappers.count({x, y})) {
                 for (std::pair<int, int> node : zapperNodes(game_map, x, y))
                     hacked_zappers[node] = 1e9f;
             }
@@ -272,7 +272,7 @@ void Server::breach(int owner_fd, float start)
         for (int y = 0; y < static_cast<int>(game_map.getHeight()); y++) {
             if (isLiveDrone(x, y)) {
                 destroyDrone(owner_fd, x, y);
-            } else if (game_map.getTile(x, y) == 'e') {
+            } else if (game_map.getTile(x, y) == ZAPPER_TILE) {
                 float &left = hacked_zappers[{x, y}];
                 left = std::max(left, BREACH_TIME);
             }

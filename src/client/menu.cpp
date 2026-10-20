@@ -2,6 +2,7 @@
 
 #include "menu.hpp"
 #include "touch.hpp"
+#include "../common/runners.hpp"
 #include "render/renderer.hpp"
 #include "audio.hpp"
 #include "characters.hpp"
@@ -306,7 +307,7 @@ void Menu::leaveOptions()
 
 bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
 {
-    int count = CHARACTER_DIRS.size();
+    int count = RUNNER_COUNT;
     auto box = [count](int index) { return MenuLayout::cardBox(index, count); };
 
     if (isKey(event, sf::Keyboard::Key::Escape)) {
