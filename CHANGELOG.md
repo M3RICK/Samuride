@@ -11,7 +11,7 @@ taken from this file. Players on different versions can't play together: update 
   his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
   way. The other runners get theirs in the next updates.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
-  the menu, under Johnny's greeting.
+  the menu, once Johnny's greeting is over.
 
 ## v2.4
 

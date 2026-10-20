@@ -40,7 +40,7 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         drawUltimateGauge(players.at(me).ultimate);
 }
 
-// Bottom of the screen: fills with your eddies, pulses when the ultimate is ready
+// Bottom of the screen: fills with your eddies, its outline pulses when the ultimate is ready
 void GameScreen::drawUltimateGauge(int percent)
 {
     bool ready = percent >= 100;
@@ -48,14 +48,11 @@ void GameScreen::drawUltimateGauge(int percent)
     sf::Color color = ready ? NEON_YELLOW : NEON_ORANGE;
     sf::Vector2f pos(Screen::WIDTH / 2 - 200, Screen::PLAY_BOTTOM + 40);
 
-    if (ready)
-        canvas.halo(pos + sf::Vector2f(200, 7), 230, withAlpha(NEON_YELLOW, static_cast<uint8_t>(40 + 50 * pulse)));
-
     sf::RectangleShape back({400, 14});
     back.setPosition(pos);
     back.setFillColor(sf::Color(0, 0, 0, 160));
-    back.setOutlineColor(color);
-    back.setOutlineThickness(2);
+    back.setOutlineColor(withAlpha(color, static_cast<uint8_t>(255 - 120 * pulse)));
+    back.setOutlineThickness(2 + 2 * pulse);
     canvas.draw(back);
 
     sf::RectangleShape fill({4.0f * std::min(percent, 100), 14});

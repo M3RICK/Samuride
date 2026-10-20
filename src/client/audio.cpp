@@ -193,7 +193,7 @@ void Audio::synthesize()
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
 }
 
-// One track loops in the runs, another out of them, under Johnny's greeting
+// One track loops in the runs, another out of them once Johnny's greeting is over
 void Audio::playMusic(bool in_game)
 {
     sf::Music &wanted = in_game ? game_music : menu_music;
@@ -202,12 +202,15 @@ void Audio::playMusic(bool in_game)
     other.stop();
     if (in_game)
         greeting.stop();
+    else if (greeting.getStatus() == sf::SoundSource::Status::Playing)
+        return;
     if (wanted.getStatus() != sf::SoundSource::Status::Playing)
         wanted.play();
 }
 
 void Audio::greet()
 {
+    menu_music.stop();
     greeting.stop();
     greeting.play();
 }
@@ -221,11 +224,11 @@ void Audio::play(Sfx sfx)
     voice.play();
 }
 
-// The tracks and the jetpack sit a little under the rest of their group; the menu track under Johnny
+// The tracks and the jetpack sit a little under the rest of their group
 void Audio::setVolumes(int music, int sfx)
 {
     greeting.setVolume(music);
-    menu_music.setVolume(music * 0.5f);
+    menu_music.setVolume(music * 0.8f);
     game_music.setVolume(music * 0.8f);
 
     for (sf::Sound &voice : voices)
