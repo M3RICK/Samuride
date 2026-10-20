@@ -287,6 +287,11 @@ bool Client::combatRun() const
     return game_state.getMode() == GameMode::Cyberpsycho;
 }
 
+bool Client::runEnded() const
+{
+    return !connected || game_state.getPhase() == Phase::Over;
+}
+
 void Client::sendUltimate()
 {
     sendToServer(Protocol::createPacket(MSG_ULTIMATE, {}));

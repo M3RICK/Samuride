@@ -316,9 +316,20 @@ void GameScreen::drawRematchPrompt(GameState &state, bool solo)
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
     else
-        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP: RUN AGAIN     [BACK] MENU")
-                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP: REMATCH     [BACK] MENU"),
+        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP TO RUN AGAIN")
+                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP TO REMATCH"),
                     32, NEON_YELLOW, pos);
+    drawMenuButton();
+}
+
+// Phones: the way back to the menu
+void GameScreen::drawMenuButton()
+{
+    if (!Touch::ENABLED)
+        return;
+    sf::FloatRect box(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE);
+    canvas.card(box, true);
+    canvas.text("MENU", 40, NEON_YELLOW, Touch::MENU_BUTTON);
 }
 
 void GameScreen::drawConnectionLost()
@@ -327,5 +338,8 @@ void GameScreen::drawConnectionLost()
     canvas.overlay(200);
 
     canvas.glitchText("CONNECTION LOST", 110, NEON_RED, Screen::CENTER + sf::Vector2f(0, -40));
-    canvas.text(Touch::hint("[ESC] BACK TO MENU", "[BACK] BACK TO MENU"), 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
+    if (Touch::ENABLED)
+        drawMenuButton();
+    else
+        canvas.text("[ESC] BACK TO MENU", 32, NEON_YELLOW, Screen::CENTER + sf::Vector2f(0, 100));
 }

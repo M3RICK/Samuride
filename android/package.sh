@@ -4,13 +4,9 @@
 # For arm64 phones: nearly every Android phone of the last ten years.
 # Writes dist/samuride-<version>-android.apk
 #
-# Usage: android/package.sh [version]
+# Usage: android/package.sh [version]     (or android/docker.sh [version], with nothing to install)
 # Needs a JDK, cmake, git, make, unzip, zip and curl (Ubuntu: openjdk-17-jdk-headless cmake git make
 # unzip zip curl). The Android SDK and NDK are downloaded into build/android the first time.
-# From any Linux with Docker:
-#   docker run --rm -v "$PWD":/src -w /src ubuntu:24.04 bash -c \
-#     'apt-get update -qq && apt-get install -y -qq openjdk-17-jdk-headless cmake git make unzip zip curl \
-#      && android/package.sh && chown -R '"$(id -u):$(id -g)"' build dist'
 set -euo pipefail
 
 VERSION="${1:-dev}"

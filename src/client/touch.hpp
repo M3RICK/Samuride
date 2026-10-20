@@ -5,6 +5,7 @@
     #define TOUCH_HPP
 
 #include <SFML/Window/Event.hpp>
+#include <cmath>
 
 namespace Touch {
 #ifdef __ANDROID__
@@ -17,6 +18,17 @@ namespace Touch {
     constexpr float BUTTON_RADIUS = 95;
     constexpr sf::Vector2f ATTACK{1920 - 160, 1080 - 170};
     constexpr sf::Vector2f ULTIMATE{1920 - 160, 1080 - 400};
+
+    // Once a run is over (or the connection lost): the way back to the menu, at the bottom.
+    // The phone's back gesture doesn't always reach the game.
+    constexpr sf::Vector2f MENU_BUTTON{1920 / 2, 1080 - 110};
+    constexpr sf::Vector2f MENU_BUTTON_SIZE{380, 100};
+
+    inline bool onMenuButton(sf::Vector2f pos)
+    {
+        sf::Vector2f offset = pos - MENU_BUTTON;
+        return std::abs(offset.x) < MENU_BUTTON_SIZE.x / 2 && std::abs(offset.y) < MENU_BUTTON_SIZE.y / 2;
+    }
 
     // A help line: the keys on desktop, the gestures on phones (where the back button is Escape)
     inline const char *hint(const char *keyboard, const char *touch)

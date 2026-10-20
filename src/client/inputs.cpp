@@ -32,7 +32,11 @@ void InputManager::processInputs()
             // The screen view the HUD was last drawn with, buttons included
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
             fingers[touch->finger] = pos;
-            confirm_pressed = true;     // a tap is a rematch, once a game is over
+            // Once a game is over, the menu button goes back, a tap anywhere else is a rematch
+            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos))
+                back_requested = true;
+            else
+                confirm_pressed = true;
             if (onButton(Touch::ATTACK, pos))
                 pressAttack();
             else if (onButton(Touch::ULTIMATE, pos))
