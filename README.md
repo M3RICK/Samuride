@@ -20,7 +20,7 @@
 
 You sprint forward on your own, the jetpack is the only thing you control. The corridor never ends: it is generated on the fly, faster and nastier the further you go.
 
-- **Solo**: run as far as you can. Your best distance is saved.
+- **Solo**: run as far as you can. Your best distance is saved for each mode, and your most drones down in one CYBERPSYCHO run.
 - **Versus**: two runners, one corridor. First one to get zapped loses.
 - **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
 - **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.

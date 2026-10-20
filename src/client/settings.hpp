@@ -22,8 +22,15 @@ struct Settings {
 // Readable key name for the options screen, like "SPACE" or "F"
 std::string keyName(sf::Keyboard::Key key);
 
-// Best solo distance, kept next to the settings
-int loadBestDistance();
-void saveBestDistance(int distance);
+// Solo personal bests, kept next to the settings
+struct Bests {
+    int classic = 0;        // metres
+    int cyberpsycho = 0;    // metres
+    int drones = 0;         // drones down in one CYBERPSYCHO run
+
+    static Bests load();
+    void save() const;
+    int &distance(bool cyberpsycho) { return cyberpsycho ? this->cyberpsycho : classic; }
+};
 
 #endif

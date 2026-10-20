@@ -50,7 +50,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
     if (phase == Phase::Running && previous == Phase::Countdown)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
-        recordSoloDistance(state);
+        recordSoloBests(state);
         bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
@@ -73,14 +73,15 @@ void GameScreen::resetRun()
     cuts.clear();
     coin_streak = 0;
     new_record = false;
-    best_distance = loadBestDistance();
+    new_drone_record = false;
+    bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
     sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
-// Solo runs chase the personal best
-void GameScreen::recordSoloDistance(GameState &state)
+// Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO
+void GameScreen::recordSoloBests(GameState &state)
 {
     auto players = state.getPlayers();
     auto mine = players.find(state.getMyPlayerNumber());
@@ -89,11 +90,15 @@ void GameScreen::recordSoloDistance(GameState &state)
         return;
 
     int distance = static_cast<int>(mine->second.x);
-    new_record = distance > best_distance;
-    if (new_record) {
-        best_distance = distance;
-        saveBestDistance(distance);
-    }
+    cyberpsycho_run = state.getMode() == GameMode::Cyberpsycho;
+    new_record = distance > bests.distance(cyberpsycho_run);
+    new_drone_record = cyberpsycho_run && drones_down > bests.drones;
+    if (new_record)
+        bests.distance(cyberpsycho_run) = distance;
+    if (new_drone_record)
+        bests.drones = drones_down;
+    if (new_record || new_drone_record)
+        bests.save();
 }
 
 // The run's eddies go to the wallet, to buy runners with

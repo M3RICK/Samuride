@@ -26,8 +26,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
 
     canvas.text(std::format("{:04} M", distance), 56, NEON_YELLOW, {24, 16}, {0, 0});
 
-    if (players.size() == 1 && best_distance > 0) {
-        canvas.text(std::format("BEST {} M", best_distance), 24, DIM_WHITE, {24, y}, {0, 0});
+    if (players.size() == 1 && bests.distance(cyberpsycho) > 0) {
+        canvas.text(std::format("BEST {} M", bests.distance(cyberpsycho)), 24, DIM_WHITE, {24, y}, {0, 0});
         y += 36;
     }
 
@@ -37,7 +37,9 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
     }
 
     if (cyberpsycho)
-        canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
+        canvas.text(players.size() == 1 && bests.drones > 0 ? std::format("DRONES DOWN  {}   BEST {}", drones_down, bests.drones)
+                                                            : std::format("DRONES DOWN  {}", drones_down),
+                    26, NEON_RED, {24, y}, {0, 0});
     if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
         drawUltimatePanel(players.at(me), me);
     if (Touch::ENABLED && cyberpsycho && players.count(me))
@@ -275,15 +277,21 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
 void GameScreen::drawSoloResults(const PlayerState &me)
 {
     sf::Vector2f center = Screen::CENTER;
-    std::string result = std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
+    std::string result = cyberpsycho_run
+                             ? std::format("{} M      {} DRONES      {} EDDIES", static_cast<int>(me.x), drones_down, me.score)
+                             : std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
 
     canvas.glitchText("FLATLINED", 140, NEON_RED, center + sf::Vector2f(0, -150));
     canvas.text(result, 44, sf::Color::White, center + sf::Vector2f(0, 10));
 
-    if (new_record)
-        canvas.glitchText("NEW PERSONAL BEST", 48, NEON_YELLOW, center + sf::Vector2f(0, 95));
+    if (new_record || new_drone_record)
+        canvas.glitchText(new_record && new_drone_record ? "NEW PERSONAL BESTS" : new_record ? "NEW PERSONAL BEST" : "NEW DRONE RECORD",
+                          48, NEON_YELLOW, center + sf::Vector2f(0, 95));
+    else if (cyberpsycho_run)
+        canvas.text(std::format("BEST  {} M      {} DRONES", bests.cyberpsycho, bests.drones), 32, DIM_WHITE,
+                    center + sf::Vector2f(0, 95));
     else
-        canvas.text(std::format("BEST  {} M", best_distance), 32, DIM_WHITE, center + sf::Vector2f(0, 95));
+        canvas.text(std::format("BEST  {} M", bests.classic), 32, DIM_WHITE, center + sf::Vector2f(0, 95));
 }
 
 void GameScreen::drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me)

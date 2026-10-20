@@ -13,6 +13,7 @@
 #include "titans.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
+#include "../settings.hpp"
 
 class Audio;
 class Backdrops;
@@ -74,8 +75,10 @@ private:
     std::string banner_tagline;
     sf::Clock banner_clock;
 
-    int best_distance = 0;
+    Bests bests;
+    bool cyberpsycho_run = false;   // which of the bests this run chases
     bool new_record = false;
+    bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
@@ -87,7 +90,7 @@ private:
     // game_screen.cpp: the run
     void onPhaseChange(GameState &state, Phase phase);
     void resetRun();
-    void recordSoloDistance(GameState &state);
+    void recordSoloBests(GameState &state);
     void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);

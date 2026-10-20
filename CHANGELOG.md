@@ -5,6 +5,10 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v2.8
 
+### New
+- **A personal best per mode**: CLASSIC and CYBERPSYCHO each keep their own best distance, and CYBERPSYCHO
+  also keeps your most drones down in one run. Your old best carries over as the CLASSIC one.
+
 ### Balance
 - **The eddie magnet reaches less**: half a tile per level instead of one, all around you. At level 3 it
   used to sweep almost the whole height of the screen; now it grabs the eddies you graze.

@@ -102,9 +102,11 @@ void MenuScreens::drawMain(const MenuState &menu)
 
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter());
-    if (menu.best_distance > 0)
-        canvas.text(std::format("BEST RUN  {} M     {} EDDIES", menu.best_distance, menu.wallet.eddies),
-                    32, NEON_YELLOW, {x, 960});
+    const Bests &bests = menu.bests;
+    if (bests.classic > 0 || bests.cyberpsycho > 0)
+        canvas.text(std::format("BEST  CLASSIC {} M    CYBERPSYCHO {} M, {} DRONES    {} EDDIES", bests.classic,
+                                bests.cyberpsycho, bests.drones, menu.wallet.eddies),
+                    28, NEON_YELLOW, {x, 960});
 
     canvas.text(Touch::hint("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", "TAP TO SELECT"), 22, HINT_GREY, {x, 1030});
 }
