@@ -17,6 +17,8 @@ struct PlayerAnim {
     float smoke_x = 0;      // where the titan stood when it ended, in tiles
     bool sprinting = false;
     sf::Clock sprint_clock; // time since the Sandevistan kicked in
+    bool berserk = false;
+    sf::Clock berserk_clock;
 };
 
 struct Run {
@@ -32,6 +34,7 @@ struct Run {
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> attack_clocks;
+    std::map<std::pair<int, int>, sf::Clock> hacked_zappers;    // node -> since Lucy hacked it
     float shake = 0;
 
     // Speed feel: measured from your own movement, no extra network data
@@ -47,6 +50,8 @@ struct Run {
     sf::Vector2f toScreen(sf::Vector2f world) const { return view.toScreen(world); }
     float floor() const { return map.getHeight(); }
     int characterOf(int player_num) const;
+    // Seconds before a hacked zapper node is live again, 0 when it is
+    float hackLeft(int x, int y) const;
     void shakeAtLeast(float amount);
 
 private:

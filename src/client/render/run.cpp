@@ -9,6 +9,7 @@ void Run::reset()
     player_anims.clear();
     death_clocks.clear();
     attack_clocks.clear();
+    hacked_zappers.clear();
     shake = 0;
     run_speed = 0;
     last_x = -1;
@@ -66,4 +67,13 @@ int Run::characterOf(int player_num) const
 void Run::shakeAtLeast(float amount)
 {
     shake = std::max(shake, amount);
+}
+
+float Run::hackLeft(int x, int y) const
+{
+    auto hacked = hacked_zappers.find({x, y});
+
+    if (hacked == hacked_zappers.end())
+        return 0;
+    return std::max(0.0f, HACK_TIME - hacked->second.getElapsedTime().asSeconds());
 }

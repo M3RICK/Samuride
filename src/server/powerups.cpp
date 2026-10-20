@@ -1,4 +1,4 @@
-// Shield and Sandevistan: placed in the map, dropped by drones, and the shield taking a hit
+// Shield, Sandevistan and Berserk: placed in the map, dropped by drones, and the shield taking a hit
 
 #include "server.hpp"
 
@@ -24,7 +24,11 @@ void Server::placePowerUp(std::vector<std::string> &rows)
 
     if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= POWERUP_CHANCE)
         return;
-    placeInFreeTile(rows, chance(rng) < 0.5f ? SHIELD_TILE : SANDEVISTAN_TILE);
+    // Berserk is no use without attacks: CYBERPSYCHO only
+    std::vector<char> kinds = {SHIELD_TILE, SANDEVISTAN_TILE};
+    if (mode == GameMode::Cyberpsycho)
+        kinds.push_back(BERSERK_TILE);
+    placeInFreeTile(rows, kinds[std::uniform_int_distribution<size_t>(0, kinds.size() - 1)(rng)]);
 }
 
 // What a player can pick up on this tile: a power-up of the map, or one a destroyed drone dropped

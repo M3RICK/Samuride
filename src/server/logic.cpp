@@ -16,6 +16,7 @@ bool Server::resetMap()
     last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;
     destroyed_drones.clear();
     projectiles.clear();
+    hacked_zappers.clear();
     resetTitans();
 
     if (!config.map_path.empty()) {
@@ -150,11 +151,17 @@ void Server::updatePlayers()
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
+        // Berserk attacks on its own, as soon as the cooldown allows
+        if (player.isBerserk())
+            handleAttack(client_fd);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());
     }
 
     updateTitans(rear_x);
+    for (auto &[node, left] : hacked_zappers)
+        left -= TICK_DT;
+    std::erase_if(hacked_zappers, [](const auto &entry) { return entry.second <= 0; });
     for (auto &[client_fd, player] : players) {
         if (!checkPlayerCollisions(player))
             survivors.push_back(player.getPlayerNumber());
@@ -201,7 +208,7 @@ bool Server::checkPlayerCollisions(Player &player)
             return false;
         } else if (player.isInvincible()) {
             continue;
-        } else if ((tile == 'e' || isLiveDrone(tile_x, tile_y)) &&
+        } else if (((tile == 'e' && !hacked_zappers.count({tile_x, tile_y})) || isLiveDrone(tile_x, tile_y)) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
             return hurt(player, 'e', tile_x, tile_y);
@@ -222,9 +229,10 @@ void Server::sendGameState()
         Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getScore());
-        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan
+        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM, bit 7: Berserk
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
-                             (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4);
+                             (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
+                             player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

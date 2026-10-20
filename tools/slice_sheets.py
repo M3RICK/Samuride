@@ -51,6 +51,7 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 #   mirror:         frames face left in the game (they run toward the player)
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
+#   crops:          {file: box} extra pictures cut as they are, trimmed to their opaque pixels
 TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
 
 # Eren's transformation: smoke column, titan emerging from it, titan running.
@@ -92,6 +93,16 @@ CHARACTERS = {
         "death":   animation((750, 795, 1536, 877), 10, mode="once"),
         "attack":  animation((795, 505, 1536, 615), 16, mode="once", effects_ahead=True, splits=[1168]),
     }),
+    # She rides a drone: no takeoff nor death of her own, the game electrocutes her
+    "lucy": ("sources/lucy.png", (15, 15, 180, 180), {
+        "run":    animation((640, 228, 1515, 340), 12, ground=True),
+        "rise":   animation((20, 372, 815, 527), 12, frames=[1, 2, 3, 4, 5, 6]),
+        "hover":  animation((20, 228, 620, 340), 10),
+        "fall":   animation((835, 385, 1515, 527), 12),
+        "attack": animation((20, 575, 758, 690), 16, mode="once"),
+    # Her white hair would pass for smoke; a jump frame's head reaches the "JUMP" label's height
+    # target.png: the glitch ring marking what her hack will hit
+    }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
@@ -141,7 +152,7 @@ def label_blobs(mask):
     return labels, count
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 
 
 def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
@@ -301,6 +312,10 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
             grid.alpha_composite(f, (int(col * cell_w + cell_w / 2 - cx), int(row * cell_h + feet_y - ay)))
 
     grid.save(out / "sheet.png")
+    for file, box in options.get("crops", {}).items():
+        picture = sheet.crop(box)
+        alpha = picture.getchannel("A").point(lambda a: 255 if a > ALPHA else 0)
+        picture.crop(alpha.getbbox()).save(out / file)
     if portrait_box:
         sheet.crop(portrait_box).save(out / "portrait.png")
     else:

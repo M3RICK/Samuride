@@ -25,6 +25,10 @@ void Shots::handle(GameState &state)
                 audio.play(Audio::Sfx::Slash);
                 particles.emit(muzzle + sf::Vector2f(1, 0), 10, sf::Color::White, 6, 0.25f, 0);
                 break;
+            case Weapon::Hack:
+                audio.play(Audio::Sfx::Hack);
+                particles.emit(muzzle, 8, NEON_PURPLE, 3, 0.3f, 0);
+                break;
             case Weapon::Rockets:
                 audio.play(Audio::Sfx::Rocket);
                 particles.emit(muzzle, 8, NEON_PINK, 4, 0.3f, 0);

@@ -121,6 +121,9 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (player.sprinting)
         drawAfterimages(sprite, tile_size);
+    if (player.berserk)
+        canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * (0.9f + 0.15f * std::sin(canvas.time() * 16)),
+                    withAlpha(BERSERK_COLOR, 70));
     if (player.shielded)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
     if (shocked)
@@ -140,7 +143,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 // Shield & Sandevistan
 //=============================================================================
 
-// Starts the Sandevistan clock, which drains your gauge in the HUD
+// Starts the Sandevistan and Berserk clocks, which drain your gauges in the HUD
 void Players::updateSprint(int player_num, const PlayerState &player)
 {
     PlayerAnim &state = run.player_anims[player_num];
@@ -148,16 +151,19 @@ void Players::updateSprint(int player_num, const PlayerState &player)
     if (player.sprinting && !state.sprinting)
         state.sprint_clock.restart();
     state.sprinting = player.sprinting;
+    if (player.berserk && !state.berserk)
+        state.berserk_clock.restart();
+    state.berserk = player.berserk;
 }
 
-// Sandevistan: ghosts of the runner trailing behind, alternating green and pink
+// Sandevistan: ghosts of the runner trailing behind, alternating magenta and white
 void Players::drawAfterimages(const sf::Sprite &sprite, float tile_size)
 {
     sf::Sprite ghost = sprite;
 
     for (int i = 4; i >= 1; i--) {
         ghost.setPosition(sprite.getPosition() - sf::Vector2f(tile_size * 0.45f * i, 0));
-        ghost.setColor(withAlpha(i % 2 ? NEON_GREEN : NEON_PINK, 230 - 40 * i));
+        ghost.setColor(withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, 230 - 40 * i));
         canvas.draw(ghost, sf::BlendAdd);
     }
 }
@@ -168,8 +174,8 @@ void Players::drawShieldBubble(sf::Vector2f center, float tile_size)
     float time = canvas.time();
     float radius = tile_size * (1.05f + 0.04f * std::sin(time * 9));
 
-    canvas.halo(center, radius, withAlpha(NEON_CYAN, 35));
-    canvas.hexagon(center, radius, withAlpha(NEON_CYAN, std::rand() % 10 ? 200 : 110), time * 25);
+    canvas.halo(center, radius, withAlpha(SHIELD_COLOR, 35));
+    canvas.hexagon(center, radius, withAlpha(SHIELD_COLOR, std::rand() % 10 ? 200 : 110), time * 25);
 }
 
 //=============================================================================

@@ -15,6 +15,7 @@ struct Sprites {
     sf::Texture zapper;
     sf::Texture drone;          // DRONE_FRAMES frames side by side
     sf::Texture titan_face;     // on the power-up orb
+    sf::Texture hack_target;    // Lucy's glitch ring, on what her hack will hit
 
     std::vector<Character> characters;  // one per CHARACTER_DIRS entry
     std::vector<Character> titans;      // one per TitanType

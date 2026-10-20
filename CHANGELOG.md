@@ -3,6 +3,23 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.4
+
+### New
+- **Lucy**, the netrunner, rides in on her drone (750 eddies, after Mikasa). In CYBERPSYCHO she
+  doesn't shoot, she hacks what's in her way: the first zapper ahead of her goes off for
+  1.2 seconds, or the first drone ahead of her goes down. Each hack takes one of her 2 charges of RAM, and a charge comes back every
+  6 seconds: her RAM shows next to her eddies, and a glitch ring marks what her next hack will hit.
+- **Districts are bought with eddies too.** The Corridor and Night City stay free; The Walls (150),
+  Zaun (300), Worlds Collide (500) and Both Worlds (750) are bought from the district select, in
+  any order. Only the host needs to own the district: whoever joins plays it anyway.
+
+- **Berserk**, a new CYBERPSYCHO power-up (gold crossed blades): for 8 seconds you attack on your
+  own, twice as often, and Lucy's RAM comes back three times faster. Drones drop it too.
+
+### Other
+- The shield is now green, so it no longer looks like a zapper, and the Sandevistan is now magenta.
+
 ## v2.3
 
 ### New

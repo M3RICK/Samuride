@@ -151,6 +151,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     tiles.draw(state.getCollectedCoins(), destroyed);
+    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
+        drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     runners.draw(players, me, phase == Phase::Running);
@@ -170,6 +172,26 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     // Leave time to watch the zap before the curtain falls
     if (phase == Phase::Over && phase_clock.getElapsedTime().asSeconds() > GAME_OVER_DELAY)
         drawGameOver(state, players, me);
+}
+
+// Playing Lucy with RAM left: a pulsing ring on what F would hack, worked out like the server does
+void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int me,
+                                const std::set<std::pair<int, int>> &destroyed)
+{
+    auto mine = players.find(me);
+    auto pos = run.display_positions.find(me);
+
+    if (mine == players.end() || pos == run.display_positions.end() || mine->second.ram == 0 ||
+        mine->second.form != Form::Normal || run.death_clocks.count(me) ||
+        weaponOf(run.characterOf(me)) != Weapon::Hack)
+        return;
+
+    auto [x, y] = hackTarget(run.map, pos->second.x, pos->second.y, Run::PLAYER_HEIGHT, [&](int x, int y) {
+        return destroyed.count({x, y}) || run.hackLeft(x, y) > 0;
+    });
+    if (x >= 0)
+        tiles.drawSprite(sprites.hack_target, {static_cast<float>(x), static_cast<float>(y)},
+                         1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
 }
 
 // "ENTERING <district>" each time the scenery changes
@@ -257,15 +279,24 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         shots.land(effect.player);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == ZAPPER_HACK) {
+        // The whole zapper goes off: sparks on its nodes, nothing drawn over the screen (the shot plays the sound)
+        for (std::pair<int, int> node : zapperNodes(run.map, effect.x, effect.y)) {
+            run.hacked_zappers[node].restart();
+            particles.emit({node.first + 0.5f, node.second + 0.5f}, 10, NEON_PURPLE, 4, 0.4f, 0);
+        }
+        return;
     } else if (isPowerUp(effect.type)) {
-        bool shield = effect.type == SHIELD_TILE;
+        static const std::map<char, Audio::Sfx> sounds = {
+            {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
+            {BERSERK_TILE, Audio::Sfx::Berserk}};
         if (effect.player == me)
-            audio.play(shield ? Audio::Sfx::Shield : Audio::Sfx::Sandevistan);
-        particles.emit(tile_center, 24, shield ? NEON_CYAN : NEON_GREEN, 6, 0.5f, 0);
+            audio.play(sounds.at(effect.type));
+        particles.emit(tile_center, 24, powerUpColor(effect.type), 6, 0.5f, 0);
     } else if (effect.type == SHIELD_BREAK) {
         audio.play(Audio::Sfx::ShieldBreak);
         run.shakeAtLeast(0.3f);
-        particles.emit(tile_center, 36, NEON_CYAN, 8, 0.6f, 10);
+        particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
     } else if (effect.player == me) {
         audio.play(Audio::Sfx::Coin);
@@ -302,14 +333,13 @@ void GameScreen::drawEffects()
                             withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
-            bool shield = active.effect.type == SHIELD_TILE;
             if (active.mine)
-                canvas.text(shield ? "SHIELD" : "SANDEVISTAN", 34, withAlpha(shield ? NEON_CYAN : NEON_GREEN, alpha),
+                canvas.text(powerUpName(active.effect.type), 34, withAlpha(powerUpColor(active.effect.type), alpha),
                             run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else {
-            // A death flashes red, a broken shield cyan
+            // A death flashes red, a broken shield green
             sf::RectangleShape flash({Screen::WIDTH, Screen::HEIGHT});
-            flash.setFillColor(withAlpha(active.effect.type == SHIELD_BREAK ? NEON_CYAN : NEON_RED, alpha / 2));
+            flash.setFillColor(withAlpha(active.effect.type == SHIELD_BREAK ? SHIELD_COLOR : NEON_RED, alpha / 2));
             canvas.draw(flash);
         }
     }

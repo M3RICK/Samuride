@@ -8,6 +8,7 @@
 #include "cyberpsycho.hpp"
 #include <cassert>
 #include <iostream>
+#include <map>
 
 static void testPacketFraming()
 {
@@ -113,15 +114,61 @@ static void testPowerUps()
     sprinter.update(SANDEVISTAN_TIME, 10, 8);
     assert(!sprinter.isSprinting());
 
-    // About one drone in three drops something, both kinds show up
-    int drops[2] = {0, 0};
+    // Berserk: attacks come back twice as fast, for a while
+    Player berserker(-1);
+    berserker.reset(2, 0);
+    berserker.powerUp(BERSERK_TILE);
+    berserker.startCooldown(1);
+    berserker.update(0.5f, 10, 8);
+    assert(berserker.isBerserk() && berserker.canAttack());
+    berserker.update(BERSERK_TIME, 10, 8);
+    berserker.startCooldown(1);
+    berserker.update(0.5f, 10, 8);
+    assert(!berserker.isBerserk() && !berserker.canAttack());
+
+    // About one drone in three drops something, all three kinds show up
+    std::map<char, int> drops;
+    int dropped = 0;
     for (int x = 0; x < 3000; x++) {
         char drop = droneDrop(x, x % 10);
-        if (drop != '_')
-            drops[drop == SHIELD_TILE]++;
+        if (drop != '_') {
+            drops[drop]++;
+            dropped++;
+        }
     }
-    assert(drops[0] + drops[1] > 800 && drops[0] + drops[1] < 1200);
-    assert(drops[0] > 300 && drops[1] > 300);
+    assert(dropped > 800 && dropped < 1200);
+    assert(drops[SHIELD_TILE] > 200 && drops[SANDEVISTAN_TILE] > 200 && drops[BERSERK_TILE] > 200);
+}
+
+// Lucy's hack turns off a whole zapper and nothing else, and her RAM comes back one charge at a time
+static void testHack()
+{
+    Map map;
+    map.appendChunk({"e___", "_e_e", "__e_", "____"});
+    std::vector<std::pair<int, int>> nodes = zapperNodes(map, 0, 0);
+    assert(nodes.size() == 4);
+    assert(zapperNodes(map, 3, 1).size() == 4);
+
+    // A drone far above her is out of her way, the one level with her is hit even behind a closer column's
+    Map lane;
+    lane.appendChunk({"__d___", "______", "______", "______", "____d_", "______", "______"});
+    auto none = [](int, int) { return false; };
+    assert(hackTarget(lane, 0, 4, 2, none) == std::make_pair(4, 4));
+    assert(hackTarget(lane, 0, 4, 2, [](int x, int) { return x == 4; }) == std::make_pair(-1, -1));
+
+    Player lucy(-1);
+    lucy.reset(0, 0);
+    lucy.spendRam();
+    lucy.spendRam();
+    assert(lucy.getRam() == 0);
+    lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
+    assert(lucy.getRam() == 0);
+    lucy.update(0.2f, 10, 8);
+    assert(lucy.getRam() == 1);
+    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    assert(lucy.getRam() == RAM_MAX);
+    assert(weaponOf(4) == Weapon::Hack);
 }
 
 // Runners are bought in order, with enough eddies
@@ -134,6 +181,13 @@ static void testWallet()
     assert(!wallet.buy(2) && !wallet.isUnlocked(2));
     wallet.eddies = 1000;
     assert(wallet.buy(2) && wallet.buy(3) && !wallet.buy(4));
+
+    // Districts: free ones are there, the others in any order
+    Wallet map_wallet;
+    map_wallet.eddies = 400;
+    assert(map_wallet.hasDistrict(0) && map_wallet.hasDistrict(2) && !map_wallet.hasDistrict(4));
+    assert(map_wallet.buyDistrict(4) && map_wallet.hasDistrict(4) && map_wallet.eddies == 100);
+    assert(!map_wallet.buyDistrict(4) && !map_wallet.buyDistrict(3) && !map_wallet.buyDistrict(0));
 }
 
 int main()
@@ -143,6 +197,7 @@ int main()
     testMapChunks();
     testGenerator();
     testPowerUps();
+    testHack();
     testWallet();
     std::cout << "All tests passed" << std::endl;
     return 0;

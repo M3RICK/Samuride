@@ -30,7 +30,9 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
             if (tile == DRONE_TILE && destroyed.count({x, y}))
                 tile = droneDrop(x, y);
 
-            if (tile == 'e')
+            if (tile == 'e' && run.hackLeft(x, y) > 0)
+                drawHackedZapper(x, y, run.hackLeft(x, y));
+            else if (tile == 'e')
                 drawZapper(x, y, time);
             else if (tile == DRONE_TILE)
                 drawDrone(x, y, time);
@@ -95,6 +97,15 @@ void Tiles::drawZapper(int x, int y, float time)
 
     sf::Color flicker(255, 255, 255, std::rand() % 8 ? 255 : 140);
     drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, flicker);
+}
+
+// Lucy hacked it: a dead purple node, blinking just before the beams come back
+void Tiles::drawHackedZapper(int x, int y, float left)
+{
+    bool waking = left < 0.3f && std::rand() % 2;
+    sf::Color color = waking ? sf::Color::White : withAlpha(NEON_PURPLE, std::rand() % 8 ? 120 : 200);
+
+    drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, color);
 }
 
 void Tiles::drawBeam(sf::Vector2f from, sf::Vector2f to)
@@ -163,12 +174,12 @@ void Tiles::drawShiftOrb(int x, int y, float time)
     canvas.image(sprites.titan_face, center, tile_size * 0.7f, {0.5f, 0.5f}, sf::Color::White);
 }
 
-// Shield: a hexagon plate; Sandevistan: green chevrons rushing forward
+// Shield: a hexagon plate; Sandevistan: chevrons rushing forward; Berserk: crossed blades
 void Tiles::drawPowerUp(int x, int y, char tile, float time)
 {
     float tile_size = run.view.tile_size;
     bool shield = tile == SHIELD_TILE;
-    sf::Color color = shield ? NEON_CYAN : NEON_GREEN;
+    sf::Color color = powerUpColor(tile);
     sf::Vector2f center = run.toScreen({x + 0.5f, y + 0.5f + std::sin(time * 3 + x) * 0.1f});
     float pulse = 0.5f + 0.5f * std::sin(time * 6 + x);
 
@@ -177,6 +188,17 @@ void Tiles::drawPowerUp(int x, int y, char tile, float time)
 
     if (shield) {
         canvas.hexagon(center, tile_size * 0.26f, color, time * 40);
+        return;
+    }
+    if (tile == BERSERK_TILE) {
+        sf::RectangleShape blade({tile_size * 0.55f, tile_size * 0.09f});
+        blade.setOrigin(blade.getSize() / 2.f);
+        blade.setPosition(center);
+        blade.setFillColor(color);
+        for (float angle : {45.f, -45.f}) {
+            blade.setRotation(sf::degrees(angle));
+            canvas.draw(blade);
+        }
         return;
     }
 

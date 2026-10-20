@@ -74,6 +74,7 @@ private:
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
+    void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();
@@ -82,9 +83,9 @@ private:
 
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
-    void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
+    void drawHUDLine(int player_num, const PlayerState &player, int me, float y, bool cyberpsycho);
     void drawPowerUps(const PlayerState &player, int me);
-    void drawGauge(const std::string &label, sf::Color color, float left);
+    void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);

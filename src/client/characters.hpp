@@ -8,7 +8,7 @@
 #include <vector>
 
 // Folders in assets/, in selection order. Their sheets come from tools/slice_sheets.py.
-inline const std::vector<std::string> CHARACTER_DIRS = {"johny", "david", "jinx", "mikasa"};
+inline const std::vector<std::string> CHARACTER_DIRS = {"johny", "david", "jinx", "mikasa", "lucy"};
 
 struct Animation {
     enum class Mode { Loop, Once, Hide };

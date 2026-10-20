@@ -40,7 +40,7 @@ private:
     void drawModeCard(int index, bool selected);
 
     void drawDistrictSelect(const MenuState &menu);
-    void drawDistrictCard(int index, bool selected);
+    void drawDistrictCard(int index, bool selected, const Wallet &wallet);
     void drawThumbnail(const Backdrops::Segment &segment, sf::FloatRect dest, float from, float to);
 
 public:
