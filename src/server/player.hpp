@@ -41,6 +41,7 @@ private:
     float ram_timer;            // seconds before the next charge comes back
     int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)
     int spears;                 // Mikasa's thunder spears left
+    float recoil_timer;         // seconds of Fishbones' recoil left
     int burst_left;             // Pow-Pow bullets still to come in this burst
     float burst_timer;          // seconds before the next one
     std::set<std::pair<int, int>> collected_coins;
@@ -89,6 +90,7 @@ public:
     // The gauge, in percent of what this player needs
     int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(upgrades); }
     void spendUltimate() { ultimate_charge = 0; }
+    void startRecoil() { recoil_timer = FISHBONES_RECOIL_TIME; }
     void startBurst(int bullets) { burst_left = bullets; burst_timer = MINIGUN_BURST_GAP; }
     // True when the next bullet of the burst is due this tick
     bool burstShotDue(float dt);

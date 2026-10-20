@@ -6,7 +6,7 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), burst_left(0), burst_timer(0) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), recoil_timer(0), burst_left(0), burst_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -27,6 +27,7 @@ void Player::reset(int number, float spawn_y)
     ram_timer = RAM_RECHARGE;
     ultimate_charge = 0;
     spears = 0;
+    recoil_timer = 0;
     burst_left = 0;
     collected_coins.clear();
 }
@@ -109,9 +110,15 @@ void Player::update(float dt, float forward_speed, float max_y)
         ram_timer = RAM_RECHARGE;
     }
 
-    // Standing still while the smoke rises; the titan runs on the floor
+    // Standing still while the smoke rises; the titan runs on the floor. Fishbones' recoil throws Jinx
+    // backward, then she picks her pace back up.
+    float pace = isSprinting() ? SANDEVISTAN_SPEED : 1;
+    if (recoil_timer > 0) {
+        pace *= 1 - (1 + FISHBONES_RECOIL_PUSH) * recoil_timer / FISHBONES_RECOIL_TIME;
+        recoil_timer = std::max(0.0f, recoil_timer - dt);
+    }
     if (form != Form::Shifting)
-        x += forward_speed * (isSprinting() ? SANDEVISTAN_SPEED : 1) * dt;
+        x += forward_speed * pace * dt;
     sprint_timer = std::max(0.0f, sprint_timer - dt);
     berserk_timer = std::max(0.0f, berserk_timer - dt);
     if (form == Form::Titan) {

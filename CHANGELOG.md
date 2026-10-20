@@ -11,6 +11,13 @@ taken from this file. Players on different versions can't play together: update 
   eddies sooner per level, **Eddie magnet** picks up eddies 1 tile further per level (3 levels each:
   1000, 2500 and 5000 eddies), and **Subdermal armor** starts every run with a shield (5000 eddies).
 
+- **Hits you can feel.** Mikasa's blade jolts the screen and sparks when it cuts a drone down, every
+  bullet of Jinx's Pow-Pow kicks, and the screen shakes harder or lighter depending on the hit.
+
+### Balance
+- **Fishbones has a recoil**: firing it throws Jinx back, and she picks her pace up again over half a
+  second.
+
 ### Fixes
 - Taking a whole row of eddies at once no longer slows phones down: the eddies count up on a single
   "+N" instead of one "+1" each, and the sounds don't pile up.

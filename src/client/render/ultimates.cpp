@@ -50,6 +50,7 @@ void Ultimates::start(const UltimateEvent &ultimate)
     } else if (ultimate.ultimate == Ultimate::Fishbones) {
         audio.play(Audio::Sfx::Rocket);
         run.flashScreen(NEON_PINK, 0.25f);
+        run.shakeAtLeast(0.6f, 26);   // the recoil throws her back (server's Player::update)
         rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::ThunderSpears) {
         audio.play(Audio::Sfx::Thunder);

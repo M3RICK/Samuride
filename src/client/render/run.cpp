@@ -14,6 +14,7 @@ void Run::reset()
     callout.clear();
     burnt_zappers.clear();
     shake = 0;
+    shake_strength = 0;
     run_speed = 0;
     last_x = -1;
 }
@@ -67,9 +68,12 @@ int Run::characterOf(int player_num) const
     return it != roster.end() ? it->second : player_num;
 }
 
-void Run::shakeAtLeast(float amount)
+void Run::shakeAtLeast(float seconds, float strength)
 {
-    shake = std::max(shake, amount);
+    if (shake <= 0)
+        shake_strength = 0;
+    shake = std::max(shake, seconds);
+    shake_strength = std::max(shake_strength, strength);
 }
 
 float Run::hackLeft(int x, int y) const

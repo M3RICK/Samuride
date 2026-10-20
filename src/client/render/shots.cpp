@@ -39,6 +39,10 @@ void Shots::handle(GameState &state)
                 trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
                 break;
             case Weapon::Minigun:
+                // Every bullet kicks: a jolt for the shooter, and the sprite pushed back (players.cpp)
+                run.player_anims[shot.player].shot_clock.restart();
+                if (shot.player == state.getMyPlayerNumber())
+                    run.shakeAtLeast(0.06f, 5);
                 audio.play(Audio::Sfx::Minigun);
                 particles.emit(muzzle, 3, NEON_PINK, 3, 0.1f, 0);
                 trails.push_back({shot.player, shot.weapon, muzzle.y + randf(-0.08f, 0.08f), sf::Clock()});

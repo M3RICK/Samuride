@@ -145,11 +145,12 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     update(state, players, me, dt);
     updateSounds(state, phase, players, me);
 
-    // World view shakes when someone gets zapped, the HUD doesn't
+    // The world view shakes on hits and blasts, the HUD doesn't. It eases out over its last 0.15 s.
     sf::View ui_view = canvas.screenView();
     sf::View world_view = ui_view;
     if (run.shake > 0) {
-        world_view.move({randf(-12, 12), randf(-12, 12)});
+        float strength = run.shake_strength * std::min(1.0f, run.shake / 0.15f);
+        world_view.move({randf(-strength, strength), randf(-strength, strength)});
         run.shake -= dt;
     }
 
@@ -265,13 +266,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 
     if (effect.type == ZAPPER_TILE) {
         audio.play(Audio::Sfx::Zap);
-        run.shake = 0.5f;
+        run.shakeAtLeast(0.5f, 18);
         run.death_clocks.try_emplace(effect.player);
         particles.emit(tile_center, 40, NEON_CYAN, 9, 0.7f, 12);
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.type == TITAN_HIT) {
         audio.play(Audio::Sfx::Stomp);
-        run.shake = 0.6f;
+        run.shakeAtLeast(0.6f, 22);
         run.death_clocks.try_emplace(effect.player);
         particles.emit(tile_center, 40, NEON_RED, 9, 0.7f, 12);
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
@@ -283,8 +284,14 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center + sf::Vector2f(0, -3), 20, NEON_RED, 6, 0.6f, 8);
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
-        run.shakeAtLeast(0.15f);
         drones_down += effect.player == me;
+        // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
+        if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+            run.shakeAtLeast(0.2f, 20);
+            particles.emit(tile_center, 18, sf::Color::White, 10, 0.3f, 0);
+        } else {
+            run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
+        }
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);

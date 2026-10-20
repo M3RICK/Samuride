@@ -34,6 +34,7 @@ void Server::handleUltimate(int client_fd)
         case Ultimate::Fishbones: {
             auto [top, bottom] = fishbonesRows(line);
             sweeps.push_back({client_fd, start, start, FISHBONES_RANGE, FISHBONES_SPEED, top, bottom});
+            player.startRecoil();
             break;
         }
         case Ultimate::Nuke:

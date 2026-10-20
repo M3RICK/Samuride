@@ -112,6 +112,10 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (shocked)
         feet += {randf(-6, 6), randf(-6, 6)};
+    // Pow-Pow's kick: pushed back a few pixels right after each bullet
+    if (weaponOf(run.characterOf(player_num)) == Weapon::Minigun &&
+        run.player_anims[player_num].shot_clock.getElapsedTime().asSeconds() < 0.05f)
+        feet.x -= tile_size * 0.1f;
 
     sf::Sprite sprite(character.sheet);
     sprite.setTextureRect(character.frameRect(*animation.animation, frame));
