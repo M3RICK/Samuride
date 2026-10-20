@@ -61,7 +61,8 @@ for ABI in "${ABIS[@]}"; do
     fi
 
     # The game: libsamuride.so
-    cmake -S "$ROOT/android" -B "$BUILD/game-$ABI" "${ANDROID_CMAKE[@]}" -DSFML_DIR="$SFML_CMAKE_DIR"
+    cmake -S "$ROOT/android" -B "$BUILD/game-$ABI" "${ANDROID_CMAKE[@]}" -DSFML_DIR="$SFML_CMAKE_DIR" \
+          -DSHOW_FPS="${SHOW_FPS:-0}"
     cmake --build "$BUILD/game-$ABI" --parallel
     mkdir -p "$STAGE/lib/$ABI"
     cp "$BUILD/game-$ABI/libsamuride.so" "$STAGE/lib/$ABI/"

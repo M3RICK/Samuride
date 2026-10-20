@@ -22,6 +22,15 @@ private:
 
     std::string lobby_info;
     sf::Clock frame_clock;
+
+    // Built with SAMURIDE_SHOW_FPS (SHOW_FPS=1 android/docker.sh): frames per second and the slowest
+    // frame of the last second, in a corner, to see where a phone struggles
+    sf::Clock stats_frame;
+    sf::Clock stats_second;
+    int stats_frames = 0;
+    float stats_worst = 0;
+    std::string stats_label;
+    void drawFrameStats();
     sf::VertexArray scanlines;
 
     void beginFrame(bool in_game);
