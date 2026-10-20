@@ -3,6 +3,7 @@
 #include "canvas.hpp"
 #include "../../common/debug.hpp"
 #include "../../common/powerups.hpp"
+#include "../../common/cyberpsycho.hpp"
 #include <algorithm>
 #include <cstdlib>
 
@@ -243,4 +244,22 @@ sf::Color powerUpColor(char tile)
 const char *powerUpName(char tile)
 {
     return tile == SHIELD_TILE ? "SHIELD" : tile == SANDEVISTAN_TILE ? "SANDEVISTAN" : "BERSERK";
+}
+
+UltimateLook ultimateLook(Ultimate ultimate)
+{
+    switch (ultimate) {
+        case Ultimate::FireWave:
+            return {"NEVER FADE AWAY", Palette::NEON_ORANGE};
+        case Ultimate::Nuke:
+            return {"ARM CANNON", Palette::NEON_YELLOW};
+        case Ultimate::Breach:
+            return {"SYSTEM BREACH", Palette::NEON_PURPLE};
+        case Ultimate::ThunderSpears:
+            return {"THUNDER SPEARS", Palette::NEON_CYAN};
+        case Ultimate::Fishbones:
+            return {"FISHBONES", Palette::NEON_PINK};
+        default:
+            return {"", sf::Color::White};
+    }
 }

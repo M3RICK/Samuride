@@ -14,6 +14,8 @@ void Run::reset()
     nukes.clear();
     rockets.clear();
     breaches.clear();
+    flash = {};
+    callout.clear();
     burnt_zappers.clear();
     shake = 0;
     run_speed = 0;
@@ -104,4 +106,11 @@ void Run::hackZappers(float from, float to, float duration)
                 hacked_zappers[{x, y}] = {sf::Clock(), duration};
         }
     }
+}
+
+void Run::announce(const UltimateLook &look)
+{
+    callout = look.name;
+    callout_color = look.color;
+    callout_clock.restart();
 }

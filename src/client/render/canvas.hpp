@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include "../../common/cyberpsycho.hpp"
 
 // Everything is drawn in a fixed 1920x1080 space, the window just scales it to fit the screen
 namespace Screen {
@@ -35,6 +36,13 @@ namespace Palette {
     constexpr sf::Color HINT_GREY{150, 150, 150};
     constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards
 }
+
+// An ultimate's name and colour, wherever it shows
+struct UltimateLook {
+    const char *name;
+    sf::Color color;
+};
+UltimateLook ultimateLook(Ultimate ultimate);
 
 // A power-up tile's colour, wherever it shows
 sf::Color powerUpColor(char tile);

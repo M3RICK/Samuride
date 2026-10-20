@@ -73,6 +73,20 @@ struct Run {
     std::vector<Nuke> nukes;
     std::vector<Rocket> rockets;
     std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
+
+    // Over the whole screen: a flash that fades, and an ultimate's name in big letters
+    struct Flash {
+        sf::Color color = sf::Color::Transparent;
+        float duration = 1;
+        sf::Clock clock;
+    };
+    Flash flash;
+    std::string callout;
+    sf::Color callout_color;
+    sf::Clock callout_clock;
+
+    void flashScreen(sf::Color color, float duration) { flash = {color, duration, sf::Clock()}; }
+    void announce(const UltimateLook &look);
     std::set<std::pair<int, int>> burnt_zappers;                // out for the rest of the run
 
     // The zappers in these columns go out, like on the server; only those touching rows top to bottom

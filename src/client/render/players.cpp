@@ -137,6 +137,21 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
+
+    // Mikasa's thunder spears left, over her head
+    for (int i = 0; i < player.spears; i++) {
+        sf::Vector2f tip = tag_pos + sf::Vector2f((i - (player.spears - 1) / 2.f) * 22, -62);
+        sf::RectangleShape shaft({5, 30});
+        shaft.setPosition(tip + sf::Vector2f(-2.5f, 12));
+        shaft.setFillColor(NEON_CYAN);
+        canvas.draw(shaft);
+        sf::ConvexShape head(3);
+        head.setPoint(0, tip);
+        head.setPoint(1, tip + sf::Vector2f(-7, 14));
+        head.setPoint(2, tip + sf::Vector2f(7, 14));
+        head.setFillColor(sf::Color::White);
+        canvas.draw(head);
+    }
 }
 
 //=============================================================================

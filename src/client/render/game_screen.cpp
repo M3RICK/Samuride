@@ -70,6 +70,7 @@ void GameScreen::resetRun()
     new_record = false;
     best_distance = loadBestDistance();
     ultimate_key = keyName(Settings::load().ultimate_key);
+    ultimate_was_ready = false;
 }
 
 // Solo runs chase the personal best
@@ -161,6 +162,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
+    drawFlashAndCallout();
     drawEffects();
     titans.drawWarnings(titan_states);
     if (players.count(me))
