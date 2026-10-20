@@ -1,10 +1,11 @@
-// Keyboard: jetpack, attack, confirm and back
+// Keyboard: jetpack, attack, ultimate, confirm and back
 
 #include "inputs.hpp"
 #include "client.hpp"
 
 InputManager::InputManager(Client *client, sf::Window *window, const Settings &settings)
     : client(client), window(window), jetpack_key(settings.jetpack_key), attack_key(settings.attack_key),
+      ultimate_key(settings.ultimate_key),
       jet_active(false),
       close_requested(false), back_requested(false), confirm_pressed(false) {
 }
@@ -25,6 +26,8 @@ void InputManager::processInputs()
             // CYBERPSYCHO; the server ignores it in CLASSIC
             if (key->code == attack_key)
                 client->sendAttack();
+            if (key->code == ultimate_key)
+                client->sendUltimate();
         }
     }
 

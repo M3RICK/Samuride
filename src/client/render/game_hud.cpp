@@ -36,6 +36,35 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
 
     if (cyberpsycho)
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
+    if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
+        drawUltimateGauge(players.at(me).ultimate);
+}
+
+// Bottom of the screen: fills with your eddies, pulses when the ultimate is ready
+void GameScreen::drawUltimateGauge(int percent)
+{
+    bool ready = percent >= 100;
+    float pulse = ready ? 0.5f + 0.5f * std::sin(canvas.time() * 8) : 0;
+    sf::Color color = ready ? NEON_YELLOW : NEON_ORANGE;
+    sf::Vector2f pos(Screen::WIDTH / 2 - 200, Screen::PLAY_BOTTOM + 40);
+
+    if (ready)
+        canvas.halo(pos + sf::Vector2f(200, 7), 230, withAlpha(NEON_YELLOW, static_cast<uint8_t>(40 + 50 * pulse)));
+
+    sf::RectangleShape back({400, 14});
+    back.setPosition(pos);
+    back.setFillColor(sf::Color(0, 0, 0, 160));
+    back.setOutlineColor(color);
+    back.setOutlineThickness(2);
+    canvas.draw(back);
+
+    sf::RectangleShape fill({4.0f * std::min(percent, 100), 14});
+    fill.setPosition(pos);
+    fill.setFillColor(color);
+    canvas.draw(fill);
+
+    std::string label = ready ? std::format("ULTIMATE READY  [{}]", ultimate_key) : "ULTIMATE";
+    canvas.text(label, 22, color, pos + sf::Vector2f(200, -18));
 }
 
 // Portrait, then "YOU   12 EDDIES", a hexagon while shielded, and Lucy's RAM in CYBERPSYCHO

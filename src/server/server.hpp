@@ -80,7 +80,15 @@ private:
 
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
-    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again
+    // Johnny's ultimate, sweeping ahead
+    struct FireWave {
+        int owner_fd;
+        float start;    // in tiles
+        float front;
+    };
+
+    std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
+    std::vector<FireWave> fire_waves;
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
@@ -186,6 +194,10 @@ private:
     bool isLiveDrone(int x, int y) const;
 
     void destroyDrone(int owner_fd, int x, int y);
+
+    void handleUltimate(int client_fd);
+
+    void updateFireWaves();
 
     //===========================================================================
     // Titans (titans.cpp)

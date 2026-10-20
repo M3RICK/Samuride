@@ -62,6 +62,7 @@ private:
     int best_distance = 0;
     bool new_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
+    std::string ultimate_key;   // its name, read from the settings at the start of each run
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -86,6 +87,7 @@ private:
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y, bool cyberpsycho);
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
+    void drawUltimateGauge(int percent);
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);

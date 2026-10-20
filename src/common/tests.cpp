@@ -171,6 +171,22 @@ static void testHack()
     assert(weaponOf(4) == Weapon::Hack);
 }
 
+// Every eddy charges the ultimate, up to full, and firing it empties the gauge
+static void testUltimate()
+{
+    Player johnny(-1);
+    johnny.reset(0, 0);
+    for (int i = 0; i < 3; i++)
+        johnny.collectCoin(i, 0);
+    johnny.addScore(DRONE_BOUNTY);
+    assert(johnny.getUltimateCharge() == 3 + DRONE_BOUNTY && !johnny.ultimateReady());
+    johnny.addScore(ULTIMATE_CHARGE);
+    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ULTIMATE_CHARGE);
+    johnny.spendUltimate();
+    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
+    assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(4) == Ultimate::None);
+}
+
 // Runners are bought in order, with enough eddies
 static void testWallet()
 {
@@ -198,6 +214,7 @@ int main()
     testGenerator();
     testPowerUps();
     testHack();
+    testUltimate();
     testWallet();
     std::cout << "All tests passed" << std::endl;
     return 0;

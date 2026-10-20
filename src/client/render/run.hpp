@@ -5,6 +5,8 @@
 
 #include <SFML/Graphics.hpp>
 #include <map>
+#include <set>
+#include <vector>
 #include "canvas.hpp"
 #include "../state.hpp"
 #include "../../common/map.hpp"
@@ -21,6 +23,15 @@ struct PlayerAnim {
     sf::Clock berserk_clock;
 };
 
+// Johnny's ultimate on screen, moving like the server's
+struct FireWave {
+    float start;        // in tiles
+    float burnt_to;     // the zappers are out up to here
+    sf::Clock age;
+
+    float front() const { return start + std::min(FIRE_WAVE_RANGE, FIRE_WAVE_SPEED * age.getElapsedTime().asSeconds()); }
+};
+
 struct Run {
     // Players are 2 tiles tall, like their server hitbox
     static constexpr float PLAYER_HEIGHT = 2.0f;
@@ -35,6 +46,8 @@ struct Run {
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> attack_clocks;
     std::map<std::pair<int, int>, sf::Clock> hacked_zappers;    // node -> since Lucy hacked it
+    std::vector<FireWave> fire_waves;
+    std::set<std::pair<int, int>> burnt_zappers;                // out for the rest of the run
     float shake = 0;
 
     // Speed feel: measured from your own movement, no extra network data

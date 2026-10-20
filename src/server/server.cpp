@@ -201,6 +201,10 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
             handleAttack(client_fd);
             break;
 
+        case MSG_ULTIMATE:
+            handleUltimate(client_fd);
+            break;
+
         default:
             break;
     }

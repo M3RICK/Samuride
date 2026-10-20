@@ -17,6 +17,7 @@ bool Server::resetMap()
     destroyed_drones.clear();
     projectiles.clear();
     hacked_zappers.clear();
+    fire_waves.clear();
     resetTitans();
 
     if (!config.map_path.empty()) {
@@ -169,6 +170,7 @@ void Server::updatePlayers()
 
     spawnTitans(leader_x);
     updateProjectiles();
+    updateFireWaves();
     extendMap(leader_x);
     sendGameState();
     sendTitans();
@@ -233,6 +235,8 @@ void Server::sendGameState()
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
                              player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
+        // Ultimate gauge, in percent
+        state_data.push_back(player.getUltimateCharge() * 100 / ULTIMATE_CHARGE);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

@@ -167,6 +167,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_SHOT:
             handleShot(payload);
             break;
+        case MSG_ULTIMATE:
+            handleUltimate(payload);
+            break;
         case MSG_TITANS:
             handleTitans(payload);
             break;
@@ -214,9 +217,17 @@ void Client::handleShot(const std::vector<uint8_t> &payload)
         game_state.pushShot({payload[0], static_cast<Weapon>(payload[1])});
 }
 
+// [player][ultimate][x in 1/100 tile, 4 bytes]
+void Client::handleUltimate(const std::vector<uint8_t> &payload)
+{
+    if (payload.size() >= 6)
+        game_state.pushUltimate({payload[0], static_cast<Ultimate>(payload[1]),
+                                 Protocol::readU32(payload.data() + 2) / POSITION_SCALE});
+}
+
 void Client::handleGameState(const std::vector<uint8_t> &payload)
 {
-    for (size_t pos = 0; pos + 10 <= payload.size(); pos += 10) {
+    for (size_t pos = 0; pos + 11 <= payload.size(); pos += 11) {
         const uint8_t *p = payload.data() + pos;
 
         // Last byte: bit 0 jetpack, bits 1-2 form, bit 3 shield, bit 4 Sandevistan, bits 5-6 RAM, bit 7 Berserk
@@ -229,7 +240,8 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
             (p[9] & 8) != 0,
             (p[9] & 16) != 0,
             (p[9] >> 5) & 3,
-            (p[9] & 128) != 0});
+            (p[9] & 128) != 0,
+            p[10]});
     }
 }
 
@@ -266,6 +278,11 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
 void Client::sendAttack()
 {
     sendToServer(Protocol::createPacket(MSG_ATTACK, {}));
+}
+
+void Client::sendUltimate()
+{
+    sendToServer(Protocol::createPacket(MSG_ULTIMATE, {}));
 }
 
 void Client::sendPlayerInput(bool jet_activated)

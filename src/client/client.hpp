@@ -54,6 +54,7 @@ private:
 
     void handleGameStart(const std::vector<uint8_t> &payload);
     void handleShot(const std::vector<uint8_t> &payload);
+    void handleUltimate(const std::vector<uint8_t> &payload);
     void handleTitans(const std::vector<uint8_t> &payload);
     void handleGameState(const std::vector<uint8_t> &payload);
     void handleCollision(const std::vector<uint8_t> &payload);
@@ -71,6 +72,7 @@ public:
 
     void sendPlayerInput(bool jet_activated);
     void sendAttack();
+    void sendUltimate();
 };
 
 #endif

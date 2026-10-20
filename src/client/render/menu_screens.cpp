@@ -258,7 +258,8 @@ void MenuScreens::drawOptions(const MenuState &menu)
 // Label on the left, value on the right: a volume bar or a key
 void MenuScreens::drawOptionRow(int index, const MenuState &menu)
 {
-    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "FULLSCREEN", "BACK"};
+    static const char *labels[] = {"MUSIC VOLUME", "EFFECTS VOLUME", "JETPACK KEY", "ATTACK KEY", "ULTIMATE KEY", "FULLSCREEN",
+                                   "BACK"};
     const Settings &settings = menu.settings;
     sf::FloatRect box = MenuLayout::optionBox(index);
     bool selected = index == menu.option;
@@ -284,7 +285,8 @@ void MenuScreens::drawOptionRow(int index, const MenuState &menu)
     }
 
     bool waiting = selected && menu.waiting_for_key;
-    sf::Keyboard::Key key = index == MenuLayout::OPTION_JETPACK ? settings.jetpack_key : settings.attack_key;
+    sf::Keyboard::Key key = index == MenuLayout::OPTION_JETPACK ? settings.jetpack_key :
+                            index == MenuLayout::OPTION_ATTACK ? settings.attack_key : settings.ultimate_key;
     std::string value = waiting ? (canvas.blink() ? "PRESS A KEY..." : "") : keyName(key);
     canvas.text(value, 36, waiting ? NEON_CYAN : color, right, {1, 0.5f});
 }

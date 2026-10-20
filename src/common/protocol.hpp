@@ -19,7 +19,9 @@ enum MessageType : uint8_t {
     MSG_READY = 9,        // client wants a rematch
     MSG_ATTACK = 10,      // CYBERPSYCHO: client attacks
     MSG_SHOT = 11,        // CYBERPSYCHO: someone attacked, payload = player number, weapon
-    MSG_TITANS = 12       // titans charging along the floor, every tick
+    MSG_TITANS = 12,      // titans charging along the floor, every tick
+    MSG_ULTIMATE = 13     // CYBERPSYCHO: client fires its ultimate; server: someone did,
+                          // payload = player number, ultimate, x where it starts (1/100 tile, 4 bytes)
 };
 
 struct MessageHeader {

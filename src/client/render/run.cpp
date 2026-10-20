@@ -10,6 +10,8 @@ void Run::reset()
     death_clocks.clear();
     attack_clocks.clear();
     hacked_zappers.clear();
+    fire_waves.clear();
+    burnt_zappers.clear();
     shake = 0;
     run_speed = 0;
     last_x = -1;

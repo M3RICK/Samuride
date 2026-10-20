@@ -69,6 +69,7 @@ void GameScreen::resetRun()
     drones_down = 0;
     new_record = false;
     best_distance = loadBestDistance();
+    ultimate_key = keyName(Settings::load().ultimate_key);
 }
 
 // Solo runs chase the personal best
@@ -187,7 +188,7 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
         return;
 
     auto [x, y] = hackTarget(run.map, pos->second.x, pos->second.y, Run::PLAYER_HEIGHT, [&](int x, int y) {
-        return destroyed.count({x, y}) || run.hackLeft(x, y) > 0;
+        return destroyed.count({x, y}) || run.hackLeft(x, y) > 0 || run.burnt_zappers.count({x, y});
     });
     if (x >= 0)
         tiles.drawSprite(sprites.hack_target, {static_cast<float>(x), static_cast<float>(y)},

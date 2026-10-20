@@ -6,6 +6,10 @@ taken from this file. Players on different versions can't play together: update 
 ## v2.5
 
 ### New
+- **Ultimates** (CYBERPSYCHO). Every eddy you earn charges a gauge at the bottom of the screen;
+  once it's full, `E` (set it in Options) fires your runner's ultimate. First one: **Johnny** palms
+  his gun and a wall of fire sweeps the screen ahead, burning every drone, zapper and titan in its
+  way. The other runners get theirs in the next updates.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
   the menu, under Johnny's greeting.
 

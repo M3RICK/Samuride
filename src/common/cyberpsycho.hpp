@@ -64,6 +64,24 @@ inline WeaponStats statsOf(Weapon weapon)
     }
 }
 
+// Ultimates (CYBERPSYCHO only): every eddy you earn charges the gauge, a full one fires your runner's.
+// None of them makes you invincible: they act on the scenery, you still steer and can die.
+enum class Ultimate : uint8_t { None, FireWave };
+
+constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
+
+// Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
+constexpr float FIRE_WAVE_SPEED = 45;   // tiles per second, not on top of the run speed
+constexpr float FIRE_WAVE_RANGE = 25;   // tiles from where it started
+
+// Character ids follow the client's CHARACTER_DIRS; runners without one yet get None
+inline Ultimate ultimateOf(int character)
+{
+    if (character == 0)
+        return Ultimate::FireWave;
+    return Ultimate::None;
+}
+
 // Every node of the zapper that has one at (x, y): the nodes linked to it, the way its beams are drawn
 inline std::vector<std::pair<int, int>> zapperNodes(const Map &map, int x, int y)
 {

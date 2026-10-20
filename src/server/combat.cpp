@@ -121,3 +121,63 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     notifyCollision(DRONE_TILE, owner->second, x, y);
     DEBUG_LOG("Player " + std::to_string(owner->second.getPlayerNumber()) + " destroyed a drone");
 }
+
+//=============================================================================
+// Ultimates
+//=============================================================================
+
+// Only with a full gauge, out of the Attack Titan's forms
+void Server::handleUltimate(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end())
+        return;
+
+    Player &player = it->second;
+    Ultimate ultimate = ultimateOf(player.getCharacter());
+
+    if (ultimate == Ultimate::None || !player.ultimateReady() || player.getForm() != Form::Normal)
+        return;
+    player.spendUltimate();
+
+    float start = player.getX() + 1;
+    std::vector<uint8_t> payload = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(ultimate)};
+    Protocol::pushU32(payload, start * POSITION_SCALE);
+    broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, payload));
+
+    if (ultimate == Ultimate::FireWave)
+        fire_waves.push_back({client_fd, start, start});
+}
+
+// Every column the fire crossed this tick burns from floor to ceiling: drones go down, zappers go out
+// for the rest of the run, and titans charging into it die
+void Server::updateFireWaves()
+{
+    int height = game_map.getHeight();
+
+    for (FireWave &wave : fire_waves) {
+        float front = std::min(wave.start + FIRE_WAVE_RANGE, wave.front + FIRE_WAVE_SPEED * TICK_DT);
+        auto owner = players.find(wave.owner_fd);
+
+        for (int x = static_cast<int>(wave.front); x <= static_cast<int>(front); x++) {
+            for (int y = 0; y < height; y++) {
+                if (isLiveDrone(x, y)) {
+                    destroyDrone(wave.owner_fd, x, y);
+                } else if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
+                    for (std::pair<int, int> node : zapperNodes(game_map, x, y))
+                        hacked_zappers[node] = 1e9f;
+                }
+            }
+        }
+        std::erase_if(titans, [&](const Titan &titan) {
+            if (titan.x > front || titan.x < wave.start - 1 || owner == players.end())
+                return false;
+            owner->second.addScore(TITAN_BOUNTY);
+            notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);
+            return true;
+        });
+        wave.front = front;
+    }
+    std::erase_if(fire_waves, [](const FireWave &wave) { return wave.front >= wave.start + FIRE_WAVE_RANGE; });
+}

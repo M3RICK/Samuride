@@ -1,4 +1,4 @@
-// CYBERPSYCHO attacks: muzzle flashes, slashes and the projectiles in flight
+// CYBERPSYCHO attacks: muzzle flashes, slashes, the projectiles in flight, and the ultimates
 
 #include "shots.hpp"
 #include "canvas.hpp"
@@ -6,6 +6,7 @@
 #include "run.hpp"
 #include "../audio.hpp"
 #include <algorithm>
+#include <cmath>
 
 using namespace Palette;
 
@@ -41,6 +42,19 @@ void Shots::handle(GameState &state)
                 break;
         }
     }
+    for (const UltimateEvent &ultimate : state.takeUltimates())
+        startUltimate(ultimate);
+}
+
+void Shots::startUltimate(const UltimateEvent &ultimate)
+{
+    run.attack_clocks[ultimate.player].restart();
+    run.shakeAtLeast(0.4f);
+
+    if (ultimate.ultimate == Ultimate::FireWave) {
+        audio.play(Audio::Sfx::FireWave);
+        run.fire_waves.push_back({ultimate.x, ultimate.x, sf::Clock()});
+    }
 }
 
 sf::Vector2f Shots::positionOf(const Trail &trail) const
@@ -60,9 +74,51 @@ void Shots::land(int player)
         trails.erase(oldest);
 }
 
+// A wall of fire from floor to ceiling; the zappers it went over are out, like on the server
+void Shots::drawFireWaves()
+{
+    float tile_size = run.view.tile_size;
+
+    for (FireWave &wave : run.fire_waves) {
+        float front = wave.front();
+
+        for (int x = static_cast<int>(wave.burnt_to); x <= static_cast<int>(front); x++) {
+            for (int y = 0; y < static_cast<int>(run.map.getHeight()); y++) {
+                if (run.map.getTile(x, y) == 'e' && !run.burnt_zappers.count({x, y})) {
+                    for (std::pair<int, int> node : zapperNodes(run.map, x, y))
+                        run.burnt_zappers.insert(node);
+                }
+            }
+        }
+        wave.burnt_to = front;
+
+        // Fades out once it reached its range
+        float fade = std::clamp(1 - (wave.age.getElapsedTime().asSeconds() - FIRE_WAVE_RANGE / FIRE_WAVE_SPEED) * 3, 0.0f, 1.0f);
+        sf::Vector2f top = run.toScreen({front, 0});
+        sf::Vector2f bottom = run.toScreen({front, run.floor()});
+
+        for (auto [width, color] : {std::pair{2.2f, NEON_RED}, {1.4f, NEON_ORANGE}, {0.6f, NEON_YELLOW}}) {
+            sf::RectangleShape flame({tile_size * width, bottom.y - top.y});
+            flame.setPosition({top.x - tile_size * width, top.y});
+            flame.setFillColor(withAlpha(color, static_cast<uint8_t>(150 * fade)));
+            canvas.draw(flame, sf::BlendAdd);
+        }
+        if (fade > 0.5f) {
+            for (int i = 0; i < 6; i++)
+                particles.emit({front - randf(0, 1.5f), randf(0, run.floor())}, 1, i % 2 ? NEON_ORANGE : NEON_YELLOW,
+                               4, 0.5f, -6);
+        }
+    }
+    std::erase_if(run.fire_waves, [](const FireWave &wave) {
+        return wave.age.getElapsedTime().asSeconds() > FIRE_WAVE_RANGE / FIRE_WAVE_SPEED + 0.4f;
+    });
+}
+
 // A shot ends out of range, or when the server says it hit (land)
 void Shots::draw()
 {
+    drawFireWaves();
+
     float tile_size = run.view.tile_size;
 
     std::erase_if(trails, [](const Trail &trail) {

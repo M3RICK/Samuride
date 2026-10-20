@@ -33,6 +33,7 @@ Positions travel in hundredths of a tile.
 | 10 | `MSG_ATTACK` | client → server | CYBERPSYCHO attack |
 | 11 | `MSG_SHOT` | server → client | Someone attacked, for the animation |
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
+| 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
 
 ### `MSG_CONNECT`
 
@@ -105,7 +106,7 @@ Sent when the input changes, not every frame.
 
 ### `MSG_GAME_STATE`
 
-A 10-byte record per player, 60 times per second:
+An 11-byte record per player, 60 times per second:
 
 | Bytes | Field |
 | --- | --- |
@@ -113,7 +114,8 @@ A 10-byte record per player, 60 times per second:
 | 4 | X, also the distance run |
 | 2 | Y: top of the 2-tile-tall body, 0 is the top row |
 | 2 | Score |
-| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan |
+| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
+| 1 | Ultimate gauge, in percent |
 
 ### `MSG_COLLISION`
 
@@ -130,10 +132,12 @@ A 10-byte record per player, 60 times per second:
 | `e` | Zapper or drone contact: death |
 | `d` | Drone destroyed, +5 |
 | `t` | Run down by a titan: death |
-| `k` | Titan taken down (Mikasa's blade or the Attack Titan), +20 |
+| `k` | Titan taken down (Mikasa's blade, the Attack Titan or Johnny's fire wave), +20 |
 | `p` | Attack Titan orb taken: shifting starts |
 | `a` | Shield taken |
 | `v` | Sandevistan taken: the sprint starts |
+| `r` | Berserk taken: 8 s of attacking on your own, twice as often |
+| `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 1.2 s |
 | `b` | A shield took a deadly hit (zapper, drone or titan) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`
@@ -155,14 +159,31 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 
 Empty, CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny and
 David shoot guns, Jinx rockets: a projectile flies ahead at run speed plus the weapon's speed, for
-up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead.
+up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
+the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
+feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
 
 ### `MSG_SHOT`
 
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 rockets, 2 blade |
+| 1 | Weapon: 0 gun, 1 rockets, 2 blade, 3 hack |
+
+### `MSG_ULTIMATE`
+
+From the client: empty, CYBERPSYCHO only, ignored unless the gauge is full (100 eddies earned since
+the last one) and the runner has an ultimate. From the server, to everyone:
+
+| Bytes | Field |
+| --- | --- |
+| 1 | Player number |
+| 1 | Ultimate: 1 fire wave (Johnny) |
+| 4 | X where it starts |
+
+The fire wave sweeps 25 tiles ahead at 45 tiles per second: every column it crosses burns from
+floor to ceiling. Drones go down (`d`), zappers go out for the rest of the run, titans die (`k`).
+Clients burn the zappers themselves from the start and the speed.
 
 ### `MSG_TITANS`
 
