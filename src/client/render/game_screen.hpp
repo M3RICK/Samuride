@@ -4,6 +4,7 @@
     #define GAME_SCREEN_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include "run.hpp"
@@ -64,6 +65,14 @@ private:
         sf::Clock age;
     };
     std::vector<Cut> cuts;
+    // Lucy's hack: a crackling bolt from her to the drone, and from it to the one the hack jumps to
+    static constexpr float ZAP_TIME = 0.2f;
+    struct Zap {
+        sf::Vector2f from, to;  // in tiles
+        sf::Clock age;
+    };
+    std::vector<Zap> zaps;
+    std::set<int> bounced;      // players whose next drone down is the one their hack jumped to
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
@@ -103,6 +112,7 @@ private:
     void addEffect(const CollisionEffect &effect, int me);
     void drawEffects();
     void drawCuts();
+    void drawZaps();
 
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);

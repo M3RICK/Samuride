@@ -71,6 +71,8 @@ void GameScreen::resetRun()
     drones_down = 0;
     hit_stop = 0;
     cuts.clear();
+    zaps.clear();
+    bounced.clear();
     coin_streak = 0;
     last_drone.clear();
     new_record = false;
@@ -179,6 +181,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     ultimates.draw();
     shots.draw();
     drawCuts();
+    drawZaps();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -306,6 +309,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             cuts.push_back({tile_center, sf::Clock()});
             run.shakeAtLeast(0.15f, 16);
             particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
+        } else if (weaponOf(run.characterOf(effect.player)) == Weapon::Hack && run.display_positions.count(effect.player)) {
+            // Lucy's hack lands: a bolt from her hand (the bounce brought its own), the drone glitching apart in purple
+            if (!bounced.erase(effect.player))
+                zaps.push_back({run.display_positions[effect.player] + sf::Vector2f(0.9f, 1.0f), tile_center, sf::Clock()});
+            run.shakeAtLeast(0.15f, effect.player == me ? 12 : 4);
+            particles.emit(tile_center, 18, NEON_PURPLE, 7, 0.35f, 0);
+            particles.emit(tile_center, 8, NEON_CYAN, 5, 0.25f, 0);
         } else {
             run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
         }
@@ -313,10 +323,10 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
     } else if (effect.type == HACK_BOUNCE) {
-        // A purple arc from the drone Lucy hacked to the one the hack jumps to (its blast comes next)
+        // The bolt jumps from the drone Lucy hacked to the next one (its blast comes next)
         sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : tile_center;
-        for (int i = 0; i <= 10; i++)
-            particles.emit(from + (tile_center - from) * (i / 10.f), 3, i % 2 ? NEON_PURPLE : sf::Color::White, 1.5f, 0.35f, 0);
+        zaps.push_back({from, tile_center, sf::Clock()});
+        bounced.insert(effect.player);
         return;
     } else if (effect.type == SPEAR_BLAST) {
         audio.play(Audio::Sfx::Thunder);
@@ -375,6 +385,38 @@ void GameScreen::drawCuts()
         slash.setFillColor(withAlpha(sf::Color::White, static_cast<uint8_t>(255 * (1 - t))));
         canvas.draw(slash, sf::BlendAdd);
         canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(NEON_CYAN, static_cast<uint8_t>(120 * (1 - t))));
+    }
+}
+
+// A jagged bolt, redrawn every frame so it crackles: a wide purple glow under a thin white core
+void GameScreen::drawZaps()
+{
+    static constexpr int SEGMENTS = 6;
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(zaps, [](const Zap &zap) { return zap.age.getElapsedTime().asSeconds() > ZAP_TIME; });
+    for (const Zap &zap : zaps) {
+        float fade = 1 - zap.age.getElapsedTime().asSeconds() / ZAP_TIME;
+        sf::Vector2f along = zap.to - zap.from;
+        sf::Vector2f across = sf::Vector2f(-along.y, along.x) / std::max(0.01f, along.length());
+        sf::Vector2f last = zap.from;
+
+        for (int i = 1; i <= SEGMENTS; i++) {
+            sf::Vector2f next = zap.from + along * (static_cast<float>(i) / SEGMENTS);
+            if (i < SEGMENTS)
+                next += across * randf(-0.3f, 0.3f);
+            sf::Vector2f a = run.toScreen(last);
+            sf::Vector2f b = run.toScreen(next);
+            for (auto [width, color] : {std::pair{0.18f, NEON_PURPLE}, {0.06f, sf::Color::White}}) {
+                sf::RectangleShape segment({(b - a).length(), tile_size * width * fade});
+                segment.setOrigin({0, segment.getSize().y / 2});
+                segment.setPosition(a);
+                segment.setRotation((b - a).angle());
+                segment.setFillColor(withAlpha(color, static_cast<uint8_t>(255 * fade)));
+                canvas.draw(segment, sf::BlendAdd);
+            }
+            last = next;
+        }
     }
 }
 

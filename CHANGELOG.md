@@ -10,6 +10,8 @@ taken from this file. Players on different versions can't play together: update 
   also keeps your most drones down in one run. Your old best carries over as the CLASSIC one.
 
 ### Balance
+- **Mikasa's thunder spears hit harder**: 5 spears instead of 3, and each lightning column is 5 tiles wide
+  instead of 3.
 - **Lucy hacks more**: 3 charges of RAM instead of 2, one back every 3.5 s instead of 6, and a hacked
   zapper stays off 2 s instead of 1.2. A drone she hacks passes the hack on: the nearest drone within
   4 tiles of it goes down too.
@@ -19,6 +21,8 @@ taken from this file. Players on different versions can't play together: update 
   after bursting out of the titan.
 
 ### Other
+- **Lucy's hack lands with a bang**: a crackling bolt from her hand to the drone (and on to the next one when
+  it jumps), the drone glitching apart in purple, and a jolt of the screen.
 - **Mikasa throws her thunder spears with `E`** (the SPEAR button on phones), the key that called them: her
   blade stays on the attack key, so Berserk keeps slashing while she holds spears.
 - **You blink while you can't be hurt**, for the second after a broken shield, the Sandevistan or the titan.
