@@ -90,6 +90,15 @@ private:
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
     std::vector<FireWave> fire_waves;
 
+    // David's ultimate, falling
+    struct Nuke {
+        int owner_fd;
+        float impact;   // x where it lands, in tiles
+        float timer;    // seconds before it does
+    };
+
+    std::vector<Nuke> nukes;
+
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
 
@@ -197,7 +206,9 @@ private:
 
     void handleUltimate(int client_fd);
 
-    void updateFireWaves();
+    void updateUltimates();
+
+    void scorch(int owner_fd, float from, float to, float titans_from);
 
     //===========================================================================
     // Titans (titans.cpp)

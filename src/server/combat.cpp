@@ -148,36 +148,50 @@ void Server::handleUltimate(int client_fd)
 
     if (ultimate == Ultimate::FireWave)
         fire_waves.push_back({client_fd, start, start});
+    else if (ultimate == Ultimate::Nuke)
+        nukes.push_back({client_fd, start + NUKE_DISTANCE, NUKE_DELAY});
 }
 
-// Every column the fire crossed this tick burns from floor to ceiling: drones go down, zappers go out
-// for the rest of the run, and titans charging into it die
-void Server::updateFireWaves()
+// The fire wave sweeps on, the nukes land
+void Server::updateUltimates()
 {
-    int height = game_map.getHeight();
-
     for (FireWave &wave : fire_waves) {
         float front = std::min(wave.start + FIRE_WAVE_RANGE, wave.front + FIRE_WAVE_SPEED * TICK_DT);
-        auto owner = players.find(wave.owner_fd);
-
-        for (int x = static_cast<int>(wave.front); x <= static_cast<int>(front); x++) {
-            for (int y = 0; y < height; y++) {
-                if (isLiveDrone(x, y)) {
-                    destroyDrone(wave.owner_fd, x, y);
-                } else if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
-                    for (std::pair<int, int> node : zapperNodes(game_map, x, y))
-                        hacked_zappers[node] = 1e9f;
-                }
-            }
-        }
-        std::erase_if(titans, [&](const Titan &titan) {
-            if (titan.x > front || titan.x < wave.start - 1 || owner == players.end())
-                return false;
-            owner->second.addScore(TITAN_BOUNTY);
-            notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);
-            return true;
-        });
+        scorch(wave.owner_fd, wave.front, front, wave.start - 1);
         wave.front = front;
     }
     std::erase_if(fire_waves, [](const FireWave &wave) { return wave.front >= wave.start + FIRE_WAVE_RANGE; });
+
+    for (Nuke &nuke : nukes) {
+        nuke.timer -= TICK_DT;
+        if (nuke.timer <= 0)
+            scorch(nuke.owner_fd, nuke.impact - NUKE_RADIUS, nuke.impact + NUKE_RADIUS, nuke.impact - NUKE_RADIUS);
+    }
+    std::erase_if(nukes, [](const Nuke &nuke) { return nuke.timer <= 0; });
+}
+
+// Every column from `from` to `to` burns from floor to ceiling: drones go down, zappers go out for the
+// rest of the run, and titans between `titans_from` and `to` die. The owner gets the bounties.
+void Server::scorch(int owner_fd, float from, float to, float titans_from)
+{
+    int height = game_map.getHeight();
+    auto owner = players.find(owner_fd);
+
+    for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
+        for (int y = 0; y < height; y++) {
+            if (isLiveDrone(x, y)) {
+                destroyDrone(owner_fd, x, y);
+            } else if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
+                for (std::pair<int, int> node : zapperNodes(game_map, x, y))
+                    hacked_zappers[node] = 1e9f;
+            }
+        }
+    }
+    std::erase_if(titans, [&](const Titan &titan) {
+        if (titan.x > to || titan.x < titans_from || owner == players.end())
+            return false;
+        owner->second.addScore(TITAN_BOUNTY);
+        notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);
+        return true;
+    });
 }

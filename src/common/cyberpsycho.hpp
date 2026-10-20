@@ -66,7 +66,7 @@ inline WeaponStats statsOf(Weapon weapon)
 
 // Ultimates (CYBERPSYCHO only): every eddy you earn charges the gauge, a full one fires your runner's.
 // None of them makes you invincible: they act on the scenery, you still steer and can die.
-enum class Ultimate : uint8_t { None, FireWave };
+enum class Ultimate : uint8_t { None, FireWave, Nuke };
 
 constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
 
@@ -74,11 +74,19 @@ constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
 constexpr float FIRE_WAVE_SPEED = 45;   // tiles per second, not on top of the run speed
 constexpr float FIRE_WAVE_RANGE = 25;   // tiles from where it started
 
+// David's arm cannon: a shell fired at the ground ahead, razing everything from floor to ceiling around
+// where it lands. Measured from where it was fired: he runs into the blast, it doesn't spare him.
+constexpr float NUKE_DELAY = 0.5f;      // seconds before it lands
+constexpr float NUKE_DISTANCE = 10;     // tiles ahead of where it was fired
+constexpr float NUKE_RADIUS = 8;        // tiles razed on each side of the impact
+
 // Character ids follow the client's CHARACTER_DIRS; runners without one yet get None
 inline Ultimate ultimateOf(int character)
 {
     if (character == 0)
         return Ultimate::FireWave;
+    if (character == 1)
+        return Ultimate::Nuke;
     return Ultimate::None;
 }
 

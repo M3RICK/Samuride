@@ -33,6 +33,7 @@ private:
     sf::Vector2f positionOf(const Trail &trail) const;
     void startUltimate(const UltimateEvent &ultimate);
     void drawFireWaves();
+    void drawNukes();
 
 public:
     Shots(Canvas &canvas, Run &run, Audio &audio, Particles &particles);

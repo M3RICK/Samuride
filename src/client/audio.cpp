@@ -175,6 +175,8 @@ void Audio::synthesize()
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Johnny's fire wave: a roaring blast
     buffers[Sfx::FireWave] = toBuffer(mix(burst(1.0f, 0.5f, 0.15f), tone(Wave::Saw, 160, 50, 0.9f, 0.25f)));
+    // David's nuke: a deep, long blast
+    buffers[Sfx::Nuke] = toBuffer(mix(burst(1.4f, 0.6f, 0.05f), tone(Wave::Sine, 90, 25, 1.4f, 0.5f)));
     // Lucy's hack: a glitchy data chirp
     buffers[Sfx::Hack] = toBuffer(concat(tone(Wave::Square, 2400, 800, 0.06f, 0.12f),
                                          tone(Wave::Square, 600, 1800, 0.1f, 0.12f)));

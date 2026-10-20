@@ -32,6 +32,13 @@ struct FireWave {
     float front() const { return start + std::min(FIRE_WAVE_RANGE, FIRE_WAVE_SPEED * age.getElapsedTime().asSeconds()); }
 };
 
+// David's ultimate on screen: the shell flying, then the blast
+struct Nuke {
+    float start;        // where it was fired, in tiles
+    bool landed = false;
+    sf::Clock age;
+};
+
 struct Run {
     // Players are 2 tiles tall, like their server hitbox
     static constexpr float PLAYER_HEIGHT = 2.0f;
@@ -47,8 +54,11 @@ struct Run {
     std::map<int, sf::Clock> attack_clocks;
     std::map<std::pair<int, int>, sf::Clock> hacked_zappers;    // node -> since Lucy hacked it
     std::vector<FireWave> fire_waves;
+    std::vector<Nuke> nukes;
     std::set<std::pair<int, int>> burnt_zappers;                // out for the rest of the run
-    float shake = 0;
+
+    // The zappers in these columns go out, like on the server
+    void burnZappers(float from, float to);    float shake = 0;
 
     // Speed feel: measured from your own movement, no extra network data
     float run_speed = 0;    // tiles per second

@@ -54,6 +54,9 @@ void Shots::startUltimate(const UltimateEvent &ultimate)
     if (ultimate.ultimate == Ultimate::FireWave) {
         audio.play(Audio::Sfx::FireWave);
         run.fire_waves.push_back({ultimate.x, ultimate.x, sf::Clock()});
+    } else if (ultimate.ultimate == Ultimate::Nuke) {
+        audio.play(Audio::Sfx::Rocket);
+        run.nukes.push_back({ultimate.x, false, sf::Clock()});
     }
 }
 
@@ -82,14 +85,7 @@ void Shots::drawFireWaves()
     for (FireWave &wave : run.fire_waves) {
         float front = wave.front();
 
-        for (int x = static_cast<int>(wave.burnt_to); x <= static_cast<int>(front); x++) {
-            for (int y = 0; y < static_cast<int>(run.map.getHeight()); y++) {
-                if (run.map.getTile(x, y) == 'e' && !run.burnt_zappers.count({x, y})) {
-                    for (std::pair<int, int> node : zapperNodes(run.map, x, y))
-                        run.burnt_zappers.insert(node);
-                }
-            }
-        }
+        run.burnZappers(wave.burnt_to, front);
         wave.burnt_to = front;
 
         // Fades out once it reached its range
@@ -114,10 +110,49 @@ void Shots::drawFireWaves()
     });
 }
 
+// The shell arcs from David's arm to the ground ahead, then a white flash and a dome of fire
+void Shots::drawNukes()
+{
+    static constexpr float BLAST_TIME = 0.8f;
+    float tile_size = run.view.tile_size;
+
+    for (Nuke &nuke : run.nukes) {
+        float t = nuke.age.getElapsedTime().asSeconds();
+        sf::Vector2f impact(nuke.start + NUKE_DISTANCE, run.floor());
+
+        if (t < NUKE_DELAY) {
+            float k = t / NUKE_DELAY;
+            sf::Vector2f from(nuke.start, run.floor() / 2);
+            sf::Vector2f shell = from + (impact - from) * k - sf::Vector2f(0, 3 * std::sin(k * 3.1416f));
+            canvas.halo(run.toScreen(shell), tile_size * 0.35f, withAlpha(NEON_YELLOW, 200));
+            particles.emit(shell, 2, NEON_ORANGE, 1.5f, 0.3f, 0);
+            continue;
+        }
+        if (!nuke.landed) {
+            nuke.landed = true;
+            audio.play(Audio::Sfx::Nuke);
+            run.shakeAtLeast(0.8f);
+            run.burnZappers(impact.x - NUKE_RADIUS, impact.x + NUKE_RADIUS);
+            particles.emit(impact - sf::Vector2f(0, 2), 80, NEON_ORANGE, 14, 0.9f, -4);
+            particles.emit(impact - sf::Vector2f(0, 2), 40, NEON_YELLOW, 10, 0.7f, -4);
+        }
+
+        // Swells over the whole razed stretch, then fades
+        float k = std::min(1.0f, (t - NUKE_DELAY) / BLAST_TIME);
+        auto alpha = static_cast<uint8_t>(220 * (1 - k));
+        canvas.halo(run.toScreen(impact), tile_size * NUKE_RADIUS * (0.4f + 0.6f * k), withAlpha(NEON_ORANGE, alpha));
+        canvas.halo(run.toScreen(impact), tile_size * NUKE_RADIUS * 0.5f * (0.4f + 0.6f * k), withAlpha(sf::Color::White, alpha));
+    }
+    std::erase_if(run.nukes, [](const Nuke &nuke) {
+        return nuke.age.getElapsedTime().asSeconds() > NUKE_DELAY + BLAST_TIME;
+    });
+}
+
 // A shot ends out of range, or when the server says it hit (land)
 void Shots::draw()
 {
     drawFireWaves();
+    drawNukes();
 
     float tile_size = run.view.tile_size;
 

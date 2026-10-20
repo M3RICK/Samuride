@@ -18,6 +18,7 @@ bool Server::resetMap()
     projectiles.clear();
     hacked_zappers.clear();
     fire_waves.clear();
+    nukes.clear();
     resetTitans();
 
     if (!config.map_path.empty()) {
@@ -170,7 +171,7 @@ void Server::updatePlayers()
 
     spawnTitans(leader_x);
     updateProjectiles();
-    updateFireWaves();
+    updateUltimates();
     extendMap(leader_x);
     sendGameState();
     sendTitans();
