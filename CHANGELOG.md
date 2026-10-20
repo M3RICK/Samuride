@@ -11,7 +11,8 @@ taken from this file. Players on different versions can't play together: update 
 
 ### Balance
 - **Lucy hacks more**: 3 charges of RAM instead of 2, one back every 3.5 s instead of 6, and a hacked
-  zapper stays off 2 s instead of 1.2.
+  zapper stays off 2 s instead of 1.2. A drone she hacks passes the hack on: the nearest drone within
+  4 tiles of it goes down too.
 - **The eddie magnet reaches less**: half a tile per level instead of one, all around you. At level 3 it
   used to sweep almost the whole height of the screen; now it grabs the eddies you graze.
 - **A second to get clear**: you stay invincible for 1 s after the Sandevistan wears off, and 1 s more

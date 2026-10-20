@@ -72,6 +72,7 @@ void GameScreen::resetRun()
     hit_stop = 0;
     cuts.clear();
     coin_streak = 0;
+    last_drone.clear();
     new_record = false;
     new_drone_record = false;
     bests = Bests::load();
@@ -297,6 +298,7 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
         drones_down += effect.player == me;
+        last_drone[effect.player] = tile_center;
         // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
         if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
             // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
@@ -310,6 +312,12 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == HACK_BOUNCE) {
+        // A purple arc from the drone Lucy hacked to the one the hack jumps to (its blast comes next)
+        sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : tile_center;
+        for (int i = 0; i <= 10; i++)
+            particles.emit(from + (tile_center - from) * (i / 10.f), 3, i % 2 ? NEON_PURPLE : sf::Color::White, 1.5f, 0.35f, 0);
+        return;
     } else if (effect.type == SPEAR_BLAST) {
         audio.play(Audio::Sfx::Thunder);
         run.shakeAtLeast(0.35f);

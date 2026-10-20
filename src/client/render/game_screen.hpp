@@ -67,6 +67,7 @@ private:
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
+    std::map<int, sf::Vector2f> last_drone;     // each player's last drone down, where Lucy's hack bounces from
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes

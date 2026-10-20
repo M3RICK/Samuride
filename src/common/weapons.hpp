@@ -38,6 +38,9 @@ constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berser
 // HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
 // A hacked zapper is off for HACK_TIME, a hacked drone goes down like a shot one.
 constexpr char ZAPPER_HACK = 'h';   // collision type: a zapper was hacked, at one of its nodes
+// A drone she hacks passes the hack on to the nearest live drone within HACK_BOUNCE_RANGE tiles of it
+constexpr char HACK_BOUNCE = 'j';   // collision type: the hack jumped to that drone, from her last kill
+constexpr float HACK_BOUNCE_RANGE = 4;
 constexpr float HACK_RANGE = 7;
 constexpr int HACK_LANE = 1;
 constexpr float HACK_TIME = 2.0f;
