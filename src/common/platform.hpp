@@ -9,7 +9,8 @@ namespace Platform {
     std::filesystem::path executableDirectory();
 
     // Where settings and the best run are kept: ~/.local/share/samuride,
-    // ~/Library/Application Support/Samuride on macOS, %APPDATA%\Samuride on Windows
+    // ~/Library/Application Support/Samuride on macOS, %APPDATA%\Samuride on Windows,
+    // the app's private folder on Android
     std::filesystem::path dataDirectory();
 }
 
