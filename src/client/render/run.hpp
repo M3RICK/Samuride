@@ -32,6 +32,7 @@ struct Run {
     Map map;
     WorldView view;
     std::map<int, int> roster;      // who plays which character
+    bool cyberpsycho = false;       // the run's mode
 
     std::map<int, sf::Vector2f> display_positions;
     std::map<int, PlayerAnim> player_anims;

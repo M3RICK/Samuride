@@ -144,6 +144,19 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
 
+    // Lucy's RAM, over her head where it can be read without looking away from the run
+    if (run.cyberpsycho && weaponOf(run.characterOf(player_num)) == Weapon::Hack) {
+        for (int i = 0; i < RAM_MAX; i++) {
+            sf::RectangleShape chip({20, 20});
+            chip.setOrigin({10, 10});
+            chip.setPosition(tag_pos + sf::Vector2f((i - (RAM_MAX - 1) / 2.f) * 30, -40));
+            chip.setFillColor(i < player.ram ? NEON_PURPLE : sf::Color(0, 0, 0, 120));
+            chip.setOutlineColor(i < player.ram ? sf::Color::White : NEON_PURPLE);
+            chip.setOutlineThickness(2);
+            canvas.draw(chip);
+        }
+    }
+
     // Mikasa's thunder spears left, over her head
     for (int i = 0; i < player.spears; i++) {
         sf::Vector2f tip = tag_pos + sf::Vector2f((i - (player.spears - 1) / 2.f) * 22, -62);

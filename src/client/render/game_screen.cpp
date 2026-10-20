@@ -177,6 +177,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
         drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    run.cyberpsycho = state.getMode() == GameMode::Cyberpsycho;
     runners.draw(players, me, phase == Phase::Running);
     ultimates.draw();
     shots.draw();
