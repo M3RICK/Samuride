@@ -8,6 +8,7 @@
 #include "cyberpsycho.hpp"
 #include <cassert>
 #include <iostream>
+#include <map>
 
 static void testPacketFraming()
 {
@@ -113,15 +114,30 @@ static void testPowerUps()
     sprinter.update(SANDEVISTAN_TIME, 10, 8);
     assert(!sprinter.isSprinting());
 
-    // About one drone in three drops something, both kinds show up
-    int drops[2] = {0, 0};
+    // Berserk: attacks come back twice as fast, for a while
+    Player berserker(-1);
+    berserker.reset(2, 0);
+    berserker.powerUp(BERSERK_TILE);
+    berserker.startCooldown(1);
+    berserker.update(0.5f, 10, 8);
+    assert(berserker.isBerserk() && berserker.canAttack());
+    berserker.update(BERSERK_TIME, 10, 8);
+    berserker.startCooldown(1);
+    berserker.update(0.5f, 10, 8);
+    assert(!berserker.isBerserk() && !berserker.canAttack());
+
+    // About one drone in three drops something, all three kinds show up
+    std::map<char, int> drops;
+    int dropped = 0;
     for (int x = 0; x < 3000; x++) {
         char drop = droneDrop(x, x % 10);
-        if (drop != '_')
-            drops[drop == SHIELD_TILE]++;
+        if (drop != '_') {
+            drops[drop]++;
+            dropped++;
+        }
     }
-    assert(drops[0] + drops[1] > 800 && drops[0] + drops[1] < 1200);
-    assert(drops[0] > 300 && drops[1] > 300);
+    assert(dropped > 800 && dropped < 1200);
+    assert(drops[SHIELD_TILE] > 200 && drops[SANDEVISTAN_TILE] > 200 && drops[BERSERK_TILE] > 200);
 }
 
 // Lucy's hack turns off a whole zapper and nothing else, and her RAM comes back one charge at a time

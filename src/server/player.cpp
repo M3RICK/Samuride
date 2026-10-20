@@ -6,7 +6,7 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -21,6 +21,7 @@ void Player::reset(int number, float spawn_y)
     form_timer = 0;
     shield = false;
     sprint_timer = 0;
+    berserk_timer = 0;
     grace_timer = 0;
     ram = RAM_MAX;
     ram_timer = RAM_RECHARGE;
@@ -53,6 +54,8 @@ void Player::powerUp(char tile)
         shield = true;
     else if (tile == SANDEVISTAN_TILE)
         sprint_timer = SANDEVISTAN_TIME;
+    else if (tile == BERSERK_TILE)
+        berserk_timer = BERSERK_TIME;
 }
 
 bool Player::absorbHit()
@@ -89,9 +92,9 @@ void Player::updateForm(float dt)
 void Player::update(float dt, float forward_speed, float max_y)
 {
     updateForm(dt);
-    attack_cooldown = std::max(0.0f, attack_cooldown - dt);
+    attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
     grace_timer = std::max(0.0f, grace_timer - dt);
-    if (ram < RAM_MAX && (ram_timer -= dt) <= 0) {
+    if (ram < RAM_MAX && (ram_timer -= dt * (isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
     }
@@ -100,6 +103,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     if (form != Form::Shifting)
         x += forward_speed * (isSprinting() ? SANDEVISTAN_SPEED : 1) * dt;
     sprint_timer = std::max(0.0f, sprint_timer - dt);
+    berserk_timer = std::max(0.0f, berserk_timer - dt);
     if (form == Form::Titan) {
         y = max_y;
         y_velocity = 0;

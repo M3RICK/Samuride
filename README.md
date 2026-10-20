@@ -27,7 +27,8 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Attack Titan**: grab the rare orange orb and you stop while the smoke rises, then run for 4 seconds as Eren's titan, invincible, crushing drones and titans and sweeping up the eddies, before bursting back out of the smoke.
 - **Subdermal shield**: the green hexagon takes one deadly hit for you (zapper, drone or titan), then gives you a second to get clear.
 - **Sandevistan**: the magenta chevrons send you into a 3-second sprint nothing can hurt, leaving afterimages behind.
-- In CYBERPSYCHO, **one drone in three drops a shield or a Sandevistan** when you shoot it down.
+- **Berserk** (CYBERPSYCHO only): the gold crossed blades let you attack twice as often for 8 seconds, and Lucy's RAM comes back three times faster.
+- In CYBERPSYCHO, **one drone in three drops a shield, a Sandevistan or a Berserk** when you shoot it down.
 - **Titans** charge along the floor past 300 m: a blinking red column warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires her shark rockets, Mikasa slices with her blades, and Lucy hacks: the first zapper in her way goes off for a moment, or the first drone in her way goes down. She has 2 charges of RAM, one comes back every 6 seconds.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.

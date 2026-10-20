@@ -169,6 +169,8 @@ void Audio::synthesize()
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // Berserk: a low growl revving up
+    buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Lucy's hack: a glitchy data chirp
     buffers[Sfx::Hack] = toBuffer(concat(tone(Wave::Square, 2400, 800, 0.06f, 0.12f),
                                          tone(Wave::Square, 600, 1800, 0.1f, 0.12f)));

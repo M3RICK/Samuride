@@ -85,7 +85,7 @@ private:
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y, bool cyberpsycho);
     void drawPowerUps(const PlayerState &player, int me);
-    void drawGauge(const std::string &label, sf::Color color, float left);
+    void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);

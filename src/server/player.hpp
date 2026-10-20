@@ -33,6 +33,7 @@ private:
     float form_timer;           // seconds left in the current form
     bool shield;
     float sprint_timer;         // seconds of Sandevistan left
+    float berserk_timer;        // seconds of Berserk left
     float grace_timer;          // seconds of invincibility left after a shield broke
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
@@ -71,6 +72,7 @@ public:
     bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
     bool hasShield() const { return shield; }
     bool isSprinting() const { return sprint_timer > 0; }
+    bool isBerserk() const { return berserk_timer > 0; }
     void powerUp(char tile);
     // Returns true when the shield took the hit
     bool absorbHit();

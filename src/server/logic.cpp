@@ -226,10 +226,10 @@ void Server::sendGameState()
         Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
         Protocol::pushU16(state_data, player.getScore());
-        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM
+        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM, bit 7: Berserk
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
-                             player.getRam() << 5);
+                             player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

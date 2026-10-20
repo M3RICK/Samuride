@@ -25,6 +25,7 @@ struct PlayerState {
     bool shielded = false;
     bool sprinting = false;     // Sandevistan
     int ram = 0;                // Lucy's hack charges
+    bool berserk = false;
 };
 
 // Someone attacked in CYBERPSYCHO

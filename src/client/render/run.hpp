@@ -17,6 +17,8 @@ struct PlayerAnim {
     float smoke_x = 0;      // where the titan stood when it ended, in tiles
     bool sprinting = false;
     sf::Clock sprint_clock; // time since the Sandevistan kicked in
+    bool berserk = false;
+    sf::Clock berserk_clock;
 };
 
 struct Run {

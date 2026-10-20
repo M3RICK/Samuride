@@ -2,6 +2,7 @@
 
 #include "canvas.hpp"
 #include "../../common/debug.hpp"
+#include "../../common/powerups.hpp"
 #include <algorithm>
 #include <cstdlib>
 
@@ -231,4 +232,15 @@ void Canvas::stripFrame(const sf::Texture &texture, int frames, int frame, sf::V
     sprite.setScale({scale, scale});
     sprite.setPosition(center);
     window.draw(sprite);
+}
+
+sf::Color powerUpColor(char tile)
+{
+    return tile == SHIELD_TILE ? Palette::SHIELD_COLOR :
+           tile == SANDEVISTAN_TILE ? Palette::SANDEVISTAN_COLOR : Palette::BERSERK_COLOR;
+}
+
+const char *powerUpName(char tile)
+{
+    return tile == SHIELD_TILE ? "SHIELD" : tile == SANDEVISTAN_TILE ? "SANDEVISTAN" : "BERSERK";
 }

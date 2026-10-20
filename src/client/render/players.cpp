@@ -121,6 +121,9 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (player.sprinting)
         drawAfterimages(sprite, tile_size);
+    if (player.berserk)
+        canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * (0.9f + 0.15f * std::sin(canvas.time() * 16)),
+                    withAlpha(BERSERK_COLOR, 70));
     if (player.shielded)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
     if (shocked)
@@ -140,7 +143,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 // Shield & Sandevistan
 //=============================================================================
 
-// Starts the Sandevistan clock, which drains your gauge in the HUD
+// Starts the Sandevistan and Berserk clocks, which drain your gauges in the HUD
 void Players::updateSprint(int player_num, const PlayerState &player)
 {
     PlayerAnim &state = run.player_anims[player_num];
@@ -148,6 +151,9 @@ void Players::updateSprint(int player_num, const PlayerState &player)
     if (player.sprinting && !state.sprinting)
         state.sprint_clock.restart();
     state.sprinting = player.sprinting;
+    if (player.berserk && !state.berserk)
+        state.berserk_clock.restart();
+    state.berserk = player.berserk;
 }
 
 // Sandevistan: ghosts of the runner trailing behind, alternating magenta and white

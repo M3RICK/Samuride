@@ -67,24 +67,29 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
     }
 }
 
-// Your timed power-ups drain a gauge; the Sandevistan also tints the screen magenta
+// Your timed power-ups drain a gauge each, stacked; the Sandevistan also tints the screen magenta
 void GameScreen::drawPowerUps(const PlayerState &player, int me)
 {
     const PlayerAnim &anim = run.player_anims[me];
+    float y = 40;
 
     if (player.form == Form::Titan) {
-        drawGauge("ATTACK TITAN", NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / TITAN_TIME);
+        drawGauge("ATTACK TITAN", NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / TITAN_TIME, y);
+        y += 80;
     } else if (player.sprinting) {
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
-        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME);
+        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / SANDEVISTAN_TIME, y);
+        y += 80;
     }
+    if (player.berserk)
+        drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() / BERSERK_TIME, y);
 }
 
-void GameScreen::drawGauge(const std::string &label, sf::Color color, float left)
+void GameScreen::drawGauge(const std::string &label, sf::Color color, float left, float y)
 {
-    sf::Vector2f pos(Screen::WIDTH / 2 - 250, 40);
+    sf::Vector2f pos(Screen::WIDTH / 2 - 250, y);
 
     sf::RectangleShape back({500, 18});
     back.setPosition(pos);

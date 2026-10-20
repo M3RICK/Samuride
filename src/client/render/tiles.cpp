@@ -174,12 +174,12 @@ void Tiles::drawShiftOrb(int x, int y, float time)
     canvas.image(sprites.titan_face, center, tile_size * 0.7f, {0.5f, 0.5f}, sf::Color::White);
 }
 
-// Shield: a hexagon plate; Sandevistan: chevrons rushing forward
+// Shield: a hexagon plate; Sandevistan: chevrons rushing forward; Berserk: crossed blades
 void Tiles::drawPowerUp(int x, int y, char tile, float time)
 {
     float tile_size = run.view.tile_size;
     bool shield = tile == SHIELD_TILE;
-    sf::Color color = shield ? SHIELD_COLOR : SANDEVISTAN_COLOR;
+    sf::Color color = powerUpColor(tile);
     sf::Vector2f center = run.toScreen({x + 0.5f, y + 0.5f + std::sin(time * 3 + x) * 0.1f});
     float pulse = 0.5f + 0.5f * std::sin(time * 6 + x);
 
@@ -188,6 +188,17 @@ void Tiles::drawPowerUp(int x, int y, char tile, float time)
 
     if (shield) {
         canvas.hexagon(center, tile_size * 0.26f, color, time * 40);
+        return;
+    }
+    if (tile == BERSERK_TILE) {
+        sf::RectangleShape blade({tile_size * 0.55f, tile_size * 0.09f});
+        blade.setOrigin(blade.getSize() / 2.f);
+        blade.setPosition(center);
+        blade.setFillColor(color);
+        for (float angle : {45.f, -45.f}) {
+            blade.setRotation(sf::degrees(angle));
+            canvas.draw(blade);
+        }
         return;
     }
 

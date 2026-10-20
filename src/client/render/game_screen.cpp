@@ -287,10 +287,12 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         }
         return;
     } else if (isPowerUp(effect.type)) {
-        bool shield = effect.type == SHIELD_TILE;
+        static const std::map<char, Audio::Sfx> sounds = {
+            {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
+            {BERSERK_TILE, Audio::Sfx::Berserk}};
         if (effect.player == me)
-            audio.play(shield ? Audio::Sfx::Shield : Audio::Sfx::Sandevistan);
-        particles.emit(tile_center, 24, shield ? SHIELD_COLOR : SANDEVISTAN_COLOR, 6, 0.5f, 0);
+            audio.play(sounds.at(effect.type));
+        particles.emit(tile_center, 24, powerUpColor(effect.type), 6, 0.5f, 0);
     } else if (effect.type == SHIELD_BREAK) {
         audio.play(Audio::Sfx::ShieldBreak);
         run.shakeAtLeast(0.3f);
@@ -331,9 +333,8 @@ void GameScreen::drawEffects()
                             withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
-            bool shield = active.effect.type == SHIELD_TILE;
             if (active.mine)
-                canvas.text(shield ? "SHIELD" : "SANDEVISTAN", 34, withAlpha(shield ? SHIELD_COLOR : SANDEVISTAN_COLOR, alpha),
+                canvas.text(powerUpName(active.effect.type), 34, withAlpha(powerUpColor(active.effect.type), alpha),
                             run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else {
             // A death flashes red, a broken shield green

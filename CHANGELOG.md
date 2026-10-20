@@ -14,6 +14,9 @@ taken from this file. Players on different versions can't play together: update 
   Zaun (300), Worlds Collide (500) and Both Worlds (750) are bought from the district select, in
   any order. Only the host needs to own the district: whoever joins plays it anyway.
 
+- **Berserk**, a new CYBERPSYCHO power-up (gold crossed blades): for 8 seconds you attack twice as
+  often, and Lucy's RAM comes back three times faster. Drones drop it too.
+
 ### Other
 - The shield is now green, so it no longer looks like a zapper, and the Sandevistan is now magenta.
 
