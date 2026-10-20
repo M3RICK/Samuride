@@ -22,7 +22,7 @@ MenuChoice Menu::run(Renderer &renderer)
     audio = &renderer.getAudio();
     audio->greet();
     state.screen = MenuState::Screen::Main;
-    state.best_distance = loadBestDistance();
+    state.bests = Bests::load();
     state.wallet = Wallet::load();
 
     while (window.isOpen()) {

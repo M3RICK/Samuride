@@ -188,6 +188,7 @@ private:
     bool checkPlayerCollisions(Player &player);
 
     void attractCoins(Player &player);
+    void bounceHack(int client_fd, const Player &player, int from_x, int from_y);
 
     void sendGameState();
 

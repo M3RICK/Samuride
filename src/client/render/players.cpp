@@ -132,6 +132,8 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
+    else if (player.grace && std::fmod(canvas.time(), 0.16f) < 0.08f)
+        sprite.setColor(sf::Color(255, 255, 255, 60));
     else if (!is_me)
         sprite.setColor(sf::Color(255, 255, 255, 215));
     canvas.draw(sprite);
@@ -141,6 +143,23 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
+
+    // Lucy's RAM, over her head where it can be read without looking away from the run: thin red bars,
+    // like the RAM units of Cyberpunk 2077, lit while loaded, hollow once spent
+    if (run.cyberpsycho && weaponOf(run.characterOf(player_num)) == Weapon::Hack) {
+        for (int i = 0; i < RAM_MAX; i++) {
+            bool loaded = i < player.ram;
+            sf::RectangleShape unit({9, 26});
+            unit.setOrigin({4.5f, 13});
+            unit.setPosition(tag_pos + sf::Vector2f((i - (RAM_MAX - 1) / 2.f) * 15, -40));
+            unit.setFillColor(loaded ? NEON_RED : sf::Color(0, 0, 0, 120));
+            unit.setOutlineColor(withAlpha(NEON_RED, loaded ? 255 : 140));
+            unit.setOutlineThickness(2);
+            canvas.draw(unit);
+            if (loaded)
+                canvas.draw(unit, sf::BlendAdd);
+        }
+    }
 
     // Mikasa's thunder spears left, over her head
     for (int i = 0; i < player.spears; i++) {

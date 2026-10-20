@@ -4,6 +4,7 @@
     #define GAME_SCREEN_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include "run.hpp"
@@ -13,6 +14,7 @@
 #include "titans.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
+#include "../settings.hpp"
 
 class Audio;
 class Backdrops;
@@ -34,6 +36,7 @@ private:
 
     static constexpr float BANNER_DURATION = 2.5f;
     static constexpr float EFFECT_DURATION = 0.6f;
+    static constexpr float COIN_FLY_SHARE = 0.4f;  // of the effect, for an eddy to reach its taker
     static constexpr float GAME_OVER_DELAY = 0.9f;
     static constexpr float PROMPT_DELAY = 1.5f;
 
@@ -62,9 +65,18 @@ private:
         sf::Clock age;
     };
     std::vector<Cut> cuts;
+    // Lucy's hack: a crackling bolt from her to the drone, and from it to the one the hack jumps to
+    static constexpr float ZAP_TIME = 0.2f;
+    struct Zap {
+        sf::Vector2f from, to;  // in tiles
+        sf::Clock age;
+    };
+    std::vector<Zap> zaps;
+    std::set<int> bounced;      // players whose next drone down is the one their hack jumped to
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
+    std::map<int, sf::Vector2f> last_drone;     // each player's last drone down, where Lucy's hack bounces from
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes
@@ -73,11 +85,26 @@ private:
     std::string banner_tagline;
     sf::Clock banner_clock;
 
-    int best_distance = 0;
+    Bests bests;
+    bool cyberpsycho_run = false;   // which of the bests this run chases
     bool new_record = false;
+    bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
+    int spears_shown = 0;       // to see one thrown
+    // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
+    // interrupts a lesser one.
+    enum class Mood { Idle, Pickup, Kill, Frenzy, Surprised, Shout };
+    Mood mood = Mood::Idle;
+    sf::Clock mood_clock;
+    int kill_streak = 0;        // kills in a quick row
+    // Idle, the head turns a step at a time toward a column of the faces' first row, holds, turns back
+    int head = 0;
+    int head_target = 0;
+    float head_moved = 0;       // canvas time of its last step
+    float head_until = 0;       // when it picks a new target
+    bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
 
     Phase last_phase = Phase::Waiting;
@@ -86,7 +113,7 @@ private:
     // game_screen.cpp: the run
     void onPhaseChange(GameState &state, Phase phase);
     void resetRun();
-    void recordSoloDistance(GameState &state);
+    void recordSoloBests(GameState &state);
     void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
@@ -98,16 +125,20 @@ private:
     void addEffect(const CollisionEffect &effect, int me);
     void drawEffects();
     void drawCuts();
+    void drawZaps();
 
     // game_hud.cpp: what is drawn over the world
     void drawHUD(const std::map<int, PlayerState> &players, int me, bool cyberpsycho);
-    void drawHUDLine(int player_num, const PlayerState &player, int me, float y, bool cyberpsycho);
+    void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
-    void drawUltimatePanel(const PlayerState &player, int me);
+    void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
+    void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
+    void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
+    sf::Vector2i faceCell(const PlayerState &player, int me);
+    void react(Mood new_mood);
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
-    void drawSpearIcon(sf::Vector2f pos, float height, bool loaded);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);

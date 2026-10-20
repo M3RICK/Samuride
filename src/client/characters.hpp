@@ -24,6 +24,8 @@ struct Character {
     std::string name = "?";
     sf::Texture sheet;
     sf::Texture portrait;
+    sf::Texture faces;      // the HUD's living face, a grid of heads (game_hud.cpp); empty for most
+    sf::Vector2i face_grid; // its columns and rows
     sf::Vector2i frame_size;
     float feet = 0;     // y of the feet inside a cell
     float body = 1;     // standing height in pixels, scaled to the player's hitbox

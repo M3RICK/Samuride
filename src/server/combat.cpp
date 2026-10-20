@@ -13,7 +13,7 @@ void Server::handleAttack(int client_fd)
         return;
 
     Player &player = it->second;
-    Weapon weapon = player.getSpears() > 0 ? Weapon::Spear : weaponOf(player.getCharacter());
+    Weapon weapon = weaponOf(player.getCharacter());
     WeaponStats stats = statsOf(weapon);
 
     if (!player.canAttack())
@@ -37,9 +37,7 @@ void Server::handleAttack(int client_fd)
             fireProjectile(client_fd, player, weapon);
             break;
         case Weapon::Spear:
-            player.useSpear();
-            fireProjectile(client_fd, player, weapon);
-            break;
+            break;  // thrown with the ultimate key, see handleUltimate in ultimates.cpp
         case Weapon::Blade:
             announceShot(player, weapon);
             strike(client_fd, player, stats.reach);
@@ -99,12 +97,36 @@ bool Server::hack(int client_fd, Player &player)
     player.spendRam();
     if (isLiveDrone(x, y)) {
         destroyDrone(client_fd, x, y);
+        bounceHack(client_fd, player, x, y);
         return true;
     }
     for (std::pair<int, int> node : zapperNodes(game_map, x, y))
         hacked_zappers[node] = HACK_TIME;
     notifyCollision(ZAPPER_HACK, player, x, y);
     return true;
+}
+
+// The nearest live drone around the one just hacked goes down too, if there is one close enough
+void Server::bounceHack(int client_fd, const Player &player, int from_x, int from_y)
+{
+    int reach = static_cast<int>(HACK_BOUNCE_RANGE);
+    std::pair<int, int> target = {-1, -1};
+    int best = reach * reach;
+
+    for (int x = std::max(0, from_x - reach); x <= from_x + reach; x++) {
+        for (int y = std::max(0, from_y - reach); y <= from_y + reach; y++) {
+            int distance = (x - from_x) * (x - from_x) + (y - from_y) * (y - from_y);
+            if (distance <= best && isLiveDrone(x, y)) {
+                best = distance;
+                target = {x, y};
+            }
+        }
+    }
+    if (target.first < 0)
+        return;
+    // Before the drone goes down: the clients draw the arc from the last drone this player took
+    notifyCollision(HACK_BOUNCE, player, target.first, target.second);
+    destroyDrone(client_fd, target.first, target.second);
 }
 
 void Server::updateProjectiles()

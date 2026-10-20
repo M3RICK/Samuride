@@ -96,9 +96,11 @@ public:
     void overlay(uint8_t alpha);
     void card(sf::FloatRect box, bool selected);
     void halo(sf::Vector2f center, float radius, sf::Color color);
+    void arc(sf::Vector2f center, float inner, float outer, float from, float to, sf::Color color);
     void backing(sf::Vector2f center, float radius, sf::Color ring);
     void hexagon(sf::Vector2f center, float radius, sf::Color color, float angle);
     void image(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
+    void image(const sf::Texture &texture, sf::IntRect rect, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color);
     void stripFrame(const sf::Texture &texture, int frames, int frame, sf::Vector2f center, float width);
 };
 

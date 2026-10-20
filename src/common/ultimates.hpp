@@ -36,10 +36,10 @@ constexpr float NUKE_RADIUS = 8;        // tiles razed on each side of the impac
 constexpr float BREACH_AHEAD = 15;      // tiles ahead of where it starts: the rest of the screen
 constexpr float BREACH_TIME = 3.0f;
 
-// Mikasa's thunder spears: her next attacks are spears, flying ahead until they stick in a drone or a
+// Mikasa's thunder spears: thrown with the ultimate key, flying ahead until they stick in a drone or a
 // titan (or reach their range), then blowing up in a lightning column from floor to ceiling
-constexpr int THUNDER_SPEARS = 3;
-constexpr float SPEAR_BLAST_RADIUS = 1;     // tiles on each side of the impact
+constexpr int THUNDER_SPEARS = 5;
+constexpr float SPEAR_BLAST_RADIUS = 2;     // tiles on each side of the impact
 constexpr char SPEAR_BLAST = 'l';           // collision type: a spear blew up at that column
 
 // Jinx's Fishbones: a big rocket at her height, razing a band of the corridor she can then fly through

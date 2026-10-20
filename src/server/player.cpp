@@ -6,7 +6,7 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), charge_timer(0), recoil_timer(0), burst_left(0), burst_timer(0) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), spear_cooldown(0), charge_timer(0), recoil_timer(0), burst_left(0), burst_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -27,6 +27,7 @@ void Player::reset(int number, float spawn_y)
     ram_timer = RAM_RECHARGE;
     ultimate_charge = 0;
     spears = 0;
+    spear_cooldown = 0;
     charge_timer = 0;
     recoil_timer = 0;
     burst_left = 0;
@@ -70,6 +71,16 @@ void Player::powerUp(char tile)
         berserk_timer = BERSERK_TIME;
 }
 
+// Their own cooldown: the blade keeps the attack key, Berserk included
+bool Player::throwSpear()
+{
+    if (spears == 0 || spear_cooldown > 0)
+        return false;
+    spears--;
+    spear_cooldown = statsOf(Weapon::Spear).cooldown;
+    return true;
+}
+
 bool Player::absorbHit()
 {
     if (!shield)
@@ -98,6 +109,7 @@ void Player::updateForm(float dt)
         y_velocity = -MAX_VELOCITY;
     } else {
         form = Form::Normal;
+        grace_timer = END_GRACE;
     }
 }
 
@@ -106,6 +118,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
     grace_timer = std::max(0.0f, grace_timer - dt);
+    spear_cooldown = std::max(0.0f, spear_cooldown - dt);
     if (ram < RAM_MAX && (ram_timer -= dt * (isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
@@ -125,7 +138,10 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
     if (form != Form::Shifting && !charging)
         x += forward_speed * pace * dt;
-    sprint_timer = std::max(0.0f, sprint_timer - dt);
+    if (sprint_timer > 0 && (sprint_timer -= dt) <= 0) {
+        sprint_timer = 0;
+        grace_timer = END_GRACE;
+    }
     berserk_timer = std::max(0.0f, berserk_timer - dt);
     if (form == Form::Titan) {
         y = max_y;

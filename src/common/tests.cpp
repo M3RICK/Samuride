@@ -158,15 +158,15 @@ static void testHack()
 
     Player lucy(-1);
     lucy.reset(0, 0);
-    lucy.spendRam();
-    lucy.spendRam();
+    for (int i = 0; i < RAM_MAX; i++)
+        lucy.spendRam();
     assert(lucy.getRam() == 0);
     lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
     assert(lucy.getRam() == 0);
     lucy.update(0.2f, 10, 8);
     assert(lucy.getRam() == 1);
-    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
-    lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
+    for (int i = 0; i < RAM_MAX; i++)
+        lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
     assert(lucy.getRam() == RAM_MAX);
     assert(weaponOf(4) == Weapon::Hack);
 }
@@ -192,9 +192,14 @@ static void testUltimate()
     Player mikasa(-1);
     mikasa.reset(3, 0);
     mikasa.giveSpears();
-    for (int i = 0; i < THUNDER_SPEARS; i++)
-        mikasa.useSpear();
-    assert(mikasa.getSpears() == 0);
+    // One spear per press, their own cooldown between two, none left after the last
+    assert(mikasa.throwSpear() && !mikasa.throwSpear());
+    for (int i = 1; i < THUNDER_SPEARS; i++) {
+        mikasa.update(1, 0, 8);
+        assert(mikasa.throwSpear());
+    }
+    mikasa.update(1, 0, 8);
+    assert(mikasa.getSpears() == 0 && !mikasa.throwSpear());
 
     // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
     Player jinx(-1);

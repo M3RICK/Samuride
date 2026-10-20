@@ -37,7 +37,7 @@ struct MenuState {
     Settings settings;
     std::string address = "127.0.0.1:4242";
     std::string error;
-    int best_distance = 0;
+    Bests bests;
     Wallet wallet;
 };
 

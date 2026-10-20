@@ -3,6 +3,44 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.8
+
+### New
+- **A personal best per mode**: CLASSIC and CYBERPSYCHO each keep their own best distance, and CYBERPSYCHO
+  also keeps your most drones down in one run. Your old best carries over as the CLASSIC one.
+- **Mikasa's face comes alive in the HUD**, Doom style: she turns her head to look ahead, frowns on a kill and
+  cries out after three in a row, smiles at a power-up, flinches when her shield breaks, glares at an
+  incoming titan, shouts her ultimate and bleeds when she falls.
+- **Jinx's face too**: a grin on every kill, a mad cackle on a streak, a wink at a power-up, a laugh as she
+  fires her ultimate.
+- **A round portrait at the bottom centre**, with your ultimate's gauge filling a ring around it (a notch per
+  thunder spear while Mikasa holds them).
+
+### Balance
+- **Mikasa's thunder spears hit harder**: 5 spears instead of 3, and each lightning column is 5 tiles wide
+  instead of 3.
+- **Lucy hacks more**: 3 charges of RAM instead of 2, one back every 3.5 s instead of 6, and a hacked
+  zapper stays off 2 s instead of 1.2. A drone she hacks passes the hack on: the nearest drone within
+  4 tiles of it goes down too.
+- **The eddie magnet reaches less**: half a tile per level instead of one, all around you. At level 3 it
+  used to sweep almost the whole height of the screen; now it grabs the eddies you graze.
+- **A second to get clear**: you stay invincible for 1 s after the Sandevistan wears off, and 1 s more
+  after bursting out of the titan.
+
+### Fixes
+- **No more haze at top speed**: past ~800 m the speed streaks were so many they blurred the screen. Half
+  as many now, and fainter.
+
+### Other
+- **Lucy's RAM shows over her head**, as red bars like in Cyberpunk 2077, where you can read it without looking away from the run.
+- **Lucy's hack lands with a bang**: a crackling bolt from her hand to the drone (and on to the next one when
+  it jumps), the drone glitching apart in purple, and a jolt of the screen.
+- **Mikasa throws her thunder spears with `E`** (the SPEAR button on phones), the key that called them: her
+  blade stays on the attack key, so Berserk keeps slashing while she holds spears.
+- **You blink while you can't be hurt**, for the second after a broken shield, the Sandevistan or the titan.
+- **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
+  were.
+
 ## v2.7
 
 ### New

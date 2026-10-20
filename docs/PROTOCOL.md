@@ -107,7 +107,7 @@ Sent when the input changes, not every frame.
 
 ### `MSG_GAME_STATE`
 
-A 12-byte record per player, 60 times per second:
+A 13-byte record per player, 60 times per second:
 
 | Bytes | Field |
 | --- | --- |
@@ -118,6 +118,7 @@ A 12-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan |
 
 ### `MSG_COLLISION`
 
@@ -139,8 +140,9 @@ A 12-byte record per player, 60 times per second:
 | `a` | Shield taken |
 | `v` | Sandevistan taken: the sprint starts |
 | `r` | Berserk taken: 8 s of attacking on your own, twice as often |
-| `l` | One of Mikasa's thunder spears blew up at that column: everything 1 tile around it, floor to ceiling, goes down |
-| `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 1.2 s |
+| `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
+| `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
+| `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone or titan) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`

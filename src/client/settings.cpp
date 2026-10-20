@@ -7,6 +7,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 
 static std::filesystem::path dataPath(const std::string &file)
@@ -66,16 +67,21 @@ std::string keyName(sf::Keyboard::Key key)
     return name.empty() ? "?" : name;
 }
 
-int loadBestDistance()
+Bests Bests::load()
 {
-    std::ifstream file(dataPath("best_run"));
-    int distance = 0;
+    Bests bests;
+    std::ifstream file(dataPath("bests"));
 
-    file >> distance;
-    return distance;
+    if (!(file >> bests.classic >> bests.cyberpsycho >> bests.drones)) {
+        // Up to v2.7, one best distance for both modes: it carries over as the CLASSIC one
+        bests = {};
+        std::ifstream old(dataPath("best_run"));
+        old >> bests.classic;
+    }
+    return bests;
 }
 
-void saveBestDistance(int distance)
+void Bests::save() const
 {
-    writeFile("best_run", std::to_string(distance) + "\n");
+    writeFile("bests", std::format("{} {} {}\n", classic, cyberpsycho, drones));
 }

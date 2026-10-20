@@ -18,6 +18,7 @@ constexpr char BERSERK_TILE = 'r';
 constexpr char SHIELD_BREAK = 'b';
 
 constexpr float SHIELD_GRACE = 1.0f;        // invincible after the shield breaks, to get clear
+constexpr float END_GRACE = 1.0f;           // and after the Sandevistan or the titan wears off
 constexpr float SANDEVISTAN_TIME = 3.0f;
 constexpr float SANDEVISTAN_SPEED = 1.7f;   // times the run speed
 constexpr float BERSERK_TIME = 8.0f;

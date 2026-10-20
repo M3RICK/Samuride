@@ -50,7 +50,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
     if (phase == Phase::Running && previous == Phase::Countdown)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
-        recordSoloDistance(state);
+        recordSoloBests(state);
         bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
@@ -71,16 +71,25 @@ void GameScreen::resetRun()
     drones_down = 0;
     hit_stop = 0;
     cuts.clear();
+    zaps.clear();
+    bounced.clear();
     coin_streak = 0;
+    last_drone.clear();
     new_record = false;
-    best_distance = loadBestDistance();
+    new_drone_record = false;
+    bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
+    spears_shown = 0;
+    mood = Mood::Idle;
+    kill_streak = 0;
+    head = head_target = 0;
+    head_until = 0;
     sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
-// Solo runs chase the personal best
-void GameScreen::recordSoloDistance(GameState &state)
+// Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO
+void GameScreen::recordSoloBests(GameState &state)
 {
     auto players = state.getPlayers();
     auto mine = players.find(state.getMyPlayerNumber());
@@ -89,11 +98,15 @@ void GameScreen::recordSoloDistance(GameState &state)
         return;
 
     int distance = static_cast<int>(mine->second.x);
-    new_record = distance > best_distance;
-    if (new_record) {
-        best_distance = distance;
-        saveBestDistance(distance);
-    }
+    cyberpsycho_run = state.getMode() == GameMode::Cyberpsycho;
+    new_record = distance > bests.distance(cyberpsycho_run);
+    new_drone_record = cyberpsycho_run && drones_down > bests.drones;
+    if (new_record)
+        bests.distance(cyberpsycho_run) = distance;
+    if (new_drone_record)
+        bests.drones = drones_down;
+    if (new_record || new_drone_record)
+        bests.save();
 }
 
 // The run's eddies go to the wallet, to buy runners with
@@ -169,10 +182,15 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
         drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
+        return run.toScreen({titan.x, 0}).x > Screen::WIDTH;
+    });
+    run.cyberpsycho = state.getMode() == GameMode::Cyberpsycho;
     runners.draw(players, me, phase == Phase::Running);
     ultimates.draw();
     shots.draw();
     drawCuts();
+    drawZaps();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -228,10 +246,11 @@ void GameScreen::drawDistrict(int district)
 // Speed Lines
 //=============================================================================
 
-// Streaks start past 7 tiles/s and thicken up to top speed
+// Streaks start past 7 tiles/s and thicken up to top speed: about 20 of them there, more washed the
+// screen out into a blur
 void GameScreen::updateSpeedLines(float dt)
 {
-    size_t wanted = std::clamp(static_cast<int>((run.run_speed - 7) * 4), 0, 60);
+    size_t wanted = std::clamp(static_cast<int>((run.run_speed - 7) * 2), 0, 30);
 
     while (speed_lines.size() < wanted) {
         float speed = run.run_speed * run.view.tile_size * randf(1.5f, 2.5f);
@@ -254,7 +273,7 @@ void GameScreen::drawSpeedLines()
     for (const SpeedLine &streak : speed_lines) {
         line.setSize({streak.length, 3});
         line.setPosition(streak.pos);
-        line.setFillColor(withAlpha(sf::Color::White, 70));
+        line.setFillColor(withAlpha(sf::Color::White, 45));
         canvas.draw(line, sf::BlendAdd);
 
         line.setSize({streak.length * 0.25f, 3});
@@ -285,6 +304,8 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.type == TITAN_KILL) {
         // Steam bursting from the nape
+        if (effect.player == me)
+            react(Mood::Kill);
         audio.play(Audio::Sfx::Explosion);
         run.shakeAtLeast(0.3f);
         particles.emit(tile_center + sf::Vector2f(0, -3), 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
@@ -292,6 +313,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
         drones_down += effect.player == me;
+        if (effect.player == me)
+            react(Mood::Kill);
+        last_drone[effect.player] = tile_center;
         // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
         if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
             // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
@@ -299,12 +323,25 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             cuts.push_back({tile_center, sf::Clock()});
             run.shakeAtLeast(0.15f, 16);
             particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
+        } else if (weaponOf(run.characterOf(effect.player)) == Weapon::Hack && run.display_positions.count(effect.player)) {
+            // Lucy's hack lands: a bolt from her hand (the bounce brought its own), the drone glitching apart in purple
+            if (!bounced.erase(effect.player))
+                zaps.push_back({run.display_positions[effect.player] + sf::Vector2f(0.9f, 1.0f), tile_center, sf::Clock()});
+            run.shakeAtLeast(0.15f, effect.player == me ? 12 : 4);
+            particles.emit(tile_center, 18, NEON_PURPLE, 7, 0.35f, 0);
+            particles.emit(tile_center, 8, NEON_CYAN, 5, 0.25f, 0);
         } else {
             run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
         }
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == HACK_BOUNCE) {
+        // The bolt jumps from the drone Lucy hacked to the next one (its blast comes next)
+        sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : tile_center;
+        zaps.push_back({from, tile_center, sf::Clock()});
+        bounced.insert(effect.player);
+        return;
     } else if (effect.type == SPEAR_BLAST) {
         audio.play(Audio::Sfx::Thunder);
         run.shakeAtLeast(0.35f);
@@ -323,11 +360,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         static const std::map<char, Audio::Sfx> sounds = {
             {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
             {BERSERK_TILE, Audio::Sfx::Berserk}};
-        if (effect.player == me)
+        if (effect.player == me) {
             audio.play(sounds.at(effect.type));
+            react(Mood::Pickup);
+        }
         particles.emit(tile_center, 24, powerUpColor(effect.type), 6, 0.5f, 0);
     } else if (effect.type == SHIELD_BREAK) {
         audio.play(Audio::Sfx::ShieldBreak);
+        if (effect.player == me)
+            react(Mood::Surprised);
         run.shakeAtLeast(0.3f);
         particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
@@ -365,6 +406,38 @@ void GameScreen::drawCuts()
     }
 }
 
+// A jagged bolt, redrawn every frame so it crackles: a wide purple glow under a thin white core
+void GameScreen::drawZaps()
+{
+    static constexpr int SEGMENTS = 6;
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(zaps, [](const Zap &zap) { return zap.age.getElapsedTime().asSeconds() > ZAP_TIME; });
+    for (const Zap &zap : zaps) {
+        float fade = 1 - zap.age.getElapsedTime().asSeconds() / ZAP_TIME;
+        sf::Vector2f along = zap.to - zap.from;
+        sf::Vector2f across = sf::Vector2f(-along.y, along.x) / std::max(0.01f, along.length());
+        sf::Vector2f last = zap.from;
+
+        for (int i = 1; i <= SEGMENTS; i++) {
+            sf::Vector2f next = zap.from + along * (static_cast<float>(i) / SEGMENTS);
+            if (i < SEGMENTS)
+                next += across * randf(-0.3f, 0.3f);
+            sf::Vector2f a = run.toScreen(last);
+            sf::Vector2f b = run.toScreen(next);
+            for (auto [width, color] : {std::pair{0.18f, NEON_PURPLE}, {0.06f, sf::Color::White}}) {
+                sf::RectangleShape segment({(b - a).length(), tile_size * width * fade});
+                segment.setOrigin({0, segment.getSize().y / 2});
+                segment.setPosition(a);
+                segment.setRotation((b - a).angle());
+                segment.setFillColor(withAlpha(color, static_cast<uint8_t>(255 * fade)));
+                canvas.draw(segment, sf::BlendAdd);
+            }
+            last = next;
+        }
+    }
+}
+
 void GameScreen::drawEffects()
 {
     std::erase_if(effects, [](const ActiveEffect &e) {
@@ -383,7 +456,12 @@ void GameScreen::drawEffects()
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
         if (active.effect.type == COIN_TILE) {
-            // Coin pops: swells and fades out
+            // The eddy is sucked into whoever took it (from afar with the magnet), swelling and fading out
+            auto taker = run.display_positions.find(active.effect.player);
+            if (taker != run.display_positions.end()) {
+                float fly = std::min(1.0f, t / COIN_FLY_SHARE);
+                tile += (taker->second + sf::Vector2f(0, 0.5f) - tile) * fly * fly;
+            }
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
         } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
             // Blast ring, and the bounty for whoever took it down

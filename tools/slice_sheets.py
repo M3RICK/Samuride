@@ -153,6 +153,41 @@ def label_blobs(mask):
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
+# Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
+FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
+
+
+def slice_faces(source, columns, rows, out):
+    """Heads split on the transparent lines between them, each set on the bottom of a uniform cell.
+    Where two heads touch, the widest block is cut at its emptiest line until the count is right."""
+    sheet = Image.open(ROOT / source).convert("RGBA")
+    opaque = np.array(sheet)[..., 3] > ALPHA
+
+    def cuts(counts, n):
+        edges = np.flatnonzero(np.diff(np.concatenate(([0], (counts > 0).astype(int), [0]))))
+        spans = [list(span) for span in zip(edges[::2], edges[1::2])]
+        while len(spans) < n:
+            i = max(range(len(spans)), key=lambda k: spans[k][1] - spans[k][0])
+            start, end = spans[i]
+            third = (end - start) // 3
+            cut = start + third + int(np.argmin(counts[start + third:end - third]))
+            spans[i:i + 1] = [[start, cut], [cut, end]]
+        return [0] + [(a[1] + b[0]) // 2 for a, b in zip(spans, spans[1:])] + [len(counts)]
+
+    xs, ys = cuts(opaque.sum(0), columns), cuts(opaque.sum(1), rows)
+    heads = [[sheet.crop((xs[c], ys[r], xs[c + 1], ys[r + 1])) for c in range(columns)] for r in range(rows)]
+    heads = [[head.crop(head.getbbox()) for head in row] for row in heads]
+    cell_w = max(head.width for row in heads for head in row)
+    cell_h = max(head.height for row in heads for head in row)
+    grid = Image.new("RGBA", (cell_w * columns, cell_h * rows))
+    for r, row in enumerate(heads):
+        for c, head in enumerate(row):
+            grid.alpha_composite(head, (c * cell_w + (cell_w - head.width) // 2, r * cell_h + cell_h - head.height))
+    # Small heads are blown up without smoothing: the game smooths them only on the way down
+    if cell_h < 150:
+        scale = -(-150 // cell_h)
+        grid = grid.resize((grid.width * scale, grid.height * scale), Image.NEAREST)
+    grid.save(out / "faces.png")
 
 
 def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
@@ -326,6 +361,10 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in FACES:
+        source, columns, rows = FACES[name]
+        slice_faces(source, columns, rows, out)
+        lines.append(f"faces faces.png {columns} {rows}")
     for row, (anim, spec) in enumerate(animations.items()):
         lines.append(f"{anim} {row} {len(frames[anim])} {spec['fps']} {spec['mode']}")
     (out / "meta.txt").write_text("\n".join(lines) + "\n")
