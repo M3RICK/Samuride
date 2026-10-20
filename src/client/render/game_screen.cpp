@@ -14,7 +14,8 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles) {
+      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
+      ultimates(canvas, run, audio, particles) {
 }
 
 void GameScreen::draw(GameState &state, Phase phase, bool connected, float dt)
@@ -62,6 +63,7 @@ void GameScreen::resetRun()
     particles.clear();
     titans.reset();
     shots.clear();
+    ultimates.clear();
     effects.clear();
     speed_lines.clear();
     shown_backdrop = -1;
@@ -116,6 +118,7 @@ void GameScreen::update(GameState &state, const std::map<int, PlayerState> &play
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
     shots.handle(state);
+    ultimates.handle(state);
 }
 
 // Countdown beeps, and the jetpack rumble while your thrust is on
@@ -158,6 +161,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     runners.draw(players, me, phase == Phase::Running);
+    ultimates.draw();
     shots.draw();
     particles.draw(canvas, run.view);
 

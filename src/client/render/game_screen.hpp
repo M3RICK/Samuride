@@ -12,6 +12,7 @@
 #include "players.hpp"
 #include "titans.hpp"
 #include "shots.hpp"
+#include "ultimates.hpp"
 
 class Audio;
 class Backdrops;
@@ -47,6 +48,7 @@ private:
     Players runners;
     Titans titans;
     Shots shots;
+    Ultimates ultimates;
 
     std::vector<SpeedLine> speed_lines;
     std::vector<ActiveEffect> effects;

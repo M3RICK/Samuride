@@ -10,10 +10,6 @@ void Run::reset()
     death_clocks.clear();
     attack_clocks.clear();
     hacked_zappers.clear();
-    fire_waves.clear();
-    nukes.clear();
-    rockets.clear();
-    breaches.clear();
     flash = {};
     callout.clear();
     burnt_zappers.clear();

@@ -215,6 +215,10 @@ private:
 
     void destroyDrone(int owner_fd, int x, int y);
 
+    //===========================================================================
+    // Ultimates (ultimates.cpp)
+    //===========================================================================
+
     void handleUltimate(int client_fd);
 
     void updateUltimates();
