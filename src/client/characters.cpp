@@ -40,12 +40,14 @@ bool Character::load(const std::string &dir)
     while (meta >> key) {
         if (key == "name") {
             meta >> name;
-        } else if (key == "sheet" || key == "portrait") {
+        } else if (key == "sheet" || key == "portrait" || key == "faces") {
             std::string file;
             meta >> file;
-            sf::Texture &texture = key == "sheet" ? sheet : portrait;
+            sf::Texture &texture = key == "sheet" ? sheet : key == "portrait" ? portrait : faces;
             if (!texture.loadFromFile(dir + "/" + file))
                 DEBUG_LOG("Failed to load " + dir + "/" + file);
+            // Drawn well under their size in the HUD
+            texture.setSmooth(key == "faces");
         } else if (key == "frame") {
             meta >> frame_size.x >> frame_size.y;
         } else if (key == "feet") {

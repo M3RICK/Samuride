@@ -153,6 +153,28 @@ def label_blobs(mask):
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
+# Faces for the HUD, Doom style: a grid of heads, 8 by 5, laid out as the game expects (game_hud.cpp)
+FACES = {"mikasa": "sources/mikasa_faces.png"}
+
+
+def slice_faces(source, out):
+    """Heads split on the transparent rows and columns between them, each set on the bottom of a uniform cell."""
+    sheet = Image.open(ROOT / source).convert("RGBA")
+    opaque = np.array(sheet)[..., 3] > ALPHA
+
+    def spans(filled):
+        edges = np.flatnonzero(np.diff(np.concatenate(([0], filled.astype(int), [0]))))
+        return list(zip(edges[::2], edges[1::2]))
+
+    heads = [[sheet.crop((x0, y0, x1, y1)) for x0, x1 in spans(opaque.any(0))] for y0, y1 in spans(opaque.any(1))]
+    heads = [[head.crop(head.getbbox()) for head in row] for row in heads]
+    cell_w = max(head.width for row in heads for head in row)
+    cell_h = max(head.height for row in heads for head in row)
+    grid = Image.new("RGBA", (cell_w * len(heads[0]), cell_h * len(heads)))
+    for r, row in enumerate(heads):
+        for c, head in enumerate(row):
+            grid.alpha_composite(head, (c * cell_w + (cell_w - head.width) // 2, r * cell_h + cell_h - head.height))
+    grid.save(out / "faces.png")
 
 
 def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
@@ -326,6 +348,9 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in FACES:
+        slice_faces(FACES[name], out)
+        lines.append("faces faces.png")
     for row, (anim, spec) in enumerate(animations.items()):
         lines.append(f"{anim} {row} {len(frames[anim])} {spec['fps']} {spec['mode']}")
     (out / "meta.txt").write_text("\n".join(lines) + "\n")

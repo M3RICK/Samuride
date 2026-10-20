@@ -202,12 +202,18 @@ void Canvas::hexagon(sf::Vector2f center, float radius, sf::Color color, float a
 // A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)
 void Canvas::image(const sf::Texture &texture, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color)
 {
-    sf::Vector2f size(texture.getSize());
+    image(texture, sf::IntRect({0, 0}, sf::Vector2i(texture.getSize())), pos, height, anchor, color);
+}
+
+// Only `rect` of the texture
+void Canvas::image(const sf::Texture &texture, sf::IntRect rect, sf::Vector2f pos, float height, sf::Vector2f anchor, sf::Color color)
+{
+    sf::Vector2f size(rect.size);
 
     if (size.y == 0)
         return;
 
-    sf::Sprite sprite(texture);
+    sf::Sprite sprite(texture, rect);
     float scale = height / size.y;
 
     sprite.setOrigin(size.componentWiseMul(anchor));

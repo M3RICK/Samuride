@@ -92,6 +92,11 @@ private:
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
+    int spears_shown = 0;       // to see one thrown
+    // The HUD's face reacts for a moment to what happens to you, like Doom's
+    enum class Mood { Idle, Kill, Shout, Surprised, Pickup };
+    Mood mood = Mood::Idle;
+    sf::Clock mood_clock;
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
 
     Phase last_phase = Phase::Waiting;
@@ -119,7 +124,9 @@ private:
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
-    void drawUltimatePanel(const PlayerState &player, int me);
+    void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
+    void drawFace(const PlayerState &player, int me, sf::Vector2f pos, float height);
+    void react(Mood new_mood);
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
     void drawSpearIcon(sf::Vector2f pos, float height, bool loaded);

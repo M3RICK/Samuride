@@ -40,8 +40,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(players.size() == 1 && bests.drones > 0 ? std::format("DRONES DOWN  {}   BEST {}", drones_down, bests.drones)
                                                             : std::format("DRONES DOWN  {}", drones_down),
                     26, NEON_RED, {24, y}, {0, 0});
-    if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
-        drawUltimatePanel(players.at(me), me);
+    if (players.count(me))
+        drawRunnerPanel(players.at(me), me, cyberpsycho && ultimateOf(run.characterOf(me)) != Ultimate::None);
     if (Touch::ENABLED && cyberpsycho && players.count(me))
         drawTouchButtons(players.at(me), me);
 }
@@ -74,29 +74,36 @@ void GameScreen::drawTouchButtons(const PlayerState &player, int me)
     }
 }
 
-// Top right: your portrait, your ultimate's name and a segmented gauge in its colour. Full, it lights up
-// and says which key fires it. Mikasa's thunder spears show there while she has some.
-void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
+// Bottom centre: your runner's face, and in CYBERPSYCHO your ultimate's name and a segmented gauge in its
+// colour. Full, it lights up and says which key fires it. Mikasa's thunder spears show there while she has some.
+void GameScreen::drawRunnerPanel(const PlayerState &player, int me, bool ultimate)
 {
     static constexpr int SEGMENTS = 10;
+    static constexpr float FACE = 124;
     UltimateLook look = ultimateLook(ultimateOf(run.characterOf(me)));
     bool ready = player.ultimate >= 100;
     float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 8);
-    sf::FloatRect box({Screen::WIDTH - 24 - 520, 20}, {520, 110});
+    float width = ultimate ? 640 : FACE + 24;
+    sf::FloatRect box({Screen::WIDTH / 2 - width / 2, Screen::HEIGHT - 24 - FACE - 24}, {width, FACE + 24});
 
+    // Fired: the gauge empties, or a spear leaves
+    if ((ultimate_was_ready && !ready) || player.spears < spears_shown)
+        react(Mood::Shout);
     if (ready && !ultimate_was_ready)
         audio.play(Audio::Sfx::UltimateReady);
     ultimate_was_ready = ready;
+    spears_shown = player.spears;
 
-    canvas.card(box, ready);
-    if (ready)
+    canvas.card(box, ultimate && ready);
+    if (ultimate && ready)
         canvas.halo(box.getCenter(), 300, withAlpha(look.color, static_cast<uint8_t>(25 + 30 * pulse)));
-    canvas.image(sprites.character(run.characterOf(me)).portrait, box.position + sf::Vector2f(12, 12), 86, {0, 0},
-                 sf::Color::White);
+    drawFace(player, me, box.position + sf::Vector2f(12 + FACE / 2, 12 + FACE), FACE);
+    if (!ultimate)
+        return;
 
-    sf::Vector2f text_pos = box.position + sf::Vector2f(116, 30);
-    sf::Vector2f gauge_pos = box.position + sf::Vector2f(116, 62);
-    float gauge_w = box.size.x - 116 - 20;
+    sf::Vector2f text_pos = box.position + sf::Vector2f(FACE + 36, 40);
+    sf::Vector2f gauge_pos = box.position + sf::Vector2f(FACE + 36, 80);
+    float gauge_w = box.size.x - FACE - 36 - 20;
 
     if (player.spears > 0) {
         canvas.text(Touch::ENABLED ? std::string(look.name) : std::format("[{}]  {}", ultimate_key, look.name), 28, look.color, text_pos, {0, 0.5f});
@@ -110,7 +117,7 @@ void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
                           text_pos + sf::Vector2f(gauge_w / 2, 0));
     } else {
         canvas.text(look.name, 28, DIM_WHITE, text_pos, {0, 0.5f});
-        canvas.text(std::format("{}%", player.ultimate), 24, HINT_GREY, box.position + sf::Vector2f(box.size.x - 20, 30),
+        canvas.text(std::format("{}%", player.ultimate), 24, HINT_GREY, box.position + sf::Vector2f(box.size.x - 20, 40),
                     {1, 0.5f});
     }
 
@@ -123,6 +130,51 @@ void GameScreen::drawUltimatePanel(const PlayerState &player, int me)
                                  : sf::Color(255, 255, 255, 30));
         canvas.draw(segment);
     }
+}
+
+void GameScreen::react(Mood new_mood)
+{
+    mood = new_mood;
+    mood_clock.restart();
+}
+
+// Your face, its bottom centre at `pos`. Runners with a faces sheet (8 by 5 heads, Mikasa's layout) live
+// like Doom's marine: glance around, grit their teeth on a kill, shout their ultimate, bleed once dead.
+// The others show their portrait.
+void GameScreen::drawFace(const PlayerState &player, int me, sf::Vector2f pos, float height)
+{
+    static constexpr float MOOD_TIME = 0.7f;
+    static constexpr float GLANCE_TIME = 1.1f;
+    // Mostly straight ahead, now and then to a side or down
+    static constexpr sf::Vector2i IDLE[] = {{0, 0}, {0, 0}, {1, 0}, {0, 0}, {7, 0}, {0, 0}, {5, 0}, {4, 0}};
+    const Character &character = sprites.character(run.characterOf(me));
+    sf::Vector2i cell_size(character.faces.getSize().x / 8, character.faces.getSize().y / 5);
+
+    if (cell_size.y == 0) {
+        canvas.image(character.portrait, pos, height, {0.5f, 1}, sf::Color::White);
+        return;
+    }
+
+    sf::Vector2i cell = IDLE[static_cast<int>(canvas.time() / GLANCE_TIME) % std::size(IDLE)];
+    bool reacting = mood != Mood::Idle && mood_clock.getElapsedTime().asSeconds() < MOOD_TIME;
+    if (run.death_clocks.count(me))
+        cell = {4, 3};      // blood down her face
+    else if (reacting && mood == Mood::Shout)
+        cell = {2, 1};
+    else if (reacting && mood == Mood::Kill)
+        cell = {3, 1};
+    else if (reacting && mood == Mood::Surprised)
+        cell = {2, 2};
+    else if (reacting && mood == Mood::Pickup)
+        cell = {3, 4};      // a smirk
+    else if (player.form == Form::Titan || player.berserk)
+        cell = {6, 1};
+    else if (player.sprinting)
+        cell = {6, 0};
+    else if (player.ultimate >= 100)
+        cell = {3, 0};
+    canvas.image(character.faces, sf::IntRect(cell.componentWiseMul(cell_size), cell_size), pos, height, {0.5f, 1},
+                 sf::Color::White);
 }
 
 // A thunder spear standing up: shaft and head, hollow once thrown

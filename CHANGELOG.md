@@ -8,6 +8,9 @@ taken from this file. Players on different versions can't play together: update 
 ### New
 - **A personal best per mode**: CLASSIC and CYBERPSYCHO each keep their own best distance, and CYBERPSYCHO
   also keeps your most drones down in one run. Your old best carries over as the CLASSIC one.
+- **Mikasa's face comes alive in the HUD**, Doom style: she glances around, grits her teeth on a kill, smirks
+  at a power-up, shouts her ultimate and bleeds when she falls.
+- **Your portrait and ultimate gauge moved to the bottom centre** of the screen.
 
 ### Balance
 - **Mikasa's thunder spears hit harder**: 5 spears instead of 3, and each lightning column is 5 tiles wide

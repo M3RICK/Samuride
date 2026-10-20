@@ -80,6 +80,8 @@ void GameScreen::resetRun()
     bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
+    spears_shown = 0;
+    mood = Mood::Idle;
     sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
@@ -296,6 +298,8 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.type == TITAN_KILL) {
         // Steam bursting from the nape
+        if (effect.player == me)
+            react(Mood::Kill);
         audio.play(Audio::Sfx::Explosion);
         run.shakeAtLeast(0.3f);
         particles.emit(tile_center + sf::Vector2f(0, -3), 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
@@ -303,6 +307,8 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
     } else if (effect.type == DRONE_TILE) {
         audio.play(Audio::Sfx::Explosion);
         drones_down += effect.player == me;
+        if (effect.player == me)
+            react(Mood::Kill);
         last_drone[effect.player] = tile_center;
         // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
         if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
@@ -348,11 +354,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         static const std::map<char, Audio::Sfx> sounds = {
             {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
             {BERSERK_TILE, Audio::Sfx::Berserk}};
-        if (effect.player == me)
+        if (effect.player == me) {
             audio.play(sounds.at(effect.type));
+            react(Mood::Pickup);
+        }
         particles.emit(tile_center, 24, powerUpColor(effect.type), 6, 0.5f, 0);
     } else if (effect.type == SHIELD_BREAK) {
         audio.play(Audio::Sfx::ShieldBreak);
+        if (effect.player == me)
+            react(Mood::Surprised);
         run.shakeAtLeast(0.3f);
         particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);

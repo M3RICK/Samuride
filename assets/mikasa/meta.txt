@@ -5,6 +5,7 @@ frame 181 122
 feet 95
 body 82
 exhaust 0 240 255
+faces faces.png
 run 0 7 12 loop
 takeoff 1 6 16 once
 rise 2 8 12 loop
