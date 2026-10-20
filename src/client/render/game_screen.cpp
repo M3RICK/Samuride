@@ -15,7 +15,7 @@ GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
       titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
-      ultimates(canvas, run, audio, particles) {
+      ultimates(canvas, sprites, run, audio, particles) {
 }
 
 void GameScreen::draw(GameState &state, Phase phase, bool connected, float dt)

@@ -9,6 +9,7 @@
 #include "../state.hpp"
 
 class Canvas;
+struct Sprites;
 class Audio;
 class Particles;
 struct Run;
@@ -45,6 +46,7 @@ private:
     };
 
     Canvas &canvas;
+    const Sprites &sprites;
     Run &run;
     Audio &audio;
     Particles &particles;
@@ -60,7 +62,7 @@ private:
     void drawRockets();
 
 public:
-    Ultimates(Canvas &canvas, Run &run, Audio &audio, Particles &particles);
+    Ultimates(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio, Particles &particles);
 
     void clear();
     // Starts the ultimates the server reported

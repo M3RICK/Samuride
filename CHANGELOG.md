@@ -15,6 +15,8 @@ taken from this file. Players on different versions can't play together: update 
   flashes across the drone and the screen jolts. Every bullet of Jinx's Pow-Pow kicks, and the screen shakes
   harder or lighter depending on the hit.
 
+- **Fishbones is a real shark rocket now**, with the blue flame and trail of Arcane.
+
 ### Balance
 - **Fishbones charges, then kicks**: Jinx stops dead in the air for 0.6 s while the rocket charges
   (nothing protects her meanwhile), then the recoil throws her back and she picks her pace up again.

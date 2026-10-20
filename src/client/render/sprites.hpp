@@ -16,6 +16,7 @@ struct Sprites {
     sf::Texture drone;          // DRONE_FRAMES frames side by side
     sf::Texture titan_face;     // on the power-up orb
     sf::Texture hack_target;    // Lucy's glitch ring, on what her hack will hit
+    sf::Texture fishbones;      // Jinx's shark rocket, nose to the right
 
     std::vector<Character> characters;  // one per runner, in RUNNERS order (common/runners.hpp)
     std::vector<Character> titans;      // one per TitanType
