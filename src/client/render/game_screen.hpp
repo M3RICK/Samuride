@@ -53,6 +53,9 @@ private:
     std::vector<SpeedLine> speed_lines;
     std::vector<ActiveEffect> effects;
     int drones_down = 0;
+    int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
+    sf::Clock coin_clock;       // since the last one
+    sf::Vector2f last_coin;     // where it was, in tiles
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes

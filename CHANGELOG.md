@@ -11,6 +11,10 @@ taken from this file. Players on different versions can't play together: update 
   eddies sooner per level, **Eddie magnet** picks up eddies 1 tile further per level (3 levels each:
   1000, 2500 and 5000 eddies), and **Subdermal armor** starts every run with a shield (5000 eddies).
 
+### Fixes
+- Taking a whole row of eddies at once no longer slows phones down: the eddies count up on a single
+  "+N" instead of one "+1" each, and the sounds don't pile up.
+
 ## v2.6
 
 ### New

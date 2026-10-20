@@ -69,6 +69,7 @@ void GameScreen::resetRun()
     shown_backdrop = -1;
     heard_countdown = -1;
     drones_down = 0;
+    coin_streak = 0;
     new_record = false;
     best_distance = loadBestDistance();
     ultimate_key = keyName(Settings::load().ultimate_key);
@@ -314,9 +315,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         particles.emit(tile_center, 36, SHIELD_COLOR, 8, 0.6f, 10);
         particles.emit(tile_center, 12, sf::Color::White, 5, 0.4f, 10);
     } else if (effect.player == me) {
+        // A row of eddies taken at once counts up on one "+N", where the last one was
+        if (coin_clock.getElapsedTime().asSeconds() > EFFECT_DURATION)
+            coin_streak = 0;
+        coin_streak++;
+        coin_clock.restart();
+        last_coin = tile_center;
         audio.play(Audio::Sfx::Coin);
-        particles.emit(tile_center, 14, NEON_PINK, 5, 0.45f, 0);
-        particles.emit(tile_center, 6, NEON_YELLOW, 3, 0.35f, 0);
+        particles.emit(tile_center, 6, NEON_PINK, 5, 0.45f, 0);
+        particles.emit(tile_center, 2, NEON_YELLOW, 3, 0.35f, 0);
     } else {
         return;
     }
@@ -329,15 +336,20 @@ void GameScreen::drawEffects()
         return e.clock.getElapsedTime().asSeconds() > EFFECT_DURATION;
     });
 
+    // Your eddies: one "+N" floating up, not a text per coin (dozens of them made phones stutter)
+    float since_coin = coin_clock.getElapsedTime().asSeconds() / EFFECT_DURATION;
+    if (coin_streak > 0 && since_coin < 1)
+        canvas.text(std::format("+{}", coin_streak), 34, withAlpha(NEON_CYAN, static_cast<uint8_t>(255 * (1 - since_coin))),
+                    run.toScreen(last_coin + sf::Vector2f(0, -0.5f - since_coin)));
+
     for (const ActiveEffect &active : effects) {
         float t = active.clock.getElapsedTime().asSeconds() / EFFECT_DURATION;
         auto alpha = static_cast<uint8_t>(255 * (1 - t));
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
         if (active.effect.type == COIN_TILE) {
-            // Coin pops: swells and fades out while +1 floats up
+            // Coin pops: swells and fades out
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
-            canvas.text("+1", 30, withAlpha(NEON_CYAN, alpha), run.toScreen(tile + sf::Vector2f(0.5f, -t)));
         } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
             // Blast ring, and the bounty for whoever took it down
             bool titan = active.effect.type == TITAN_KILL;

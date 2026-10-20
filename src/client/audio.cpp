@@ -231,6 +231,11 @@ void Audio::greet()
 
 void Audio::play(Sfx sfx)
 {
+    auto last = last_played.find(sfx);
+    if (last != last_played.end() && last->second.getElapsedTime().asSeconds() < REPEAT_GAP)
+        return;
+    last_played[sfx].restart();
+
     sf::Sound &voice = voices[next_voice];
 
     next_voice = (next_voice + 1) % VOICES;
