@@ -1,4 +1,4 @@
-// Eddies earned over every run, spent on unlocking the characters one after the other
+// Eddies earned over every run, spent on the runners (one after the other) and the districts
 
 #include "wallet.hpp"
 #include "../common/runners.hpp"
