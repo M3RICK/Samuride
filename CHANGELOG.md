@@ -13,7 +13,12 @@ taken from this file. Players on different versions can't play together: update 
   16 tiles from floor to ceiling. **Lucy** breaches the network: every drone on screen goes down and
   every zapper on screen goes off for 3 seconds. **Mikasa** gets 3 thunder spears: her next attacks
   fly ahead, stick in the first drone or titan and blow up in a lightning column from floor to
-  ceiling. Jinx gets hers in the next update.
+  ceiling. **Jinx** fires Fishbones: a big shark rocket razes a band of the corridor at her height,
+  and she can fly through it.
+
+### Balance
+- **Jinx swaps her rockets for Pow-Pow**, her minigun: small fast bullets, and it keeps firing for
+  as long as you hold the attack key. The rockets became her ultimate.
 - **New music for the runs**: a 1:40 punk track instead of the short loop. That loop now plays in
   the menu, once Johnny's greeting is over.
 

@@ -41,6 +41,7 @@ struct UltimateEvent {
     int player;
     Ultimate ultimate;
     float x;    // where it starts, in tiles
+    float y;    // the line it follows, for Fishbones
 };
 
 struct TitanState {

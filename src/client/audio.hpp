@@ -10,7 +10,7 @@
 class Audio {
 public:
     enum class Sfx { Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm, Gun, Rocket, Slash, Explosion, Stomp, Roar, Steam,
-                     Shield, ShieldBreak, Sandevistan, Hack, Berserk, FireWave, Nuke, Breach, Thunder };
+                     Shield, ShieldBreak, Sandevistan, Hack, Berserk, FireWave, Nuke, Breach, Thunder, Minigun };
 
     Audio();
 

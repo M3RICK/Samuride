@@ -217,12 +217,13 @@ void Client::handleShot(const std::vector<uint8_t> &payload)
         game_state.pushShot({payload[0], static_cast<Weapon>(payload[1])});
 }
 
-// [player][ultimate][x in 1/100 tile, 4 bytes]
+// [player][ultimate][x in 1/100 tile, 4 bytes][y in 1/100 tile, 2 bytes]
 void Client::handleUltimate(const std::vector<uint8_t> &payload)
 {
-    if (payload.size() >= 6)
+    if (payload.size() >= 8)
         game_state.pushUltimate({payload[0], static_cast<Ultimate>(payload[1]),
-                                 Protocol::readU32(payload.data() + 2) / POSITION_SCALE});
+                                 Protocol::readU32(payload.data() + 2) / POSITION_SCALE,
+                                 Protocol::readU16(payload.data() + 6) / POSITION_SCALE});
 }
 
 void Client::handleGameState(const std::vector<uint8_t> &payload)
@@ -276,9 +277,9 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
     message_queue.push(data);
 }
 
-void Client::sendAttack()
+void Client::sendAttack(bool pressed)
 {
-    sendToServer(Protocol::createPacket(MSG_ATTACK, {}));
+    sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
 }
 
 void Client::sendUltimate()

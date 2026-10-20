@@ -17,7 +17,7 @@ bool Server::resetMap()
     destroyed_drones.clear();
     projectiles.clear();
     hacked_zappers.clear();
-    fire_waves.clear();
+    sweeps.clear();
     nukes.clear();
     resetTitans();
 
@@ -153,8 +153,10 @@ void Server::updatePlayers()
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
-        // Berserk attacks on its own, as soon as the cooldown allows; Mikasa's spears are hers to aim
-        if (player.isBerserk() && player.getSpears() == 0)
+        // Berserk attacks on its own, and Pow-Pow while the key is held, as soon as the cooldown allows;
+        // Mikasa's spears are hers to aim
+        bool minigun = player.isAttackHeld() && weaponOf(player.getCharacter()) == Weapon::Minigun;
+        if ((player.isBerserk() || minigun) && player.getSpears() == 0)
             handleAttack(client_fd);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());

@@ -39,7 +39,7 @@ Positions travel in hundredths of a tile.
 
 | Bytes | Field |
 | --- | --- |
-| 1, optional | Character: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa |
+| 1, optional | Character: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy |
 | 1, optional | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds |
 | 1, optional | Mode: 0 CLASSIC, 1 CYBERPSYCHO |
 
@@ -159,8 +159,9 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 
 ### `MSG_ATTACK`
 
-Empty, CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny and
-David shoot guns, Jinx rockets: a projectile flies ahead at run speed plus the weapon's speed, for
+One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up. CYBERPSYCHO
+only (ignored otherwise). Pressing attacks once; holding keeps Jinx's minigun firing. The server
+enforces the weapon cooldown. Johnny and David shoot guns, Jinx her minigun: a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
 feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
@@ -170,7 +171,7 @@ feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 rockets, 2 blade, 3 hack, 4 thunder spear |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear |
 
 ### `MSG_ULTIMATE`
 
@@ -180,8 +181,9 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx) |
 | 4 | X where it starts |
+| 2 | Y of its line: the middle of the runner's body |
 
 The fire wave sweeps 25 tiles ahead at 45 tiles per second: every column it crosses burns from
 floor to ceiling. Drones go down (`d`), zappers go out for the rest of the run, titans die (`k`).
@@ -195,6 +197,9 @@ for 3 s (burnt ones stay out). Clients turn the zappers off themselves from X.
 
 The thunder spears replace Mikasa's next 3 attacks: each flies like a projectile (run speed + 28) until
 it sticks in a drone or a titan, or reaches 22 tiles, then blows up (`l`).
+
+Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but only the rows within
+2.5 tiles of Y: a zapper touching them goes out whole, a titan dies if the band reaches its height.
 
 ### `MSG_TITANS`
 

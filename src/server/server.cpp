@@ -198,7 +198,7 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
             break;
 
         case MSG_ATTACK:
-            handleAttack(client_fd);
+            holdAttack(client_fd, payload.empty() || payload[0] != 0);
             break;
 
         case MSG_ULTIMATE:

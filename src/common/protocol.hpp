@@ -17,11 +17,12 @@ enum MessageType : uint8_t {
     MSG_GAME_END = 7,     // game is over
     MSG_COUNTDOWN = 8,    // countdown before game starts, 0 = go
     MSG_READY = 9,        // client wants a rematch
-    MSG_ATTACK = 10,      // CYBERPSYCHO: client attacks
+    MSG_ATTACK = 10,      // CYBERPSYCHO: attack key pressed (payload 1, or none) or released (0)
     MSG_SHOT = 11,        // CYBERPSYCHO: someone attacked, payload = player number, weapon
     MSG_TITANS = 12,      // titans charging along the floor, every tick
     MSG_ULTIMATE = 13     // CYBERPSYCHO: client fires its ultimate; server: someone did,
-                          // payload = player number, ultimate, x where it starts (1/100 tile, 4 bytes)
+                          // payload = player number, ultimate, x where it starts (1/100 tile, 4 bytes),
+                          // y of its line (1/100 tile, 2 bytes)
 };
 
 struct MessageHeader {

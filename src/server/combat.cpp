@@ -4,6 +4,18 @@
 
 // CYBERPSYCHO: attacks, projectiles and drones
 
+// Pressing attacks once; holding only matters to Pow-Pow, which keeps firing (see updatePlayers)
+void Server::holdAttack(int client_fd, bool held)
+{
+    auto it = players.find(client_fd);
+
+    if (it == players.end())
+        return;
+    it->second.setAttackHeld(held);
+    if (held)
+        handleAttack(client_fd);
+}
+
 void Server::handleAttack(int client_fd)
 {
     auto it = players.find(client_fd);
@@ -182,12 +194,18 @@ void Server::handleUltimate(int client_fd)
     player.spendUltimate();
 
     float start = player.getX() + 1;
+    float line = player.getY() + Player::HEIGHT / 2;
     std::vector<uint8_t> payload = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(ultimate)};
     Protocol::pushU32(payload, start * POSITION_SCALE);
+    Protocol::pushU16(payload, line * POSITION_SCALE);
     broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, payload));
 
+    auto [top, bottom] = fishbonesRows(line);
+
     if (ultimate == Ultimate::FireWave)
-        fire_waves.push_back({client_fd, start, start});
+        sweeps.push_back({client_fd, start, start, FIRE_WAVE_RANGE, FIRE_WAVE_SPEED, 0, 1 << 20});
+    else if (ultimate == Ultimate::Fishbones)
+        sweeps.push_back({client_fd, start, start, FISHBONES_RANGE, FISHBONES_SPEED, top, bottom});
     else if (ultimate == Ultimate::Nuke)
         nukes.push_back({client_fd, start + NUKE_DISTANCE, NUKE_DELAY});
     else if (ultimate == Ultimate::Breach)
@@ -196,15 +214,15 @@ void Server::handleUltimate(int client_fd)
         player.giveSpears();
 }
 
-// The fire wave sweeps on, the nukes land
+// The fire wave and Fishbones sweep on, the nukes land
 void Server::updateUltimates()
 {
-    for (FireWave &wave : fire_waves) {
-        float front = std::min(wave.start + FIRE_WAVE_RANGE, wave.front + FIRE_WAVE_SPEED * TICK_DT);
-        scorch(wave.owner_fd, wave.front, front, wave.start - 1);
-        wave.front = front;
+    for (Sweep &sweep : sweeps) {
+        float front = std::min(sweep.start + sweep.range, sweep.front + sweep.speed * TICK_DT);
+        scorch(sweep.owner_fd, sweep.front, front, sweep.start - 1, sweep.top, sweep.bottom);
+        sweep.front = front;
     }
-    std::erase_if(fire_waves, [](const FireWave &wave) { return wave.front >= wave.start + FIRE_WAVE_RANGE; });
+    std::erase_if(sweeps, [](const Sweep &sweep) { return sweep.front >= sweep.start + sweep.range; });
 
     for (Nuke &nuke : nukes) {
         nuke.timer -= TICK_DT;
@@ -214,15 +232,17 @@ void Server::updateUltimates()
     std::erase_if(nukes, [](const Nuke &nuke) { return nuke.timer <= 0; });
 }
 
-// Every column from `from` to `to` burns from floor to ceiling: drones go down, zappers go out for the
-// rest of the run, and titans between `titans_from` and `to` die. The owner gets the bounties.
-void Server::scorch(int owner_fd, float from, float to, float titans_from)
+// Every column from `from` to `to` burns, rows top to bottom (floor to ceiling by default): drones go
+// down, zappers touching those rows go out for the rest of the run, and titans between `titans_from`
+// and `to` die if the rows reach them. The owner gets the bounties.
+void Server::scorch(int owner_fd, float from, float to, float titans_from, int top, int bottom)
 {
     int height = game_map.getHeight();
     auto owner = players.find(owner_fd);
 
+    bottom = std::min(bottom, height - 1);
     for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
-        for (int y = 0; y < height; y++) {
+        for (int y = std::max(0, top); y <= bottom; y++) {
             if (isLiveDrone(x, y)) {
                 destroyDrone(owner_fd, x, y);
             } else if (game_map.getTile(x, y) == 'e' && !hacked_zappers.count({x, y})) {
@@ -232,7 +252,8 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from)
         }
     }
     std::erase_if(titans, [&](const Titan &titan) {
-        if (titan.x > to || titan.x < titans_from || owner == players.end())
+        bool reached = bottom + 1 > height - titanStats(titan.type).height;
+        if (titan.x > to || titan.x < titans_from || !reached || owner == players.end())
             return false;
         owner->second.addScore(TITAN_BOUNTY);
         notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);

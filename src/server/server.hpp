@@ -81,15 +81,19 @@ private:
 
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
-    // Johnny's ultimate, sweeping ahead
-    struct FireWave {
+    // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
+    struct Sweep {
         int owner_fd;
         float start;    // in tiles
         float front;
+        float range;
+        float speed;
+        int top;
+        int bottom;
     };
 
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
-    std::vector<FireWave> fire_waves;
+    std::vector<Sweep> sweeps;
 
     // David's ultimate, falling
     struct Nuke {
@@ -193,6 +197,8 @@ private:
 
     void handleAttack(int client_fd);
 
+    void holdAttack(int client_fd, bool held);
+
     void strike(int client_fd, const Player &player, float reach);
 
     bool hack(int client_fd, Player &player);
@@ -213,7 +219,7 @@ private:
 
     void updateUltimates();
 
-    void scorch(int owner_fd, float from, float to, float titans_from);
+    void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
 
     void breach(int owner_fd, float start);
 

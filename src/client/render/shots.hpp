@@ -35,6 +35,7 @@ private:
     void drawFireWaves();
     void drawNukes();
     void drawBreaches();
+    void drawRockets();
 
 public:
     Shots(Canvas &canvas, Run &run, Audio &audio, Particles &particles);

@@ -169,6 +169,8 @@ void Audio::synthesize()
 
     // CYBERPSYCHO weapons and drones
     buffers[Sfx::Gun] = toBuffer(tone(Wave::Square, 1200, 300, 0.08f, 0.15f));
+    // Pow-Pow: short and sharp, it fires 8 times a second
+    buffers[Sfx::Minigun] = toBuffer(tone(Wave::Square, 900, 450, 0.04f, 0.1f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
     // Berserk: a low growl revving up
