@@ -4,6 +4,7 @@
 #include "../common/debug.hpp"
 #include <algorithm>
 
+// The attack key, or Berserk attacking on its own: what happens depends on the weapon (weapons.hpp)
 void Server::handleAttack(int client_fd)
 {
     auto it = players.find(client_fd);
@@ -15,30 +16,47 @@ void Server::handleAttack(int client_fd)
     Weapon weapon = player.getSpears() > 0 ? Weapon::Spear : weaponOf(player.getCharacter());
     WeaponStats stats = statsOf(weapon);
 
+    if (!player.canAttack())
+        return;
     // Lucy only hacks when there is something to hack and RAM to do it
-    if (!player.canAttack() || (weapon == Weapon::Hack && !hack(client_fd, player)))
+    if (weapon == Weapon::Hack && !hack(client_fd, player))
         return;
-    // Pow-Pow: a burst, the rest of it fired over the next ticks (see updatePlayers); a spray in Berserk
-    bool spray = weapon == Weapon::Minigun && player.isBerserk();
-    player.startCooldown(spray ? MINIGUN_SPRAY_COOLDOWN : stats.cooldown);
-    if (weapon == Weapon::Minigun && !spray)
-        player.startBurst(MINIGUN_BURST - 1);
+    player.startCooldown(stats.cooldown);
 
-    if (weapon != Weapon::Blade && weapon != Weapon::Hack) {
-        if (weapon == Weapon::Spear)
+    // A new weapon gets its case here
+    switch (weapon) {
+        case Weapon::Gun:
+            fireProjectile(client_fd, player, weapon);
+            break;
+        case Weapon::Minigun:
+            // A burst, the rest of it fired over the next ticks (see updatePlayers); a spray in Berserk
+            if (player.isBerserk())
+                player.startCooldown(MINIGUN_SPRAY_COOLDOWN);
+            else
+                player.startBurst(MINIGUN_BURST - 1);
+            fireProjectile(client_fd, player, weapon);
+            break;
+        case Weapon::Spear:
             player.useSpear();
-        fireProjectile(client_fd, player, weapon);
-        return;
+            fireProjectile(client_fd, player, weapon);
+            break;
+        case Weapon::Blade:
+            announceShot(player, weapon);
+            strike(client_fd, player, stats.reach);
+            slashTitans(client_fd, player, stats.reach);
+            break;
+        case Weapon::Hack:
+            announceShot(player, weapon);   // hack() already did the rest
+            break;
     }
+}
 
+// Every client plays the attacker's attack animation and sound (MSG_SHOT)
+void Server::announceShot(const Player &player, Weapon weapon)
+{
     std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
-    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
 
-    if (weapon == Weapon::Blade) {
-        strike(client_fd, player, stats.reach);
-        slashTitans(client_fd, player, stats.reach);
-        return;
-    }
+    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
 }
 
 // Fired from the hip, flying ahead of the shooter
@@ -46,9 +64,8 @@ void Server::fireProjectile(int client_fd, const Player &player, Weapon weapon)
 {
     WeaponStats stats = statsOf(weapon);
     float x = player.getX() + 0.9f;
-    std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
 
-    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
+    announceShot(player, weapon);
     projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
                            weapon == Weapon::Spear});
 }

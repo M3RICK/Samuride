@@ -164,6 +164,7 @@ void Server::updatePlayers()
     }
 
     updateTitans(rear_x);
+    // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
     std::erase_if(hacked_zappers, [](const auto &entry) { return entry.second <= 0; });
