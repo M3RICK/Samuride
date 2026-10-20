@@ -89,6 +89,7 @@ private:
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawUltimatePanel(const PlayerState &player, int me);
+    void drawTouchButtons(const PlayerState &player, int me);
     void drawSpearIcon(sf::Vector2f pos, float height, bool loaded);
     void drawFlashAndCallout();
     void drawBanner();

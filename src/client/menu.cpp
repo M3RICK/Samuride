@@ -1,6 +1,7 @@
 // Menu logic: navigation, options, character, mode and district select
 
 #include "menu.hpp"
+#include "touch.hpp"
 #include "render/renderer.hpp"
 #include "audio.hpp"
 #include "characters.hpp"
@@ -146,7 +147,12 @@ void Menu::handleJoinEvent(const sf::Event &event)
         state.screen = MenuState::Screen::Main;
     } else if (isKey(event, sf::Keyboard::Key::Enter)) {
         parseAddress();
+    } else if (Touch::ENABLED && event.is<sf::Event::MouseButtonPressed>()) {
+        // A tap brings the phone's keyboard back
+        sf::Keyboard::setVirtualKeyboardVisible(true);
     }
+    if (Touch::ENABLED && state.screen != MenuState::Screen::Join)
+        sf::Keyboard::setVirtualKeyboardVisible(false);
 }
 
 bool Menu::activate(MenuChoice &choice)
@@ -156,6 +162,8 @@ bool Menu::activate(MenuChoice &choice)
     switch (state.selected) {
         case MenuLayout::ITEM_JOIN:
             state.screen = MenuState::Screen::Join;
+            if (Touch::ENABLED)
+                sf::Keyboard::setVirtualKeyboardVisible(true);
             return false;
         case MenuLayout::ITEM_OPTIONS:
             state.option = 0;

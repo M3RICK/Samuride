@@ -3,6 +3,7 @@
 #include "game_screen.hpp"
 #include "sprites.hpp"
 #include "../audio.hpp"
+#include "../touch.hpp"
 #include <algorithm>
 #include <format>
 
@@ -39,6 +40,35 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(std::format("DRONES DOWN  {}", drones_down), 26, NEON_RED, {24, y}, {0, 0});
     if (cyberpsycho && players.count(me) && ultimateOf(run.characterOf(me)) != Ultimate::None)
         drawUltimatePanel(players.at(me), me);
+    if (Touch::ENABLED && cyberpsycho && players.count(me))
+        drawTouchButtons(players.at(me), me);
+}
+
+// Phones: attack, and the ultimate above it, lit in its colour once ready
+void GameScreen::drawTouchButtons(const PlayerState &player, int me)
+{
+    Ultimate ultimate = ultimateOf(run.characterOf(me));
+    bool ready = player.ultimate >= 100;
+    float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 8);
+
+    auto button = [&](sf::Vector2f center, sf::Color color, bool lit, const std::string &label) {
+        sf::CircleShape circle(Touch::BUTTON_RADIUS);
+        circle.setOrigin({Touch::BUTTON_RADIUS, Touch::BUTTON_RADIUS});
+        circle.setPosition(center);
+        circle.setFillColor(withAlpha(color, lit ? 90 : 25));
+        circle.setOutlineColor(withAlpha(color, lit ? 255 : 120));
+        circle.setOutlineThickness(4);
+        canvas.draw(circle);
+        canvas.text(label, 30, withAlpha(color, lit ? 255 : 150), center);
+    };
+
+    button(Touch::ATTACK, NEON_RED, true, "ATTACK");
+    if (ultimate != Ultimate::None) {
+        sf::Color color = ultimateLook(ultimate).color;
+        button(Touch::ULTIMATE, color, ready, ready ? "ULT" : std::format("{}%", player.ultimate));
+        if (ready)
+            canvas.halo(Touch::ULTIMATE, Touch::BUTTON_RADIUS * (1.2f + 0.2f * pulse), withAlpha(color, 60));
+    }
 }
 
 // Top right: your portrait, your ultimate's name and a segmented gauge in its colour. Full, it lights up

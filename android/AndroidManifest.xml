@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No Java: Android's own NativeActivity loads libsamuride.so, SFML's main starts the game -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.m3rick.samuride"
+          android:versionCode="1"
+          android:versionName="dev">
+
+    <uses-feature android:glEsVersion="0x00010001" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application android:label="Samuride"
+                 android:hasCode="false"
+                 android:extractNativeLibs="true"
+                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+
+        <activity android:name="android.app.NativeActivity"
+                  android:label="Samuride"
+                  android:screenOrientation="sensorLandscape"
+                  android:configChanges="keyboardHidden|keyboard|orientation|screenSize|screenLayout"
+                  android:exported="true">
+
+            <meta-data android:name="android.app.lib_name" android:value="samuride" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
