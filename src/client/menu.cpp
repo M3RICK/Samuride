@@ -26,7 +26,7 @@ MenuChoice Menu::run(Renderer &renderer)
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
-            if (handleEvent(*event, choice))
+            if (handleEvent(Touch::asClick(*event), choice))
                 return choice;
         }
         renderer.renderMenu(state);

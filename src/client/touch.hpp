@@ -4,7 +4,7 @@
 #ifndef TOUCH_HPP
     #define TOUCH_HPP
 
-#include <SFML/System/Vector2.hpp>
+#include <SFML/Window/Event.hpp>
 
 namespace Touch {
 #ifdef __ANDROID__
@@ -22,6 +22,15 @@ namespace Touch {
     inline const char *hint(const char *keyboard, const char *touch)
     {
         return ENABLED ? touch : keyboard;
+    }
+
+    // SFML reports fingers only as touch events: for the menus, which work with the mouse, a finger
+    // going down is a click
+    inline sf::Event asClick(const sf::Event &event)
+    {
+        if (const auto *touch = event.getIf<sf::Event::TouchBegan>())
+            return sf::Event::MouseButtonPressed{sf::Mouse::Button::Left, touch->position};
+        return event;
     }
 
     // A little more than the drawn circle: fingers are fat
