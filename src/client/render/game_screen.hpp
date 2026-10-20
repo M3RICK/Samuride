@@ -34,6 +34,7 @@ private:
 
     static constexpr float BANNER_DURATION = 2.5f;
     static constexpr float EFFECT_DURATION = 0.6f;
+    static constexpr float COIN_FLY_SHARE = 0.4f;  // of the effect, for an eddy to reach its taker
     static constexpr float GAME_OVER_DELAY = 0.9f;
     static constexpr float PROMPT_DELAY = 1.5f;
 

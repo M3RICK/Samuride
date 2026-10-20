@@ -383,7 +383,12 @@ void GameScreen::drawEffects()
         sf::Vector2f tile(active.effect.x, active.effect.y);
 
         if (active.effect.type == COIN_TILE) {
-            // Coin pops: swells and fades out
+            // The eddy is sucked into whoever took it (from afar with the magnet), swelling and fading out
+            auto taker = run.display_positions.find(active.effect.player);
+            if (taker != run.display_positions.end()) {
+                float fly = std::min(1.0f, t / COIN_FLY_SHARE);
+                tile += (taker->second + sf::Vector2f(0, 0.5f) - tile) * fly * fly;
+            }
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
         } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
             // Blast ring, and the bounty for whoever took it down

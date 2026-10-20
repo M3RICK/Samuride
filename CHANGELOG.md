@@ -3,6 +3,12 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.8
+
+### Other
+- **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
+  were.
+
 ## v2.7
 
 ### New
