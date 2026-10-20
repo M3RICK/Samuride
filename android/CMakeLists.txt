@@ -14,6 +14,13 @@ list(REMOVE_ITEM SOURCES ${ROOT}/src/common/tests.cpp ${ROOT}/src/server/main.cp
 add_library(samuride SHARED ${SOURCES})
 target_include_directories(samuride PRIVATE ${ROOT}/src)
 
+# SFML is built static for Android by package.sh: everything ends up in libsamuride.so.
+# Its static config links Android's EGL and OpenGL ES by target name without defining them.
+set(SFML_STATIC_LIBRARIES ON)
+add_library(EGL::EGL INTERFACE IMPORTED)
+set_target_properties(EGL::EGL PROPERTIES INTERFACE_LINK_LIBRARIES EGL)
+add_library(GLES::GLES INTERFACE IMPORTED)
+set_target_properties(GLES::GLES PROPERTIES INTERFACE_LINK_LIBRARIES GLESv1_CM)
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Audio Main)
 target_link_libraries(samuride PRIVATE SFML::Graphics SFML::Audio android log)
 

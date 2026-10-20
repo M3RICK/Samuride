@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Builds an Android APK (arm64 phones): SFML and the game with the NDK, packed with the SDK's build
-# tools, signed with a local debug key. No Gradle, no Java code: Android's NativeActivity runs the game.
-# Writes dist/samuride-<version>-android-arm64.apk
+# Builds an Android APK: SFML and the game with the NDK, packed with the SDK's build tools, signed with a
+# local debug key. No Gradle, no Java code: Android's NativeActivity runs the game.
+# For arm64 phones, and x86_64 for the emulator on a PC (see emulator.sh): each device picks its own.
+# Writes dist/samuride-<version>-android.apk
 #
 # Usage: android/package.sh [version]
 # Needs a JDK, cmake, git, make, unzip, zip and curl (Ubuntu: openjdk-17-jdk-headless cmake git make
@@ -14,7 +15,7 @@ set -euo pipefail
 
 VERSION="${1:-dev}"
 SFML_VERSION="3.1.0"
-ABI="arm64-v8a"
+ABIS=(arm64-v8a x86_64)
 MIN_SDK=26
 TARGET_SDK=34
 NDK_VERSION="27.2.12479018"
@@ -24,7 +25,7 @@ BUILD="$ROOT/build/android"
 SDK="$BUILD/sdk"
 NDK="$SDK/ndk/$NDK_VERSION"
 TOOLS="$SDK/build-tools/$BUILD_TOOLS"
-PACKAGE="samuride-$VERSION-android-arm64"
+PACKAGE="samuride-$VERSION-android"
 
 # Android SDK and NDK, downloaded once
 if [ ! -x "$TOOLS/aapt2" ] || [ ! -d "$NDK" ]; then
@@ -39,33 +40,36 @@ if [ ! -x "$TOOLS/aapt2" ] || [ ! -d "$NDK" ]; then
         "platforms;android-$TARGET_SDK" "build-tools;$BUILD_TOOLS" "ndk;$NDK_VERSION" > /dev/null
 fi
 
-ANDROID_CMAKE=(-DCMAKE_SYSTEM_NAME=Android -DCMAKE_ANDROID_NDK="$NDK" -DCMAKE_ANDROID_ARCH_ABI="$ABI"
-               -DCMAKE_ANDROID_API="$MIN_SDK" -DCMAKE_ANDROID_STL_TYPE=c++_static -DCMAKE_BUILD_TYPE=Release)
-
-# SFML 3 for Android, static, built once; it installs itself into the NDK
-SFML_CMAKE_DIR="$NDK/sources/third_party/sfml/lib/$ABI/cmake/SFML"
-if [ ! -d "$SFML_CMAKE_DIR" ]; then
-    rm -rf "$BUILD/sfml-src" "$BUILD/sfml-build"
-    git clone -q --depth 1 --branch "$SFML_VERSION" https://github.com/SFML/SFML.git "$BUILD/sfml-src"
-    cmake -S "$BUILD/sfml-src" -B "$BUILD/sfml-build" "${ANDROID_CMAKE[@]}" \
-          -DBUILD_SHARED_LIBS=OFF -DSFML_BUILD_NETWORK=OFF
-    cmake --build "$BUILD/sfml-build" --parallel
-    cmake --install "$BUILD/sfml-build"
-fi
-
-# The game: libsamuride.so
-cmake -S "$ROOT/android" -B "$BUILD/game" "${ANDROID_CMAKE[@]}" -DSFML_DIR="$SFML_CMAKE_DIR"
-cmake --build "$BUILD/game" --parallel
-
 # What the APK holds: the manifest, the assets (read where the game expects them: assets/..., maps/...)
-# and the library
+# and a library per ABI
 STAGE="$BUILD/stage"
 rm -rf "$STAGE"
-mkdir -p "$STAGE/assets" "$STAGE/lib/$ABI"
+mkdir -p "$STAGE/assets"
 cp -r "$ROOT/assets" "$ROOT/maps" "$STAGE/assets/"
 # The sprite sheet sources are only needed to regenerate the characters
 rm -rf "$STAGE/assets/assets/sources"
-cp "$BUILD/game/libsamuride.so" "$STAGE/lib/$ABI/"
+
+for ABI in "${ABIS[@]}"; do
+    ANDROID_CMAKE=(-DCMAKE_SYSTEM_NAME=Android -DCMAKE_ANDROID_NDK="$NDK" -DCMAKE_ANDROID_ARCH_ABI="$ABI"
+                   -DCMAKE_ANDROID_API="$MIN_SDK" -DCMAKE_ANDROID_STL_TYPE=c++_static -DCMAKE_BUILD_TYPE=Release)
+
+    # SFML 3 for Android, static, built once per ABI; it installs itself into the NDK
+    SFML_CMAKE_DIR="$NDK/sources/third_party/sfml/lib/$ABI/cmake/SFML"
+    if [ ! -d "$SFML_CMAKE_DIR" ]; then
+        [ -d "$BUILD/sfml-src" ] || git clone -q --depth 1 --branch "$SFML_VERSION" https://github.com/SFML/SFML.git "$BUILD/sfml-src"
+        rm -rf "$BUILD/sfml-build-$ABI"
+        cmake -S "$BUILD/sfml-src" -B "$BUILD/sfml-build-$ABI" "${ANDROID_CMAKE[@]}" \
+              -DBUILD_SHARED_LIBS=OFF -DSFML_BUILD_NETWORK=OFF
+        cmake --build "$BUILD/sfml-build-$ABI" --parallel
+        cmake --install "$BUILD/sfml-build-$ABI"
+    fi
+
+    # The game: libsamuride.so
+    cmake -S "$ROOT/android" -B "$BUILD/game-$ABI" "${ANDROID_CMAKE[@]}" -DSFML_DIR="$SFML_CMAKE_DIR"
+    cmake --build "$BUILD/game-$ABI" --parallel
+    mkdir -p "$STAGE/lib/$ABI"
+    cp "$BUILD/game-$ABI/libsamuride.so" "$STAGE/lib/$ABI/"
+done
 
 "$TOOLS/aapt2" link -o "$BUILD/unaligned.apk" --manifest "$ROOT/android/AndroidManifest.xml" \
     -I "$SDK/platforms/android-$TARGET_SDK/android.jar" --min-sdk-version "$MIN_SDK" \
@@ -79,6 +83,6 @@ if [ ! -f "$KEYSTORE" ]; then
             -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Samuride" > /dev/null 2>&1
 fi
 mkdir -p "$ROOT/dist"
-"$TOOLS/zipalign" -f -P 16 4 "$BUILD/unaligned.apk" "$BUILD/aligned.apk"
+"$TOOLS/zipalign" -f -p 4 "$BUILD/unaligned.apk" "$BUILD/aligned.apk"
 "$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --out "$ROOT/dist/$PACKAGE.apk" "$BUILD/aligned.apk"
 echo "Packed dist/$PACKAGE.apk"
