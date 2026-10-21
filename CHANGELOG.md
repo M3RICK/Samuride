@@ -3,7 +3,7 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
-## Next
+## v2.9
 
 ### New
 - **Voice lines.** Johnny's gun now fires with his real Malorian shot, and he speaks when he fires his

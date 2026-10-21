@@ -8,13 +8,21 @@ set -euo pipefail
 VERSION="$1"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-NOTES="$(awk -v version="$VERSION" '
-    /^## / { inside = ($2 == version) ; next }
-    inside
-' "$ROOT/CHANGELOG.md")"
+section() {
+    awk -v version="$1" '
+        /^## / { inside = ($2 == version) ; next }
+        inside
+    ' "$ROOT/CHANGELOG.md"
+}
 
-if [ -z "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
-    echo "No notes for $VERSION in CHANGELOG.md: add a \"## $VERSION\" section first" >&2
+empty() { [ -z "$(echo "$1" | tr -d '[:space:]')" ]; }
+
+# Tagged before renaming "## Next" to "## <version>": the Next section is this release's notes
+NOTES="$(section "$VERSION")"
+empty "$NOTES" && NOTES="$(section Next)"
+
+if empty "$NOTES"; then
+    echo "No notes for $VERSION in CHANGELOG.md: add a \"## $VERSION\" (or \"## Next\") section first" >&2
     exit 1
 fi
 echo "$NOTES"
