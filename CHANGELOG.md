@@ -3,6 +3,12 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## Next
+
+### New
+- **Voice lines.** Johnny's gun now fires with his real Malorian shot, and he speaks when he fires his
+  ultimate. Jinx throws one of six lines ("Bye bye!", "See ya!", "Watch this!"...) when she launches Fishbones.
+
 ## v2.8
 
 ### New
@@ -40,6 +46,7 @@ taken from this file. Players on different versions can't play together: update 
 - **You blink while you can't be hurt**, for the second after a broken shield, the Sandevistan or the titan.
 - **The eddie magnet pulls**: the eddies it grabs now fly into you instead of vanishing where they
   were.
+||||||| parent of 1bd16eb (Johnny fires his recorded Malorian and speaks on his ultimate, Jinx shouts a line when she launches Fishbones)
 
 ## v2.7
 

@@ -6,16 +6,17 @@
 #include <optional>
 #include <vector>
 
-// Music, plus sound effects synthesized at start-up: no audio files to ship
+// Music, sound effects synthesized at start-up, and the runners' recorded lines
 class Audio {
 public:
-    // Each one is synthesized in Audio::synthesize()
+    // Each one is synthesized in Audio::synthesize(), but the recorded ones loaded in loadLines()
     enum class Sfx {
         Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm,       // the run and the menus
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
         Stomp, Roar, Steam,                                         // titans and the Attack Titan
         Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
         FireWave, Nuke, Breach, Charge, UltimateReady,              // ultimates
+        JohnnyGun, JohnnyUlt, JinxUlt,                              // recorded: assets/voices
     };
 
     Audio();
@@ -37,6 +38,8 @@ private:
     sf::Music game_music;   // loops during the runs
 
     std::map<Sfx, sf::SoundBuffer> buffers;
+    // A recorded sound has a few takes: play() picks one at random
+    std::map<Sfx, std::vector<sf::SoundBuffer>> lines;
     std::vector<sf::Sound> voices;     // played round-robin so effects can overlap
     size_t next_voice = 0;
     // A sound started again within this is skipped: twenty coins in one frame ring as one
@@ -47,6 +50,7 @@ private:
     std::optional<sf::Sound> jet;
 
     void loadMusic();
+    void loadLines();
     void synthesize();
 };
 

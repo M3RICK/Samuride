@@ -135,6 +135,7 @@ Audio::Audio()
 {
     loadMusic();
     synthesize();
+    loadLines();
 
     for (size_t i = 0; i < VOICES; i++)
         voices.emplace_back(buffers.at(Sfx::Coin));
@@ -154,6 +155,25 @@ void Audio::loadMusic()
         menu_music.setLooping(true);
     if (game_music.openFromFile("assets/music/run.mp3"))
         game_music.setLooping(true);
+}
+
+void Audio::loadLines()
+{
+    const std::map<Sfx, std::vector<const char *>> files = {
+        {Sfx::JohnnyGun, {"johny_gun_low", "johny_gun_loud"}},
+        {Sfx::JohnnyUlt, {"johny_ult"}},
+        {Sfx::JinxUlt, {"jinx_ult_byebye", "jinx_ult_catch", "jinx_ult_huh", "jinx_ult_seeya",
+                        "jinx_ult_watchthis", "jinx_ult_wo"}},
+    };
+
+    for (const auto &[sfx, names] : files)
+        for (const char *name : names) {
+            sf::SoundBuffer buffer;
+            if (buffer.loadFromFile(std::string("assets/voices/") + name + ".ogg"))
+                lines[sfx].push_back(std::move(buffer));
+            else
+                DEBUG_LOG("Failed to load a voice line");
+        }
 }
 
 // Retro arcade palette: square-wave blips, saw sweeps and filtered noise
@@ -243,7 +263,14 @@ void Audio::play(Sfx sfx)
     sf::Sound &voice = voices[next_voice];
 
     next_voice = (next_voice + 1) % VOICES;
-    voice.setBuffer(buffers.at(sfx));
+    static std::mt19937 rng(std::random_device{}());
+    auto takes = lines.find(sfx);
+    if (takes != lines.end())
+        voice.setBuffer(takes->second[std::uniform_int_distribution<size_t>(0, takes->second.size() - 1)(rng)]);
+    else if (buffers.count(sfx))
+        voice.setBuffer(buffers.at(sfx));
+    else
+        return;
     voice.play();
 }
 

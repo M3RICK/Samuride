@@ -44,6 +44,7 @@ void Ultimates::start(const UltimateEvent &ultimate)
 
     if (ultimate.ultimate == Ultimate::FireWave) {
         audio.play(Audio::Sfx::FireWave);
+        audio.play(Audio::Sfx::JohnnyUlt);
         run.flashScreen(NEON_ORANGE, 0.4f);
         particles.emit(body + sf::Vector2f(0.8f, 0), 40, NEON_YELLOW, 10, 0.4f, 0);
         fire_waves.push_back({ultimate.x, ultimate.x, sf::Clock()});
@@ -54,6 +55,7 @@ void Ultimates::start(const UltimateEvent &ultimate)
     } else if (ultimate.ultimate == Ultimate::Fishbones) {
         // She charges it first, standing still: it fires in drawRockets
         audio.play(Audio::Sfx::Charge);
+        audio.play(Audio::Sfx::JinxUlt);
         rockets.push_back({ultimate.x, ultimate.y, ultimate.x, false, false, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::ThunderSpears) {
         audio.play(Audio::Sfx::Thunder);

@@ -48,7 +48,8 @@ void Shots::handle(GameState &state)
                 trails.push_back({shot.player, shot.weapon, muzzle.y + randf(-0.08f, 0.08f), sf::Clock()});
                 break;
             default:
-                audio.play(Audio::Sfx::Gun);
+                // Johnny (runner 0) fires his recorded Malorian, David the synthesized gun
+                audio.play(run.characterOf(shot.player) == 0 ? Audio::Sfx::JohnnyGun : Audio::Sfx::Gun);
                 particles.emit(muzzle, 5, NEON_YELLOW, 3, 0.15f, 0);
                 trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
                 break;
