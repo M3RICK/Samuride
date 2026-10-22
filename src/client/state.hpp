@@ -11,6 +11,7 @@
 #include <vector>
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
+#include "../common/missiles.hpp"
 #include "../common/shift.hpp"
 #include "../common/powerups.hpp"
 
@@ -50,6 +51,12 @@ struct TitanState {
     float x;    // left edge, in tiles
 };
 
+struct MissileState {
+    float x;        // its tip, in tiles
+    float y;
+    bool locked;    // its line won't follow its target anymore
+};
+
 struct CollisionEffect {
     char type;
     int player;
@@ -75,6 +82,7 @@ private:
     std::vector<ShotEvent> pending_shots;
     std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
+    std::vector<MissileState> missiles;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
@@ -85,6 +93,7 @@ public:
     void pushShot(ShotEvent shot);
     void pushUltimate(UltimateEvent ultimate);
     void setTitans(std::vector<TitanState> list);
+    void setMissiles(std::vector<MissileState> list);
     void setCountdown(int value);
     void updatePlayer(int player_number, const PlayerState &player);
     void handleCollision(char type, int player, int x, int y);
@@ -104,6 +113,7 @@ public:
     std::vector<ShotEvent> takeShots();
     std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;
+    std::vector<MissileState> getMissiles() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();

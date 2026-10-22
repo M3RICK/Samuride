@@ -20,6 +20,7 @@ bool Server::resetMap()
     sweeps.clear();
     nukes.clear();
     resetTitans();
+    resetMissiles();
 
     if (!config.map_path.empty()) {
         if (!game_map.loadFromFile(config.map_path)) {
@@ -164,6 +165,7 @@ void Server::updatePlayers()
     }
 
     updateTitans(rear_x);
+    updateMissiles(rear_x);
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -174,11 +176,13 @@ void Server::updatePlayers()
     }
 
     spawnTitans(leader_x);
+    spawnMissiles(leader_x);
     updateProjectiles();
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
     sendTitans();
+    sendMissiles();
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -225,6 +229,8 @@ bool Server::checkPlayerCollisions(Player &player)
 
     if (!player.isInvincible() && hitByTitan(player))
         return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
+    if (!player.isInvincible() && hitByMissile(player))
+        return hurt(player, MISSILE_HIT, player.getX(), player.getY() + 1);
     return false;
 }
 

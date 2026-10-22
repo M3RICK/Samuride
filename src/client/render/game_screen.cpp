@@ -14,7 +14,7 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
+      titans(canvas, sprites, run, audio), missiles(canvas, run, audio), shots(canvas, run, audio, particles),
       ultimates(canvas, sprites, run, audio, particles) {
 }
 
@@ -62,6 +62,7 @@ void GameScreen::resetRun()
     run.reset();
     particles.clear();
     titans.reset();
+    missiles.reset();
     shots.clear();
     ultimates.clear();
     effects.clear();
@@ -182,6 +183,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
         drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    std::vector<MissileState> missile_states = state.getMissiles();
+    missiles.draw(missile_states);
     titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
         return run.toScreen({titan.x, 0}).x > Screen::WIDTH;
     });
@@ -197,6 +200,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawFlashAndCallout();
     drawEffects();
     titans.drawWarnings(titan_states);
+    missiles.drawWarnings(missile_states);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
@@ -301,6 +305,12 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         run.shakeAtLeast(0.6f, 22);
         run.death_clocks.try_emplace(effect.player);
         particles.emit(tile_center, 40, NEON_RED, 9, 0.7f, 12);
+        particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
+    } else if (effect.type == MISSILE_HIT) {
+        audio.play(Audio::Sfx::Explosion);
+        run.shakeAtLeast(0.6f, 22);
+        run.death_clocks.try_emplace(effect.player);
+        particles.emit(tile_center, 40, NEON_ORANGE, 9, 0.7f, 12);
         particles.emit(tile_center, 20, sf::Color::White, 6, 0.5f, 12);
     } else if (effect.type == TITAN_KILL) {
         // Steam bursting from the nape

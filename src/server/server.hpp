@@ -1,6 +1,6 @@
 // The authoritative game server: it runs the game, the clients only send inputs and draw what it says.
 // Split by theme: server.cpp (connections, messages), logic.cpp (lobby, physics, collisions),
-// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, shift.cpp (the Attack Titan
+// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, missiles.cpp, shift.cpp (the Attack Titan
 // power-up) and powerups.cpp (shield, Sandevistan, Berserk).
 
 #ifndef SERVER_HPP
@@ -17,6 +17,7 @@
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
+#include "../common/missiles.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -40,16 +41,23 @@ private:
     static constexpr size_t CHUNK_WIDTH = 40;
     static constexpr size_t SAFE_START = 14;
     static constexpr float LOOKAHEAD = 40;
-    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 50;   // ~2000 m
+    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 30;   // ~1200 m
 
-    // Run speed in tiles per second, ramps up over time: top speed after ~200 s, ~2300 m
-    static constexpr float START_SPEED = 8.0f;
-    static constexpr float MAX_SPEED = 15.0f;
-    static constexpr float ACCELERATION = 0.035f;
+    // Run speed in tiles per second, ramps up over time: top speed after ~2 min, ~1500 m
+    static constexpr float START_SPEED = 9.0f;
+    static constexpr float MAX_SPEED = 16.0f;
+    static constexpr float ACCELERATION = 0.06f;
 
     struct Titan {
         TitanType type;
         float x;        // left edge, in tiles
+    };
+
+    struct Missile {
+        int target_fd;
+        float x;        // its tip, in tiles
+        float y;
+        float track;    // seconds it still follows its target's height
     };
 
     struct Projectile {
@@ -110,6 +118,9 @@ private:
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
+
+    std::vector<Missile> missiles;
+    float missile_timer;    // seconds before the next missile
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -251,6 +262,20 @@ private:
     void slashTitans(int client_fd, const Player &player, float reach);
 
     void sendTitans();
+
+    //===========================================================================
+    // Missiles (missiles.cpp)
+    //===========================================================================
+
+    void resetMissiles();
+
+    void spawnMissiles(float leader_x);
+
+    void updateMissiles(float rear_x);
+
+    bool hitByMissile(const Player &player);
+
+    void sendMissiles();
 
     //===========================================================================
     // Attack Titan power-up (shift.cpp)

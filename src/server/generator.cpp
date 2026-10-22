@@ -1,4 +1,4 @@
-// Random map chunks: zapper beams, coin blocks and waves, drone squads
+// Random map chunks: zapper beams and corridors, coin blocks and waves, drone squads
 
 #include "generator.hpp"
 #include "../common/cyberpsycho.hpp"
@@ -24,11 +24,11 @@ static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
 {
     int height = rows.size();
     // Always leave 4 free rows in a column: the player is 2 tiles tall. Long beams stay rare:
-    // the shorter of two rolls, 4 tiles only past ~1300 m and 5 at full difficulty
+    // the shorter of two rolls, 4 tiles only past ~800 m and 5 at full difficulty
     int max_len = std::clamp(2 + static_cast<int>(3 * difficulty), 2, height - 4);
     int len = std::min(randInt(rng, 2, max_len), randInt(rng, 2, max_len));
 
-    switch (randInt(rng, 0, 2)) {
+    switch (randInt(rng, 0, 3)) {
         case 0: {
             int y = randInt(rng, 0, height - len);
             for (int i = 0; i < len; i++)
@@ -40,6 +40,16 @@ static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
             for (int i = 0; i < len; i++)
                 setTile(rows, x + i, y, ZAPPER_TILE);
             return len;
+        }
+        case 2: {
+            // A corridor: two horizontal beams 4 free rows apart, longer as the run goes on
+            int width = randInt(rng, 4, 6 + static_cast<int>(4 * difficulty));
+            int y = randInt(rng, 0, height - 6);
+            for (int i = 0; i < width; i++) {
+                setTile(rows, x + i, y, ZAPPER_TILE);
+                setTile(rows, x + i, y + 5, ZAPPER_TILE);
+            }
+            return width;
         }
         default: {
             int y = randInt(rng, 0, height - len);

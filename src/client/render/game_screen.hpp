@@ -12,6 +12,7 @@
 #include "tiles.hpp"
 #include "players.hpp"
 #include "titans.hpp"
+#include "missiles.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
 #include "../settings.hpp"
@@ -50,6 +51,7 @@ private:
     Tiles tiles;
     Players runners;
     Titans titans;
+    Missiles missiles;
     Shots shots;
     Ultimates ultimates;
 

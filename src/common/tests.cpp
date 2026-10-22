@@ -6,6 +6,7 @@
 #include "../server/player.hpp"
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
+#include "missiles.hpp"
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -90,6 +91,17 @@ static void testGenerator()
             assert(obstacles <= 6);
         }
     }
+}
+
+// A missile hits the body, from head to feet, and only the body
+static void testMissileHit()
+{
+    assert(missileHits(10.5f, 6.0f, 10, 5));
+    assert(missileHits(10.5f, 5.0f, 10, 5));
+    assert(missileHits(10.5f, 7.0f, 10, 5));
+    assert(!missileHits(10.5f, 4.3f, 10, 5));
+    assert(!missileHits(10.5f, 7.7f, 10, 5));
+    assert(!missileHits(11.5f, 6.0f, 10, 5));
 }
 
 // The shield takes one hit then gives a moment to get clear; the Sandevistan outruns everyone
@@ -280,6 +292,7 @@ int main()
     testIntegers();
     testMapChunks();
     testGenerator();
+    testMissileHit();
     testPowerUps();
     testHack();
     testUltimate();

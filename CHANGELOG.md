@@ -5,11 +5,15 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v2.9
 
+### New
+- **Missiles.** Past 150 m, a missile flies in from the right every 5 to 10 s. A yellow warning on the
+  right edge follows your height, turns red when the missile locks its line, then it comes in: move.
+- **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.
+
 ### Balance
-- **Easier runs, closer to Jetpack Joyride.** The run starts a bit slower and speeds up far more gently:
-  top speed is lower and only reached around 2300 m instead of 800 m. Obstacles get harder over ~2000 m
-  instead of ~500 m.
-- **Fewer tall zappers.** 4-tile zappers only show up past ~1300 m and stay rare; most beams are 2 or 3 tiles.
+- **Closer to Jetpack Joyride.** Speed climbs more gently: top speed is a bit lower and reached around
+  1500 m instead of 800 m. Obstacles get harder over ~1200 m instead of ~500 m.
+- **Fewer tall zappers.** 4-tile zappers only show up past ~800 m and stay rare; most beams are 2 or 3 tiles.
 
 ## v2.85
 
