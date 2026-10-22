@@ -183,9 +183,9 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
         drawCharacterCard(i, i == menu.character, menu.wallet, time);
 
     if (!menu.error.empty())
-        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 975});
+        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 990});
 
-    canvas.text(Touch::hint("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // Portrait, name, and the runner itself: running, then flying when selected.
@@ -193,19 +193,19 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
 void MenuScreens::drawCharacterCard(int index, bool selected, const Wallet &wallet, float time)
 {
     const Character &character = sprites.characters[index];
-    sf::FloatRect box = MenuLayout::cardBox(index, sprites.characters.size());
+    sf::FloatRect box = MenuLayout::cardBox(index);
     float center_x = box.getCenter().x;
     float top = box.position.y;
     bool locked = !wallet.isUnlocked(index);
     sf::Color tint = locked ? sf::Color(25, 20, 40) : selected ? sf::Color::White : FADED;
 
     canvas.card(box, selected);
-    canvas.image(character.portrait, {center_x, top + 25}, 150, {0.5f, 0}, tint);
+    canvas.image(character.portrait, {center_x, top + 15}, 90, {0.5f, 0}, tint);
 
     if (selected)
-        canvas.glitchText(character.name, 46, NEON_YELLOW, {center_x, top + 215});
+        canvas.glitchText(character.name, 46, NEON_YELLOW, {center_x, top + 130});
     else
-        canvas.text(character.name, 40, DIM_WHITE, {center_x, top + 215});
+        canvas.text(character.name, 40, DIM_WHITE, {center_x, top + 130});
 
     drawCharacterPreview(character, box, selected && !locked, tint, time);
     if (locked)
@@ -217,12 +217,12 @@ void MenuScreens::drawPriceTag(int index, sf::FloatRect box, const Wallet &walle
 {
     int price = RUNNERS[index].price;
     bool affordable = index == wallet.unlocked && wallet.eddies >= price;
-    sf::Vector2f center = box.getCenter() + sf::Vector2f(0, 90);
+    sf::Vector2f center = box.getCenter() + sf::Vector2f(0, 30);
 
     canvas.text("LOCKED", 34, DIM_WHITE, center);
-    canvas.text(std::format("{} EDDIES", price), 30, affordable ? NEON_YELLOW : HINT_GREY, center + sf::Vector2f(0, 45));
+    canvas.text(std::format("{} EDDIES", price), 30, affordable ? NEON_YELLOW : HINT_GREY, center + sf::Vector2f(0, 40));
     if (affordable)
-        canvas.text(Touch::hint("[ENTER] BUY", "TAP TO BUY"), 24, NEON_CYAN, center + sf::Vector2f(0, 85));
+        canvas.text(Touch::hint("[ENTER] BUY", "TAP TO BUY"), 24, NEON_CYAN, center + sf::Vector2f(0, 75));
 }
 
 // Standing at the bottom of the card; the selected one runs, then flies
@@ -235,13 +235,13 @@ void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect
     bool flying = selected && static_cast<int>(time / 2.5f) % 2 == 1;
     const Animation &anim = flying ? character.hover : character.run;
     // Cells are padded for trails and blades, they may spill a little out of the card
-    float scale = std::min(190.f / character.body, (box.size.x + 60) / character.frame_size.x);
+    float scale = std::min(130.f / character.body, (box.size.x + 60) / character.frame_size.x);
 
     sf::Sprite sprite(character.sheet);
     sprite.setTextureRect(character.frameRect(anim, selected ? anim.frameAt(time) : 0));
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
-    sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 30});
+    sprite.setPosition({box.getCenter().x, box.position.y + box.size.y - 20});
     sprite.setColor(tint);
     canvas.draw(sprite);
 }
@@ -387,7 +387,7 @@ void MenuScreens::drawModeSelect(const MenuState &menu)
     for (int i = 0; i < MenuLayout::MODE_COUNT; i++)
         drawModeCard(i, i == menu.game_mode);
 
-    canvas.text(Touch::hint("[LEFT / RIGHT] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 void MenuScreens::drawModeCard(int index, bool selected)

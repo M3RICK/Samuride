@@ -52,10 +52,13 @@ static void moveSelection(int &selected, sf::Keyboard::Key key, int count, int c
         step = -1;
     else if (key == Key::Right || key == Key::D)
         step = 1;
-    else if (key == Key::Up || key == Key::W)
-        step = -columns;
-    else if (key == Key::Down || key == Key::S)
-        step = columns;
+    else if (key == Key::Up || key == Key::W || key == Key::Down || key == Key::S) {
+        // Same column a row up or down, wrapping; the last card where that row is short
+        int rows = (count + columns - 1) / columns;
+        int row = (selected / columns + (key == Key::Up || key == Key::W ? rows - 1 : 1)) % rows;
+        selected = std::min(row * columns + selected % columns, count - 1);
+        return;
+    }
     selected = ((selected + step) % count + count) % count;
 }
 
@@ -341,14 +344,13 @@ void Menu::leaveOptions()
 bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
 {
     int count = RUNNER_COUNT;
-    auto box = [count](int index) { return MenuLayout::cardBox(index, count); };
 
     if (isKey(event, sf::Keyboard::Key::Escape)) {
         state.error.clear();
         state.screen = MenuState::Screen::Main;
         return false;
     }
-    if (!navigate(event, state.character, count, count, box))
+    if (!navigate(event, state.character, count, MenuLayout::CARD_COLUMNS, MenuLayout::cardBox))
         return false;
     if (!state.wallet.isUnlocked(state.character)) {
         buyCharacter();
