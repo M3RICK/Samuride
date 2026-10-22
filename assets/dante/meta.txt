@@ -1,0 +1,13 @@
+name DANTE
+sheet sheet.png
+portrait portrait.png
+frame 207 119
+feet 112
+body 103
+run 0 13 14 loop
+rise 1 11 12 loop
+hover 2 11 12 loop
+fall 3 4 8 loop
+death 4 10 10 once
+attack 5 5 18 once
+shoot 6 3 18 once
