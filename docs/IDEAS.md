@@ -84,12 +84,9 @@ The goal: friends who never coded change the game and send real feedback. In Eng
 - Not planned: a scripting language for new weapons. A lot of work and bugs for friends who mostly
   want to change numbers and add runners.
 
-## Where we stopped (2026-10-22)
+## Where we stopped
 
-Branch `2.9`, nothing pushed. The Hunter is in and played (new Bloodborne sheet, tap/hold F, parry
-coached on the reticle, heavier cleaver, visceral), his list above is what's left on him. The tuning
-file is done. Next session: pick from the list just above, then Dante (needs his sprite sheet), then
-Adam Smasher.
+See `docs/NEXT.md`.
 
 ## Later
 
