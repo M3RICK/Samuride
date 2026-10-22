@@ -15,9 +15,9 @@
 #include "snipers.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
+#include "../audio.hpp"
 #include "../settings.hpp"
 
-class Audio;
 class Backdrops;
 
 class GameScreen {
@@ -124,7 +124,17 @@ private:
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();
+    // Hit effects (game_effects.cpp)
     void addEffect(const CollisionEffect &effect, int me);
+    void playerDown(const CollisionEffect &effect, Audio::Sfx sound, sf::Color color, float shake, float strength);
+    void titanDown(const CollisionEffect &effect, bool mine);
+    void droneDown(const CollisionEffect &effect, int me);
+    void hackBounced(const CollisionEffect &effect);
+    void spearBlast(const CollisionEffect &effect);
+    void zapperHacked(const CollisionEffect &effect);
+    void shieldBroken(const CollisionEffect &effect, bool mine);
+    void powerUpTaken(const CollisionEffect &effect, bool mine);
+    void eddyTaken(const CollisionEffect &effect);
     void drawEffects();
     void drawCuts();
     void drawZaps();
