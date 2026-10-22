@@ -1,35 +1,39 @@
-// Arasaka snipers: aimed on a timer at one player, ticked down, streamed to clients with MSG_SNIPERS
+// The Arasaka snipers on the server (see snipers.hpp)
 
-#include "server.hpp"
+#include "snipers.hpp"
+#include "player.hpp"
+#include "../common/protocol.hpp"
 #include <algorithm>
 
-void Server::resetSnipers()
+SniperPhase SniperSquad::Sniper::phase() const
 {
-    snipers.clear();
-    sniper_timer = 2;
+    if (time < SNIPER_TRACK_TIME)
+        return SniperPhase::Tracking;
+    return time < SNIPER_TRACK_TIME + SNIPER_AIM_TIME ? SniperPhase::Aiming : SniperPhase::Firing;
 }
 
-// Aimed at a random player, at their middle
-void Server::spawnSnipers(float leader_x)
+void SniperSquad::reset()
 {
-    if (leader_x < SNIPER_FIRST_DISTANCE || players.empty())
-        return;
+    snipers.clear();
+    timer = 2;
+}
 
-    sniper_timer -= TICK_DT;
-    if (sniper_timer > 0)
+void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players)
+{
+    if (leader_x < SNIPER_FIRST_DISTANCE || players.empty() || (timer -= dt) > 0)
         return;
 
     std::uniform_real_distribution<float> interval(SNIPER_MIN_INTERVAL, std::max(SNIPER_MIN_INTERVAL, SNIPER_MAX_INTERVAL));
     auto target = std::next(players.begin(), std::uniform_int_distribution<size_t>(0, players.size() - 1)(rng));
 
-    sniper_timer = interval(rng);
+    timer = interval(rng);
     snipers.push_back({target->first, target->second.getY() + Player::HEIGHT / 2, 0});
 }
 
-void Server::updateSnipers()
+void SniperSquad::update(float dt, const std::map<int, Player> &players)
 {
     for (Sniper &sniper : snipers) {
-        sniper.time += TICK_DT;
+        sniper.time += dt;
 
         auto target = players.find(sniper.target_fd);
         if (sniper.phase() == SniperPhase::Tracking && target != players.end())
@@ -41,16 +45,14 @@ void Server::updateSnipers()
     });
 }
 
-// The beam hits everyone in its row, the whole time it lasts: a shield takes it, then its grace does
-bool Server::hitBySniper(const Player &player) const
+bool SniperSquad::hit(const Player &player) const
 {
     return std::ranges::any_of(snipers, [&](const Sniper &sniper) {
         return sniper.phase() == SniperPhase::Firing && sniperHits(sniper.y, player.getY());
     });
 }
 
-// [count]([phase][y in 1/100 tile, 2 bytes])...
-void Server::sendSnipers()
+std::vector<uint8_t> SniperSquad::serialize() const
 {
     std::vector<uint8_t> data = {static_cast<uint8_t>(snipers.size())};
 
@@ -58,5 +60,5 @@ void Server::sendSnipers()
         data.push_back(static_cast<uint8_t>(sniper.phase()));
         Protocol::pushU16(data, std::max(0.0f, sniper.y) * POSITION_SCALE);
     }
-    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, data));
+    return data;
 }

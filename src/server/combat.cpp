@@ -132,7 +132,7 @@ float Server::spearHit(const Projectile &shot, float from_x)
             if (isLiveDrone(x, y))
                 return x + 0.5f;
         }
-        if (titanInPath(x, x, shot.y))
+        if (titans.inPath(x, x, shot.y, game_map.getHeight()))
             return x + 0.5f;
     }
     return -1;
@@ -167,14 +167,28 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from, int t
             }
         }
     }
-    std::erase_if(titans, [&](const Titan &titan) {
-        bool reached = bottom + 1 > height - titanStats(titan.type).height;
-        if (titan.x > to || titan.x < titans_from || !reached || owner == players.end())
-            return false;
-        owner->second.addScore(TITAN_BOUNTY);
-        notifyCollision(TITAN_KILL, owner->second, titan.x, height - 1);
-        return true;
-    });
+    if (owner == players.end())
+        return;
+    auto reached = [&](const Horde::Titan &titan) {
+        return titan.x <= to && titan.x >= titans_from && bottom + 1 > height - titanStats(titan.type).height;
+    };
+    for (float x : titans.takeDown(reached))
+        titanDown(owner->second, x);
+}
+
+void Server::slashTitans(Player &player, float reach)
+{
+    auto reached = [&](const Horde::Titan &titan) {
+        return titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
+    };
+    for (float x : titans.takeDown(reached))
+        titanDown(player, x);
+}
+
+void Server::titanDown(Player &player, float x)
+{
+    player.addScore(TITAN_BOUNTY);
+    notifyCollision(TITAN_KILL, player, x, game_map.getHeight() - 1);
 }
 
 void Server::switchOffZapper(int x, int y, float seconds)

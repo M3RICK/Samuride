@@ -17,8 +17,8 @@ bool Server::resetMap()
     destroyed_drones.clear();
     projectiles.clear();
     hacked_zappers.clear();
-    resetTitans();
-    resetSnipers();
+    titans.reset();
+    snipers.reset();
 
     if (!config.map_path.empty()) {
         if (!game_map.loadFromFile(config.map_path)) {
@@ -162,8 +162,8 @@ void Server::updatePlayers()
         rear_x = std::min(rear_x, player.getX());
     }
 
-    updateTitans(rear_x);
-    updateSnipers();
+    titans.update(rear_x, TICK_DT);
+    snipers.update(TICK_DT, players);
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -173,14 +173,14 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
-    spawnTitans(leader_x);
-    spawnSnipers(leader_x);
+    titans.spawn(leader_x, TICK_DT, rng);
+    snipers.spawn(leader_x, TICK_DT, rng, players);
     updateProjectiles();
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
-    sendTitans();
-    sendSnipers();
+    broadcastToAllClients(Protocol::createPacket(MSG_TITANS, titans.serialize()));
+    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, snipers.serialize()));
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -225,9 +225,9 @@ bool Server::checkPlayerCollisions(Player &player)
         }
     }
 
-    if (!player.isInvincible() && hitByTitan(player))
+    if (!player.isInvincible() && titans.hit(player, game_map.getHeight()))
         return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
-    if (!player.isInvincible() && hitBySniper(player))
+    if (!player.isInvincible() && snipers.hit(player))
         return hurt(player, SNIPER_HIT, player.getX(), player.getY() + 1);
     return false;
 }

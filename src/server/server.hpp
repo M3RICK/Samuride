@@ -17,8 +17,8 @@
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
-#include "../common/titans.hpp"
-#include "../common/snipers.hpp"
+#include "titans.hpp"
+#include "snipers.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -42,24 +42,6 @@ private:
     static constexpr float LOOKAHEAD = 40;
     // The run's speed and difficulty: common/difficulty.hpp
 
-    struct Titan {
-        TitanType type;
-        float x;        // left edge, in tiles
-    };
-
-    struct Sniper {
-        int target_fd;
-        float y;        // its line, in tiles
-        float time;     // seconds since it started aiming
-
-        SniperPhase phase() const
-        {
-            if (time < SNIPER_TRACK_TIME)
-                return SniperPhase::Tracking;
-            return time < SNIPER_TRACK_TIME + SNIPER_AIM_TIME ? SniperPhase::Aiming : SniperPhase::Firing;
-        }
-    };
-
     struct Projectile {
         int owner_fd;
         float x;
@@ -71,35 +53,32 @@ private:
     };
 
     ServerConfig config;
-    int server_fd;
-    std::atomic<bool> stopping;
+    int server_fd = -1;
+    std::atomic<bool> stopping = false;
     size_t required_players;
 
     // The run
     Map game_map;
-    std::mt19937 rng;
-    int chunks_generated;
-    int last_orb_chunk;     // chunk of the last Attack Titan orb
-    float run_speed;
-    Phase phase;
-    int countdown;
-    int countdown_ticks;
+    std::mt19937 rng{std::random_device{}()};
+    int chunks_generated = 0;
+    int last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;     // chunk of the last Attack Titan orb
+    float run_speed = START_SPEED;
+    Phase phase = Phase::Waiting;
+    int countdown = 0;
+    int countdown_ticks = 0;
     std::set<int> ready_clients;
 
     // Picked by the first player in the lobby: the host
-    uint8_t district;
-    GameMode mode;
+    uint8_t district = 0;
+    GameMode mode = GameMode::Classic;
 
     // CYBERPSYCHO
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
 
-    std::vector<Titan> titans;
-    float titan_timer;      // seconds before the next titan
-
-    std::vector<Sniper> snipers;
-    float sniper_timer;     // seconds before the next sniper aims
+    Horde titans;
+    SniperSquad snipers;
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -203,36 +182,6 @@ private:
     void spearBlast(int owner_fd, float x);
 
     //===========================================================================
-    // Titans (titans.cpp)
-    //===========================================================================
-
-    void resetTitans();
-
-    void spawnTitans(float leader_x);
-
-    void updateTitans(float rear_x);
-
-    bool hitByTitan(const Player &player) const;
-
-    Titan *titanInPath(float from_x, float to_x, float y);
-
-    void sendTitans();
-
-    //===========================================================================
-    // Arasaka snipers (snipers.cpp)
-    //===========================================================================
-
-    void resetSnipers();
-
-    void spawnSnipers(float leader_x);
-
-    void updateSnipers();
-
-    bool hitBySniper(const Player &player) const;
-
-    void sendSnipers();
-
-    //===========================================================================
     // Attack Titan power-up (shift.cpp)
     //===========================================================================
 
@@ -280,8 +229,11 @@ public:
     // Every live drone within reach in front of the player goes down. Returns how many.
     int strike(const Player &player, float reach);
 
-    // Every titan within reach in front of the player goes down. Returns how many.
-    int slashTitans(Player &player, float reach);
+    // Every titan within reach in front of the player goes down
+    void slashTitans(Player &player, float reach);
+
+    // Its bounty to whoever took it down, standing at x
+    void titanDown(Player &player, float x);
 
     // Every column from `from` to `to` burns, rows top to bottom (floor to ceiling by default)
     void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);

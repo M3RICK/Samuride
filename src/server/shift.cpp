@@ -30,12 +30,9 @@ void Server::titanSmash(Player &player)
         }
     }
 
-    std::erase_if(titans, [&](const Titan &titan) {
-        bool reached = titan.x < player.getX() + TITAN_FORM_WIDTH && titan.x + titanStats(titan.type).width > player.getX();
-        if (!reached)
-            return false;
-        player.addScore(TITAN_BOUNTY);
-        notifyCollision(TITAN_KILL, player, titan.x, floor - 1);
-        return true;
-    });
+    auto reached = [&](const Horde::Titan &titan) {
+        return titan.x < player.getX() + TITAN_FORM_WIDTH && titan.x + titanStats(titan.type).width > player.getX();
+    };
+    for (float x : titans.takeDown(reached))
+        titanDown(player, x);
 }
