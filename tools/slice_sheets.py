@@ -172,7 +172,7 @@ def label_blobs(mask):
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "hunter": "150 175 215"}
-# No jetpack: a trail of mist in the exhaust colour, the whole time they're in the air (players.cpp)
+# No jetpack, so no flames: they fly in mist (players.cpp; the mist itself is to be redone)
 MIST = {"hunter"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}

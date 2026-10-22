@@ -6,8 +6,7 @@ taken from this file. Players on different versions can't play together: update 
 ## v2.9
 
 ### New
-- **New runner: the Hunter** (Bloodborne), 1000 eddies. He flies on chained quicksteps, in a trail of
-  grey mist. In CYBERPSYCHO, tap `F` for his Saw Cleaver, a very short and very fast cut. Hold `F`,
+- **New runner: the Hunter** (Bloodborne), 1000 eddies. He flies on chained quicksteps. In CYBERPSYCHO, tap `F` for his Saw Cleaver, a very short and very fast cut. Hold `F`,
   then let go, to fire his pistol: he has 3 quicksilver bullets, and only cleaver kills load new ones.
   - A bullet **staggers a titan**: it stops dead, and your next cut tears it open (**visceral**, +40).
   - **Parry a sniper** (+10): hold `F` while its laser tracks you, and let go the moment it freezes.

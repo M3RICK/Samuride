@@ -19,7 +19,6 @@ void Players::draw(const std::map<int, PlayerState> &players, int me, bool live)
 {
     if (live)
         emitExhaust(players);
-    drawMist();
 
     // Others first so you are always drawn on top
     for (const auto &[player_num, player] : players) {
@@ -32,61 +31,19 @@ void Players::draw(const std::map<int, PlayerState> &players, int me, bool live)
         drawPlayer(me, mine->second, true);
 }
 
-// Exhaust stays in the world, so it trails behind as the player runs. The Hunter has no jetpack: his
-// coat fades into mist, slow puffs drifting up behind him the whole time he's off the ground, thicker
-// as he climbs.
+// Exhaust stays in the world, so it trails behind as the player runs. The Hunter has no jetpack, so no
+// flames: his mist is to be redone (the soft puffs and ghosts tried in v2.9 looked bad)
 void Players::emitExhaust(const std::map<int, PlayerState> &players)
 {
-    bool puff = puff_clock.getElapsedTime().asSeconds() > PUFF_GAP;
-
-    if (puff)
-        puff_clock.restart();
     for (const auto &[player_num, player] : players) {
         const Character &character = sprites.character(run.characterOf(player_num));
         sf::Vector2f nozzle = run.display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
         bool flying = player.form == Form::Normal || player.form == Form::Emerging;
-        bool airborne = !run.player_anims[player_num].on_ground;
 
-        if (flying && character.mist && (player.jet_active || airborne)) {
-            for (int i = puff ? (player.jet_active ? 2 : 1) : 0; i > 0; i--)
-                mist.push_back({run.display_positions[player_num] + sf::Vector2f(randf(0.1f, 0.6f), randf(0.9f, 2.0f)),
-                                character.exhaust, sf::Clock()});
-        } else if (flying && player.jet_active) {
+        if (flying && player.jet_active && !character.mist) {
             particles.emit(nozzle, 2, character.exhaust, 1.5f, 0.35f, 0, {0, 8});
             particles.emit(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
-    }
-}
-
-// Each puff is a few stacked discs, see-through, the core denser: it reads as a cloud, not a shape
-void Players::drawMist()
-{
-    float tile_size = run.view.tile_size;
-
-    std::erase_if(mist, [](const Puff &puff) { return puff.age.getElapsedTime().asSeconds() > PUFF_LIFE; });
-    for (const Puff &puff : mist) {
-        float t = puff.age.getElapsedTime().asSeconds() / PUFF_LIFE;
-        sf::Vector2f center = run.toScreen(puff.pos - sf::Vector2f(0, 0.6f * t));
-        float radius = tile_size * (0.3f + 0.6f * t);
-        for (float k : {1.0f, 0.65f, 0.35f}) {
-            sf::CircleShape disc(radius * k);
-            disc.setOrigin({radius * k, radius * k});
-            disc.setPosition(center);
-            disc.setFillColor(withAlpha(puff.color, static_cast<uint8_t>(40 * (1 - t))));
-            canvas.draw(disc);
-        }
-    }
-}
-
-// The Hunter flies on quicksteps: two ghosts of him in mist, trailing a step and two behind
-void Players::drawMistGhosts(const sf::Sprite &sprite, sf::Color color, float tile_size)
-{
-    sf::Sprite ghost = sprite;
-
-    for (int i = 2; i >= 1; i--) {
-        ghost.setPosition(sprite.getPosition() - sf::Vector2f(tile_size * 0.35f * i, -tile_size * 0.05f * i));
-        ghost.setColor(withAlpha(color, static_cast<uint8_t>(150 - 50 * i)));
-        canvas.draw(ghost, sf::BlendAdd);
     }
 }
 
@@ -173,8 +130,6 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (player.sprinting)
         drawAfterimages(sprite, tile_size);
-    else if (character.mist && !run.player_anims[player_num].on_ground && !shocked)
-        drawMistGhosts(sprite, character.exhaust, tile_size);
     if (player.berserk)
         canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * (0.9f + 0.15f * std::sin(canvas.time() * 16)),
                     withAlpha(BERSERK_COLOR, 70));

@@ -30,8 +30,9 @@ He makes you rush drones instead of dodging them. Played once (v2.9), not good e
 animations, flat gameplay. What to improve:
 
 **Looks**
-- New sheet in (the platformer one): he takes off on its jump, flies on its glide, and his mist is
-  drawn by the game as particles. It has no flight of its own: a row of him floating forward, coat
+- New sheet in (the platformer one): he flies on its glide. His mist is to
+  redo: square particles were invisible, soft puffs and two trailing ghosts looked bad (both out). It
+  has no flight of its own: a row of him floating forward, coat
   dissolving into mist, would beat the glide. Its attack and shoot rows are drawn bigger, shrunk to fit.
 - His faces sheet, for the HUD's living face (only the portrait shows).
 - No take-off: the sheet's jump looked wrong. Its attack row cuts twice, only the second is played.
