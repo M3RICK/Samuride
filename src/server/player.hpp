@@ -39,7 +39,7 @@ private:
     float grace_timer;          // seconds of invincibility left after a shield broke, a sprint or a titan
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
-    int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)
+    int ultimate_charge;        // eddies earned since the last ultimate, up to its runner's charge
     int spears;                 // Mikasa's thunder spears left
     float spear_cooldown;       // seconds before she can throw the next one
     float charge_timer;         // seconds left charging Fishbones: standing still in the air
@@ -89,9 +89,9 @@ public:
     void startShift();
     void addScore(int points);
     int getUltimateCharge() const { return ultimate_charge; }
-    bool ultimateReady() const { return ultimate_charge >= ultimateCharge(upgrades); }
+    bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs
-    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(upgrades); }
+    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
     void spendUltimate() { ultimate_charge = 0; }
     // Charges, then the recoil once it fires
     void startFishbones() { charge_timer = FISHBONES_CHARGE_TIME; }

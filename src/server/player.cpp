@@ -52,7 +52,7 @@ bool Player::collectCoin(int tile_x, int tile_y)
 void Player::addScore(int points)
 {
     score += points;
-    ultimate_charge = std::min(ultimateCharge(upgrades), ultimate_charge + points);
+    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points);
 }
 
 void Player::startShift()

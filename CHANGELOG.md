@@ -14,6 +14,8 @@ taken from this file. Players on different versions can't play together: update 
 - **Closer to Jetpack Joyride.** Speed climbs more gently: top speed is a bit lower and reached around
   1500 m instead of 800 m. Obstacles get harder over ~1200 m instead of ~500 m.
 - **Fewer tall zappers.** 4-tile zappers only show up past ~800 m and stay rare; most beams are 2 or 3 tiles.
+- **Ultimates charge slower**: 150 eddies instead of 100. Except Mikasa's thunder spears, still 100.
+- **The ULTIMATE upgrade is gone.** The eddies you spent on it are given back.
 
 ## v2.85
 

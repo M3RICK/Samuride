@@ -16,14 +16,15 @@ struct Runner {
     int price;              // eddies; they are bought in the order of the list
     Weapon weapon;          // the attack, in CYBERPSYCHO (weapons.hpp)
     Ultimate ultimate;      // fired once the gauge is full, in CYBERPSYCHO (ultimates.hpp)
+    int charge;             // eddies to fill the ultimate's gauge
 };
 
 inline constexpr Runner RUNNERS[] = {
-    {"johny",  0,   Weapon::Gun,     Ultimate::FireWave},
-    {"david",  100, Weapon::Gun,     Ultimate::Nuke},
-    {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones},
-    {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears},
-    {"lucy",   750, Weapon::Hack,    Ultimate::Breach},
+    {"johny",  0,   Weapon::Gun,     Ultimate::FireWave,      150},
+    {"david",  100, Weapon::Gun,     Ultimate::Nuke,          150},
+    {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150},
+    {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears, 100},
+    {"lucy",   750, Weapon::Hack,    Ultimate::Breach,        150},
 };
 
 constexpr int RUNNER_COUNT = static_cast<int>(std::size(RUNNERS));
@@ -36,5 +37,6 @@ inline const Runner &runner(int id)
 
 inline Weapon weaponOf(int id) { return runner(id).weapon; }
 inline Ultimate ultimateOf(int id) { return runner(id).ultimate; }
+inline int ultimateCharge(int id) { return runner(id).charge; }
 
 #endif

@@ -191,10 +191,12 @@ static void testUltimate()
         johnny.collectCoin(i, 0);
     johnny.addScore(DRONE_BOUNTY);
     assert(johnny.getUltimateCharge() == 3 + DRONE_BOUNTY && !johnny.ultimateReady());
-    johnny.addScore(ULTIMATE_CHARGE);
-    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ULTIMATE_CHARGE);
+    johnny.addScore(ultimateCharge(0));
+    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ultimateCharge(0));
     johnny.spendUltimate();
-    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
+    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ultimateCharge(0));
+    // Mikasa's fills sooner than the others'
+    assert(ultimateCharge(3) < ultimateCharge(0));
     assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::Breach);
     assert(ultimateOf(3) == Ultimate::ThunderSpears && ultimateOf(2) == Ultimate::Fishbones);
     // An unknown runner plays as the first one
@@ -253,7 +255,6 @@ static void testUpgrades()
 
     UpgradeLevels levels{};
     levels[UPGRADE_SANDEVISTAN] = 2;
-    levels[UPGRADE_ULTIMATE] = 3;
     levels[UPGRADE_SHIELD] = 1;
     Player player(-1);
     player.setUpgrades(levels);
@@ -262,8 +263,6 @@ static void testUpgrades()
     player.powerUp(SANDEVISTAN_TILE);
     player.update(SANDEVISTAN_TIME + 0.5f, 10, 8);
     assert(player.isSprinting());
-    player.addScore(ULTIMATE_CHARGE - 3 * ULTIMATE_CHARGE_PER_LEVEL);
-    assert(player.ultimateReady() && player.ultimatePercent() == 100);
 }
 
 // Runners are bought in order, with enough eddies

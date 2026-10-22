@@ -20,8 +20,6 @@ enum class Ultimate : uint8_t {
     Fishbones,      // Jinx
 };
 
-constexpr int ULTIMATE_CHARGE = 100;    // eddies to fill the gauge
-
 // Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
 constexpr float FIRE_WAVE_SPEED = 45;   // tiles per second, not on top of the run speed
 constexpr float FIRE_WAVE_RANGE = 25;   // tiles from where it started

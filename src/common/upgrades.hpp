@@ -3,16 +3,16 @@
 // sends them when it joins a run (MSG_CONNECT); the server applies them.
 //
 // To add one: an entry in the enum and in UPGRADES (same order), then its effect where the server uses it.
-// Levels are sent and saved by position: only add at the end.
+// Levels are sent and saved by position: only add at the end. Removing one changes the positions:
+// the wallet then reads the old saves with a legacy order (wallet.cpp).
 
 #ifndef UPGRADES_HPP
     #define UPGRADES_HPP
 
 #include <array>
 #include "powerups.hpp"
-#include "ultimates.hpp"
 
-enum Upgrade { UPGRADE_SANDEVISTAN, UPGRADE_ULTIMATE, UPGRADE_MAGNET, UPGRADE_SHIELD, UPGRADE_COUNT };
+enum Upgrade { UPGRADE_SANDEVISTAN, UPGRADE_MAGNET, UPGRADE_SHIELD, UPGRADE_COUNT };
 
 struct UpgradeInfo {
     const char *name;
@@ -23,7 +23,6 @@ struct UpgradeInfo {
 
 inline constexpr UpgradeInfo UPGRADES[UPGRADE_COUNT] = {
     {"SANDEVISTAN",     "+0.5 S OF SPRINT",             3, {1000, 2500, 5000}},
-    {"ULTIMATE",        "CHARGES 10 EDDIES SOONER",     3, {1000, 2500, 5000}},
     {"EDDIE MAGNET",    "PULLS EDDIES 0.5 TILE FURTHER",3, {1000, 2500, 5000}},
     {"SUBDERMAL ARMOR", "START EVERY RUN SHIELDED",     1, {5000}},
 };
@@ -32,18 +31,11 @@ inline constexpr UpgradeInfo UPGRADES[UPGRADE_COUNT] = {
 using UpgradeLevels = std::array<int, UPGRADE_COUNT>;
 
 constexpr float SANDEVISTAN_PER_LEVEL = 0.5f;
-constexpr int ULTIMATE_CHARGE_PER_LEVEL = 10;
 constexpr float MAGNET_PER_LEVEL = 0.5f;
 
 inline float sandevistanTime(const UpgradeLevels &levels)
 {
     return SANDEVISTAN_TIME + SANDEVISTAN_PER_LEVEL * levels[UPGRADE_SANDEVISTAN];
-}
-
-// Eddies to fill the ultimate's gauge
-inline int ultimateCharge(const UpgradeLevels &levels)
-{
-    return ULTIMATE_CHARGE - ULTIMATE_CHARGE_PER_LEVEL * levels[UPGRADE_ULTIMATE];
 }
 
 // Eddies whose center is this many tiles from the body are picked up too

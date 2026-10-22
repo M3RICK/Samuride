@@ -107,7 +107,7 @@ namespace MenuLayout {
     // Upgrades shop: one card each, in a row
     inline sf::FloatRect upgradeBox(int index)
     {
-        return centeredBox({960 + (index - 1.5f) * 440, 580}, {400, 480});
+        return centeredBox({960 + (index - (UPGRADE_COUNT - 1) / 2.0f) * 440, 580}, {400, 480});
     }
 
     inline sf::FloatRect districtBox(int index)

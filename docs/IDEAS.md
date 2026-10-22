@@ -26,6 +26,9 @@ Arcane, Attack on Titan.
 
 ## Later
 
+- **A mount per runner**, in place of the Attack Titan power-up for everyone: Mikasa rides Eren's
+  titan, Jinx Warwick, Johnny his Porsche 911, David goes cyberpsycho. Alex's sheets are in
+  `Samuride Files/Animation files/` (JPG with backgrounds and labels: ask for transparent PNGs).
 - Bosses at distance milestones (Adam Smasher before 1000 m).
 - The ultimates take snipers down too (Johnny's fire wave, Fishbones).
 - Real sprites and sounds for the sniper: plain shapes for now.

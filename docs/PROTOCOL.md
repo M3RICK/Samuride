@@ -43,7 +43,7 @@ Positions travel in hundredths of a tile.
 | 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
-| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, ultimate, eddie magnet, subdermal armor |
+| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
 
 District and mode are only taken from the first player in the lobby, the host; whoever joins
 sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
