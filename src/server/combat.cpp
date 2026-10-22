@@ -1,48 +1,23 @@
-// CYBERPSYCHO: attacks, projectiles and drones. The ultimates are in ultimates.cpp.
+// CYBERPSYCHO: attacks, ultimates, projectiles and drones. What each runner's weapon and ultimate does: arsenal.cpp.
 
 #include "server.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
 
-// The attack key going down. The Hunter's waits for it to come back up: a tap cuts, a hold fires.
-void Server::pressAttack(int client_fd)
-{
-    auto it = players.find(client_fd);
-
-    if (it != players.end() && weaponOf(it->second.getCharacter()) == Weapon::Cleaver)
-        it->second.pressTrigger();
-    else
-        handleAttack(client_fd);
-}
-
-// The Hunter lets go: held long enough with a bullet loaded, the pistol; otherwise the cleaver
-void Server::releaseAttack(int client_fd)
-{
-    auto it = players.find(client_fd);
-
-    if (it == players.end() || weaponOf(it->second.getCharacter()) != Weapon::Cleaver)
-        return;
-    Player &player = it->second;
-    bool aimed = player.isAiming();
-    if (player.releaseTrigger() < 0)
-        return;
-    if (aimed)
-        firePistol(client_fd, player);
-    else
-        handleAttack(client_fd);
-}
-
-// A quicksilver bullet: it flies like a shot, and takes out a sniper whose sight is frozen on its line
-void Server::firePistol(int client_fd, Player &player)
-{
-    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || !player.fireQuicksilver())
-        return;
-    fireProjectile(client_fd, player, Weapon::Pistol);
-    parrySnipers(player);
-}
-
-// The attack key, or Berserk attacking on its own: what happens depends on the weapon (weapons.hpp)
+// The attack key, or Berserk attacking on its own: what happens is up to the runner's weapon (arsenal.cpp)
 void Server::handleAttack(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() || !it->second.canAttack())
+        return;
+    if (float cooldown = it->second.weapon().attack(*this, it->second); cooldown > 0)
+        it->second.startCooldown(cooldown);
+}
+
+// Only with a full gauge, out of the Attack Titan's forms; an ultimate still going may use the key itself
+// (Mikasa throws a spear)
+void Server::handleUltimate(int client_fd)
 {
     auto it = players.find(client_fd);
 
@@ -50,49 +25,29 @@ void Server::handleAttack(int client_fd)
         return;
 
     Player &player = it->second;
-    Weapon weapon = weaponOf(player.getCharacter());
-    WeaponStats stats = statsOf(weapon);
-
-    if (!player.canAttack())
+    if (player.ultimate().press(*this, player))
         return;
-    // Lucy only hacks when there is something to hack and RAM to do it
-    if (weapon == Weapon::Hack && !hack(client_fd, player))
+    if (!player.ultimateReady() || player.getForm() != Form::Normal)
         return;
-    player.startCooldown(stats.cooldown);
+    player.spendUltimate();
 
-    // A new weapon gets its case here
-    switch (weapon) {
-        case Weapon::Gun:
-            fireProjectile(client_fd, player, weapon);
-            break;
-        case Weapon::Minigun:
-            // A burst, the rest of it fired over the next ticks (see updatePlayers); a spray in Berserk
-            if (player.isBerserk())
-                player.startCooldown(MINIGUN_SPRAY_COOLDOWN);
-            else
-                player.startBurst(MINIGUN_BURST - 1);
-            fireProjectile(client_fd, player, weapon);
-            break;
-        case Weapon::Spear:
-            break;  // thrown with the ultimate key, see handleUltimate in ultimates.cpp
-        case Weapon::Pistol:
-            break;  // the attack key held then released, see releaseAttack
-        case Weapon::Cleaver:
-            announceShot(player, weapon);
-            cleave(client_fd, player, stats.reach);
-            break;
-        case Weapon::Blade:
-            announceShot(player, weapon);
-            strike(client_fd, player, stats.reach);
-            slashTitans(player, stats.reach, false);
-            break;
-        case Weapon::Hack:
-            announceShot(player, weapon);   // hack() already did the rest
-            break;
-    }
+    float start = player.getX() + 1;
+    float line = player.getY() + Player::HEIGHT / 2;
+    std::vector<uint8_t> payload = {static_cast<uint8_t>(player.getPlayerNumber()),
+                                    static_cast<uint8_t>(ultimateOf(player.getCharacter()))};
+    Protocol::pushU32(payload, start * POSITION_SCALE);
+    Protocol::pushU16(payload, line * POSITION_SCALE);
+    broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, payload));
+    player.ultimate().fire(*this, player, start, line);
 }
 
-// Every client plays the attacker's attack animation and sound (MSG_SHOT)
+// What the ultimates do on their own every tick: the sweeps go on, the nukes land
+void Server::updateUltimates()
+{
+    for (auto &[client_fd, player] : players)
+        player.ultimate().act(*this, player);
+}
+
 void Server::announceShot(const Player &player, Weapon weapon)
 {
     std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
@@ -101,93 +56,38 @@ void Server::announceShot(const Player &player, Weapon weapon)
 }
 
 // Fired from the hip, flying ahead of the shooter
-void Server::fireProjectile(int client_fd, const Player &player, Weapon weapon)
+void Server::fireProjectile(const Player &player, Weapon weapon)
+{
+    announceShot(player, weapon);
+    fireProjectile(player, weapon, player.getY());
+}
+
+void Server::fireProjectile(const Player &player, Weapon weapon, float y)
 {
     WeaponStats stats = statsOf(weapon);
     float x = player.getX() + 0.9f;
 
-    announceShot(player, weapon);
-    projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
-                           weapon});
+    projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
 }
 
-// Every live drone within reach in front of the player goes down. Returns how many.
-int Server::strike(int client_fd, const Player &player, float reach)
+int Server::strike(const Player &player, float reach, float y)
 {
     int kills = 0;
 
-    int top = static_cast<int>(player.getY()) - 1;
-    int bottom = static_cast<int>(player.getY() + Player::HEIGHT);
+    int top = static_cast<int>(y) - 1;
+    int bottom = static_cast<int>(y + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
     int end = static_cast<int>(player.getX() + 0.5f + reach);
 
     for (int x = front; x <= end; x++) {
         for (int y = std::max(0, top); y <= bottom; y++) {
             if (isLiveDrone(x, y)) {
-                destroyDrone(client_fd, x, y);
+                destroyDrone(player.getClientFd(), x, y);
                 kills++;
             }
         }
     }
     return kills;
-}
-
-// The Hunter's cut: drones within reach go down, and a staggered titan is torn open (a visceral). Each
-// kill loads a bullet, and wins back a shield that just broke (the rally).
-void Server::cleave(int client_fd, Player &player, float reach)
-{
-    int kills = strike(client_fd, player, reach) + slashTitans(player, VISCERAL_REACH, true);
-
-    if (kills == 0)
-        return;
-    player.loadQuicksilver(kills);
-    if (player.rally())
-        notifyCollision(RALLY, player, player.getX(), player.getY() + 1);
-}
-
-// A drone in her way goes down, a zapper's beams go off
-bool Server::hack(int client_fd, Player &player)
-{
-    auto [x, y] = hackTarget(game_map, player.getX(), player.getY(), Player::HEIGHT, [this](int x, int y) {
-        return destroyed_drones.count({x, y}) || hacked_zappers.count({x, y});
-    });
-
-    if (player.getRam() == 0 || x < 0)
-        return false;
-
-    player.spendRam();
-    if (isLiveDrone(x, y)) {
-        destroyDrone(client_fd, x, y);
-        bounceHack(client_fd, player, x, y);
-        return true;
-    }
-    for (std::pair<int, int> node : zapperNodes(game_map, x, y))
-        hacked_zappers[node] = HACK_TIME;
-    notifyCollision(ZAPPER_HACK, player, x, y);
-    return true;
-}
-
-// The nearest live drone around the one just hacked goes down too, if there is one close enough
-void Server::bounceHack(int client_fd, const Player &player, int from_x, int from_y)
-{
-    int reach = static_cast<int>(HACK_BOUNCE_RANGE);
-    std::pair<int, int> target = {-1, -1};
-    int best = reach * reach;
-
-    for (int x = std::max(0, from_x - reach); x <= from_x + reach; x++) {
-        for (int y = std::max(0, from_y - reach); y <= from_y + reach; y++) {
-            int distance = (x - from_x) * (x - from_x) + (y - from_y) * (y - from_y);
-            if (distance <= best && isLiveDrone(x, y)) {
-                best = distance;
-                target = {x, y};
-            }
-        }
-    }
-    if (target.first < 0)
-        return;
-    // Before the drone goes down: the clients draw the arc from the last drone this player took
-    notifyCollision(HACK_BOUNCE, player, target.first, target.second);
-    destroyDrone(client_fd, target.first, target.second);
 }
 
 void Server::updateProjectiles()
@@ -202,7 +102,7 @@ void Server::updateProjectiles()
                 spearBlast(shot.owner_fd, hit >= 0 ? hit : shot.max_x);
                 shot.x = shot.max_x;
             }
-        } else if (shot.weapon == Weapon::Pistol ? bulletHit(shot, from_x) : projectileHit(shot, from_x)) {
+        } else if (projectileHit(shot, from_x)) {
             shot.x = shot.max_x;
         }
     }
@@ -227,22 +127,6 @@ bool Server::projectileHit(const Projectile &shot, float from_x)
     return false;
 }
 
-// The Hunter's bullet: a drone goes down like with any shot, a titan in its way is staggered
-bool Server::bulletHit(const Projectile &shot, float from_x)
-{
-    if (projectileHit(shot, from_x))
-        return true;
-
-    Titan *titan = titanInPath(from_x, shot.x, shot.y);
-    auto owner = players.find(shot.owner_fd);
-    if (!titan)
-        return false;
-    titan->stagger = STAGGER_TIME;
-    if (owner != players.end())
-        notifyCollision(TITAN_STAGGER, owner->second, titan->x, game_map.getHeight() - 1);
-    return true;
-}
-
 // Where a spear sticks this tick: the first live drone near its line, or a titan tall enough
 // to stand in its way. -1 when it flies on.
 float Server::spearHit(const Projectile &shot, float from_x)
@@ -252,7 +136,7 @@ float Server::spearHit(const Projectile &shot, float from_x)
             if (isLiveDrone(x, y))
                 return x + 0.5f;
         }
-        if (titanInPath(x, x, shot.y))
+        if (titans.inPath(x, x, shot.y, game_map.getHeight()))
             return x + 0.5f;
     }
     return -1;
@@ -266,6 +150,55 @@ void Server::spearBlast(int owner_fd, float x)
     if (owner != players.end())
         notifyCollision(SPEAR_BLAST, owner->second, x, 0);
     scorch(owner_fd, x - SPEAR_BLAST_RADIUS, x + SPEAR_BLAST_RADIUS, x - SPEAR_BLAST_RADIUS - 2);
+}
+
+// Every column from `from` to `to` burns, rows top to bottom (floor to ceiling by default): drones go
+// down, zappers touching those rows go out for the rest of the run, and titans between `titans_from`
+// and `to` die if the rows reach them. The owner gets the bounties.
+void Server::scorch(int owner_fd, float from, float to, float titans_from, int top, int bottom)
+{
+    int height = game_map.getHeight();
+    auto owner = players.find(owner_fd);
+
+    bottom = std::min(bottom, height - 1);
+    for (int x = std::max(0, static_cast<int>(from)); x <= static_cast<int>(to); x++) {
+        for (int y = std::max(0, top); y <= bottom; y++) {
+            if (isLiveDrone(x, y)) {
+                destroyDrone(owner_fd, x, y);
+            } else if (game_map.getTile(x, y) == ZAPPER_TILE && !hacked_zappers.count({x, y})) {
+                for (std::pair<int, int> node : zapperNodes(game_map, x, y))
+                    hacked_zappers[node] = 1e9f;
+            }
+        }
+    }
+    if (owner == players.end())
+        return;
+    auto reached = [&](const Horde::Titan &titan) {
+        return titan.x <= to && titan.x >= titans_from && bottom + 1 > height - titanStats(titan.type).height;
+    };
+    for (float x : titans.takeDown(reached))
+        titanDown(owner->second, x);
+}
+
+void Server::slashTitans(Player &player, float reach)
+{
+    auto reached = [&](const Horde::Titan &titan) {
+        return titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
+    };
+    for (float x : titans.takeDown(reached))
+        titanDown(player, x);
+}
+
+void Server::titanDown(Player &player, float x)
+{
+    player.addScore(TITAN_BOUNTY);
+    notifyCollision(TITAN_KILL, player, x, game_map.getHeight() - 1);
+}
+
+void Server::switchOffZapper(int x, int y, float seconds)
+{
+    float &left = hacked_zappers[{x, y}];
+    left = std::max(left, seconds);
 }
 
 bool Server::isLiveDrone(int x, int y) const
@@ -282,7 +215,7 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
-    owner->second.addScore(DRONE_BOUNTY);
+    owner->second.addScore(owner->second.weapon().droneDown());
     notifyCollision(DRONE_TILE, owner->second, x, y);
     DEBUG_LOG("Player " + std::to_string(owner->second.getPlayerNumber()) + " destroyed a drone");
 }

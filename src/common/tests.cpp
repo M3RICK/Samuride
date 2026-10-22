@@ -9,6 +9,7 @@
 #include "snipers.hpp"
 #include "tuning.hpp"
 #include "difficulty.hpp"
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -171,19 +172,21 @@ static void testHack()
     assert(hackTarget(lane, 0, 4, 2, none) == std::make_pair(4, 4));
     assert(hackTarget(lane, 0, 4, 2, [](int x, int) { return x == 4; }) == std::make_pair(-1, -1));
 
+    assert(weaponOf(4) == Weapon::Hack);
     Player lucy(-1);
+    lucy.setCharacter(4);
     lucy.reset(0, 0);
+    auto &hack = dynamic_cast<Hack &>(lucy.weapon());
     for (int i = 0; i < RAM_MAX; i++)
-        lucy.spendRam();
-    assert(lucy.getRam() == 0);
+        hack.spendRam();
+    assert(hack.charges() == 0);
     lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
-    assert(lucy.getRam() == 0);
+    assert(hack.charges() == 0);
     lucy.update(0.2f, 10, 8);
-    assert(lucy.getRam() == 1);
+    assert(hack.charges() == 1);
     for (int i = 0; i < RAM_MAX; i++)
         lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
-    assert(lucy.getRam() == RAM_MAX);
-    assert(weaponOf(4) == Weapon::Hack);
+    assert(hack.charges() == RAM_MAX);
 }
 
 // Every eddy charges the ultimate, up to full, and firing it empties the gauge
@@ -207,30 +210,33 @@ static void testUltimate()
     assert(ultimateOf(RUNNER_COUNT) == Ultimate::FireWave && weaponOf(-1) == Weapon::Gun);
 
     Player mikasa(-1);
-    mikasa.reset(3, 0);
-    mikasa.giveSpears();
+    mikasa.setCharacter(3);
+    mikasa.reset(0, 0);
+    auto &spears = dynamic_cast<ThunderSpears &>(mikasa.ultimate());
+    spears.give();
     // One spear per press, their own cooldown between two, none left after the last
-    assert(mikasa.throwSpear() && !mikasa.throwSpear());
+    assert(spears.throwSpear() && !spears.throwSpear());
     for (int i = 1; i < THUNDER_SPEARS; i++) {
         mikasa.update(1, 0, 8);
-        assert(mikasa.throwSpear());
+        assert(spears.throwSpear());
     }
     mikasa.update(1, 0, 8);
-    assert(mikasa.getSpears() == 0 && !mikasa.throwSpear());
+    assert(spears.charges() == 0 && !spears.throwSpear());
 
-    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
-    Player jinx(-1);
-    jinx.reset(2, 0);
-    jinx.startBurst(MINIGUN_BURST - 1);
+    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing. The first is
+    // fired by attack(), which needs a server: the burst is started by hand.
+    Minigun powpow;
+    powpow.startBurst();
     int fired = 0;
     for (int tick = 0; tick < 60; tick++)
-        fired += jinx.burstShotDue(1 / 60.f);
+        fired += powpow.burstShotDue(1 / 60.f);
     assert(fired == MINIGUN_BURST - 1);
 
     // Fishbones: Jinx stands still while it charges, its recoil throws her back, then she runs again
     Player thrown(-1);
-    thrown.reset(2, 4);
-    thrown.startFishbones();
+    thrown.setCharacter(2);
+    thrown.reset(0, 4);
+    dynamic_cast<Fishbones &>(thrown.ultimate()).charge();
     thrown.update(FISHBONES_CHARGE_TIME / 2, 10, 8);
     assert(thrown.getX() == 0 && thrown.getY() == 4);
     thrown.update(FISHBONES_CHARGE_TIME / 2 + 0.01f, 10, 8);
@@ -244,6 +250,42 @@ static void testUltimate()
     // Fishbones razes 5 rows around its line
     auto [top, bottom] = fishbonesRows(5);
     assert(top == 2 && bottom == 7);
+}
+
+// Dante: STYLE_KILLS kills go up a rank and the next drones pay more; a rank drops after
+// STYLE_DROP_TIME without a kill, a hit drops him to D. His Doppelganger lasts DOPPELGANGER_TIME.
+static void testDante()
+{
+    assert(weaponOf(5) == Weapon::Rebellion && ultimateOf(5) == Ultimate::Doppelganger);
+
+    Player dante(-1);
+    dante.setCharacter(5);
+    dante.reset(0, 0);
+    RunnerWeapon &rebellion = dante.weapon();
+    for (int i = 0; i < STYLE_KILLS; i++)
+        assert(rebellion.droneDown() == DRONE_BOUNTY);
+    assert(rebellion.style() == 1);
+    while (rebellion.style() < STYLE_RANKS - 1)
+        rebellion.droneDown();
+    assert(rebellion.droneDown() == static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[STYLE_RANKS - 1])));
+    assert(rebellion.style() == STYLE_RANKS - 1);
+
+    dante.update(STYLE_DROP_TIME - 0.1f, 10, 8);
+    assert(rebellion.style() == STYLE_RANKS - 1);
+    dante.update(0.2f, 10, 8);
+    assert(rebellion.style() == STYLE_RANKS - 2);
+    dante.powerUp(SHIELD_TILE);
+    assert(dante.absorbHit() && rebellion.style() == 0);
+
+    // Nobody else has a style rank
+    Player johnny(-1);
+    johnny.reset(0, 0);
+    assert(johnny.weapon().droneDown() == DRONE_BOUNTY && johnny.weapon().style() == 0);
+
+    assert(!dante.ultimate().doubles());
+    dante.ultimate().tick(1);
+    assert(!dante.ultimate().doubles());
+    assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
@@ -319,6 +361,7 @@ int main()
     testPowerUps();
     testHack();
     testUltimate();
+    testDante();
     testTuning();
     testWallet();
     testUpgrades();

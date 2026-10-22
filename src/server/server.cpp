@@ -12,9 +12,7 @@
 //=============================================================================
 
 Server::Server(const ServerConfig &config)
-    : config(config), server_fd(-1), stopping(false), required_players(config.solo ? 1 : 2),
-      rng(std::random_device{}()), chunks_generated(0), last_orb_chunk(-SHIFT_MIN_GAP_CHUNKS), run_speed(START_SPEED), phase(Phase::Waiting),
-      countdown(0), countdown_ticks(0), district(0), mode(GameMode::Classic), titan_timer(0) {
+    : config(config), required_players(config.solo ? 1 : 2) {
     g_logger.setDebugMode(config.debug_mode);
 }
 
@@ -198,11 +196,9 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
             break;
 
         case MSG_ATTACK:
-            // The key going down (1, or empty), or coming back up (0)
+            // The key going down (1, or empty); coming back up (0) changes nothing
             if (payload.empty() || payload[0] != 0)
-                pressAttack(client_fd);
-            else
-                releaseAttack(client_fd);
+                handleAttack(client_fd);
             break;
 
         case MSG_ULTIMATE:

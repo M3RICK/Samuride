@@ -18,7 +18,7 @@ enum class Ultimate : uint8_t {
     Breach,         // Lucy
     ThunderSpears,  // Mikasa
     Fishbones,      // Jinx
-    Moonlight,      // the Hunter
+    Doppelganger,   // Dante
 };
 
 // Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
@@ -53,21 +53,18 @@ inline float FISHBONES_CHARGE_TIME = 0.6f;
 inline float FISHBONES_RECOIL_TIME = 0.5f;
 inline float FISHBONES_RECOIL_PUSH = 0.8f;
 
-// The Hunter's Moonlight Blade: a wave of blue light slashed ahead at his height, razing a band
-inline float MOONLIGHT_SPEED = 50;       // tiles per second, not on top of the run speed
-inline float MOONLIGHT_RANGE = 25;       // tiles from where it was slashed
-inline float MOONLIGHT_HALF_HEIGHT = 1.5f;
+// Dante's Doppelganger: for DOPPELGANGER_TIME his double, in red, flies at the opposite height
+// (mirrored around the corridor's middle) and repeats every attack of his from there. It does nothing
+// on its own. Its kills are his: they pay his style rank and raise it.
+inline float DOPPELGANGER_TIME = 8;
+
+// Where the double's body is, its top at y, for a body `height` tall in a corridor `floor` tiles high
+inline float mirrored(float y, float height, float floor) { return floor - height - y; }
 
 // Rows of the band Fishbones razes, around its line at y
 inline std::pair<int, int> fishbonesRows(float y)
 {
     return {static_cast<int>(y - FISHBONES_HALF_HEIGHT), static_cast<int>(y + FISHBONES_HALF_HEIGHT)};
-}
-
-// ... and the Moonlight Blade
-inline std::pair<int, int> moonlightRows(float y)
-{
-    return {static_cast<int>(y - MOONLIGHT_HALF_HEIGHT), static_cast<int>(y + MOONLIGHT_HALF_HEIGHT)};
 }
 
 #endif

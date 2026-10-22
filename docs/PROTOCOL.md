@@ -40,7 +40,7 @@ Positions travel in hundredths of a tile.
 
 | Bytes | Field |
 | --- | --- |
-| 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy (the order of `src/common/runners.hpp`) |
+| 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
 | 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
@@ -119,7 +119,7 @@ A 13-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
-| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; the Hunter's bits 1-2 quicksilver bullets, bit 3 aiming his pistol (the attack key held long enough, a bullet loaded), bit 4 rallying |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS) |
 
 ### `MSG_COLLISION`
 
@@ -145,10 +145,6 @@ A 13-byte record per player, 60 times per second:
 | `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
-| `g` | The Hunter's bullet staggered the titan at that column: it stands still 1.5 s |
-| `x` | The Hunter cut a staggered titan down (visceral), +40 |
-| `q` | The Hunter's bullet took out a sniper whose sight was frozen on that row, +10 |
-| `y` | The Hunter's cleaver kill won his broken shield back (rally) |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`
@@ -169,12 +165,7 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 ### `MSG_ATTACK`
 
 One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up, which the
-server ignores but for the Hunter: his attack happens when the key comes back up. Held under 0.3 s,
-or with no bullet, it is his Saw Cleaver: every drone within 1.8 tiles ahead goes down, and so does a
-staggered titan in reach (`x`); each kill loads a quicksilver bullet (3 at most) and, within 2 s of his
-shield breaking, brings the shield back (`y`). Held longer with a bullet, it fires his pistol: a
-projectile (run speed + 34) that downs a drone or staggers the first titan in its way (`g`), and takes
-out every sniper whose sight is frozen within 1.5 tiles of his middle (`q`). Both share a 0.3 s cooldown. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
+server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
@@ -185,7 +176,7 @@ feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 5 cleaver, 6 pistol |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear (Dante's attacks go out as 0 in the air, 2 on the ground) |
 
 ### `MSG_ULTIMATE`
 
@@ -195,7 +186,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Moonlight Blade (the Hunter) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -215,8 +206,9 @@ it sticks in a drone or a titan, or reaches 22 tiles, then blows up (`l`).
 Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but only the rows within
 2.5 tiles of Y: a zapper touching them goes out whole, a titan dies if the band reaches its height.
 
-The Moonlight Blade sweeps 25 tiles ahead at 50 tiles per second like Fishbones, the rows within 1.5
-tiles of Y.
+The Doppelganger sends nothing more: for 8 seconds each of Dante's attacks is also made from the
+opposite height (the corridor's height minus his body's, minus his y), and the clients draw his double
+there and its shots themselves. Its kills come as his.
 
 ### `MSG_TITANS`
 

@@ -30,11 +30,9 @@ struct Character {
     float feet = 0;     // y of the feet inside a cell
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
     sf::Color exhaust{252, 238, 10};
-    bool mist = false;  // no jetpack, no flames: he flies in mist (the Hunter; the mist itself is to be redone)
 
     Animation run, takeoff, rise, hover, fall, death, attack;
-    Animation shoot;            // the Hunter's pistol, his attack being the cleaver
-    Animation visceral;         // the Hunter tearing a staggered titan open
+    Animation shoot;            // Dante's guns: his attack in the air, his sword being on the ground
     Animation smoke, emerge;    // Eren's transformation only
 
     bool load(const std::string &dir);

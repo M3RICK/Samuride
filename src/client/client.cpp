@@ -245,23 +245,22 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
     for (size_t pos = 0; pos + 13 <= payload.size(); pos += 13) {
         const uint8_t *p = payload.data() + pos;
 
-        // Last byte: bit 0 jetpack, bits 1-2 form, bit 3 shield, bit 4 Sandevistan, bits 5-6 RAM, bit 7 Berserk
+        // docs/PROTOCOL.md, MSG_GAME_STATE
         game_state.updatePlayer(p[0], {
-            Protocol::readU32(p + 1) / POSITION_SCALE,
-            Protocol::readU16(p + 5) / POSITION_SCALE,
-            Protocol::readU16(p + 7),
-            (p[9] & 1) != 0,
-            static_cast<Form>((p[9] >> 1) & 3),
-            (p[9] & 8) != 0,
-            (p[9] & 16) != 0,
-            (p[9] >> 5) & 3,
-            (p[9] & 128) != 0,
-            p[10],
-            p[11],
-            (p[12] & 1) != 0,
-            (p[12] >> 1) & 3,
-            (p[12] & 8) != 0,
-            (p[12] & 16) != 0});
+            .x = Protocol::readU32(p + 1) / POSITION_SCALE,
+            .y = Protocol::readU16(p + 5) / POSITION_SCALE,
+            .score = Protocol::readU16(p + 7),
+            .jet_active = (p[9] & 1) != 0,
+            .form = static_cast<Form>((p[9] >> 1) & 3),
+            .shielded = (p[9] & 8) != 0,
+            .sprinting = (p[9] & 16) != 0,
+            .ram = (p[9] >> 5) & 3,
+            .berserk = (p[9] & 128) != 0,
+            .ultimate = p[10],
+            .spears = p[11],
+            .grace = (p[12] & 1) != 0,
+            .style = (p[12] >> 1) & 7,
+        });
     }
 }
 

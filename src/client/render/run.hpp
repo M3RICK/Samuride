@@ -22,9 +22,6 @@ struct PlayerAnim {
     bool berserk = false;
     sf::Clock berserk_clock;
     sf::Clock shot_clock;   // since the last shot: Jinx's sprite kicks back on each bullet
-    // The Hunter's last attack, for its animation: his cleaver, his pistol, or a visceral
-    enum class Strike { Cut, Shot, Visceral };
-    Strike strike = Strike::Cut;
 };
 
 struct Run {
@@ -41,6 +38,7 @@ struct Run {
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> attack_clocks;
+    std::map<int, sf::Clock> doubles;      // since each Dante's Doppelganger came out
     // Camera shake: seconds left, and how far it throws the view, in pixels
     float shake = 0;
     float shake_strength = 0;
@@ -77,6 +75,10 @@ struct Run {
     sf::Vector2f toScreen(sf::Vector2f world) const { return view.toScreen(world); }
     float floor() const { return map.getHeight(); }
     int characterOf(int player_num) const;
+    // Dante's Doppelganger is out, repeating his attacks
+    bool doubled(int player_num) const;
+    // The top of the double's body, mirrored from the player's (display) height
+    float doubleY(int player_num) const;
     // The stronger of the current shake and this one: a light one doesn't cut a big one short
     void shakeAtLeast(float seconds, float strength = 12);
 

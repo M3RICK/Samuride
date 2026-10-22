@@ -15,9 +15,9 @@
 #include "snipers.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
+#include "../audio.hpp"
 #include "../settings.hpp"
 
-class Audio;
 class Backdrops;
 
 class GameScreen {
@@ -26,6 +26,7 @@ private:
         CollisionEffect effect;
         sf::Clock clock;
         bool mine;      // caused by this player
+        int bounty = 0; // what it paid you, for the "+N"
     };
 
     // Screen-space streak sold as wind: more and faster as the run speeds up
@@ -65,7 +66,6 @@ private:
     struct Cut {
         sf::Vector2f pos;       // in tiles
         sf::Clock age;
-        sf::Color color;        // white for Mikasa's blade, red for the Hunter's cleaver
     };
     std::vector<Cut> cuts;
     // Lucy's hack: a crackling bolt from her to the drone, and from it to the one the hack jumps to
@@ -94,9 +94,10 @@ private:
     bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
-    std::string attack_key;     // likewise, for the Hunter's parry
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
+    int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
+    sf::Clock style_clock;      // since it last went up
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
     enum class Mood { Idle, Pickup, Kill, Frenzy, Surprised, Shout };
@@ -126,7 +127,17 @@ private:
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();
+    // Hit effects (game_effects.cpp)
     void addEffect(const CollisionEffect &effect, int me);
+    void playerDown(const CollisionEffect &effect, Audio::Sfx sound, sf::Color color, float shake, float strength);
+    void titanDown(const CollisionEffect &effect, bool mine);
+    void droneDown(const CollisionEffect &effect, int me);
+    void hackBounced(const CollisionEffect &effect);
+    void spearBlast(const CollisionEffect &effect);
+    void zapperHacked(const CollisionEffect &effect);
+    void shieldBroken(const CollisionEffect &effect, bool mine);
+    void powerUpTaken(const CollisionEffect &effect, bool mine);
+    void eddyTaken(const CollisionEffect &effect);
     void drawEffects();
     void drawCuts();
     void drawZaps();
@@ -137,6 +148,7 @@ private:
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
+    void drawStyle(const PlayerState &player);
     void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
     void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
     sf::Vector2i faceCell(const PlayerState &player, int me);

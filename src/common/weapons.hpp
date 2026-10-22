@@ -18,8 +18,8 @@ enum class Weapon : uint8_t {
     Blade,      // Mikasa: cuts what is right in front, titans included
     Hack,       // Lucy: switches off the first zapper or drone in her way
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
-    Cleaver,    // the Hunter's Saw Cleaver: a very short, very fast cut
-    Pistol,     // the Hunter's pistol: the attack key held, then released
+    Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
+                // like Gun); its shots go out as those two, it has no stats of its own
 };
 
 struct WeaponStats {
@@ -50,27 +50,13 @@ inline float HACK_TIME = 2.0f;
 constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
 inline float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 
-// The Hunter: a tap of the attack key is a Saw Cleaver cut, holding it PISTOL_HOLD seconds then letting go
-// fires a quicksilver bullet. Only cleaver kills load bullets, up to QUICKSILVER_MAX.
-inline float PISTOL_HOLD = 0.3f;
-constexpr int QUICKSILVER_MAX = 3;  // sent in 2 bits: 3 at most
-// A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral),
-// lunging up to VISCERAL_REACH tiles: closing on it at run speed, the cleaver's own reach left no time
-inline float STAGGER_TIME = 1.5f;
-inline float VISCERAL_REACH = 5;
-inline int VISCERAL_BONUS = 20;  // on top of the titan's bounty
-// Fired while a sniper's sight is frozen within PARRY_REACH tiles of his line, a bullet takes the sniper out.
-// The key can be held while the sight tracks him, to let go the moment it freezes.
-inline float PARRY_REACH = 1.5f;
-inline int PARRY_BOUNTY = 10;
-inline bool parryReaches(float sight_y, float line) { return std::abs(sight_y - line) <= PARRY_REACH; }
-// Rally: once his shield breaks, a cleaver kill within RALLY_TIME brings it back
-inline float RALLY_TIME = 2.0f;
-// Collision types
-constexpr char TITAN_STAGGER = 'g';
-constexpr char VISCERAL = 'x';
-constexpr char SNIPER_PARRY = 'q';
-constexpr char RALLY = 'y';
+// Dante's style meter: kills in a row raise his rank, from D to SSS, and each rank pays more per drone.
+// STYLE_KILLS kills go up a rank; STYLE_DROP_TIME seconds without one drop a rank; a hit drops him to D.
+constexpr int STYLE_RANKS = 7;
+inline const char *STYLE_NAMES[STYLE_RANKS] = {"D", "C", "B", "A", "S", "SS", "SSS"};
+inline float STYLE_BOUNTY[STYLE_RANKS] = {1, 1, 1.5f, 2, 2, 2.5f, 3};    // times a drone's bounty
+inline int STYLE_KILLS = 2;
+inline float STYLE_DROP_TIME = 6;
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {
@@ -79,8 +65,6 @@ inline WeaponStats WEAPON_STATS[] = {
     {0.45f, 0, 2.5f, 0},        // Blade
     {0.45f, 0, 0, 0},           // Hack: its way is HACK_RANGE and HACK_LANE
     {0.45f, 28, 0, 0.6f},       // Spear
-    {0.3f, 0, 2.2f, 0},         // Cleaver
-    {0.3f, 34, 0, 0.5f},        // Pistol
 };
 
 // A weapon from a newer version of the game fires like a gun

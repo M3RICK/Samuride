@@ -129,27 +129,6 @@ HACK_TIME 2
 HACK_BOUNCE_RANGE 4
 # Seconds to get one charge of RAM back (3 at most)
 RAM_RECHARGE 3.5
-# The Hunter's Saw Cleaver, a tap of the attack key
-CLEAVER_COOLDOWN 0.3
-CLEAVER_REACH 2.2
-# His pistol, the attack key held then released
-PISTOL_COOLDOWN 0.3
-PISTOL_SPEED 34
-PISTOL_RADIUS 0.5
-# Seconds to hold the attack key before letting go fires the pistol
-PISTOL_HOLD 0.3
-# Seconds a titan hit by his bullet stands still
-STAGGER_TIME 1.5
-# Tiles his cut reaches a staggered titan from
-VISCERAL_REACH 5
-# Eddies for a visceral, on top of the titan's bounty
-VISCERAL_BONUS 20
-# Tiles from his middle a frozen sniper sight can be parried
-PARRY_REACH 1.5
-# Eddies for a parried sniper
-PARRY_BOUNTY 10
-# Seconds after his shield breaks for a cleaver kill to win it back
-RALLY_TIME 2
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second
@@ -186,12 +165,22 @@ FISHBONES_CHARGE_TIME 0.6
 FISHBONES_RECOIL_TIME 0.5
 # How hard the recoil throws her back, times the run speed
 FISHBONES_RECOIL_PUSH 0.8
-# The Hunter: the Moonlight Blade's speed
-MOONLIGHT_SPEED 50
-# How far it sweeps
-MOONLIGHT_RANGE 25
-# Tiles razed above and below his line
-MOONLIGHT_HALF_HEIGHT 1.5
+# Dante: seconds his Doppelganger repeats his attacks
+DOPPELGANGER_TIME 8
+
+## Dante's style meter: ranks D, C, B, A, S, SS, SSS
+# Kills in a row to go up a rank
+STYLE_KILLS 2
+# Seconds without a kill to drop a rank (a hit drops him to D)
+STYLE_DROP_TIME 6
+# A drone's bounty times this, at each rank
+STYLE_BOUNTY_D 1
+STYLE_BOUNTY_C 1
+STYLE_BOUNTY_B 1.5
+STYLE_BOUNTY_A 2
+STYLE_BOUNTY_S 2
+STYLE_BOUNTY_SS 2.5
+STYLE_BOUNTY_SSS 3
 
 ## Runners: price in eddies, and eddies to charge the ultimate
 JOHNY_PRICE 0
@@ -204,3 +193,5 @@ MIKASA_PRICE 500
 MIKASA_ULTIMATE_CHARGE 100
 LUCY_PRICE 750
 LUCY_ULTIMATE_CHARGE 150
+DANTE_PRICE 1000
+DANTE_ULTIMATE_CHARGE 150

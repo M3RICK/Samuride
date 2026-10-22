@@ -18,7 +18,7 @@ private:
     sf::Keyboard::Key ultimate_key;
     bool jet_active;
     bool attack_held;
-    bool attack_key_down;   // from its press and release events: the Hunter's hold must not flicker
+    bool attack_key_down;   // from its press and release events, so a held key never flickers
     std::map<unsigned int, sf::Vector2f> fingers;   // on the screen, in screen coordinates
 
     // Set for the frame they happened in

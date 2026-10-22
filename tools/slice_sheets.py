@@ -51,6 +51,7 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 
 # Sheet options:
 #   key_background: the "transparent" checkerboard is drawn in the picture, light greys become transparent
+#   key_black:      drawn on black, no transparency: black fades out (softly, the dark outlines stay)
 #   mirror:         frames face left in the game (they run toward the player)
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
@@ -106,23 +107,21 @@ CHARACTERS = {
     # Her white hair would pass for smoke; a jump frame's head reaches the "JUMP" label's height
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
+    # Pixel art on black, from Alex. Two attacks: his sword on the ground, Ebony & Ivory in the air ("shoot")
+    "dante": ("../Samuride Files/Animation files/Dante/Dante_Sprite_Sheet.png", (106, 14, 160, 68), {
+        "run":    animation((80, 140, 1380, 252), 14, ground=True),
+        "rise":   animation((85, 278, 1515, 388), 12),
+        "hover":  animation((85, 278, 1515, 388), 12),
+        # The end of his fall row: leaning back, a gun up, the pose that loops well
+        "fall":   animation((105, 405, 1500, 528), 8, frames=[8, 9, 10, 11]),
+        "death":  animation((105, 915, 1480, 1012), 10, mode="once"),
+        # The wind-up, the swing and the big arc, shorter than the cooldown so a cut never restarts
+        "attack": animation((100, 785, 1375, 905), 18, mode="once", effects_ahead=True, frames=[2, 3, 4, 5, 9]),
+        # Each muzzle flash touches the next frame's jet flame: cut between them
+        "shoot":  animation((90, 668, 1445, 778), 18, mode="once",
+                            cuts=[90, 213, 342, 471, 591, 713, 833, 960, 1094, 1210, 1328, 1445], frames=[3, 4, 5]),
+    }, {"key_black": True}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
-    # The Hunter's sheet is a platformer's: no take-off (its jump looked wrong), he flies gliding, falls
-    # without the landing; his mist is the game's exhaust particles (players.cpp). "shoot": his pistol,
-    # the attack key held then released; "visceral": the extended cut, tearing a staggered titan open.
-    "hunter": ("sources/hunter.png", (75, 95, 165, 185), {
-        "run":     animation((750, 55, 1295, 150), 12, ground=True),
-        "rise":    animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
-        "hover":   animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
-        "fall":    animation((750, 200, 1100, 302), 10, frames=[0, 1, 2, 3]),
-        "death":   animation((745, 688, 1295, 790), 10, mode="once"),
-        # Drawn bigger than the rest: his hat is 40 and 37 px wide there, 34 when he runs. The row
-        # cuts twice: only the wind-up and the big arc, shorter than the cooldown so a cut never restarts
-        "attack":  animation((15, 365, 740, 480), 16, mode="once", effects_ahead=True, scale=34 / 40,
-                             frames=[3, 4, 7, 7]),
-        "shoot":   animation((15, 535, 715, 628), 16, mode="once", effects_ahead=True, scale=34 / 37),
-        "visceral": animation((750, 365, 1295, 480), 14, mode="once", effects_ahead=True, scale=34 / 40),
-    }),
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
     }, TITAN_SHEET),
@@ -171,9 +170,7 @@ def label_blobs(mask):
     return labels, count
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "hunter": "150 175 215"}
-# No jetpack, so no flames: they fly in mist (players.cpp; the mist itself is to be redone)
-MIST = {"hunter"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -306,6 +303,23 @@ def crop_frame(sheet, box, mask):
     return Image.fromarray(frame)
 
 
+def key_black(sheet):
+    """The background (0 to 4 on Dante's sheet) goes; the dark pixels touching it fade with their
+    brightness (outlines are 17 and up), the dark ones inside the character (his hair) stay. The
+    background is the black reaching the sheet's corner: black inside a body is part of it."""
+    px = np.array(sheet).astype(int)
+    brightness = px[..., :3].max(axis=2)
+    black = Image.fromarray(np.where(brightness <= 6, 255, 0).astype(np.uint8)).copy()  # writable
+    ImageDraw.floodfill(black, (0, 0), 128)
+    background = np.array(black) == 128
+    edge = background.copy()
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            edge |= np.roll(np.roll(background, dy, axis=0), dx, axis=1)
+    px[..., 3] = np.where(edge, np.clip((brightness - 6) * 255 // 16, 0, 255), 255)
+    return Image.fromarray(px.astype(np.uint8))
+
+
 def key_background(sheet):
     """Light, colourless pixels (a drawn checkerboard) become transparent."""
     px = np.array(sheet)
@@ -328,6 +342,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     effects = options.get("effects", True)
     if options.get("key_background"):
         sheet = key_background(sheet)
+    if options.get("key_black"):
+        sheet = key_black(sheet)
     for box in options.get("erase", []):
         sheet.paste((0, 0, 0, 0), box)
     pixels = np.array(sheet)
@@ -385,8 +401,6 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
-    if name in MIST:
-        lines.append("mist")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)

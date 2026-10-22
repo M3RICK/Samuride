@@ -280,8 +280,8 @@ UltimateLook ultimateLook(Ultimate ultimate)
             return {"THUNDER SPEARS", Palette::NEON_CYAN};
         case Ultimate::Fishbones:
             return {"FISHBONES", Palette::NEON_PINK};
-        case Ultimate::Moonlight:
-            return {"MOONLIGHT BLADE", Palette::QUICKSILVER};
+        case Ultimate::Doppelganger:
+            return {"DOPPELGANGER", Palette::NEON_RED};
         default:
             return {"", sf::Color::White};
     }

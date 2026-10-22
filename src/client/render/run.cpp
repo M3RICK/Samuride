@@ -9,6 +9,7 @@ void Run::reset()
     player_anims.clear();
     death_clocks.clear();
     attack_clocks.clear();
+    doubles.clear();
     hacked_zappers.clear();
     flash = {};
     callout.clear();
@@ -113,4 +114,16 @@ void Run::announce(const UltimateLook &look)
     callout = look.name;
     callout_color = look.color;
     callout_clock.restart();
+}
+
+bool Run::doubled(int player_num) const
+{
+    auto it = doubles.find(player_num);
+    return it != doubles.end() && it->second.getElapsedTime().asSeconds() < DOPPELGANGER_TIME;
+}
+
+float Run::doubleY(int player_num) const
+{
+    auto it = display_positions.find(player_num);
+    return mirrored(it != display_positions.end() ? it->second.y : 0, PLAYER_HEIGHT, floor());
 }

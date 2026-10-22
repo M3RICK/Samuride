@@ -3,6 +3,23 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.95
+
+### New
+- **New runner: Dante** (Devil May Cry), 1000 eddies. In CYBERPSYCHO, `F` swings his sword Rebellion
+  on the ground and fires Ebony & Ivory in the air.
+  - **Style meter**: kills in a row raise his rank from D to SSS, shown next to his face. The higher
+    the rank, the more each drone pays: up to 3 times the bounty at SSS. A few seconds without a kill
+    drop a rank, a hit drops him back to D.
+  - Ultimate, **Doppelganger**: for 8 seconds his double flies at the opposite height and repeats
+    every attack of his from there. It does nothing on its own: keep attacking.
+
+### Other
+- The runners are on two rows of five: Dante starts the second one, under Johnny.
+
+### Fixes
+- Grabbing the Attack Titan's orb no longer counts as an eddy in the "+N" nor flashes the screen red.
+
 ## v2.9
 
 ### New

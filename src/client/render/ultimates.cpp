@@ -24,7 +24,6 @@ void Ultimates::clear()
     fire_waves.clear();
     nukes.clear();
     rockets.clear();
-    moon_waves.clear();
     breaches.clear();
 }
 
@@ -62,11 +61,12 @@ void Ultimates::start(const UltimateEvent &ultimate)
         audio.play(Audio::Sfx::Thunder);
         run.flashScreen(NEON_CYAN, 0.25f);
         particles.emit(body, 40, NEON_CYAN, 7, 0.6f, 0);
-    } else if (ultimate.ultimate == Ultimate::Moonlight) {
-        audio.play(Audio::Sfx::Moonlight);
-        run.flashScreen(QUICKSILVER, 0.3f);
-        particles.emit(body + sf::Vector2f(0.8f, 0), 40, QUICKSILVER, 8, 0.4f, 0);
-        moon_waves.push_back({ultimate.x, ultimate.y, ultimate.x, sf::Clock()});
+    } else if (ultimate.ultimate == Ultimate::Doppelganger) {
+        audio.play(Audio::Sfx::DanteUlt);
+        run.flashScreen(NEON_RED, 0.3f);
+        run.doubles[ultimate.player].restart();
+        sf::Vector2f double_body(body.x, run.doubleY(ultimate.player) + 1);
+        particles.emit(double_body, 40, NEON_RED, 6, 0.6f, 0);
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -277,45 +277,41 @@ void Ultimates::drawRockets()
     });
 }
 
-// A crescent of cold blue light cutting ahead along his line, the band it went through glowing behind
-void Ultimates::drawMoonWaves()
+// Dante's double: him in see-through red over a red glow, at the opposite height, playing his animation
+// (his attacks are the double's too)
+void Ultimates::drawDoubles()
 {
     static constexpr float FADE_TIME = 0.4f;
     float tile_size = run.view.tile_size;
-    float sweep = MOONLIGHT_RANGE / MOONLIGHT_SPEED;
 
-    for (MoonWave &wave : moon_waves) {
-        float front = wave.front();
-        float t = wave.age.getElapsedTime().asSeconds();
-        float fade = std::clamp(1 - (t - sweep) / FADE_TIME, 0.0f, 1.0f);
-        auto [top, bottom] = moonlightRows(wave.y);
+    for (const auto &[player, since] : run.doubles) {
+        const Character &character = sprites.character(run.characterOf(player));
+        float t = since.getElapsedTime().asSeconds();
+        auto position = run.display_positions.find(player);
+        if (t > DOPPELGANGER_TIME || position == run.display_positions.end() || character.sheet.getSize().x == 0)
+            continue;
 
-        run.burnZappers(wave.burnt_to, front, top, bottom);
-        wave.burnt_to = front;
+        float fade = std::clamp(std::min(t, DOPPELGANGER_TIME - t) / FADE_TIME, 0.0f, 1.0f);
+        float y = run.doubleY(player);
+        bool on_ground = y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
+        auto attack = run.attack_clocks.find(player);
+        float since_attack = attack != run.attack_clocks.end() ? attack->second.getElapsedTime().asSeconds() : 1e9f;
+        const Animation &strike = !on_ground && character.shoot.frames > 0 ? character.shoot : character.attack;
+        bool striking = since_attack < strike.duration();
+        const Animation &anim = striking ? strike : on_ground ? character.run : character.hover;
+        sf::Vector2f feet = run.toScreen({position->second.x + 0.5f, y + Run::PLAYER_HEIGHT});
 
-        sf::Vector2f from = run.toScreen({wave.start, static_cast<float>(top)});
-        sf::Vector2f to = run.toScreen({front, static_cast<float>(bottom + 1)});
-        sf::RectangleShape band(to - from);
-        band.setPosition(from);
-        band.setFillColor(withAlpha(QUICKSILVER, static_cast<uint8_t>(40 * fade)));
-        canvas.draw(band, sf::BlendAdd);
-
-        // The crescent: stacked slivers, longest in the middle, bowed forward
-        float height = to.y - from.y;
-        for (int i = 0; i < 12; i++) {
-            float k = (i + 0.5f) / 12 * 2 - 1;     // -1 at the top, 1 at the bottom
-            float bow = tile_size * 1.2f * (1 - k * k);
-            sf::RectangleShape sliver({tile_size * 0.5f + bow, height / 12 + 2});
-            sliver.setPosition({to.x - tile_size * 0.5f, from.y + (i * height) / 12});
-            sliver.setFillColor(withAlpha(i % 2 ? QUICKSILVER : sf::Color::White, static_cast<uint8_t>(200 * fade)));
-            canvas.draw(sliver, sf::BlendAdd);
-        }
-        if (t < sweep)
-            particles.emit({front, wave.y + randf(-MOONLIGHT_HALF_HEIGHT, MOONLIGHT_HALF_HEIGHT)}, 3, QUICKSILVER, 3, 0.4f, 0);
+        canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * 1.2f, withAlpha(NEON_RED, static_cast<uint8_t>(70 * fade)));
+        float scale = tile_size * Run::PLAYER_HEIGHT * 1.05f / character.body;
+        sf::Sprite ghost(character.sheet);
+        ghost.setTextureRect(character.frameRect(anim, anim.frameAt(striking ? since_attack : canvas.time())));
+        ghost.setOrigin({character.frame_size.x / 2.f, character.feet});
+        ghost.setScale({scale, scale});
+        ghost.setPosition(feet);
+        ghost.setColor(sf::Color(255, 90, 90, static_cast<uint8_t>(170 * fade)));
+        canvas.draw(ghost);
     }
-    std::erase_if(moon_waves, [sweep](const MoonWave &wave) {
-        return wave.age.getElapsedTime().asSeconds() > sweep + FADE_TIME;
-    });
+    std::erase_if(run.doubles, [](const auto &entry) { return entry.second.getElapsedTime().asSeconds() > DOPPELGANGER_TIME; });
 }
 
 // The whole screen glitches purple for a moment
@@ -346,5 +342,5 @@ void Ultimates::draw()
     drawNukes();
     drawBreaches();
     drawRockets();
-    drawMoonWaves();
+    drawDoubles();
 }

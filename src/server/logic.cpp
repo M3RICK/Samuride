@@ -17,10 +17,8 @@ bool Server::resetMap()
     destroyed_drones.clear();
     projectiles.clear();
     hacked_zappers.clear();
-    sweeps.clear();
-    nukes.clear();
-    resetTitans();
-    resetSnipers();
+    titans.reset();
+    snipers.reset();
 
     if (!config.map_path.empty()) {
         if (!game_map.loadFromFile(config.map_path)) {
@@ -157,15 +155,15 @@ void Server::updatePlayers()
         // Berserk attacks on its own, as soon as the cooldown allows
         if (player.isBerserk())
             handleAttack(client_fd);
-        // The rest of a Pow-Pow burst
-        if (player.burstShotDue(TICK_DT) && mode == GameMode::Cyberpsycho)
-            fireProjectile(client_fd, player, Weapon::Minigun);
+        // What the weapon does on its own: the rest of a Pow-Pow burst
+        if (mode == GameMode::Cyberpsycho)
+            player.weapon().act(*this, player);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());
     }
 
-    updateTitans(rear_x);
-    updateSnipers();
+    titans.update(rear_x, TICK_DT);
+    snipers.update(TICK_DT, players);
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -175,14 +173,14 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
-    spawnTitans(leader_x);
-    spawnSnipers(leader_x);
+    titans.spawn(leader_x, TICK_DT, rng);
+    snipers.spawn(leader_x, TICK_DT, rng, players);
     updateProjectiles();
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
-    sendTitans();
-    sendSnipers();
+    broadcastToAllClients(Protocol::createPacket(MSG_TITANS, titans.serialize()));
+    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, snipers.serialize()));
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -227,9 +225,9 @@ bool Server::checkPlayerCollisions(Player &player)
         }
     }
 
-    if (!player.isInvincible() && hitByTitan(player))
+    if (!player.isInvincible() && titans.hit(player, game_map.getHeight()))
         return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
-    if (!player.isInvincible() && hitBySniper(player))
+    if (!player.isInvincible() && snipers.hit(player))
         return hurt(player, SNIPER_HIT, player.getX(), player.getY() + 1);
     return false;
 }
@@ -264,14 +262,12 @@ void Server::sendGameState()
         // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM, bit 7: Berserk
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
-                             player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
+                             player.weapon().charges() << 5 | (player.isBerserk() ? 1 : 0) << 7);
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
-        state_data.push_back(player.getSpears());
-        // bit 0: a second of grace (shield broken, Sandevistan or titan over); the Hunter's bits 1-2:
-        // quicksilver bullets, bit 3: aiming his pistol, bit 4: rallying
-        state_data.push_back((player.isGracing() ? 1 : 0) | player.getQuicksilver() << 1 | (player.isAiming() ? 1 : 0) << 3 |
-                             (player.isRallying() ? 1 : 0) << 4);
+        state_data.push_back(player.ultimate().charges());
+        // bit 0: a second of grace (shield broken, Sandevistan or titan over), bits 1-3: Dante's style rank
+        state_data.push_back((player.isGracing() ? 1 : 0) | player.weapon().style() << 1);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

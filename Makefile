@@ -39,7 +39,7 @@ COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp sr
 # Server sources; the game links the server core too, to host solo and multiplayer runs itself
 SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
                    src/server/combat.cpp src/server/titans.cpp src/server/snipers.cpp src/server/shift.cpp \
-                   src/server/powerups.cpp src/server/ultimates.cpp
+                   src/server/powerups.cpp src/server/arsenal.cpp
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
@@ -48,12 +48,14 @@ CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/inputs.cpp sr
               $(wildcard src/client/render/*.cpp)
 CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
-# Object files
-COMMON_OBJS = $(COMMON_SRCS:.cpp=.o)
-SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
-SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:.cpp=.o)
-CLIENT_OBJS = $(CLIENT_SRCS:.cpp=.o)
-ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) src/common/tests.o
+# Object files, out of the sources: src/a/b.cpp -> build/obj/src/a/b.o
+OBJ_DIR = build/obj
+COMMON_OBJS = $(COMMON_SRCS:%.cpp=$(OBJ_DIR)/%.o)
+SERVER_OBJS = $(SERVER_SRCS:%.cpp=$(OBJ_DIR)/%.o)
+SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:%.cpp=$(OBJ_DIR)/%.o)
+CLIENT_OBJS = $(CLIENT_SRCS:%.cpp=$(OBJ_DIR)/%.o)
+TESTS_OBJS = $(OBJ_DIR)/src/common/tests.o $(SERVER_CORE_OBJS) $(OBJ_DIR)/src/client/wallet.o $(COMMON_OBJS)
+ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) $(OBJ_DIR)/src/common/tests.o
 
 # Executables
 SERVER_BIN = Samuride_server$(EXE)
@@ -72,15 +74,16 @@ $(SERVER_BIN): $(SERVER_OBJS) $(COMMON_OBJS)
 $(CLIENT_BIN): $(CLIENT_OBJS) $(SERVER_CORE_OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(CLIENT_LDFLAGS) $(WINDOWS_LIBS) $(CLIENT_WINDOWS)
 
-%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tests: src/common/tests.o src/server/generator.o src/server/player.o src/client/wallet.o $(COMMON_OBJS)
+tests: $(TESTS_OBJS)
 	$(CC) $(CFLAGS) -o run_tests $^ $(LDFLAGS)
 	./run_tests
 
 clean:
-	rm -f $(ALL_OBJS) $(ALL_OBJS:.o=.d)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(SERVER_BIN) $(CLIENT_BIN) run_tests
