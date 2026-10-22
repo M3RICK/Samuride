@@ -105,6 +105,7 @@ void Server::startGame()
     countdown = COUNTDOWN_SECONDS;
     countdown_ticks = 0;
     run_speed = START_SPEED;
+    run_time = 0;
     ready_clients.clear();
 
     announce("Game starting with " + std::to_string(players.size()) + " players");
@@ -151,6 +152,7 @@ void Server::updatePlayers()
     std::vector<int> survivors;
 
     run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    run_time += TICK_DT;
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
@@ -182,7 +184,7 @@ void Server::updatePlayers()
     extendMap(leader_x);
     sendGameState();
     sendTitans();
-    sendSnipers();
+    sendHazards();
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -220,7 +222,8 @@ bool Server::checkPlayerCollisions(Player &player)
             return false;
         } else if (player.isInvincible()) {
             continue;
-        } else if (((tile == ZAPPER_TILE && !hacked_zappers.count({tile_x, tile_y})) || isLiveDrone(tile_x, tile_y)) &&
+        } else if (((tile == ZAPPER_TILE && !hacked_zappers.count({tile_x, tile_y})) || isLiveDrone(tile_x, tile_y) ||
+                    (tile == GATE_TILE && !gateOpen(run_time, tile_x))) &&
                    std::abs(px - tile_x - 0.5f) < 0.4f && std::abs(py - tile_y - 0.5f) < 0.4f) {
             // Zappers and drones only bite near their core, grazing the tile edge is fine
             return hurt(player, ZAPPER_TILE, tile_x, tile_y);

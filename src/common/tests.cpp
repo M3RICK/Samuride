@@ -84,8 +84,8 @@ static void testGenerator()
             int obstacles = 0;
             for (const auto &row : rows) {
                 assert(row.size() == 40);
-                assert(row[x] == '_' || row[x] == 'c' || row[x] == 'e' || (drones && row[x] == DRONE_TILE));
-                obstacles += row[x] == 'e' || row[x] == DRONE_TILE;
+                assert(row[x] == '_' || row[x] == 'c' || row[x] == 'e' || row[x] == GATE_TILE || (drones && row[x] == DRONE_TILE));
+                obstacles += row[x] == 'e' || row[x] == GATE_TILE || row[x] == DRONE_TILE;
             }
             // A 2-tile-tall player always has room to pass
             assert(obstacles <= 6);

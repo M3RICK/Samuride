@@ -34,7 +34,7 @@ Positions travel in hundredths of a tile.
 | 11 | `MSG_SHOT` | server → client | Someone attacked, for the animation |
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
-| 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
+| 14 | `MSG_HAZARDS` | server → client | The gates' clock and the Arasaka snipers, every tick |
 
 ### `MSG_CONNECT`
 
@@ -70,6 +70,7 @@ Tiles:
 | `c` | Coin (eddie), +1 |
 | `e` | Zapper, deadly |
 | `d` | Drone (CYBERPSYCHO), deadly, +5 when destroyed |
+| `g` | Security gate barrier, deadly while on (see `MSG_HAZARDS`) |
 | `p` | Attack Titan orb |
 | `a` | Shield: takes one deadly hit |
 | `v` | Sandevistan: 3 s of sprint at 1.7× the run speed, invincible |
@@ -216,12 +217,16 @@ Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but o
 Titans stand on the floor and run at the players. The first one comes past 300 tiles, then one
 every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 
-### `MSG_SNIPERS`
+### `MSG_HAZARDS`
 
 | Bytes | Field |
 | --- | --- |
-| 1 | Count |
+| 4 | Run time in ms since the go |
+| 1 | Sniper count |
 | 3 per sniper | Phase (0 tracking, 1 aiming, 2 firing), Y of its line (2 bytes) |
+
+Gate barriers (`g`) follow the run time: column x is open while `(time + 0.37 x) mod 2.4 < 1.2`
+(`gateOpen` in `src/common/map.hpp`), and deadly the rest of the cycle.
 
 Arasaka snipers shoot in both modes. The first one aims past 150 tiles, then one every 5 to 10
 seconds, at a random player: for 1.2 s its line follows the middle of that player, then it stays
@@ -235,7 +240,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
    per second: 3, 2, 1, 0.
 3. During the run the server ticks 60 times per second: players move forward, faster and faster,
    gravity or thrust applies, new map chunks are generated ahead of the leader, collisions are
-   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_SNIPERS` every tick, `MSG_COLLISION` and `MSG_SHOT`
+   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_HAZARDS` every tick, `MSG_COLLISION` and `MSG_SHOT`
    when they happen, and `MSG_MAP_DATA` for each new chunk. Clients send `MSG_PLAYER_INPUT` and
    `MSG_ATTACK`.
 4. At the first death the server sends `MSG_GAME_END`. Clients answer `MSG_READY` for a rematch,

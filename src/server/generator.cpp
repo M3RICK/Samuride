@@ -1,4 +1,4 @@
-// Random map chunks: zapper beams and corridors, coin blocks and waves, drone squads
+// Random map chunks: zapper beams, corridors and security gates, coin blocks and waves, drone squads
 
 #include "generator.hpp"
 #include "../common/cyberpsycho.hpp"
@@ -42,13 +42,18 @@ static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
             return len;
         }
         case 2: {
-            // A corridor: two horizontal beams 4 free rows apart, longer as the run goes on
+            // A corridor: two horizontal beams 4 free rows apart, longer as the run goes on. Half
+            // are security gates, a barrier in the middle switching on and off: those hug the
+            // ceiling or the floor, to leave 3 free rows on the other side to fly around
             int width = randInt(rng, 4, 6 + static_cast<int>(4 * difficulty));
-            int y = randInt(rng, 0, height - 6);
+            bool gate = randInt(rng, 0, 1);
+            int y = !gate ? randInt(rng, 0, height - 6) : randInt(rng, 0, 1) ? randInt(rng, 0, 1) : height - 6 - randInt(rng, 0, 1);
             for (int i = 0; i < width; i++) {
                 setTile(rows, x + i, y, ZAPPER_TILE);
                 setTile(rows, x + i, y + 5, ZAPPER_TILE);
             }
+            for (int j = 1; gate && j < 5; j++)
+                setTile(rows, x + width / 2, y + j, GATE_TILE);
             return width;
         }
         default: {

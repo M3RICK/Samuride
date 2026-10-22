@@ -37,7 +37,7 @@ bool Map::loadFromFile(const std::string& filename)
         }
 
         for (char c : row) {
-            if (c != EMPTY_TILE && c != COIN_TILE && c != ZAPPER_TILE && c != DRONE_TILE && c != SHIFT_TILE)
+            if (c != EMPTY_TILE && c != COIN_TILE && c != ZAPPER_TILE && c != DRONE_TILE && c != GATE_TILE && c != SHIFT_TILE)
                 return false;
         }
     }

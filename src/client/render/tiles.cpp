@@ -36,6 +36,8 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
                 drawHackedZapper(x, y, run.hackLeft(x, y));
             else if (tile == ZAPPER_TILE)
                 drawZapper(x, y, time);
+            else if (tile == GATE_TILE)
+                drawGate(x, y);
             else if (tile == DRONE_TILE)
                 drawDrone(x, y, time);
             else if (collected.count({x, y}))
@@ -108,6 +110,40 @@ void Tiles::drawHackedZapper(int x, int y, float left)
     sf::Color color = waking ? sf::Color::White : withAlpha(NEON_PURPLE, std::rand() % 8 ? 120 : 200);
 
     drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.55f, color);
+}
+
+// A security gate's barrier: a red bar across the tile while on, a dim outline while open,
+// buzzing just before it switches back on.
+// ponytail: plain shapes until the gate gets its sprite
+void Tiles::drawGate(int x, int y)
+{
+    float tile_size = run.view.tile_size;
+    float cycle = gateCycle(run.run_time, x);
+    sf::Vector2f top = run.toScreen({x + 0.5f, static_cast<float>(y)});
+
+    if (cycle < GATE_OPEN_TIME && (cycle < GATE_OPEN_TIME - GATE_WARNING || std::rand() % 2)) {
+        sf::RectangleShape frame({tile_size * 0.3f, tile_size});
+        frame.setOrigin({tile_size * 0.15f, 0});
+        frame.setPosition(top);
+        frame.setFillColor(sf::Color::Transparent);
+        frame.setOutlineColor(withAlpha(NEON_RED, 80));
+        frame.setOutlineThickness(2);
+        canvas.draw(frame);
+        return;
+    }
+
+    float flicker = randf(0.7f, 1);
+    sf::RectangleShape glow({tile_size * 0.35f * flicker, tile_size});
+    glow.setOrigin({glow.getSize().x / 2, 0});
+    glow.setPosition(top);
+    glow.setFillColor(withAlpha(NEON_RED, 110));
+    canvas.draw(glow, sf::BlendAdd);
+
+    sf::RectangleShape core({6, tile_size});
+    core.setOrigin({3, 0});
+    core.setPosition(top);
+    core.setFillColor(sf::Color::White);
+    canvas.draw(core);
 }
 
 void Tiles::drawBeam(sf::Vector2f from, sf::Vector2f to)

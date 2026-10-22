@@ -106,6 +106,7 @@ private:
     int chunks_generated;
     int last_orb_chunk;     // chunk of the last Attack Titan orb
     float run_speed;
+    float run_time;         // seconds since the go: the gates' clock
     Phase phase;
     int countdown;
     int countdown_ticks;
@@ -281,7 +282,7 @@ private:
 
     bool hitBySniper(const Player &player) const;
 
-    void sendSnipers();
+    void sendHazards();
 
     //===========================================================================
     // Attack Titan power-up (shift.cpp)

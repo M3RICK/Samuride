@@ -82,6 +82,7 @@ private:
     std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
     std::vector<SniperState> snipers;
+    float run_time = 0;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
@@ -92,7 +93,7 @@ public:
     void pushShot(ShotEvent shot);
     void pushUltimate(UltimateEvent ultimate);
     void setTitans(std::vector<TitanState> list);
-    void setSnipers(std::vector<SniperState> list);
+    void setHazards(float time, std::vector<SniperState> list);
     void setCountdown(int value);
     void updatePlayer(int player_number, const PlayerState &player);
     void handleCollision(char type, int player, int x, int y);
@@ -113,6 +114,7 @@ public:
     std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;
     std::vector<SniperState> getSnipers() const;
+    float getRunTime() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();
