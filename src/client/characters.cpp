@@ -60,6 +60,8 @@ bool Character::load(const std::string &dir)
             int r, g, b;
             meta >> r >> g >> b;
             exhaust = sf::Color(r, g, b);
+        } else if (key == "mist") {
+            mist = true;
         } else if (animations.count(key)) {
             Animation &anim = *animations[key];
             std::string mode;

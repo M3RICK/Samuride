@@ -26,7 +26,7 @@ SHADOW_ROWS = 12    # bottom rows of a region where ground shadows join the fram
 
 
 def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None,
-              solo=False):
+              solo=False, scale=1):
     """One animation of a sheet.
 
     region:         box (x0, y0, x1, y1) holding the frames, labels left out
@@ -40,9 +40,10 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
                     columns between boundaries; either the boundaries' x positions, or
                     ("seams", frame centres) to cut at the emptiest column between two centres
     solo:           with cuts, only the biggest blob of each column: a neighbour's trail is left out
+    scale:          frames resized by this, for a row drawn bigger than the others
     """
     return {"region": region, "fps": fps, "ground": ground, "mode": mode,
-            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts, "solo": solo}
+            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts, "solo": solo, "scale": scale}
 
 
 # Titan sheet: frames sit above their numbered labels, cut at the emptiest column between two
@@ -106,21 +107,20 @@ CHARACTERS = {
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
-    # The Hunter's flight is mist, not flames; his rows touch (coat tails, mist), so most are cut by hand.
-    # "shoot": his pistol, the attack key held then released
-    "hunter": ("sources/hunter.png", (1030, 905, 1095, 972), {
-        "run":     animation((770, 60, 1420, 180), 12, ground=True),
-        "takeoff": animation((365, 225, 835, 365), 16, mode="once", cuts=("seams", [400, 470, 545, 610, 670, 730, 795])),
-        "rise":    animation((0, 400, 505, 535), 12, cuts=("seams", [60, 130, 190, 245, 305, 365, 415, 465])),
-        "hover":   animation((840, 255, 1536, 365), 12, solo=True,
-                             cuts=("seams", [905, 990, 1075, 1160, 1245, 1330, 1410, 1490])),
-        # His dive (DESCENTE) looks head first: he falls in his floating pose (IDLE)
-        "fall":    animation((0, 55, 760, 180), 10, cuts=("seams", [74, 156, 237, 312, 396, 472, 549, 630, 712])),
-        "death":   animation((1000, 755, 1536, 850), 10, mode="hide"),
-        "attack":  animation((0, 585, 580, 695), 16, mode="once", cuts=("seams", [55, 150, 245, 330, 420, 515])),
-        "shoot":   animation((585, 585, 1370, 695), 16, mode="once", cuts=[585, 692, 792, 885, 992, 1094, 1212, 1370]),
-    # The labels over the take-off and rise rows touch the first heads
-    }, {"erase": [(360, 195, 620, 234), (20, 365, 250, 407)]}),
+    # The Hunter's sheet is a platformer's: he takes off on its jump, flies gliding, falls without the
+    # landing; his mist is the game's exhaust particles (players.cpp). "shoot": his pistol, the attack
+    # key held then released.
+    "hunter": ("sources/hunter.png", (75, 95, 165, 185), {
+        "run":     animation((750, 55, 1295, 150), 12, ground=True),
+        "takeoff": animation((250, 200, 740, 302), 16, mode="once"),
+        "rise":    animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
+        "hover":   animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
+        "fall":    animation((750, 200, 1100, 302), 10, frames=[0, 1, 2, 3]),
+        "death":   animation((745, 688, 1295, 790), 10, mode="once"),
+        # Both drawn bigger than the rest: his hat is 40 and 37 px wide there, 34 when he runs
+        "attack":  animation((15, 365, 740, 480), 16, mode="once", effects_ahead=True, scale=34 / 40),
+        "shoot":   animation((15, 535, 715, 628), 16, mode="once", effects_ahead=True, scale=34 / 37),
+    }),
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
     }, TITAN_SHEET),
@@ -170,6 +170,8 @@ def label_blobs(mask):
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "hunter": "150 175 215"}
+# No jetpack: a trail of mist in the exhaust colour, the whole time they're in the air (players.cpp)
+MIST = {"hunter"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -333,6 +335,9 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     frames = {}
     for anim, spec in animations.items():
         found = [crop_frame(sheet, box, mask) for box, mask in find_frames(pixels, spec, effects)]
+        if spec["scale"] != 1:
+            found = [f.resize((round(f.width * spec["scale"]), round(f.height * spec["scale"])), Image.NEAREST)
+                     for f in found]
         if options.get("mirror"):
             found = [ImageOps.mirror(frame) for frame in found]
         frames[anim] = [found[i] for i in spec["frames"]] if spec["frames"] else found
@@ -378,6 +383,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in MIST:
+        lines.append("mist")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)

@@ -30,6 +30,7 @@ struct Character {
     float feet = 0;     // y of the feet inside a cell
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
     sf::Color exhaust{252, 238, 10};
+    bool mist = false;  // no jetpack flames: a trail of mist in the exhaust colour (the Hunter)
 
     Animation run, takeoff, rise, hover, fall, death, attack;
     Animation shoot;            // the Hunter's pistol, his attack being the cleaver

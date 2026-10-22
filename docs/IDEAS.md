@@ -30,11 +30,12 @@ He makes you rush drones instead of dodging them. Played once (v2.9), not good e
 animations, flat gameplay. What to improve:
 
 **Looks**
-- A new sheet, from Alex or from ChatGPT one row at a time: the Hunter is small and dark, take-off,
-  rise and flight barely differ, the mist melts into his body, and the dive (DESCENTE) was so ugly he
-  falls in his floating pose (IDLE) for now.
+- New sheet in (the platformer one): he takes off on its jump, flies on its glide, and his mist is
+  drawn by the game as particles. It has no flight of its own: a row of him floating forward, coat
+  dissolving into mist, would beat the glide. Its attack and shoot rows are drawn bigger, shrunk to fit.
 - His faces sheet, for the HUD's living face (only the portrait shows).
-- The visceral: the sheet has its row (VISCÉRAL), the game still plays the plain cut.
+- Unused rows that could serve: Attack Extended (a longer cut, for a bigger cleaver or the visceral),
+  Hit/Stun (when his shield breaks), Shoot + Move.
 - A staggered titan shows nothing but a puff of silver: it should kneel or flash, so you know it's
   open for the cut.
 

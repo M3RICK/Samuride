@@ -31,15 +31,23 @@ void Players::draw(const std::map<int, PlayerState> &players, int me, bool live)
         drawPlayer(me, mine->second, true);
 }
 
-// Exhaust stays in the world, so it trails behind as the player runs
+// Exhaust stays in the world, so it trails behind as the player runs. The Hunter has no jetpack: his
+// coat fades into mist, slow puffs drifting up behind him the whole time he's off the ground, thicker
+// as he climbs.
 void Players::emitExhaust(const std::map<int, PlayerState> &players)
 {
     for (const auto &[player_num, player] : players) {
+        const Character &character = sprites.character(run.characterOf(player_num));
         sf::Vector2f nozzle = run.display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
         bool flying = player.form == Form::Normal || player.form == Form::Emerging;
+        bool airborne = !run.player_anims[player_num].on_ground;
 
-        if (flying && player.jet_active) {
-            particles.emit(nozzle, 2, sprites.character(run.characterOf(player_num)).exhaust, 1.5f, 0.35f, 0, {0, 8});
+        if (flying && character.mist && (player.jet_active || airborne)) {
+            sf::Vector2f coat = run.display_positions[player_num] + sf::Vector2f(0.35f, randf(1.0f, 1.9f));
+            particles.emit(coat, player.jet_active ? 3 : 1, character.exhaust, 0.8f, 0.7f, -1.5f, {-1.5f, 0});
+            particles.emit(coat, 1, sf::Color(70, 80, 100), 0.6f, 0.9f, -1.0f, {-1.0f, 0});
+        } else if (flying && player.jet_active) {
+            particles.emit(nozzle, 2, character.exhaust, 1.5f, 0.35f, 0, {0, 8});
             particles.emit(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
     }
