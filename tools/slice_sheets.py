@@ -114,7 +114,8 @@ CHARACTERS = {
         "rise":    animation((0, 400, 505, 535), 12, cuts=("seams", [60, 130, 190, 245, 305, 365, 415, 465])),
         "hover":   animation((840, 255, 1536, 365), 12, solo=True,
                              cuts=("seams", [905, 990, 1075, 1160, 1245, 1330, 1410, 1490])),
-        "fall":    animation((510, 405, 980, 535), 12, cuts=("seams", [555, 610, 665, 720, 780, 835, 890, 945])),
+        # His dive (DESCENTE) looks head first: he falls in his floating pose (IDLE)
+        "fall":    animation((0, 55, 760, 180), 10, cuts=("seams", [74, 156, 237, 312, 396, 472, 549, 630, 712])),
         "death":   animation((1000, 755, 1536, 850), 10, mode="hide"),
         "attack":  animation((0, 585, 580, 695), 16, mode="once", cuts=("seams", [55, 150, 245, 330, 420, 515])),
         "shoot":   animation((585, 585, 1370, 695), 16, mode="once", cuts=[585, 692, 792, 885, 992, 1094, 1212, 1370]),

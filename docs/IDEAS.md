@@ -32,7 +32,7 @@ visceral animation (the sheet has one), and a phantom hunter ultimate if the Moo
 - **Tap F**: Saw Cleaver, very fast, very short.
 - **Hold F ~0.3 s, release**: Hunter Pistol shot, if a quicksilver bullet is left. Max 3, and only
   melee kills refill them. A shot staggers a titan (next slash is a visceral: one-shot, bonus
-  eddies) and kills a sniper while its sight is frozen. Berserk keeps the auto-cleaver.
+  eddies) and kills a sniper while its sight is on him (frozen only was too short a window). Berserk keeps the auto-cleaver.
 - **Rally**: when his shield breaks, kill a drone within ~2 s to get it back.
 - **Ultimate (E)**: the Moonlight Blade, a wave of blue light razing a band at his height.
 - **Flight**: chained quicksteps in the air, a trail of grey mist (the Old Hunter Bone).

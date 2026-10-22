@@ -56,7 +56,8 @@ constexpr int QUICKSILVER_MAX = 3;  // sent in 2 bits: 3 at most
 // A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral)
 constexpr float STAGGER_TIME = 1.5f;
 constexpr int VISCERAL_BONUS = 20;  // on top of the titan's bounty
-// Fired while a sniper's sight is frozen within PARRY_REACH tiles of his line, a bullet takes the sniper out
+// Fired while a sniper's sight is on him (within PARRY_REACH tiles of his line, before the shot), a bullet
+// takes the sniper out: a frozen-only window was too short once the key is held PISTOL_HOLD
 constexpr float PARRY_REACH = 1.5f;
 constexpr int PARRY_BOUNTY = 10;
 // Rally: once his shield breaks, a cleaver kill within RALLY_TIME brings it back
