@@ -14,6 +14,12 @@ taken from this file. Players on different versions can't play together: update 
   - Ultimate, **Doppelganger**: for 8 seconds his double flies at the opposite height and repeats
     every attack of his from there. It does nothing on its own: keep attacking.
 
+### Other
+- The runners are on two rows of five: Dante starts the second one, under Johnny.
+
+### Fixes
+- Grabbing the Attack Titan's orb no longer counts as an eddy in the "+N" nor flashes the screen red.
+
 ## v2.9
 
 ### New

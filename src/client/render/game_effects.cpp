@@ -43,11 +43,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case SHIELD_BREAK:
             shieldBroken(effect, mine);
             break;
+        case SHIFT_TILE:
+            // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
+            if (mine)
+                react(Mood::Pickup);
+            return;
         default:
             if (isPowerUp(effect.type)) {
                 powerUpTaken(effect, mine);
             } else if (mine) {
-                // An eddy, or the Attack Titan's orb
                 eddyTaken(effect);
             } else {
                 return;
