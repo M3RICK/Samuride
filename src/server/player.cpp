@@ -3,13 +3,6 @@
 #include "player.hpp"
 #include <algorithm>
 
-Player::Player(int client_fd)
-    : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
-      score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ultimate_charge(0),
-      runner_weapon(makeWeapon(weaponOf(0))), runner_ultimate(makeUltimate(ultimateOf(0))) {
-}
-
 void Player::setCharacter(int id)
 {
     character = id;

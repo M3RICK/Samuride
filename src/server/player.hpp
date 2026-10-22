@@ -19,32 +19,32 @@
 class Player {
 private:
     int client_fd;
-    int player_number;
+    int player_number = 0;
 
     // Position, in tiles
-    float x;
-    float y;
+    float x = 0;
+    float y = 0;
 
     // Velocity, in tiles per second
-    float y_velocity;
+    float y_velocity = 0;
 
     // Game state
-    int score;
-    bool jet_active;
-    int character;
-    bool introduced;            // sent MSG_CONNECT: the character is the one picked
-    UpgradeLevels upgrades;     // bought in the shop, sent with MSG_CONNECT
-    float attack_cooldown;      // seconds before the next CYBERPSYCHO attack
-    Form form;
-    float form_timer;           // seconds left in the current form
-    bool shield;
-    float sprint_timer;         // seconds of Sandevistan left
-    float berserk_timer;        // seconds of Berserk left
-    float grace_timer;          // seconds of invincibility left after a shield broke, a sprint or a titan
-    int ultimate_charge;        // eddies earned since the last ultimate, up to its runner's charge
+    int score = 0;
+    bool jet_active = false;
+    int character = 0;
+    bool introduced = false;    // sent MSG_CONNECT: the character is the one picked
+    UpgradeLevels upgrades{};   // bought in the shop, sent with MSG_CONNECT
+    float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
+    Form form = Form::Normal;
+    float form_timer = 0;       // seconds left in the current form
+    bool shield = false;
+    float sprint_timer = 0;     // seconds of Sandevistan left
+    float berserk_timer = 0;    // seconds of Berserk left
+    float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
+    int ultimate_charge = 0;    // eddies earned since the last ultimate, up to its runner's charge
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
-    std::unique_ptr<RunnerWeapon> runner_weapon;
-    std::unique_ptr<RunnerUltimate> runner_ultimate;
+    std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
+    std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
@@ -57,7 +57,7 @@ public:
     // The body is 1 tile wide and HEIGHT tiles tall, (x, y) is its top-left corner
     static constexpr float HEIGHT = 2.0f;
 
-    explicit Player(int client_fd);
+    explicit Player(int client_fd) : client_fd(client_fd) {}
 
     void reset(int number, float spawn_y);
 
