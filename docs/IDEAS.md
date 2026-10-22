@@ -49,6 +49,7 @@ animations, flat gameplay. What to improve:
 - The Moonlight Blade is a Fishbones without the recoil. The Old Hunter's bell (a phantom hunter
   fighting at his side for a few seconds) would be his own.
 
+**His kit, as built**
 - **Tap F**: Saw Cleaver, very fast, very short.
 - **Hold F ~0.3 s, release**: Hunter Pistol shot, if a quicksilver bullet is left. Max 3, and only
   melee kills refill them. A shot staggers a titan (next slash is a visceral: one-shot, bonus
