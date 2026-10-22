@@ -20,7 +20,6 @@ private:
     void drawCoin(int x, int y, float time);
     void drawZapper(int x, int y, float time);
     void drawHackedZapper(int x, int y, float left);
-    void drawGate(int x, int y);
     void drawBeam(sf::Vector2f from, sf::Vector2f to);
     void drawLightning(sf::Vector2f from, sf::Vector2f to, sf::Color color);
     void drawDrone(int x, int y, float time);

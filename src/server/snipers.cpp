@@ -1,4 +1,4 @@
-// Arasaka snipers: aimed on a timer at one player, ticked down, streamed to clients with MSG_HAZARDS
+// Arasaka snipers: aimed on a timer at one player, ticked down, streamed to clients with MSG_SNIPERS
 
 #include "server.hpp"
 #include <algorithm>
@@ -49,17 +49,14 @@ bool Server::hitBySniper(const Player &player) const
     });
 }
 
-// [run time in ms, 4 bytes][count]([phase][y in 1/100 tile, 2 bytes])...: the gates' clock, then the snipers
-void Server::sendHazards()
+// [count]([phase][y in 1/100 tile, 2 bytes])...
+void Server::sendSnipers()
 {
-    std::vector<uint8_t> data;
-
-    Protocol::pushU32(data, run_time * 1000);
-    data.push_back(static_cast<uint8_t>(snipers.size()));
+    std::vector<uint8_t> data = {static_cast<uint8_t>(snipers.size())};
 
     for (const Sniper &sniper : snipers) {
         data.push_back(static_cast<uint8_t>(sniper.phase()));
         Protocol::pushU16(data, std::max(0.0f, sniper.y) * POSITION_SCALE);
     }
-    broadcastToAllClients(Protocol::createPacket(MSG_HAZARDS, data));
+    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, data));
 }

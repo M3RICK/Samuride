@@ -33,7 +33,6 @@ struct Run {
     WorldView view;
     std::map<int, int> roster;      // who plays which character
     bool cyberpsycho = false;       // the run's mode
-    float run_time = 0;             // the server's clock, for the gates
 
     std::map<int, sf::Vector2f> display_positions;
     std::map<int, PlayerAnim> player_anims;

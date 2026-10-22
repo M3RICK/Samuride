@@ -4,7 +4,6 @@
     #define MAP_HPP
 
 #include <algorithm>
-#include <cmath>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -16,24 +15,6 @@ constexpr char EMPTY_TILE = '_';
 constexpr char COIN_TILE = 'c';         // an eddy
 constexpr char ZAPPER_TILE = 'e';       // deadly; neighbouring nodes are linked by a beam
 constexpr char DRONE_TILE = 'd';        // CYBERPSYCHO: deadly too, shot down for a bounty
-constexpr char GATE_TILE = 'g';         // a security gate's barrier: deadly while it's on
-
-// Gates switch on and off on the run's clock, each column on its own beat: open GATE_OPEN_TIME
-// out of every GATE_PERIOD seconds, buzzing GATE_WARNING seconds before switching back on
-constexpr float GATE_PERIOD = 2.4f;
-constexpr float GATE_OPEN_TIME = 1.2f;
-constexpr float GATE_WARNING = 0.3f;
-
-// Seconds into its cycle: open below GATE_OPEN_TIME
-inline float gateCycle(float run_time, int x)
-{
-    return std::fmod(run_time + x * 0.37f, GATE_PERIOD);
-}
-
-inline bool gateOpen(float run_time, int x)
-{
-    return gateCycle(run_time, x) < GATE_OPEN_TIME;
-}
 
 // Grows to the right as the run goes on: the server appends chunks, clients receive them
 class Map {

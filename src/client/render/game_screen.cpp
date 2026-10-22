@@ -178,7 +178,6 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawDistrict(state.getDistrict());
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
-    run.run_time = state.getRunTime();
     tiles.draw(state.getCollectedCoins(), destroyed);
     if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
         drawHackTarget(players, me, destroyed);

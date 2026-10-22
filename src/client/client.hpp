@@ -58,7 +58,7 @@ private:
     void handleShot(const std::vector<uint8_t> &payload);
     void handleUltimate(const std::vector<uint8_t> &payload);
     void handleTitans(const std::vector<uint8_t> &payload);
-    void handleHazards(const std::vector<uint8_t> &payload);
+    void handleSnipers(const std::vector<uint8_t> &payload);
     void handleGameState(const std::vector<uint8_t> &payload);
     void handleCollision(const std::vector<uint8_t> &payload);
     void handleGameEnd(const std::vector<uint8_t> &payload);

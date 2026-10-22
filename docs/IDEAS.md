@@ -17,8 +17,8 @@ Arcane, Attack on Titan.
 - **Arasaka sniper** (v2.9). A red laser sight crosses the screen and follows your height, freezes,
   then a railgun shot sweeps the whole row. Same reflex as Jetpack Joyride's missile, nothing flies
   at you.
-- **Security gates** (v2.9). Two horizontal zappers with a barrier between them that switches on and
-  off in rhythm: go through at the right moment, or around. Lucy can hack it open.
+- ~~Security gates~~: dropped. A barrier switching on and off on a timer is luck in a runner: you
+  can't slow down to wait for it. Any timed obstacle must be readable from where you dodge it.
 - **One obstacle per district**, so the scenery changes the run, not just its colours:
   - Piltover: hextech lines
   - Zaun: chemical gas rising from the floor
@@ -28,4 +28,4 @@ Arcane, Attack on Titan.
 
 - Bosses at distance milestones (Adam Smasher before 1000 m).
 - The ultimates take snipers down too (Johnny's fire wave, Fishbones).
-- Real sprites and sounds for the sniper and the gates: plain shapes for now.
+- Real sprites and sounds for the sniper: plain shapes for now.

@@ -9,8 +9,6 @@ taken from this file. Players on different versions can't play together: update 
 - **Arasaka snipers.** Past 150 m, every 5 to 10 s, a red laser sight crosses the screen and follows
   your height. It freezes and flickers, then a railgun shot sweeps the whole row: get off the line.
 - **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.
-- **Security gates.** Half the corridors have a red barrier in the middle that switches on and off. It
-  buzzes right before switching back on; there's always room to fly around the gate instead.
 
 ### Balance
 - **Closer to Jetpack Joyride.** Speed climbs more gently: top speed is a bit lower and reached around
