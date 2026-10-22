@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <iterator>
 #include <utility>
 #include "map.hpp"
 
@@ -17,6 +18,8 @@ enum class Weapon : uint8_t {
     Blade,      // Mikasa: cuts what is right in front, titans included
     Hack,       // Lucy: switches off the first zapper or drone in her way
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
+    Cleaver,    // the Hunter's Saw Cleaver: a very short, very fast cut
+    Pistol,     // the Hunter's pistol: the attack key held, then released
 };
 
 struct WeaponStats {
@@ -27,12 +30,12 @@ struct WeaponStats {
 };
 
 // Projectiles vanish this many tiles ahead of where they were fired
-constexpr float PROJECTILE_RANGE = 22;
+inline float PROJECTILE_RANGE = 22;
 
 // Jinx's Pow-Pow fires bursts of three; only in Berserk does it spray, one bullet at a time
-constexpr int MINIGUN_BURST = 3;
-constexpr float MINIGUN_BURST_GAP = 0.08f;      // seconds between the bullets of a burst
-constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berserk, before its speed-up
+inline int MINIGUN_BURST = 3;
+inline float MINIGUN_BURST_GAP = 0.08f;      // seconds between the bullets of a burst
+inline float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berserk, before its speed-up
 
 // Lucy's hack: the first zapper or drone in her way goes quiet, for one charge of RAM. Her way is
 // HACK_RANGE tiles ahead, from HACK_LANE tiles above her head to HACK_LANE tiles below her feet.
@@ -40,28 +43,51 @@ constexpr float MINIGUN_SPRAY_COOLDOWN = 0.2f;  // between two bullets in Berser
 constexpr char ZAPPER_HACK = 'h';   // collision type: a zapper was hacked, at one of its nodes
 // A drone she hacks passes the hack on to the nearest live drone within HACK_BOUNCE_RANGE tiles of it
 constexpr char HACK_BOUNCE = 'j';   // collision type: the hack jumped to that drone, from her last kill
-constexpr float HACK_BOUNCE_RANGE = 4;
-constexpr float HACK_RANGE = 7;
-constexpr int HACK_LANE = 1;
-constexpr float HACK_TIME = 2.0f;
+inline float HACK_BOUNCE_RANGE = 4;
+inline float HACK_RANGE = 7;
+inline int HACK_LANE = 1;
+inline float HACK_TIME = 2.0f;
 constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
-constexpr float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
+inline float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 
+// The Hunter: a tap of the attack key is a Saw Cleaver cut, holding it PISTOL_HOLD seconds then letting go
+// fires a quicksilver bullet. Only cleaver kills load bullets, up to QUICKSILVER_MAX.
+inline float PISTOL_HOLD = 0.3f;
+constexpr int QUICKSILVER_MAX = 3;  // sent in 2 bits: 3 at most
+// A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral),
+// lunging up to VISCERAL_REACH tiles: closing on it at run speed, the cleaver's own reach left no time
+inline float STAGGER_TIME = 1.5f;
+inline float VISCERAL_REACH = 5;
+inline int VISCERAL_BONUS = 20;  // on top of the titan's bounty
+// Fired while a sniper's sight is frozen within PARRY_REACH tiles of his line, a bullet takes the sniper out.
+// The key can be held while the sight tracks him, to let go the moment it freezes.
+inline float PARRY_REACH = 1.5f;
+inline int PARRY_BOUNTY = 10;
+inline bool parryReaches(float sight_y, float line) { return std::abs(sight_y - line) <= PARRY_REACH; }
+// Rally: once his shield breaks, a cleaver kill within RALLY_TIME brings it back
+inline float RALLY_TIME = 2.0f;
+// Collision types
+constexpr char TITAN_STAGGER = 'g';
+constexpr char VISCERAL = 'x';
+constexpr char SNIPER_PARRY = 'q';
+constexpr char RALLY = 'y';
+
+// In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
+inline WeaponStats WEAPON_STATS[] = {
+    {0.25f, 30, 0, 0.4f},       // Gun
+    {0.6f, 32, 0, 0.35f},       // Minigun: the cooldown is between two bursts
+    {0.45f, 0, 2.5f, 0},        // Blade
+    {0.45f, 0, 0, 0},           // Hack: its way is HACK_RANGE and HACK_LANE
+    {0.45f, 28, 0, 0.6f},       // Spear
+    {0.3f, 0, 2.2f, 0},         // Cleaver
+    {0.3f, 34, 0, 0.5f},        // Pistol
+};
+
+// A weapon from a newer version of the game fires like a gun
 inline WeaponStats statsOf(Weapon weapon)
 {
-    switch (weapon) {
-        case Weapon::Gun:
-            return {0.25f, 30, 0, 0.4f};
-        case Weapon::Minigun:
-            return {0.6f, 32, 0, 0.35f};    // the cooldown is between two bursts
-        case Weapon::Blade:
-            return {0.45f, 0, 2.5f, 0};
-        case Weapon::Hack:
-            return {0.45f, 0, HACK_RANGE, 0};
-        case Weapon::Spear:
-            return {0.45f, 28, 0, 0.6f};
-    }
-    return {0.25f, 30, 0, 0.4f};
+    auto index = static_cast<size_t>(weapon);
+    return WEAPON_STATS[index < std::size(WEAPON_STATS) ? index : 0];
 }
 
 // Where Lucy's hack lands, for a body `height` tall with its top-left corner at (x, y): the nearest

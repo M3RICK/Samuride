@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
 
 static std::filesystem::path walletPath()
@@ -28,10 +29,21 @@ Wallet Wallet::load()
             wallet.unlocked = std::clamp(value, 1, RUNNER_COUNT);
         else if (key == "districts")
             wallet.districts = value;
-        // "upgrade_<n> <level>"
+        // "upgrade.<n> <level>"
         for (int i = 0; i < UPGRADE_COUNT; i++) {
-            if (key == "upgrade_" + std::to_string(i))
+            if (key == "upgrade." + std::to_string(i))
                 wallet.upgrades[i] = std::clamp(value, 0, UPGRADES[i].max_level);
+        }
+        // Up to v2.85, "upgrade_<n>" with the ultimate upgrade second: it's gone, its eddies come back
+        static constexpr int LEGACY[] = {UPGRADE_SANDEVISTAN, -1, UPGRADE_MAGNET, UPGRADE_SHIELD};
+        static constexpr int ULTIMATE_PRICES[] = {1000, 2500, 5000};
+        for (int i = 0; i < static_cast<int>(std::size(LEGACY)); i++) {
+            if (key != "upgrade_" + std::to_string(i))
+                continue;
+            if (LEGACY[i] >= 0)
+                wallet.upgrades[LEGACY[i]] = std::clamp(value, 0, UPGRADES[LEGACY[i]].max_level);
+            for (int level = 0; LEGACY[i] < 0 && level < std::clamp(value, 0, 3); level++)
+                wallet.eddies += ULTIMATE_PRICES[level];
         }
     }
     return wallet;
@@ -46,7 +58,7 @@ void Wallet::save() const
 
     file << "eddies " << eddies << "\nunlocked " << unlocked << "\ndistricts " << districts << "\n";
     for (int i = 0; i < UPGRADE_COUNT; i++)
-        file << "upgrade_" << i << " " << upgrades[i] << "\n";
+        file << "upgrade." << i << " " << upgrades[i] << "\n";
 }
 
 void Wallet::earn(int amount)

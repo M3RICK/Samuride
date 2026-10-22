@@ -4,6 +4,7 @@
 #include "sprites.hpp"
 #include "../audio.hpp"
 #include "../touch.hpp"
+#include "../../common/tuning.hpp"
 #include <algorithm>
 #include <format>
 #include <map>
@@ -27,6 +28,11 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
     float y = 90;
 
     canvas.text(std::format("{:04} M", distance), 56, NEON_YELLOW, {24, 16}, {0, 0});
+    // assets/tuning.txt changed something: screenshots and records then say so
+    if (Tuning::custom()) {
+        canvas.text("CUSTOM TUNING", 22, NEON_CYAN, {24, y}, {0, 0});
+        y += 32;
+    }
 
     if (players.size() == 1 && bests.distance(cyberpsycho) > 0) {
         canvas.text(std::format("BEST {} M", bests.distance(cyberpsycho)), 24, DIM_WHITE, {24, y}, {0, 0});

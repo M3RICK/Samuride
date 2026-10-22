@@ -56,9 +56,9 @@ namespace MenuLayout {
 
     // Character cards, in a row
     constexpr float CARD_Y = 560;
-    constexpr float CARD_WIDTH = 300;
+    constexpr float CARD_WIDTH = 280;
     constexpr float CARD_HEIGHT = 520;
-    constexpr float CARD_SPACING = 350;
+    constexpr float CARD_SPACING = 305;
 
     // Districts: the five backdrops, then the corridor and Worlds Collide taking turns. 3x2 grid.
     constexpr int DISTRICT_COUNT = 6;
@@ -107,7 +107,7 @@ namespace MenuLayout {
     // Upgrades shop: one card each, in a row
     inline sf::FloatRect upgradeBox(int index)
     {
-        return centeredBox({960 + (index - 1.5f) * 440, 580}, {400, 480});
+        return centeredBox({960 + (index - (UPGRADE_COUNT - 1) / 2.0f) * 440, 580}, {400, 480});
     }
 
     inline sf::FloatRect districtBox(int index)

@@ -6,6 +6,11 @@
 #include "../server/player.hpp"
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
+#include "snipers.hpp"
+#include "tuning.hpp"
+#include "difficulty.hpp"
+#include <fstream>
+#include <sstream>
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -90,6 +95,16 @@ static void testGenerator()
             assert(obstacles <= 6);
         }
     }
+}
+
+// The railgun's beam hits the body from head to feet, and only along its row
+static void testSniperHit()
+{
+    assert(sniperHits(6.0f, 5));
+    assert(sniperHits(5.0f, 5));
+    assert(sniperHits(7.0f, 5));
+    assert(!sniperHits(4.3f, 5));
+    assert(!sniperHits(7.7f, 5));
 }
 
 // The shield takes one hit then gives a moment to get clear; the Sandevistan outruns everyone
@@ -180,10 +195,12 @@ static void testUltimate()
         johnny.collectCoin(i, 0);
     johnny.addScore(DRONE_BOUNTY);
     assert(johnny.getUltimateCharge() == 3 + DRONE_BOUNTY && !johnny.ultimateReady());
-    johnny.addScore(ULTIMATE_CHARGE);
-    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ULTIMATE_CHARGE);
+    johnny.addScore(ultimateCharge(0));
+    assert(johnny.ultimateReady() && johnny.getUltimateCharge() == ultimateCharge(0));
     johnny.spendUltimate();
-    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ULTIMATE_CHARGE);
+    assert(!johnny.ultimateReady() && johnny.getScore() == 3 + DRONE_BOUNTY + ultimateCharge(0));
+    // Mikasa's fills sooner than the others'
+    assert(ultimateCharge(3) < ultimateCharge(0));
     assert(ultimateOf(0) == Ultimate::FireWave && ultimateOf(1) == Ultimate::Nuke && ultimateOf(4) == Ultimate::Breach);
     assert(ultimateOf(3) == Ultimate::ThunderSpears && ultimateOf(2) == Ultimate::Fishbones);
     // An unknown runner plays as the first one
@@ -229,6 +246,27 @@ static void testUltimate()
     assert(top == 2 && bottom == 7);
 }
 
+// The tuning file: the shipped one is every default (regenerate it when one changes), a good line
+// sets its value, a bad one changes nothing
+static void testTuning()
+{
+    std::ifstream shipped("assets/tuning.txt");
+    std::stringstream text;
+    text << shipped.rdbuf();
+    if (text.str() != Tuning::defaults())
+        std::cerr << "assets/tuning.txt is out of date: ./Samuride_server -t > assets/tuning.txt" << std::endl;
+    assert(text.str() == Tuning::defaults());
+    assert(!Tuning::custom());
+
+    std::istringstream lines("START_SPEED 9.5   # faster\nNO_SUCH 3\nDRONE_BOUNTY 2.5\nDRONE_CHANCE 4\nTITAN_BOUNTY\n");
+    std::cerr.setstate(std::ios::failbit);
+    assert(Tuning::apply(lines, "test") == 1);
+    std::cerr.clear();
+    assert(START_SPEED == 9.5f && DRONE_BOUNTY == 5 && DRONE_CHANCE == 0.3f && Tuning::custom());
+    START_SPEED = 9;
+    assert(!Tuning::custom());
+}
+
 // Upgrades: bought level by level up to their max, and felt by the player once sent to the server
 static void testUpgrades()
 {
@@ -242,7 +280,6 @@ static void testUpgrades()
 
     UpgradeLevels levels{};
     levels[UPGRADE_SANDEVISTAN] = 2;
-    levels[UPGRADE_ULTIMATE] = 3;
     levels[UPGRADE_SHIELD] = 1;
     Player player(-1);
     player.setUpgrades(levels);
@@ -251,8 +288,6 @@ static void testUpgrades()
     player.powerUp(SANDEVISTAN_TILE);
     player.update(SANDEVISTAN_TIME + 0.5f, 10, 8);
     assert(player.isSprinting());
-    player.addScore(ULTIMATE_CHARGE - 3 * ULTIMATE_CHARGE_PER_LEVEL);
-    assert(player.ultimateReady() && player.ultimatePercent() == 100);
 }
 
 // Runners are bought in order, with enough eddies
@@ -280,9 +315,11 @@ int main()
     testIntegers();
     testMapChunks();
     testGenerator();
+    testSniperHit();
     testPowerUps();
     testHack();
     testUltimate();
+    testTuning();
     testWallet();
     testUpgrades();
     std::cout << "All tests passed" << std::endl;

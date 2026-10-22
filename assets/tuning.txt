@@ -1,0 +1,206 @@
+# Samuride tuning: the game's balance, in one file.
+#
+# Change a number, save, restart the game. Delete a line to get its default back.
+# Distances are in tiles: a runner is 2 tiles tall, a tile is about a metre. Times are in seconds.
+# In versus, the host's file decides what happens; the other player only draws with theirs.
+# While a value isn't at its default, the game says CUSTOM TUNING in a corner.
+# Testing something? Send this file with what you felt: it says exactly what you played.
+
+## The run
+# Run speed when a run starts, in tiles per second
+START_SPEED 9
+# Top run speed
+MAX_SPEED 16
+# Run speed gained every second, up to the top speed
+ACCELERATION 0.06
+# Obstacles are at their hardest after this many 40-tile chunks (30 is ~1200 m)
+CHUNKS_TO_MAX_DIFFICULTY 30
+# How fast you fall, in tiles per second per second
+GRAVITY 28
+# How fast the jetpack lifts you
+JET_POWER 32
+# Fastest you can rise or fall, in tiles per second
+MAX_VELOCITY 10
+# Share of obstacles that are drones, in CYBERPSYCHO (0 to 1)
+DRONE_CHANCE 0.3
+# Share of zappers at the start, after the drones' (0 to 1)
+ZAPPER_CHANCE 0.15
+# Share of zappers added by full difficulty
+ZAPPER_CHANCE_GROWTH 0.3
+# Fewest empty columns after a zapper
+ZAPPER_GAP_MIN 6
+# Most empty columns after a zapper
+ZAPPER_GAP_MAX 9
+
+## Power-ups
+# No power-up in the first this many 40-tile chunks
+POWERUP_FIRST_CHUNK 3
+# Chance a chunk holds a power-up after that (0 to 1)
+POWERUP_CHANCE 0.2
+# Seconds of invincibility after the shield breaks
+SHIELD_GRACE 1
+# Seconds of invincibility after the Sandevistan or the Attack Titan ends
+END_GRACE 1
+# Seconds of Sandevistan sprint
+SANDEVISTAN_TIME 3
+# Sandevistan speed, times the run speed
+SANDEVISTAN_SPEED 1.7
+# Seconds of Berserk
+BERSERK_TIME 8
+# Berserk attack cooldowns run out this many times faster
+BERSERK_ATTACK_RATE 2
+# Lucy's RAM comes back this many times faster in Berserk
+BERSERK_RAM_RATE 3
+# No Attack Titan orb in the first this many chunks
+SHIFT_FIRST_CHUNK 8
+# At least this many chunks between two orbs
+SHIFT_MIN_GAP_CHUNKS 10
+# Chance a chunk holds an orb after that (0 to 1)
+SHIFT_CHANCE 0.35
+# Seconds standing still in the smoke before the titan comes out
+SHIFT_TIME 1.8
+# Seconds running as the Attack Titan
+TITAN_TIME 4
+# Seconds bursting out of the titan, still invincible
+EMERGE_TIME 1
+# Seconds of Sandevistan each shop level adds
+SANDEVISTAN_PER_LEVEL 0.5
+# Tiles each eddie magnet level reaches
+MAGNET_PER_LEVEL 0.5
+
+## Enemies
+# Eddies for a drone down
+DRONE_BOUNTY 5
+# No titan before this many tiles
+TITAN_FIRST_DISTANCE 300
+# Fewest seconds between two titans
+TITAN_MIN_INTERVAL 7
+# Most seconds between two titans
+TITAN_MAX_INTERVAL 14
+# Titans appear this many tiles ahead of the leader: their warning
+TITAN_SPAWN_AHEAD 40
+# Eddies for a titan down
+TITAN_BOUNTY 20
+# No sniper before this many tiles
+SNIPER_FIRST_DISTANCE 150
+# Fewest seconds between two snipers
+SNIPER_MIN_INTERVAL 5
+# Most seconds between two snipers
+SNIPER_MAX_INTERVAL 10
+# Seconds the laser sight follows you
+SNIPER_TRACK_TIME 1.2
+# Seconds it stays frozen before the shot
+SNIPER_AIM_TIME 0.6
+# Seconds the railgun beam lasts
+SNIPER_FIRE_TIME 0.25
+# Half the height of the beam, in tiles
+SNIPER_BEAM_HALF 0.35
+
+## Weapons (CYBERPSYCHO): cooldown in seconds, speed in tiles per second on top of the run, reach and radius in tiles
+# Shots vanish this many tiles ahead
+PROJECTILE_RANGE 22
+# Johnny and David
+GUN_COOLDOWN 0.25
+GUN_SPEED 30
+# A shot hits drones this close above or below its line
+GUN_RADIUS 0.4
+# Jinx's Pow-Pow, between two bursts
+MINIGUN_COOLDOWN 0.6
+MINIGUN_SPEED 32
+MINIGUN_RADIUS 0.35
+# Bullets in a burst
+MINIGUN_BURST 3
+# Seconds between the bullets of a burst
+MINIGUN_BURST_GAP 0.08
+# Seconds between two bullets in Berserk, before its speed-up
+MINIGUN_SPRAY_COOLDOWN 0.2
+# Mikasa
+BLADE_COOLDOWN 0.45
+BLADE_REACH 2.5
+# Lucy
+HACK_COOLDOWN 0.45
+# Tiles ahead she hacks
+HACK_RANGE 7
+# Rows above her head and below her feet she hacks
+HACK_LANE 1
+# Seconds a hacked zapper stays off
+HACK_TIME 2
+# A hacked drone passes the hack to the nearest drone this close
+HACK_BOUNCE_RANGE 4
+# Seconds to get one charge of RAM back (3 at most)
+RAM_RECHARGE 3.5
+# The Hunter's Saw Cleaver, a tap of the attack key
+CLEAVER_COOLDOWN 0.3
+CLEAVER_REACH 2.2
+# His pistol, the attack key held then released
+PISTOL_COOLDOWN 0.3
+PISTOL_SPEED 34
+PISTOL_RADIUS 0.5
+# Seconds to hold the attack key before letting go fires the pistol
+PISTOL_HOLD 0.3
+# Seconds a titan hit by his bullet stands still
+STAGGER_TIME 1.5
+# Tiles his cut reaches a staggered titan from
+VISCERAL_REACH 5
+# Eddies for a visceral, on top of the titan's bounty
+VISCERAL_BONUS 20
+# Tiles from his middle a frozen sniper sight can be parried
+PARRY_REACH 1.5
+# Eddies for a parried sniper
+PARRY_BOUNTY 10
+# Seconds after his shield breaks for a cleaver kill to win it back
+RALLY_TIME 2
+
+## Ultimates (CYBERPSYCHO)
+# Johnny: the fire wave's speed, tiles per second
+FIRE_WAVE_SPEED 45
+# How far it sweeps
+FIRE_WAVE_RANGE 25
+# David: seconds before the nuke lands
+NUKE_DELAY 0.5
+# Tiles ahead it lands
+NUKE_DISTANCE 10
+# Tiles razed on each side
+NUKE_RADIUS 8
+# Lucy: tiles ahead the breach reaches
+BREACH_AHEAD 15
+# Seconds the zappers stay off
+BREACH_TIME 3
+# Mikasa: spears per ultimate
+THUNDER_SPEARS 5
+# Seconds between two spears
+SPEAR_COOLDOWN 0.45
+SPEAR_SPEED 28
+SPEAR_RADIUS 0.6
+# Tiles on each side of a spear's lightning column
+SPEAR_BLAST_RADIUS 2
+# Jinx: Fishbones' speed
+FISHBONES_SPEED 40
+# How far it flies
+FISHBONES_RANGE 30
+# Tiles razed above and below its line
+FISHBONES_HALF_HEIGHT 2.5
+# Seconds she hangs in the air charging it
+FISHBONES_CHARGE_TIME 0.6
+# Seconds its recoil lasts
+FISHBONES_RECOIL_TIME 0.5
+# How hard the recoil throws her back, times the run speed
+FISHBONES_RECOIL_PUSH 0.8
+# The Hunter: the Moonlight Blade's speed
+MOONLIGHT_SPEED 50
+# How far it sweeps
+MOONLIGHT_RANGE 25
+# Tiles razed above and below his line
+MOONLIGHT_HALF_HEIGHT 1.5
+
+## Runners: price in eddies, and eddies to charge the ultimate
+JOHNY_PRICE 0
+JOHNY_ULTIMATE_CHARGE 150
+DAVID_PRICE 100
+DAVID_ULTIMATE_CHARGE 150
+JINX_PRICE 250
+JINX_ULTIMATE_CHARGE 150
+MIKASA_PRICE 500
+MIKASA_ULTIMATE_CHARGE 100
+LUCY_PRICE 750
+LUCY_ULTIMATE_CHARGE 150

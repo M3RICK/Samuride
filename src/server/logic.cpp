@@ -20,6 +20,7 @@ bool Server::resetMap()
     sweeps.clear();
     nukes.clear();
     resetTitans();
+    resetSnipers();
 
     if (!config.map_path.empty()) {
         if (!game_map.loadFromFile(config.map_path)) {
@@ -164,6 +165,7 @@ void Server::updatePlayers()
     }
 
     updateTitans(rear_x);
+    updateSnipers();
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -174,11 +176,13 @@ void Server::updatePlayers()
     }
 
     spawnTitans(leader_x);
+    spawnSnipers(leader_x);
     updateProjectiles();
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
     sendTitans();
+    sendSnipers();
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -225,6 +229,8 @@ bool Server::checkPlayerCollisions(Player &player)
 
     if (!player.isInvincible() && hitByTitan(player))
         return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
+    if (!player.isInvincible() && hitBySniper(player))
+        return hurt(player, SNIPER_HIT, player.getX(), player.getY() + 1);
     return false;
 }
 
@@ -262,8 +268,10 @@ void Server::sendGameState()
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
         state_data.push_back(player.getSpears());
-        // bit 0: a second of grace (shield broken, Sandevistan or titan over)
-        state_data.push_back(player.isGracing() ? 1 : 0);
+        // bit 0: a second of grace (shield broken, Sandevistan or titan over); the Hunter's bits 1-2:
+        // quicksilver bullets, bit 3: aiming his pistol, bit 4: rallying
+        state_data.push_back((player.isGracing() ? 1 : 0) | player.getQuicksilver() << 1 | (player.isAiming() ? 1 : 0) << 3 |
+                             (player.isRallying() ? 1 : 0) << 4);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

@@ -7,7 +7,7 @@
 InputManager::InputManager(Client *client, sf::RenderWindow *window, const Settings &settings)
     : client(client), window(window), jetpack_key(settings.jetpack_key), attack_key(settings.attack_key),
       ultimate_key(settings.ultimate_key),
-      jet_active(false), attack_held(false),
+      jet_active(false), attack_held(false), attack_key_down(false),
       close_requested(false), back_requested(false), confirm_pressed(false) {
 }
 
@@ -24,10 +24,17 @@ void InputManager::processInputs()
                 back_requested = true;
             if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
                 confirm_pressed = true;
-            if (key->code == attack_key)
+            if (key->code == attack_key) {
+                attack_key_down = true;
                 pressAttack();
+            }
             if (key->code == ultimate_key)
                 client->sendUltimate();
+        } else if (const auto *released = event->getIf<sf::Event::KeyReleased>()) {
+            if (released->code == attack_key)
+                attack_key_down = false;
+        } else if (event->is<sf::Event::FocusLost>()) {
+            attack_key_down = false;
         } else if (const auto *touch = event->getIf<sf::Event::TouchBegan>()) {
             // The screen view the HUD was last drawn with, buttons included
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
@@ -50,7 +57,9 @@ void InputManager::processInputs()
 
     // Focus check: two clients on the same machine must not share the keyboard
     bool thrust = window->hasFocus() && sf::Keyboard::isKeyPressed(jetpack_key);
-    bool attack_down = window->hasFocus() && sf::Keyboard::isKeyPressed(attack_key);
+    // The attack key from its events: polled, a held key could read as up for a frame, and its key
+    // repeats then pressed it again and again (a Hunter's hold turned into a flurry of cuts)
+    bool attack_down = window->hasFocus() && attack_key_down;
     pollTouches(thrust, attack_down);
 
     if (attack_held && !attack_down) {

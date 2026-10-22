@@ -38,6 +38,16 @@ private:
         float front() const { return start + std::clamp(FISHBONES_SPEED * flying(), 0.0f, FISHBONES_RANGE); }
     };
 
+    // The Hunter's Moonlight Blade on screen, moving like the server's
+    struct MoonWave {
+        float start;        // in tiles
+        float y;            // its line
+        float burnt_to;     // the zappers of its band are out up to here
+        sf::Clock age;
+
+        float front() const { return start + std::min(MOONLIGHT_RANGE, MOONLIGHT_SPEED * age.getElapsedTime().asSeconds()); }
+    };
+
     // David's ultimate on screen: the shell flying, then the blast
     struct Nuke {
         float start;        // where it was fired, in tiles
@@ -53,6 +63,7 @@ private:
     std::vector<FireWave> fire_waves;
     std::vector<Nuke> nukes;
     std::vector<Rocket> rockets;
+    std::vector<MoonWave> moon_waves;
     std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
 
     void start(const UltimateEvent &ultimate);
@@ -60,6 +71,7 @@ private:
     void drawNukes();
     void drawBreaches();
     void drawRockets();
+    void drawMoonWaves();
 
 public:
     Ultimates(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio, Particles &particles);

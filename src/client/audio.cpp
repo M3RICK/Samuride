@@ -210,6 +210,12 @@ void Audio::synthesize()
     // Mikasa's thunder spears: a sharp crack, then the rumble
     buffers[Sfx::Thunder] = toBuffer(concat(burst(0.08f, 0.6f, 0.95f), mix(burst(0.6f, 0.35f, 0.1f),
                                                                              tone(Wave::Saw, 140, 45, 0.6f, 0.2f))));
+    // The Hunter's cleaver: a low serrated rasp; his pistol, a deep crack; his visceral, a wet tearing thud
+    buffers[Sfx::Cleaver] = toBuffer(mix(burst(0.18f, 0.45f, 0.35f), tone(Wave::Saw, 220, 70, 0.16f, 0.22f)));
+    buffers[Sfx::Pistol] = toBuffer(mix(burst(0.18f, 0.55f, 0.5f), tone(Wave::Square, 500, 90, 0.12f, 0.2f)));
+    buffers[Sfx::Visceral] = toBuffer(mix(burst(0.4f, 0.5f, 0.15f), tone(Wave::Sine, 110, 35, 0.35f, 0.5f)));
+    // His Moonlight Blade: a cold shimmer swelling into a hum
+    buffers[Sfx::Moonlight] = toBuffer(mix(tone(Wave::Sine, 880, 1760, 0.6f, 0.25f), tone(Wave::Saw, 110, 220, 0.6f, 0.12f)));
     // Lucy's breach: a long stuttering sweep of data
     buffers[Sfx::Breach] = toBuffer(concat(tone(Wave::Square, 300, 2400, 0.25f, 0.15f),
                                            mix(tone(Wave::Square, 2400, 200, 0.4f, 0.12f), burst(0.4f, 0.2f, 0.9f))));

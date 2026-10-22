@@ -51,6 +51,19 @@ Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/
 <p align="center"><img src="docs/characters.png" alt="Character select" width="600px"></p>
 <p align="center"><img src="docs/districts.png" alt="District select" width="600px"></p>
 
+## Tune the balance
+
+Every balance value of the game (speeds, cooldowns, bounties, power-up durations, ultimates, prices...)
+is in `assets/tuning.txt`, in the game's folder, each with a line saying what it does. Change a number,
+save, restart the game: no compiling. Delete a line to get its default back.
+
+- While a value differs from the default, the run shows **CUSTOM TUNING** under the distance, and solo
+  records aren't saved: an easier game would beat the real ones.
+- In versus, the host's file decides what happens.
+- A typo is skipped, the default stays: the console says which line.
+- Testing a balance? Send your `tuning.txt` with what you felt: it says exactly what you played.
+- Not on Android: the file is sealed in the APK.
+
 ## Download
 
 Grab the archive for your system from the [Releases](../../releases) page. Everything the game needs is inside, nothing to install. What changed in each version: [patch notes](CHANGELOG.md).

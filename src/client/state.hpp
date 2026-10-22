@@ -11,6 +11,7 @@
 #include <vector>
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
+#include "../common/snipers.hpp"
 #include "../common/shift.hpp"
 #include "../common/powerups.hpp"
 
@@ -29,6 +30,9 @@ struct PlayerState {
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
+    int quicksilver = 0;        // the Hunter's bullets
+    bool aiming = false;        // the Hunter holds the attack key: his pistol fires when he lets go
+    bool rallying = false;      // the Hunter's shield just broke: a cleaver kill brings it back
 };
 
 // Someone attacked in CYBERPSYCHO
@@ -48,6 +52,11 @@ struct UltimateEvent {
 struct TitanState {
     TitanType type;
     float x;    // left edge, in tiles
+};
+
+struct SniperState {
+    SniperPhase phase;
+    float y;        // its line, in tiles
 };
 
 struct CollisionEffect {
@@ -75,6 +84,7 @@ private:
     std::vector<ShotEvent> pending_shots;
     std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
+    std::vector<SniperState> snipers;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
@@ -85,6 +95,7 @@ public:
     void pushShot(ShotEvent shot);
     void pushUltimate(UltimateEvent ultimate);
     void setTitans(std::vector<TitanState> list);
+    void setSnipers(std::vector<SniperState> list);
     void setCountdown(int value);
     void updatePlayer(int player_number, const PlayerState &player);
     void handleCollision(char type, int player, int x, int y);
@@ -104,6 +115,7 @@ public:
     std::vector<ShotEvent> takeShots();
     std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;
+    std::vector<SniperState> getSnipers() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();

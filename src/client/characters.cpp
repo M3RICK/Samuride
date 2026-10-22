@@ -33,7 +33,7 @@ bool Character::load(const std::string &dir)
     std::istringstream meta(text);
     std::map<std::string, Animation *> animations = {
         {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
-        {"death", &death}, {"attack", &attack}, {"smoke", &smoke}, {"emerge", &emerge}
+        {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"visceral", &visceral}, {"smoke", &smoke}, {"emerge", &emerge}
     };
     std::string key;
 
@@ -60,6 +60,8 @@ bool Character::load(const std::string &dir)
             int r, g, b;
             meta >> r >> g >> b;
             exhaust = sf::Color(r, g, b);
+        } else if (key == "mist") {
+            mist = true;
         } else if (animations.count(key)) {
             Animation &anim = *animations[key];
             std::string mode;

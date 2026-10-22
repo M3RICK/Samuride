@@ -3,6 +3,7 @@
 #ifndef PLAYER_HPP
     #define PLAYER_HPP
 
+#include <algorithm>
 #include <cstdint>
 #include <set>
 #include <utility>
@@ -11,6 +12,7 @@
 #include "../common/powerups.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
+#include "../common/difficulty.hpp"
 
 class Player {
 private:
@@ -39,23 +41,21 @@ private:
     float grace_timer;          // seconds of invincibility left after a shield broke, a sprint or a titan
     int ram;                    // Lucy's hack charges
     float ram_timer;            // seconds before the next charge comes back
-    int ultimate_charge;        // eddies earned since the last ultimate, up to ultimateCharge(upgrades)
+    int ultimate_charge;        // eddies earned since the last ultimate, up to its runner's charge
     int spears;                 // Mikasa's thunder spears left
     float spear_cooldown;       // seconds before she can throw the next one
     float charge_timer;         // seconds left charging Fishbones: standing still in the air
     float recoil_timer;         // seconds of Fishbones' recoil left
     int burst_left;             // Pow-Pow bullets still to come in this burst
     float burst_timer;          // seconds before the next one
+    int quicksilver;            // the Hunter's bullets
+    float trigger_time;         // seconds the attack key has been held, -1 while it's up (the Hunter's pistol)
+    float rally_timer;          // seconds left to win the shield back (the Hunter's rally)
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
     std::vector<uint8_t> recv_buffer;
     std::vector<uint8_t> send_buffer;
-
-    // Tuning knobs, in tiles and seconds. A modif si mal equilibré.
-    static constexpr float GRAVITY = 28.0f;
-    static constexpr float JET_POWER = -32.0f;
-    static constexpr float MAX_VELOCITY = 10.0f;
 
     void updateForm(float dt);
 
@@ -89,9 +89,9 @@ public:
     void startShift();
     void addScore(int points);
     int getUltimateCharge() const { return ultimate_charge; }
-    bool ultimateReady() const { return ultimate_charge >= ultimateCharge(upgrades); }
+    bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs
-    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(upgrades); }
+    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
     void spendUltimate() { ultimate_charge = 0; }
     // Charges, then the recoil once it fires
     void startFishbones() { charge_timer = FISHBONES_CHARGE_TIME; }
@@ -101,6 +101,17 @@ public:
     int getSpears() const { return spears; }
     void giveSpears() { spears = THUNDER_SPEARS; }
     bool throwSpear();
+
+    int getQuicksilver() const { return quicksilver; }
+    void loadQuicksilver(int bullets) { quicksilver = std::min(QUICKSILVER_MAX, quicksilver + bullets); }
+    void pressTrigger() { trigger_time = 0; }
+    // Seconds it was held, -1 when it wasn't
+    float releaseTrigger() { return std::exchange(trigger_time, -1.0f); }
+    bool isAiming() const { return trigger_time >= PISTOL_HOLD && quicksilver > 0; }
+    bool fireQuicksilver();
+    bool isRallying() const { return rally_timer > 0; }
+    // A kill during the rally: the shield is back
+    bool rally();
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }

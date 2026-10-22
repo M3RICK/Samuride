@@ -22,7 +22,7 @@ void Server::spawnTitans(float leader_x)
     if (titan_timer > 0)
         return;
 
-    std::uniform_real_distribution<float> interval(TITAN_MIN_INTERVAL, TITAN_MAX_INTERVAL);
+    std::uniform_real_distribution<float> interval(TITAN_MIN_INTERVAL, std::max(TITAN_MIN_INTERVAL, TITAN_MAX_INTERVAL));
     std::uniform_int_distribution<int> type(0, TITAN_TYPES - 1);
 
     titan_timer = interval(rng);
@@ -31,8 +31,13 @@ void Server::spawnTitans(float leader_x)
 
 void Server::updateTitans(float rear_x)
 {
-    for (Titan &titan : titans)
-        titan.x -= titanStats(titan.type).speed * TICK_DT;
+    // A staggered one stands still a while
+    for (Titan &titan : titans) {
+        if (titan.stagger > 0)
+            titan.stagger -= TICK_DT;
+        else
+            titan.x -= titanStats(titan.type).speed * TICK_DT;
+    }
 
     // Gone once behind everyone
     std::erase_if(titans, [rear_x](const Titan &titan) { return titan.x < rear_x - 10; });
@@ -54,17 +59,30 @@ bool Server::hitByTitan(const Player &player) const
     return false;
 }
 
-// CYBERPSYCHO: a strike within reach takes the titan down
-void Server::slashTitans(int client_fd, const Player &player, float reach)
+// The first titan a shot flying along line y crossed between the columns from_x and to_x, standing
+// tall enough to be in its way
+Server::Titan *Server::titanInPath(float from_x, float to_x, float y)
 {
-    auto owner = players.find(client_fd);
+    float floor = game_map.getHeight();
 
-    std::erase_if(titans, [&](const Titan &titan) {
+    for (Titan &titan : titans) {
+        TitanStats stats = titanStats(titan.type);
+        if (to_x + 1 > titan.x && from_x < titan.x + stats.width && y > floor - stats.height)
+            return &titan;
+    }
+    return nullptr;
+}
+
+// CYBERPSYCHO: a strike within reach takes titans down. Mikasa's blade takes any; the Hunter's cleaver
+// only a staggered one, torn open (a visceral) for more. Returns how many.
+int Server::slashTitans(Player &player, float reach, bool staggered_only)
+{
+    return std::erase_if(titans, [&](const Titan &titan) {
         bool in_reach = titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
-        if (!in_reach || owner == players.end())
+        if (!in_reach || (staggered_only && titan.stagger <= 0))
             return false;
-        owner->second.addScore(TITAN_BOUNTY);
-        notifyCollision(TITAN_KILL, owner->second, titan.x, game_map.getHeight() - 1);
+        player.addScore(staggered_only ? TITAN_BOUNTY + VISCERAL_BONUS : TITAN_BOUNTY);
+        notifyCollision(staggered_only ? VISCERAL : TITAN_KILL, player, titan.x, game_map.getHeight() - 1);
         return true;
     });
 }

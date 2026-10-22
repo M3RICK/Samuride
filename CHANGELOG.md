@@ -3,6 +3,24 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.9
+
+### New
+- **Tune the game yourself.** `assets/tuning.txt`, in the game's folder, holds every balance value
+  (speeds, cooldowns, bounties, durations, ultimates, prices), each explained. Change a number and
+  restart, no compiling. The run says CUSTOM TUNING while you play with changed values, and then
+  doesn't save solo records. Not on Android.
+- **Arasaka snipers.** Past 150 m, every 5 to 10 s, a red laser sight crosses the screen and follows
+  your height. It freezes and flickers, then a railgun shot sweeps the whole row: get off the line.
+- **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.
+
+### Balance
+- **Closer to Jetpack Joyride.** Speed climbs more gently: top speed is a bit lower and reached around
+  1500 m instead of 800 m. Obstacles get harder over ~1200 m instead of ~500 m.
+- **Fewer tall zappers.** 4-tile zappers only show up past ~800 m and stay rare; most beams are 2 or 3 tiles.
+- **Ultimates charge slower**: 150 eddies instead of 100. Except Mikasa's thunder spears, still 100.
+- **The ULTIMATE upgrade is gone.** The eddies you spent on it are given back.
+
 ## v2.85
 
 ### New

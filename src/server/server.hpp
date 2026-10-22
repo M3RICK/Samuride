@@ -1,6 +1,6 @@
 // The authoritative game server: it runs the game, the clients only send inputs and draw what it says.
 // Split by theme: server.cpp (connections, messages), logic.cpp (lobby, physics, collisions),
-// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, shift.cpp (the Attack Titan
+// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, snipers.cpp, shift.cpp (the Attack Titan
 // power-up) and powerups.cpp (shield, Sandevistan, Berserk).
 
 #ifndef SERVER_HPP
@@ -17,6 +17,7 @@
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
+#include "../common/snipers.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -40,16 +41,25 @@ private:
     static constexpr size_t CHUNK_WIDTH = 40;
     static constexpr size_t SAFE_START = 14;
     static constexpr float LOOKAHEAD = 40;
-    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 12;
-
-    // Run speed in tiles per second, ramps up over time
-    static constexpr float START_SPEED = 9.0f;
-    static constexpr float MAX_SPEED = 18.0f;
-    static constexpr float ACCELERATION = 0.15f;
+    // The run's speed and difficulty: common/difficulty.hpp
 
     struct Titan {
         TitanType type;
         float x;        // left edge, in tiles
+        float stagger = 0;  // seconds left standing still, shot by the Hunter: a cleaver cut kills it
+    };
+
+    struct Sniper {
+        int target_fd;
+        float y;        // its line, in tiles
+        float time;     // seconds since it started aiming
+
+        SniperPhase phase() const
+        {
+            if (time < SNIPER_TRACK_TIME)
+                return SniperPhase::Tracking;
+            return time < SNIPER_TRACK_TIME + SNIPER_AIM_TIME ? SniperPhase::Aiming : SniperPhase::Firing;
+        }
     };
 
     struct Projectile {
@@ -59,10 +69,10 @@ private:
         float speed;
         float max_x;
         float radius;
-        bool spear = false;     // Mikasa's: blows up where it stops
+        Weapon weapon;          // Mikasa's spears blow up where they stop, the Hunter's bullets stagger titans
     };
 
-    // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
+    // Johnny's fire wave, Jinx's Fishbones and the Hunter's Moonlight Blade, sweeping ahead and razing rows top to bottom
     struct Sweep {
         int owner_fd;
         float start;    // in tiles
@@ -110,6 +120,9 @@ private:
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
+
+    std::vector<Sniper> snipers;
+    float sniper_timer;     // seconds before the next sniper aims
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -202,13 +215,21 @@ private:
     // CYBERPSYCHO (combat.cpp)
     //===========================================================================
 
+    void pressAttack(int client_fd);
+
+    void releaseAttack(int client_fd);
+
     void handleAttack(int client_fd);
+
+    void firePistol(int client_fd, Player &player);
 
     void announceShot(const Player &player, Weapon weapon);
 
     void fireProjectile(int client_fd, const Player &player, Weapon weapon);
 
-    void strike(int client_fd, const Player &player, float reach);
+    int strike(int client_fd, const Player &player, float reach);
+
+    void cleave(int client_fd, Player &player, float reach);
 
     bool hack(int client_fd, Player &player);
 
@@ -216,7 +237,9 @@ private:
 
     bool projectileHit(const Projectile &shot, float from_x);
 
-    float spearHit(const Projectile &shot, float from_x) const;
+    float spearHit(const Projectile &shot, float from_x);
+
+    bool bulletHit(const Projectile &shot, float from_x);
 
     void spearBlast(int owner_fd, float x);
 
@@ -248,9 +271,27 @@ private:
 
     bool hitByTitan(const Player &player) const;
 
-    void slashTitans(int client_fd, const Player &player, float reach);
+    Titan *titanInPath(float from_x, float to_x, float y);
+
+    int slashTitans(Player &player, float reach, bool staggered_only);
 
     void sendTitans();
+
+    //===========================================================================
+    // Arasaka snipers (snipers.cpp)
+    //===========================================================================
+
+    void resetSnipers();
+
+    void spawnSnipers(float leader_x);
+
+    void updateSnipers();
+
+    bool hitBySniper(const Player &player) const;
+
+    void parrySnipers(Player &player);
+
+    void sendSnipers();
 
     //===========================================================================
     // Attack Titan power-up (shift.cpp)

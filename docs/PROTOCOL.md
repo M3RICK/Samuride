@@ -34,6 +34,7 @@ Positions travel in hundredths of a tile.
 | 11 | `MSG_SHOT` | server → client | Someone attacked, for the animation |
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
+| 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
 
 ### `MSG_CONNECT`
 
@@ -42,7 +43,7 @@ Positions travel in hundredths of a tile.
 | 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
-| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, ultimate, eddie magnet, subdermal armor |
+| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
 
 District and mode are only taken from the first player in the lobby, the host; whoever joins
 sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
@@ -118,7 +119,7 @@ A 13-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
-| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; the Hunter's bits 1-2 quicksilver bullets, bit 3 aiming his pistol (the attack key held long enough, a bullet loaded), bit 4 rallying |
 
 ### `MSG_COLLISION`
 
@@ -135,6 +136,7 @@ A 13-byte record per player, 60 times per second:
 | `e` | Zapper or drone contact: death |
 | `d` | Drone destroyed, +5 |
 | `t` | Run down by a titan: death |
+| `s` | Hit by an Arasaka sniper's railgun: death |
 | `k` | Titan taken down (Mikasa's blade, the Attack Titan or Johnny's fire wave), +20 |
 | `p` | Attack Titan orb taken: shifting starts |
 | `a` | Shield taken |
@@ -143,7 +145,11 @@ A 13-byte record per player, 60 times per second:
 | `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
-| `b` | A shield took a deadly hit (zapper, drone or titan) instead of the player, who gets 1 s of invincibility |
+| `g` | The Hunter's bullet staggered the titan at that column: it stands still 1.5 s |
+| `x` | The Hunter cut a staggered titan down (visceral), +40 |
+| `q` | The Hunter's bullet took out a sniper whose sight was frozen on that row, +10 |
+| `y` | The Hunter's cleaver kill won his broken shield back (rally) |
+| `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`
 
@@ -151,7 +157,7 @@ A 13-byte record per player, 60 times per second:
 | --- | --- |
 | 1 | Winner's player number, or `0xFF` for none |
 
-The game ends at the first death (zapper, drone or titan, unless a shield takes it): the other player wins, nobody if both
+The game ends at the first death (zapper, drone, titan or sniper, unless a shield takes it): the other player wins, nobody if both
 died on the same tick. If a player disconnects, the remaining one wins. In solo the winner is
 always `0xFF` and the score is the distance run.
 
@@ -163,7 +169,12 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 ### `MSG_ATTACK`
 
 One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up, which the
-server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
+server ignores but for the Hunter: his attack happens when the key comes back up. Held under 0.3 s,
+or with no bullet, it is his Saw Cleaver: every drone within 1.8 tiles ahead goes down, and so does a
+staggered titan in reach (`x`); each kill loads a quicksilver bullet (3 at most) and, within 2 s of his
+shield breaking, brings the shield back (`y`). Held longer with a bullet, it fires his pistol: a
+projectile (run speed + 34) that downs a drone or staggers the first titan in its way (`g`), and takes
+out every sniper whose sight is frozen within 1.5 tiles of his middle (`q`). Both share a 0.3 s cooldown. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
@@ -174,7 +185,7 @@ feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 5 cleaver, 6 pistol |
 
 ### `MSG_ULTIMATE`
 
@@ -184,7 +195,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Moonlight Blade (the Hunter) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -204,6 +215,9 @@ it sticks in a drone or a titan, or reaches 22 tiles, then blows up (`l`).
 Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but only the rows within
 2.5 tiles of Y: a zapper touching them goes out whole, a titan dies if the band reaches its height.
 
+The Moonlight Blade sweeps 25 tiles ahead at 50 tiles per second like Fishbones, the rows within 1.5
+tiles of Y.
+
 ### `MSG_TITANS`
 
 | Bytes | Field |
@@ -214,6 +228,17 @@ Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but o
 Titans stand on the floor and run at the players. The first one comes past 300 tiles, then one
 every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 
+### `MSG_SNIPERS`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | Count |
+| 3 per sniper | Phase (0 tracking, 1 aiming, 2 firing), Y of its line (2 bytes) |
+
+Arasaka snipers shoot in both modes. The first one aims past 150 tiles, then one every 5 to 10
+seconds, at a random player: for 1.2 s its line follows the middle of that player, then it stays
+still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone in it included.
+
 ## A game, step by step
 
 1. The client connects and sends `MSG_CONNECT`.
@@ -222,7 +247,7 @@ every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
    per second: 3, 2, 1, 0.
 3. During the run the server ticks 60 times per second: players move forward, faster and faster,
    gravity or thrust applies, new map chunks are generated ahead of the leader, collisions are
-   checked. It sends `MSG_GAME_STATE` and `MSG_TITANS` every tick, `MSG_COLLISION` and `MSG_SHOT`
+   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_SNIPERS` every tick, `MSG_COLLISION` and `MSG_SHOT`
    when they happen, and `MSG_MAP_DATA` for each new chunk. Clients send `MSG_PLAYER_INPUT` and
    `MSG_ATTACK`.
 4. At the first death the server sends `MSG_GAME_END`. Clients answer `MSG_READY` for a rematch,

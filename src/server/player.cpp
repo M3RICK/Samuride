@@ -6,7 +6,8 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), spear_cooldown(0), charge_timer(0), recoil_timer(0), burst_left(0), burst_timer(0) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), spear_cooldown(0), charge_timer(0), recoil_timer(0), burst_left(0), burst_timer(0),
+      quicksilver(QUICKSILVER_MAX), trigger_time(-1), rally_timer(0) {
 }
 
 void Player::reset(int number, float spawn_y)
@@ -31,6 +32,9 @@ void Player::reset(int number, float spawn_y)
     charge_timer = 0;
     recoil_timer = 0;
     burst_left = 0;
+    quicksilver = QUICKSILVER_MAX;
+    trigger_time = -1;
+    rally_timer = 0;
     collected_coins.clear();
 }
 
@@ -52,7 +56,7 @@ bool Player::collectCoin(int tile_x, int tile_y)
 void Player::addScore(int points)
 {
     score += points;
-    ultimate_charge = std::min(ultimateCharge(upgrades), ultimate_charge + points);
+    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points);
 }
 
 void Player::startShift()
@@ -81,12 +85,34 @@ bool Player::throwSpear()
     return true;
 }
 
+// The Hunter can win it back: see rally()
 bool Player::absorbHit()
 {
     if (!shield)
         return false;
     shield = false;
     grace_timer = SHIELD_GRACE;
+    if (weaponOf(character) == Weapon::Cleaver)
+        rally_timer = RALLY_TIME;
+    return true;
+}
+
+bool Player::rally()
+{
+    if (rally_timer <= 0)
+        return false;
+    rally_timer = 0;
+    shield = true;
+    return true;
+}
+
+// The pistol shares the cleaver's cooldown
+bool Player::fireQuicksilver()
+{
+    if (quicksilver == 0 || attack_cooldown > 0)
+        return false;
+    quicksilver--;
+    attack_cooldown = statsOf(Weapon::Pistol).cooldown;
     return true;
 }
 
@@ -119,6 +145,9 @@ void Player::update(float dt, float forward_speed, float max_y)
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
     grace_timer = std::max(0.0f, grace_timer - dt);
     spear_cooldown = std::max(0.0f, spear_cooldown - dt);
+    rally_timer = std::max(0.0f, rally_timer - dt);
+    if (trigger_time >= 0)
+        trigger_time += dt;
     if (ram < RAM_MAX && (ram_timer -= dt * (isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
@@ -155,7 +184,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
 
     bool thrust = jet_active && form != Form::Shifting;
-    y_velocity += (thrust ? JET_POWER : GRAVITY) * dt;
+    y_velocity += (thrust ? -JET_POWER : GRAVITY) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
     y += y_velocity * dt;
 

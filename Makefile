@@ -33,11 +33,12 @@ endif
 endif
 
 # Common sources
-COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp src/common/platform.cpp
+COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp src/common/platform.cpp \
+              src/common/tuning.cpp
 
 # Server sources; the game links the server core too, to host solo and multiplayer runs itself
 SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
-                   src/server/combat.cpp src/server/titans.cpp src/server/shift.cpp \
+                   src/server/combat.cpp src/server/titans.cpp src/server/snipers.cpp src/server/shift.cpp \
                    src/server/powerups.cpp src/server/ultimates.cpp
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 

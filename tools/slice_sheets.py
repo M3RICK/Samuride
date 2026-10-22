@@ -25,7 +25,8 @@ PAD = 4
 SHADOW_ROWS = 12    # bottom rows of a region where ground shadows join the frames
 
 
-def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None):
+def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None,
+              solo=False, scale=1):
     """One animation of a sheet.
 
     region:         box (x0, y0, x1, y1) holding the frames, labels left out
@@ -38,9 +39,11 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
     cuts:           for evenly laid sheets whose frames touch (ground shadows): frames are plain
                     columns between boundaries; either the boundaries' x positions, or
                     ("seams", frame centres) to cut at the emptiest column between two centres
+    solo:           with cuts, only the biggest blob of each column: a neighbour's trail is left out
+    scale:          frames resized by this, for a row drawn bigger than the others
     """
     return {"region": region, "fps": fps, "ground": ground, "mode": mode,
-            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts}
+            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts, "solo": solo, "scale": scale}
 
 
 # Titan sheet: frames sit above their numbered labels, cut at the emptiest column between two
@@ -104,6 +107,22 @@ CHARACTERS = {
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
+    # The Hunter's sheet is a platformer's: no take-off (its jump looked wrong), he flies gliding, falls
+    # without the landing; his mist is the game's exhaust particles (players.cpp). "shoot": his pistol,
+    # the attack key held then released; "visceral": the extended cut, tearing a staggered titan open.
+    "hunter": ("sources/hunter.png", (75, 95, 165, 185), {
+        "run":     animation((750, 55, 1295, 150), 12, ground=True),
+        "rise":    animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
+        "hover":   animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
+        "fall":    animation((750, 200, 1100, 302), 10, frames=[0, 1, 2, 3]),
+        "death":   animation((745, 688, 1295, 790), 10, mode="once"),
+        # Drawn bigger than the rest: his hat is 40 and 37 px wide there, 34 when he runs. The row
+        # cuts twice: only the wind-up and the big arc, shorter than the cooldown so a cut never restarts
+        "attack":  animation((15, 365, 740, 480), 16, mode="once", effects_ahead=True, scale=34 / 40,
+                             frames=[3, 4, 7, 7]),
+        "shoot":   animation((15, 535, 715, 628), 16, mode="once", effects_ahead=True, scale=34 / 37),
+        "visceral": animation((750, 365, 1295, 480), 14, mode="once", effects_ahead=True, scale=34 / 40),
+    }),
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
     }, TITAN_SHEET),
@@ -152,7 +171,9 @@ def label_blobs(mask):
     return labels, count
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "hunter": "150 175 215"}
+# No jetpack, so no flames: they fly in mist (players.cpp; the mist itself is to be redone)
+MIST = {"hunter"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -240,11 +261,11 @@ def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
     return frames
 
 
-def column_frames(pixels, region, cuts):
+def column_frames(pixels, region, cuts, solo=False):
     """Frames as the columns between `cuts`, each trimmed to its opaque pixels.
 
     A neighbour's hand or hair can poke across a boundary: only blobs at least a
-    tenth the size of the biggest one (the frame's own body) are kept.
+    tenth the size of the biggest one (the frame's own body) are kept, only the biggest with solo.
     """
     _, y0, _, y1 = region
     frames = []
@@ -252,7 +273,7 @@ def column_frames(pixels, region, cuts):
         labels, count = label_blobs(pixels[y0:y1, left:right, 3] > ALPHA)
         sizes = np.bincount(labels.ravel(), minlength=count + 1)
         sizes[0] = 0
-        mask = np.isin(labels, np.nonzero(sizes >= sizes.max() / 10)[0])
+        mask = labels == sizes.argmax() if solo else np.isin(labels, np.nonzero(sizes >= sizes.max() / 10)[0])
         ys, xs = np.nonzero(mask)
         box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
         frames.append(((left + box[0], y0 + box[1], left + box[2], y0 + box[3]),
@@ -275,7 +296,7 @@ def find_frames(pixels, spec, effects):
     if cuts and cuts[0] == "seams":
         cuts = seam_cuts(pixels, spec["region"], cuts[1])
     if cuts:
-        return column_frames(pixels, spec["region"], cuts)
+        return column_frames(pixels, spec["region"], cuts, spec["solo"])
     return split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"], effects)
 
 
@@ -316,6 +337,9 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     frames = {}
     for anim, spec in animations.items():
         found = [crop_frame(sheet, box, mask) for box, mask in find_frames(pixels, spec, effects)]
+        if spec["scale"] != 1:
+            found = [f.resize((round(f.width * spec["scale"]), round(f.height * spec["scale"])), Image.NEAREST)
+                     for f in found]
         if options.get("mirror"):
             found = [ImageOps.mirror(frame) for frame in found]
         frames[anim] = [found[i] for i in spec["frames"]] if spec["frames"] else found
@@ -361,6 +385,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in MIST:
+        lines.append("mist")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)
