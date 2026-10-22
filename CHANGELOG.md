@@ -6,8 +6,8 @@ taken from this file. Players on different versions can't play together: update 
 ## v2.9
 
 ### New
-- **Missiles.** Past 150 m, a missile flies in from the right every 5 to 10 s. A yellow warning on the
-  right edge follows your height, turns red when the missile locks its line, then it comes in: move.
+- **Arasaka snipers.** Past 150 m, every 5 to 10 s, a red laser sight crosses the screen and follows
+  your height. It freezes and flickers, then a railgun shot sweeps the whole row: get off the line.
 - **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.
 
 ### Balance

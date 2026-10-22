@@ -6,7 +6,7 @@
 #include "../server/player.hpp"
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
-#include "missiles.hpp"
+#include "snipers.hpp"
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -93,15 +93,14 @@ static void testGenerator()
     }
 }
 
-// A missile hits the body, from head to feet, and only the body
-static void testMissileHit()
+// The railgun's beam hits the body from head to feet, and only along its row
+static void testSniperHit()
 {
-    assert(missileHits(10.5f, 6.0f, 10, 5));
-    assert(missileHits(10.5f, 5.0f, 10, 5));
-    assert(missileHits(10.5f, 7.0f, 10, 5));
-    assert(!missileHits(10.5f, 4.3f, 10, 5));
-    assert(!missileHits(10.5f, 7.7f, 10, 5));
-    assert(!missileHits(11.5f, 6.0f, 10, 5));
+    assert(sniperHits(6.0f, 5));
+    assert(sniperHits(5.0f, 5));
+    assert(sniperHits(7.0f, 5));
+    assert(!sniperHits(4.3f, 5));
+    assert(!sniperHits(7.7f, 5));
 }
 
 // The shield takes one hit then gives a moment to get clear; the Sandevistan outruns everyone
@@ -292,7 +291,7 @@ int main()
     testIntegers();
     testMapChunks();
     testGenerator();
-    testMissileHit();
+    testSniperHit();
     testPowerUps();
     testHack();
     testUltimate();

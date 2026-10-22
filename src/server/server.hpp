@@ -1,6 +1,6 @@
 // The authoritative game server: it runs the game, the clients only send inputs and draw what it says.
 // Split by theme: server.cpp (connections, messages), logic.cpp (lobby, physics, collisions),
-// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, missiles.cpp, shift.cpp (the Attack Titan
+// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, snipers.cpp, shift.cpp (the Attack Titan
 // power-up) and powerups.cpp (shield, Sandevistan, Berserk).
 
 #ifndef SERVER_HPP
@@ -17,7 +17,7 @@
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
-#include "../common/missiles.hpp"
+#include "../common/snipers.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -53,11 +53,17 @@ private:
         float x;        // left edge, in tiles
     };
 
-    struct Missile {
+    struct Sniper {
         int target_fd;
-        float x;        // its tip, in tiles
-        float y;
-        float track;    // seconds it still follows its target's height
+        float y;        // its line, in tiles
+        float time;     // seconds since it started aiming
+
+        SniperPhase phase() const
+        {
+            if (time < SNIPER_TRACK_TIME)
+                return SniperPhase::Tracking;
+            return time < SNIPER_TRACK_TIME + SNIPER_AIM_TIME ? SniperPhase::Aiming : SniperPhase::Firing;
+        }
     };
 
     struct Projectile {
@@ -119,8 +125,8 @@ private:
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
 
-    std::vector<Missile> missiles;
-    float missile_timer;    // seconds before the next missile
+    std::vector<Sniper> snipers;
+    float sniper_timer;     // seconds before the next sniper aims
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -264,18 +270,18 @@ private:
     void sendTitans();
 
     //===========================================================================
-    // Missiles (missiles.cpp)
+    // Arasaka snipers (snipers.cpp)
     //===========================================================================
 
-    void resetMissiles();
+    void resetSnipers();
 
-    void spawnMissiles(float leader_x);
+    void spawnSnipers(float leader_x);
 
-    void updateMissiles(float rear_x);
+    void updateSnipers();
 
-    bool hitByMissile(const Player &player);
+    bool hitBySniper(const Player &player) const;
 
-    void sendMissiles();
+    void sendSnipers();
 
     //===========================================================================
     // Attack Titan power-up (shift.cpp)

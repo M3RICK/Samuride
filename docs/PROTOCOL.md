@@ -34,7 +34,7 @@ Positions travel in hundredths of a tile.
 | 11 | `MSG_SHOT` | server → client | Someone attacked, for the animation |
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
-| 14 | `MSG_MISSILES` | server → client | Missiles and their warnings, every tick |
+| 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
 
 ### `MSG_CONNECT`
 
@@ -136,7 +136,7 @@ A 13-byte record per player, 60 times per second:
 | `e` | Zapper or drone contact: death |
 | `d` | Drone destroyed, +5 |
 | `t` | Run down by a titan: death |
-| `m` | Hit by a missile: death |
+| `s` | Hit by an Arasaka sniper's railgun: death |
 | `k` | Titan taken down (Mikasa's blade, the Attack Titan or Johnny's fire wave), +20 |
 | `p` | Attack Titan orb taken: shifting starts |
 | `a` | Shield taken |
@@ -145,7 +145,7 @@ A 13-byte record per player, 60 times per second:
 | `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
-| `b` | A shield took a deadly hit (zapper, drone, titan or missile) instead of the player, who gets 1 s of invincibility |
+| `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 
 ### `MSG_GAME_END`
 
@@ -153,7 +153,7 @@ A 13-byte record per player, 60 times per second:
 | --- | --- |
 | 1 | Winner's player number, or `0xFF` for none |
 
-The game ends at the first death (zapper, drone, titan or missile, unless a shield takes it): the other player wins, nobody if both
+The game ends at the first death (zapper, drone, titan or sniper, unless a shield takes it): the other player wins, nobody if both
 died on the same tick. If a player disconnects, the remaining one wins. In solo the winner is
 always `0xFF` and the score is the distance run.
 
@@ -216,18 +216,16 @@ Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but o
 Titans stand on the floor and run at the players. The first one comes past 300 tiles, then one
 every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 
-### `MSG_MISSILES`
+### `MSG_SNIPERS`
 
 | Bytes | Field |
 | --- | --- |
 | 1 | Count |
-| 7 per missile | Locked (1 byte), X of its tip (4 bytes), Y of its line (2 bytes) |
+| 3 per sniper | Phase (0 tracking, 1 aiming, 2 firing), Y of its line (2 bytes) |
 
-Missiles fly in from the right in both modes. The first one comes past 150 tiles, then one every 5 to
-10 seconds, aimed at a random player: it appears 55 tiles ahead of them and flies at 12 tiles per
-second against the run. For its first second its Y follows the middle of the player, then it is
-locked. Clients show a warning on the right edge while it is off screen. A missile that hits a
-player blows up, shield or not.
+Arasaka snipers shoot in both modes. The first one aims past 150 tiles, then one every 5 to 10
+seconds, at a random player: for 1.2 s its line follows the middle of that player, then it stays
+still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone in it included.
 
 ## A game, step by step
 
@@ -237,7 +235,7 @@ player blows up, shield or not.
    per second: 3, 2, 1, 0.
 3. During the run the server ticks 60 times per second: players move forward, faster and faster,
    gravity or thrust applies, new map chunks are generated ahead of the leader, collisions are
-   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_MISSILES` every tick, `MSG_COLLISION` and `MSG_SHOT`
+   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_SNIPERS` every tick, `MSG_COLLISION` and `MSG_SHOT`
    when they happen, and `MSG_MAP_DATA` for each new chunk. Clients send `MSG_PLAYER_INPUT` and
    `MSG_ATTACK`.
 4. At the first death the server sends `MSG_GAME_END`. Clients answer `MSG_READY` for a rematch,

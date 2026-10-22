@@ -174,8 +174,8 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_TITANS:
             handleTitans(payload);
             break;
-        case MSG_MISSILES:
-            handleMissiles(payload);
+        case MSG_SNIPERS:
+            handleSnipers(payload);
             break;
         case MSG_GAME_END:
             handleGameEnd(payload);
@@ -215,16 +215,14 @@ void Client::handleTitans(const std::vector<uint8_t> &payload)
     game_state.setTitans(std::move(titans));
 }
 
-// [count]([locked][x in 1/100 tile, 4 bytes][y in 1/100 tile, 2 bytes])...
-void Client::handleMissiles(const std::vector<uint8_t> &payload)
+// [count]([phase][y in 1/100 tile, 2 bytes])...
+void Client::handleSnipers(const std::vector<uint8_t> &payload)
 {
-    std::vector<MissileState> missiles;
+    std::vector<SniperState> snipers;
 
-    for (size_t pos = 1; !payload.empty() && pos + 7 <= payload.size(); pos += 7) {
-        missiles.push_back({Protocol::readU32(payload.data() + pos + 1) / POSITION_SCALE,
-                            Protocol::readU16(payload.data() + pos + 5) / POSITION_SCALE, payload[pos] != 0});
-    }
-    game_state.setMissiles(std::move(missiles));
+    for (size_t pos = 1; !payload.empty() && pos + 3 <= payload.size(); pos += 3)
+        snipers.push_back({static_cast<SniperPhase>(payload[pos]), Protocol::readU16(payload.data() + pos + 1) / POSITION_SCALE});
+    game_state.setSnipers(std::move(snipers));
 }
 
 void Client::handleShot(const std::vector<uint8_t> &payload)
