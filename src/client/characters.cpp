@@ -33,7 +33,7 @@ bool Character::load(const std::string &dir)
     std::istringstream meta(text);
     std::map<std::string, Animation *> animations = {
         {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
-        {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"smoke", &smoke}, {"emerge", &emerge}
+        {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"visceral", &visceral}, {"smoke", &smoke}, {"emerge", &emerge}
     };
     std::string key;
 

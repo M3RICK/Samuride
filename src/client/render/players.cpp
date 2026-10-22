@@ -76,8 +76,9 @@ Players::AnimationFrame Players::pickAnimation(int player_num, const PlayerState
     auto attack = run.attack_clocks.find(player_num);
     float air_time = run.player_anims[player_num].air_clock.getElapsedTime().asSeconds();
     float time = canvas.time();
-    bool pistol = run.player_anims[player_num].pistol && character.shoot.frames > 0;
-    const Animation &strike = pistol ? character.shoot : character.attack;
+    PlayerAnim::Strike last = run.player_anims[player_num].strike;
+    const Animation &special = last == PlayerAnim::Strike::Shot ? character.shoot : character.visceral;
+    const Animation &strike = last != PlayerAnim::Strike::Cut && special.frames > 0 ? special : character.attack;
 
     if (death != run.death_clocks.end() && character.death.frames > 0)
         return {&character.death, death->second.getElapsedTime().asSeconds()};

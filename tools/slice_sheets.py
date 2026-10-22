@@ -107,19 +107,21 @@ CHARACTERS = {
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
-    # The Hunter's sheet is a platformer's: he takes off on its jump, flies gliding, falls without the
-    # landing; his mist is the game's exhaust particles (players.cpp). "shoot": his pistol, the attack
-    # key held then released.
+    # The Hunter's sheet is a platformer's: no take-off (its jump looked wrong), he flies gliding, falls
+    # without the landing; his mist is the game's exhaust particles (players.cpp). "shoot": his pistol,
+    # the attack key held then released; "visceral": the extended cut, tearing a staggered titan open.
     "hunter": ("sources/hunter.png", (75, 95, 165, 185), {
         "run":     animation((750, 55, 1295, 150), 12, ground=True),
-        "takeoff": animation((250, 200, 740, 302), 16, mode="once"),
         "rise":    animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
         "hover":   animation((995, 845, 1295, 955), 10, cuts=("seams", [1030, 1086, 1142, 1194, 1247])),
         "fall":    animation((750, 200, 1100, 302), 10, frames=[0, 1, 2, 3]),
         "death":   animation((745, 688, 1295, 790), 10, mode="once"),
-        # Both drawn bigger than the rest: his hat is 40 and 37 px wide there, 34 when he runs
-        "attack":  animation((15, 365, 740, 480), 16, mode="once", effects_ahead=True, scale=34 / 40),
+        # Drawn bigger than the rest: his hat is 40 and 37 px wide there, 34 when he runs. The row
+        # cuts twice: only the wind-up and the big arc, shorter than the cooldown so a cut never restarts
+        "attack":  animation((15, 365, 740, 480), 16, mode="once", effects_ahead=True, scale=34 / 40,
+                             frames=[3, 4, 7, 7]),
         "shoot":   animation((15, 535, 715, 628), 16, mode="once", effects_ahead=True, scale=34 / 37),
+        "visceral": animation((750, 365, 1295, 480), 14, mode="once", effects_ahead=True, scale=34 / 40),
     }),
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),

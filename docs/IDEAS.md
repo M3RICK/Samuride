@@ -34,16 +34,15 @@ animations, flat gameplay. What to improve:
   drawn by the game as particles. It has no flight of its own: a row of him floating forward, coat
   dissolving into mist, would beat the glide. Its attack and shoot rows are drawn bigger, shrunk to fit.
 - His faces sheet, for the HUD's living face (only the portrait shows).
-- Unused rows that could serve: Attack Extended (a longer cut, for a bigger cleaver or the visceral),
-  Hit/Stun (when his shield breaks), Shoot + Move.
+- No take-off: the sheet's jump looked wrong. Its attack row cuts twice, only the second is played.
+- Unused rows that could serve: Hit/Stun (when his shield breaks), Shoot + Move.
 - A staggered titan shows nothing but a puff of silver: it should kneel or flash, so you know it's
   open for the cut.
 
 **Feel**
-- The cleaver is too discreet: 1.8 tiles, a small slash. A bigger silver arc, a heavier hit-stop,
-  maybe more reach.
-- The visceral is too tight: you close on a stopped titan at run speed, about 0.2 s to cut. Let the
-  cut reach further on a staggered titan, or have the bullet knock it back.
+- Cleaver made heavier (2.2 tiles, its own rasp, a jolt on every swing, a red cut and blood with a
+  double hit-stop on a kill), and the visceral playable (lunges 5 tiles, the extended cut, a long
+  freeze, the screen flashing red): to judge in a run.
 - Bullets: check whether 3, loaded only by cleaver kills, is too stingy to ever use the pistol on
   drones.
 - He must feel unlike Mikasa: the other melee runner, with spears for her ultimate.

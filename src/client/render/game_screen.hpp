@@ -65,6 +65,7 @@ private:
     struct Cut {
         sf::Vector2f pos;       // in tiles
         sf::Clock age;
+        sf::Color color;        // white for Mikasa's blade, red for the Hunter's cleaver
     };
     std::vector<Cut> cuts;
     // Lucy's hack: a crackling bolt from her to the drone, and from it to the one the hack jumps to

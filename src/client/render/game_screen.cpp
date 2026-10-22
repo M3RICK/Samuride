@@ -137,9 +137,10 @@ void GameScreen::update(GameState &state, const std::map<int, PlayerState> &play
     updateSpeedLines(world_dt);
     particles.update(world_dt);
 
+    // Shots first: a cleaver kill or a visceral comes on the same tick as the cut itself
+    shots.handle(state);
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
-    shots.handle(state);
     ultimates.handle(state);
 }
 
@@ -327,13 +328,16 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         last_drone[effect.player] = tile_center;
         // Mikasa's blade or the Hunter's cleaver bites: a hard jolt and white sparks; any other kill, a light one
         Weapon weapon = weaponOf(run.characterOf(me));
-        bool cut = weapon == Weapon::Blade || (weapon == Weapon::Cleaver && !run.player_anims[me].pistol);
-        if (effect.player == me && cut) {
-            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
-            hit_stop = HIT_STOP;
-            cuts.push_back({tile_center, sf::Clock()});
-            run.shakeAtLeast(0.15f, 16);
+        bool cleaver = weapon == Weapon::Cleaver && run.player_anims[me].strike != PlayerAnim::Strike::Shot;
+        if (effect.player == me && (weapon == Weapon::Blade || cleaver)) {
+            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm.
+            // The Hunter's saw bites harder, and bleeds.
+            hit_stop = cleaver ? HIT_STOP * 2 : HIT_STOP;
+            cuts.push_back({tile_center, sf::Clock(), cleaver ? NEON_RED : sf::Color::White});
+            run.shakeAtLeast(0.15f, cleaver ? 22 : 16);
             particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
+            if (cleaver)
+                particles.emit(tile_center, 24, sf::Color(170, 0, 30), 8, 0.5f, 14);
         } else if (weaponOf(run.characterOf(effect.player)) == Weapon::Hack && run.display_positions.count(effect.player)) {
             // Lucy's hack lands: a bolt from her hand (the bounce brought its own), the drone glitching apart in purple
             if (!bounced.erase(effect.player))
@@ -353,10 +357,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         run.shakeAtLeast(0.2f);
         particles.emit(tile_center + sf::Vector2f(0, -3), 30, QUICKSILVER, 7, 0.5f, 0);
     } else if (effect.type == VISCERAL) {
-        // ... and the cut tears it open
+        // ... and the cut tears it open: his extended cut, the world freezing on it, the screen bleeding
+        run.player_anims[effect.player].strike = PlayerAnim::Strike::Visceral;
+        run.attack_clocks[effect.player].restart();
         if (effect.player == me) {
             react(Mood::Kill);
-            hit_stop = HIT_STOP * 3;
+            hit_stop = HIT_STOP * 5;
+            run.flashScreen(NEON_RED, 0.3f);
         }
         audio.play(Audio::Sfx::Visceral);
         run.shakeAtLeast(0.4f, 20);
@@ -440,9 +447,10 @@ void GameScreen::drawCuts()
         slash.setOrigin(slash.getSize() / 2.f);
         slash.setPosition(run.toScreen(cut.pos));
         slash.setRotation(sf::degrees(-30));
-        slash.setFillColor(withAlpha(sf::Color::White, static_cast<uint8_t>(255 * (1 - t))));
+        slash.setFillColor(withAlpha(cut.color, static_cast<uint8_t>(255 * (1 - t))));
         canvas.draw(slash, sf::BlendAdd);
-        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(NEON_CYAN, static_cast<uint8_t>(120 * (1 - t))));
+        sf::Color glow = cut.color == sf::Color::White ? NEON_CYAN : cut.color;
+        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(glow, static_cast<uint8_t>(120 * (1 - t))));
     }
 }
 

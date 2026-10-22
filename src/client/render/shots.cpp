@@ -23,13 +23,19 @@ void Shots::handle(GameState &state)
         sf::Clock &attack = run.attack_clocks[shot.player];
         if (shot.weapon != Weapon::Minigun || attack.getElapsedTime().asSeconds() > 0.3f)
             attack.restart();
-        run.player_anims[shot.player].pistol = shot.weapon == Weapon::Pistol;
+        run.player_anims[shot.player].strike = shot.weapon == Weapon::Pistol ? PlayerAnim::Strike::Shot : PlayerAnim::Strike::Cut;
 
         switch (shot.weapon) {
             case Weapon::Blade:
-            case Weapon::Cleaver:
                 audio.play(Audio::Sfx::Slash);
                 particles.emit(muzzle + sf::Vector2f(1, 0), 10, sf::Color::White, 6, 0.25f, 0);
+                break;
+            case Weapon::Cleaver:
+                // A heavy serrated swing: felt even when it hits nothing, red sparks along the arc
+                if (shot.player == state.getMyPlayerNumber())
+                    run.shakeAtLeast(0.08f, 6);
+                audio.play(Audio::Sfx::Cleaver);
+                particles.emit(muzzle + sf::Vector2f(1.2f, -0.3f), 14, NEON_RED, 7, 0.25f, 0, {4, 2});
                 break;
             case Weapon::Pistol:
                 // A heavy blunderbuss crack, felt by the shooter

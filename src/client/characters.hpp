@@ -34,6 +34,7 @@ struct Character {
 
     Animation run, takeoff, rise, hover, fall, death, attack;
     Animation shoot;            // the Hunter's pistol, his attack being the cleaver
+    Animation visceral;         // the Hunter tearing a staggered titan open
     Animation smoke, emerge;    // Eren's transformation only
 
     bool load(const std::string &dir);

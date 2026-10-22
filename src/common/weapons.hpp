@@ -53,8 +53,10 @@ constexpr float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 // fires a quicksilver bullet. Only cleaver kills load bullets, up to QUICKSILVER_MAX.
 constexpr float PISTOL_HOLD = 0.3f;
 constexpr int QUICKSILVER_MAX = 3;  // sent in 2 bits: 3 at most
-// A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral)
+// A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral),
+// lunging up to VISCERAL_REACH tiles: closing on it at run speed, the cleaver's own reach left no time
 constexpr float STAGGER_TIME = 1.5f;
+constexpr float VISCERAL_REACH = 5;
 constexpr int VISCERAL_BONUS = 20;  // on top of the titan's bounty
 // Fired while a sniper's sight is frozen within PARRY_REACH tiles of his line, a bullet takes the sniper out.
 // The key can be held while the sight tracks him, to let go the moment it freezes.
@@ -83,7 +85,7 @@ inline WeaponStats statsOf(Weapon weapon)
         case Weapon::Spear:
             return {0.45f, 28, 0, 0.6f};
         case Weapon::Cleaver:
-            return {0.3f, 0, 1.8f, 0};
+            return {0.3f, 0, 2.2f, 0};
         case Weapon::Pistol:
             return {0.3f, 34, 0, 0.5f};
     }

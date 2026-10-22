@@ -13,7 +13,7 @@ public:
     enum class Sfx {
         Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm,       // the run and the menus
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
-        Pistol, Visceral,                                           // the Hunter
+        Cleaver, Pistol, Visceral,                                  // the Hunter
         Stomp, Roar, Steam,                                         // titans and the Attack Titan
         Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
         FireWave, Nuke, Breach, Charge, Moonlight, UltimateReady,   // ultimates

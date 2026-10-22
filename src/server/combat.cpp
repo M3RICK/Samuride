@@ -136,7 +136,7 @@ int Server::strike(int client_fd, const Player &player, float reach)
 // kill loads a bullet, and wins back a shield that just broke (the rally).
 void Server::cleave(int client_fd, Player &player, float reach)
 {
-    int kills = strike(client_fd, player, reach) + slashTitans(player, reach, true);
+    int kills = strike(client_fd, player, reach) + slashTitans(player, VISCERAL_REACH, true);
 
     if (kills == 0)
         return;
