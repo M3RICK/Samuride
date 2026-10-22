@@ -6,6 +6,14 @@ taken from this file. Players on different versions can't play together: update 
 ## v2.9
 
 ### New
+- **New runner: the Hunter** (Bloodborne), 1000 eddies. He flies on chained quicksteps, in a trail of
+  grey mist. In CYBERPSYCHO, tap `F` for his Saw Cleaver, a very short and very fast cut. Hold `F`,
+  then let go, to fire his pistol: he has 3 quicksilver bullets, and only cleaver kills load new ones.
+  - A bullet **staggers a titan**: it stops dead, and your next cut tears it open (**visceral**, +40).
+  - Fired while a sniper's sight is frozen on your line, a bullet **takes the sniper out** (+10).
+  - **Rally**: when your shield breaks, kill something with the cleaver within 2 s to get it back.
+  - Ultimate, **Moonlight Blade**: a wave of blue light slashed ahead at your height, razing a band
+    of the corridor.
 - **Arasaka snipers.** Past 150 m, every 5 to 10 s, a red laser sight crosses the screen and follows
   your height. It freezes and flickers, then a railgun shot sweeps the whole row: get off the line.
 - **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.

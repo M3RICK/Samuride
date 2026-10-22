@@ -258,7 +258,10 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
             (p[9] & 128) != 0,
             p[10],
             p[11],
-            (p[12] & 1) != 0});
+            (p[12] & 1) != 0,
+            (p[12] >> 1) & 3,
+            (p[12] & 8) != 0,
+            (p[12] & 16) != 0});
     }
 }
 

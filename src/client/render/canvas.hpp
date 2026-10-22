@@ -32,6 +32,7 @@ namespace Palette {
     constexpr sf::Color SHIELD_COLOR = NEON_GREEN;
     constexpr sf::Color SANDEVISTAN_COLOR = NEON_MAGENTA;
     constexpr sf::Color BERSERK_COLOR{255, 200, 60};   // gold
+    constexpr sf::Color QUICKSILVER{190, 215, 255};     // the Hunter's bullets and his Moonlight Blade
     constexpr sf::Color DIM_WHITE{200, 200, 200};
     constexpr sf::Color HINT_GREY{150, 150, 150};
     constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards

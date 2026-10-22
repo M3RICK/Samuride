@@ -31,8 +31,13 @@ void Server::spawnTitans(float leader_x)
 
 void Server::updateTitans(float rear_x)
 {
-    for (Titan &titan : titans)
-        titan.x -= titanStats(titan.type).speed * TICK_DT;
+    // A staggered one stands still a while
+    for (Titan &titan : titans) {
+        if (titan.stagger > 0)
+            titan.stagger -= TICK_DT;
+        else
+            titan.x -= titanStats(titan.type).speed * TICK_DT;
+    }
 
     // Gone once behind everyone
     std::erase_if(titans, [rear_x](const Titan &titan) { return titan.x < rear_x - 10; });
@@ -52,6 +57,19 @@ bool Server::hitByTitan(const Player &player) const
             return true;
     }
     return false;
+}
+
+// The first titan a shot went through this tick, standing tall enough to be in its way
+Server::Titan *Server::titanInPath(const Projectile &shot, float from_x)
+{
+    float floor = game_map.getHeight();
+
+    for (Titan &titan : titans) {
+        TitanStats stats = titanStats(titan.type);
+        if (shot.x + 1 > titan.x && from_x < titan.x + stats.width && shot.y > floor - stats.height)
+            return &titan;
+    }
+    return nullptr;
 }
 
 // CYBERPSYCHO: a strike within reach takes the titan down

@@ -4,6 +4,43 @@
 #include "../common/debug.hpp"
 #include <algorithm>
 
+// The attack key going down. The Hunter's waits for it to come back up: a tap cuts, a hold fires.
+void Server::pressAttack(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (it != players.end() && weaponOf(it->second.getCharacter()) == Weapon::Cleaver)
+        it->second.pressTrigger();
+    else
+        handleAttack(client_fd);
+}
+
+// The Hunter lets go: held long enough with a bullet loaded, the pistol; otherwise the cleaver
+void Server::releaseAttack(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (it == players.end() || weaponOf(it->second.getCharacter()) != Weapon::Cleaver)
+        return;
+    Player &player = it->second;
+    bool aimed = player.isAiming();
+    if (player.releaseTrigger() < 0)
+        return;
+    if (aimed)
+        firePistol(client_fd, player);
+    else
+        handleAttack(client_fd);
+}
+
+// A quicksilver bullet: it flies like a shot, and takes out a sniper whose sight is frozen on its line
+void Server::firePistol(int client_fd, Player &player)
+{
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || !player.fireQuicksilver())
+        return;
+    fireProjectile(client_fd, player, Weapon::Pistol);
+    parrySnipers(player);
+}
+
 // The attack key, or Berserk attacking on its own: what happens depends on the weapon (weapons.hpp)
 void Server::handleAttack(int client_fd)
 {
@@ -38,6 +75,12 @@ void Server::handleAttack(int client_fd)
             break;
         case Weapon::Spear:
             break;  // thrown with the ultimate key, see handleUltimate in ultimates.cpp
+        case Weapon::Pistol:
+            break;  // the attack key held then released, see releaseAttack
+        case Weapon::Cleaver:
+            announceShot(player, weapon);
+            cleave(client_fd, player, stats.reach);
+            break;
         case Weapon::Blade:
             announceShot(player, weapon);
             strike(client_fd, player, stats.reach);
@@ -65,12 +108,14 @@ void Server::fireProjectile(int client_fd, const Player &player, Weapon weapon)
 
     announceShot(player, weapon);
     projectiles.push_back({client_fd, x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
-                           weapon == Weapon::Spear});
+                           weapon});
 }
 
-// Every live drone within reach in front of the player goes down
-void Server::strike(int client_fd, const Player &player, float reach)
+// Every live drone within reach in front of the player goes down. Returns how many.
+int Server::strike(int client_fd, const Player &player, float reach)
 {
+    int kills = 0;
+
     int top = static_cast<int>(player.getY()) - 1;
     int bottom = static_cast<int>(player.getY() + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
@@ -78,10 +123,35 @@ void Server::strike(int client_fd, const Player &player, float reach)
 
     for (int x = front; x <= end; x++) {
         for (int y = std::max(0, top); y <= bottom; y++) {
-            if (isLiveDrone(x, y))
+            if (isLiveDrone(x, y)) {
                 destroyDrone(client_fd, x, y);
+                kills++;
+            }
         }
     }
+    return kills;
+}
+
+// The Hunter's cut: drones within reach go down, and a staggered titan is torn open (a visceral). Each
+// kill loads a bullet, and wins back a shield that just broke (the rally).
+void Server::cleave(int client_fd, Player &player, float reach)
+{
+    int kills = strike(client_fd, player, reach);
+
+    std::erase_if(titans, [&](const Titan &titan) {
+        bool in_reach = titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
+        if (titan.stagger <= 0 || !in_reach)
+            return false;
+        player.addScore(TITAN_BOUNTY + VISCERAL_BONUS);
+        notifyCollision(VISCERAL, player, titan.x, game_map.getHeight() - 1);
+        kills++;
+        return true;
+    });
+    if (kills == 0)
+        return;
+    player.loadQuicksilver(kills);
+    if (player.rally())
+        notifyCollision(RALLY, player, player.getX(), player.getY() + 1);
 }
 
 // A drone in her way goes down, a zapper's beams go off
@@ -135,13 +205,13 @@ void Server::updateProjectiles()
         float from_x = shot.x;
 
         shot.x += shot.speed * TICK_DT;
-        if (shot.spear) {
+        if (shot.weapon == Weapon::Spear) {
             float hit = spearHit(shot, from_x);
             if (hit >= 0 || shot.x >= shot.max_x) {
                 spearBlast(shot.owner_fd, hit >= 0 ? hit : shot.max_x);
                 shot.x = shot.max_x;
             }
-        } else if (projectileHit(shot, from_x)) {
+        } else if (shot.weapon == Weapon::Pistol ? bulletHit(shot, from_x) : projectileHit(shot, from_x)) {
             shot.x = shot.max_x;
         }
     }
@@ -164,6 +234,22 @@ bool Server::projectileHit(const Projectile &shot, float from_x)
         }
     }
     return false;
+}
+
+// The Hunter's bullet: a drone goes down like with any shot, a titan in its way is staggered
+bool Server::bulletHit(const Projectile &shot, float from_x)
+{
+    if (projectileHit(shot, from_x))
+        return true;
+
+    Titan *titan = titanInPath(shot, from_x);
+    auto owner = players.find(shot.owner_fd);
+    if (!titan)
+        return false;
+    titan->stagger = STAGGER_TIME;
+    if (owner != players.end())
+        notifyCollision(TITAN_STAGGER, owner->second, titan->x, game_map.getHeight() - 1);
+    return true;
 }
 
 // Where a spear sticks this tick: the first live drone near its line, or a titan tall enough

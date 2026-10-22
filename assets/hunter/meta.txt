@@ -1,0 +1,15 @@
+name HUNTER
+sheet sheet.png
+portrait portrait.png
+frame 193 149
+feet 108
+body 100
+exhaust 150 175 215
+run 0 7 12 loop
+takeoff 1 7 16 once
+rise 2 8 12 loop
+hover 3 8 12 loop
+fall 4 8 12 loop
+death 5 8 10 hide
+attack 6 6 16 once
+shoot 7 7 16 once

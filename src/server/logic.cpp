@@ -268,8 +268,10 @@ void Server::sendGameState()
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
         state_data.push_back(player.getSpears());
-        // bit 0: a second of grace (shield broken, Sandevistan or titan over)
-        state_data.push_back(player.isGracing() ? 1 : 0);
+        // bit 0: a second of grace (shield broken, Sandevistan or titan over); the Hunter's bits 1-2:
+        // quicksilver bullets, bit 3: aiming his pistol, bit 4: rallying
+        state_data.push_back((player.isGracing() ? 1 : 0) | player.getQuicksilver() << 1 | (player.isAiming() ? 1 : 0) << 3 |
+                             (player.isRallying() ? 1 : 0) << 4);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

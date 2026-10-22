@@ -68,11 +68,13 @@ Players::AnimationFrame Players::pickAnimation(int player_num, const PlayerState
     auto attack = run.attack_clocks.find(player_num);
     float air_time = run.player_anims[player_num].air_clock.getElapsedTime().asSeconds();
     float time = canvas.time();
+    bool pistol = run.player_anims[player_num].pistol && character.shoot.frames > 0;
+    const Animation &strike = pistol ? character.shoot : character.attack;
 
     if (death != run.death_clocks.end() && character.death.frames > 0)
         return {&character.death, death->second.getElapsedTime().asSeconds()};
-    if (attack != run.attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < character.attack.duration())
-        return {&character.attack, attack->second.getElapsedTime().asSeconds()};
+    if (attack != run.attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < strike.duration())
+        return {&strike, attack->second.getElapsedTime().asSeconds()};
     if (on_ground)
         return {&character.run, run.run_phase};
     if (air_time < character.takeoff.duration())
@@ -130,6 +132,10 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
                     withAlpha(BERSERK_COLOR, 70));
     if (player.shielded)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
+    // The Hunter's rally: the shield's ghost beating red, for as long as a kill can win it back
+    if (player.rallying)
+        canvas.hexagon(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size * 1.05f,
+                       withAlpha(NEON_RED, static_cast<uint8_t>(110 + 100 * std::sin(canvas.time() * 20))), 0);
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
     else if (player.grace && std::fmod(canvas.time(), 0.16f) < 0.08f)
@@ -158,6 +164,26 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
             canvas.draw(unit);
             if (loaded)
                 canvas.draw(unit, sf::BlendAdd);
+        }
+    }
+
+    // The Hunter's quicksilver bullets, over his head like Lucy's RAM; aiming, his pistol glows
+    if (run.cyberpsycho && weaponOf(run.characterOf(player_num)) == Weapon::Cleaver) {
+        for (int i = 0; i < QUICKSILVER_MAX; i++) {
+            bool loaded = i < player.quicksilver;
+            sf::CircleShape bullet(7);
+            bullet.setOrigin({7, 7});
+            bullet.setPosition(tag_pos + sf::Vector2f((i - (QUICKSILVER_MAX - 1) / 2.f) * 20, -40));
+            bullet.setFillColor(loaded ? QUICKSILVER : sf::Color(0, 0, 0, 120));
+            bullet.setOutlineColor(withAlpha(QUICKSILVER, loaded ? 255 : 140));
+            bullet.setOutlineThickness(2);
+            canvas.draw(bullet);
+        }
+        if (player.aiming) {
+            sf::Vector2f muzzle = feet + sf::Vector2f(tile_size * 0.6f, -tile_size);
+            float pulse = 0.5f + 0.5f * std::sin(canvas.time() * 25);
+            canvas.halo(muzzle, tile_size * (0.35f + 0.15f * pulse), withAlpha(QUICKSILVER, 160));
+            canvas.halo(muzzle, tile_size * 0.12f, sf::Color::White);
         }
     }
 

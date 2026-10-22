@@ -22,6 +22,7 @@ struct PlayerAnim {
     bool berserk = false;
     sf::Clock berserk_clock;
     sf::Clock shot_clock;   // since the last shot: Jinx's sprite kicks back on each bullet
+    bool pistol = false;    // the Hunter's last attack was his pistol, not his cleaver
 };
 
 struct Run {

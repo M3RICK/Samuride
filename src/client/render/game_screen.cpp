@@ -324,8 +324,10 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         if (effect.player == me)
             react(Mood::Kill);
         last_drone[effect.player] = tile_center;
-        // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
-        if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+        // Mikasa's blade or the Hunter's cleaver bites: a hard jolt and white sparks; any other kill, a light one
+        Weapon weapon = weaponOf(run.characterOf(me));
+        bool cut = weapon == Weapon::Blade || (weapon == Weapon::Cleaver && !run.player_anims[me].pistol);
+        if (effect.player == me && cut) {
             // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
             hit_stop = HIT_STOP;
             cuts.push_back({tile_center, sf::Clock()});
@@ -344,6 +346,35 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
+    } else if (effect.type == TITAN_STAGGER) {
+        // The Hunter's bullet stops a titan dead: its nape is open for a cut
+        audio.play(Audio::Sfx::Stomp);
+        run.shakeAtLeast(0.2f);
+        particles.emit(tile_center + sf::Vector2f(0, -3), 30, QUICKSILVER, 7, 0.5f, 0);
+    } else if (effect.type == VISCERAL) {
+        // ... and the cut tears it open
+        if (effect.player == me) {
+            react(Mood::Kill);
+            hit_stop = HIT_STOP * 3;
+        }
+        audio.play(Audio::Sfx::Visceral);
+        run.shakeAtLeast(0.4f, 20);
+        particles.emit(tile_center + sf::Vector2f(0, -3), 70, NEON_RED, 10, 0.8f, 10);
+        particles.emit(tile_center + sf::Vector2f(0, -3), 30, sf::Color(120, 0, 20), 6, 1.0f, 12);
+    } else if (effect.type == SNIPER_PARRY) {
+        // His bullet runs up the frozen sight: the laser shatters along its row
+        if (effect.player == me)
+            react(Mood::Kill);
+        audio.play(Audio::Sfx::ShieldBreak);
+        for (int i = 0; i < 10; i++)
+            particles.emit({effect.x + 2.0f + i * 2, effect.y + 0.5f}, 4, i % 2 ? NEON_RED : QUICKSILVER, 5, 0.4f, 0);
+    } else if (effect.type == RALLY) {
+        // His shield comes back from the kill
+        if (effect.player == me)
+            react(Mood::Pickup);
+        audio.play(Audio::Sfx::Shield);
+        particles.emit(tile_center, 30, NEON_RED, 6, 0.5f, 0);
+        particles.emit(tile_center, 20, SHIELD_COLOR, 6, 0.5f, 0);
     } else if (effect.type == HACK_BOUNCE) {
         // The bolt jumps from the drone Lucy hacked to the next one (its blast comes next)
         sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : tile_center;
@@ -446,6 +477,23 @@ void GameScreen::drawZaps()
     }
 }
 
+// The Hunter's moves, as they float up; empty for any other effect
+static std::string hunterMove(char type)
+{
+    switch (type) {
+        case TITAN_STAGGER:
+            return "STAGGER";
+        case VISCERAL:
+            return std::format("VISCERAL +{}", TITAN_BOUNTY + VISCERAL_BONUS);
+        case SNIPER_PARRY:
+            return std::format("PARRY +{}", PARRY_BOUNTY);
+        case RALLY:
+            return "RALLY";
+        default:
+            return "";
+    }
+}
+
 void GameScreen::drawEffects()
 {
     std::erase_if(effects, [](const ActiveEffect &e) {
@@ -490,6 +538,12 @@ void GameScreen::drawEffects()
                 column.setFillColor(withAlpha(color, alpha));
                 canvas.draw(column, sf::BlendAdd);
             }
+        } else if (std::string move = hunterMove(active.effect.type); !move.empty()) {
+            // The Hunter's moves, named over where they happened
+            bool titan = active.effect.type == VISCERAL || active.effect.type == TITAN_STAGGER;
+            if (active.mine)
+                canvas.text(move, titan ? 44 : 34, withAlpha(active.effect.type == RALLY ? SHIELD_COLOR : QUICKSILVER, alpha),
+                            run.toScreen(tile + sf::Vector2f(0.5f, (titan ? -3 : 0) - t)));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
             if (active.mine)

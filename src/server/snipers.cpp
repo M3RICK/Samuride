@@ -2,6 +2,7 @@
 
 #include "server.hpp"
 #include <algorithm>
+#include <cmath>
 
 void Server::resetSnipers()
 {
@@ -46,6 +47,20 @@ bool Server::hitBySniper(const Player &player) const
 {
     return std::ranges::any_of(snipers, [&](const Sniper &sniper) {
         return sniper.phase() == SniperPhase::Firing && sniperHits(sniper.y, player.getY());
+    });
+}
+
+// The Hunter's bullet, fired while a sniper's sight is frozen near his line: that sniper is out
+void Server::parrySnipers(Player &player)
+{
+    float line = player.getY() + Player::HEIGHT / 2;
+
+    std::erase_if(snipers, [&](const Sniper &sniper) {
+        if (sniper.phase() != SniperPhase::Aiming || std::abs(sniper.y - line) > PARRY_REACH)
+            return false;
+        player.addScore(PARRY_BOUNTY);
+        notifyCollision(SNIPER_PARRY, player, player.getX(), sniper.y);
+        return true;
     });
 }
 

@@ -242,6 +242,47 @@ static void testUltimate()
     assert(top == 2 && bottom == 7);
 }
 
+// The Hunter: a tap is too short to aim, a hold aims while a bullet is loaded; only kills load more,
+// and a broken shield comes back from a kill during the rally, not after it
+static void testHunter()
+{
+    assert(weaponOf(5) == Weapon::Cleaver && ultimateOf(5) == Ultimate::Moonlight);
+
+    Player hunter(-1);
+    hunter.setCharacter(5);
+    hunter.reset(0, 0);
+    hunter.pressTrigger();
+    hunter.update(PISTOL_HOLD / 2, 10, 8);
+    assert(!hunter.isAiming() && hunter.releaseTrigger() < PISTOL_HOLD);
+    assert(hunter.releaseTrigger() < 0);
+    hunter.pressTrigger();
+    hunter.update(PISTOL_HOLD + 0.05f, 10, 8);
+    assert(hunter.isAiming());
+
+    for (int i = 0; i < QUICKSILVER_MAX; i++) {
+        assert(hunter.fireQuicksilver() && !hunter.fireQuicksilver());
+        hunter.update(1, 10, 8);
+    }
+    assert(hunter.getQuicksilver() == 0 && !hunter.isAiming() && !hunter.fireQuicksilver());
+    hunter.loadQuicksilver(5);
+    assert(hunter.getQuicksilver() == QUICKSILVER_MAX);
+
+    hunter.powerUp(SHIELD_TILE);
+    assert(hunter.absorbHit() && !hunter.hasShield() && hunter.isRallying());
+    assert(hunter.rally() && hunter.hasShield() && !hunter.rally());
+    hunter.absorbHit();
+    hunter.update(RALLY_TIME + 0.1f, 10, 8);
+    assert(!hunter.rally() && !hunter.hasShield());
+
+    // Nobody else rallies
+    Player mikasa(-1);
+    mikasa.setCharacter(3);
+    mikasa.reset(0, 0);
+    mikasa.powerUp(SHIELD_TILE);
+    mikasa.absorbHit();
+    assert(!mikasa.isRallying());
+}
+
 // Upgrades: bought level by level up to their max, and felt by the player once sent to the server
 static void testUpgrades()
 {
@@ -294,6 +335,7 @@ int main()
     testPowerUps();
     testHack();
     testUltimate();
+    testHunter();
     testWallet();
     testUpgrades();
     std::cout << "All tests passed" << std::endl;

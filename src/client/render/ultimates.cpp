@@ -24,6 +24,7 @@ void Ultimates::clear()
     fire_waves.clear();
     nukes.clear();
     rockets.clear();
+    moon_waves.clear();
     breaches.clear();
 }
 
@@ -61,6 +62,11 @@ void Ultimates::start(const UltimateEvent &ultimate)
         audio.play(Audio::Sfx::Thunder);
         run.flashScreen(NEON_CYAN, 0.25f);
         particles.emit(body, 40, NEON_CYAN, 7, 0.6f, 0);
+    } else if (ultimate.ultimate == Ultimate::Moonlight) {
+        audio.play(Audio::Sfx::Moonlight);
+        run.flashScreen(QUICKSILVER, 0.3f);
+        particles.emit(body + sf::Vector2f(0.8f, 0), 40, QUICKSILVER, 8, 0.4f, 0);
+        moon_waves.push_back({ultimate.x, ultimate.y, ultimate.x, sf::Clock()});
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -271,6 +277,47 @@ void Ultimates::drawRockets()
     });
 }
 
+// A crescent of cold blue light cutting ahead along his line, the band it went through glowing behind
+void Ultimates::drawMoonWaves()
+{
+    static constexpr float FADE_TIME = 0.4f;
+    float tile_size = run.view.tile_size;
+    float sweep = MOONLIGHT_RANGE / MOONLIGHT_SPEED;
+
+    for (MoonWave &wave : moon_waves) {
+        float front = wave.front();
+        float t = wave.age.getElapsedTime().asSeconds();
+        float fade = std::clamp(1 - (t - sweep) / FADE_TIME, 0.0f, 1.0f);
+        auto [top, bottom] = moonlightRows(wave.y);
+
+        run.burnZappers(wave.burnt_to, front, top, bottom);
+        wave.burnt_to = front;
+
+        sf::Vector2f from = run.toScreen({wave.start, static_cast<float>(top)});
+        sf::Vector2f to = run.toScreen({front, static_cast<float>(bottom + 1)});
+        sf::RectangleShape band(to - from);
+        band.setPosition(from);
+        band.setFillColor(withAlpha(QUICKSILVER, static_cast<uint8_t>(40 * fade)));
+        canvas.draw(band, sf::BlendAdd);
+
+        // The crescent: stacked slivers, longest in the middle, bowed forward
+        float height = to.y - from.y;
+        for (int i = 0; i < 12; i++) {
+            float k = (i + 0.5f) / 12 * 2 - 1;     // -1 at the top, 1 at the bottom
+            float bow = tile_size * 1.2f * (1 - k * k);
+            sf::RectangleShape sliver({tile_size * 0.5f + bow, height / 12 + 2});
+            sliver.setPosition({to.x - tile_size * 0.5f, from.y + (i * height) / 12});
+            sliver.setFillColor(withAlpha(i % 2 ? QUICKSILVER : sf::Color::White, static_cast<uint8_t>(200 * fade)));
+            canvas.draw(sliver, sf::BlendAdd);
+        }
+        if (t < sweep)
+            particles.emit({front, wave.y + randf(-MOONLIGHT_HALF_HEIGHT, MOONLIGHT_HALF_HEIGHT)}, 3, QUICKSILVER, 3, 0.4f, 0);
+    }
+    std::erase_if(moon_waves, [sweep](const MoonWave &wave) {
+        return wave.age.getElapsedTime().asSeconds() > sweep + FADE_TIME;
+    });
+}
+
 // The whole screen glitches purple for a moment
 void Ultimates::drawBreaches()
 {
@@ -299,4 +346,5 @@ void Ultimates::draw()
     drawNukes();
     drawBreaches();
     drawRockets();
+    drawMoonWaves();
 }

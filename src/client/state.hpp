@@ -30,6 +30,9 @@ struct PlayerState {
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
+    int quicksilver = 0;        // the Hunter's bullets
+    bool aiming = false;        // the Hunter holds the attack key: his pistol fires when he lets go
+    bool rallying = false;      // the Hunter's shield just broke: a cleaver kill brings it back
 };
 
 // Someone attacked in CYBERPSYCHO

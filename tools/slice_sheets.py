@@ -25,7 +25,8 @@ PAD = 4
 SHADOW_ROWS = 12    # bottom rows of a region where ground shadows join the frames
 
 
-def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None):
+def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None,
+              solo=False):
     """One animation of a sheet.
 
     region:         box (x0, y0, x1, y1) holding the frames, labels left out
@@ -38,9 +39,10 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
     cuts:           for evenly laid sheets whose frames touch (ground shadows): frames are plain
                     columns between boundaries; either the boundaries' x positions, or
                     ("seams", frame centres) to cut at the emptiest column between two centres
+    solo:           with cuts, only the biggest blob of each column: a neighbour's trail is left out
     """
     return {"region": region, "fps": fps, "ground": ground, "mode": mode,
-            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts}
+            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts, "solo": solo}
 
 
 # Titan sheet: frames sit above their numbered labels, cut at the emptiest column between two
@@ -104,6 +106,20 @@ CHARACTERS = {
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
+    # The Hunter's flight is mist, not flames; his rows touch (coat tails, mist), so most are cut by hand.
+    # "shoot": his pistol, the attack key held then released
+    "hunter": ("sources/hunter.png", (1030, 905, 1095, 972), {
+        "run":     animation((770, 60, 1420, 180), 12, ground=True),
+        "takeoff": animation((365, 225, 835, 365), 16, mode="once", cuts=("seams", [400, 470, 545, 610, 670, 730, 795])),
+        "rise":    animation((0, 400, 505, 535), 12, cuts=("seams", [60, 130, 190, 245, 305, 365, 415, 465])),
+        "hover":   animation((840, 255, 1536, 365), 12, solo=True,
+                             cuts=("seams", [905, 990, 1075, 1160, 1245, 1330, 1410, 1490])),
+        "fall":    animation((510, 405, 980, 535), 12, cuts=("seams", [555, 610, 665, 720, 780, 835, 890, 945])),
+        "death":   animation((1000, 755, 1536, 850), 10, mode="hide"),
+        "attack":  animation((0, 585, 580, 695), 16, mode="once", cuts=("seams", [55, 150, 245, 330, 420, 515])),
+        "shoot":   animation((585, 585, 1370, 695), 16, mode="once", cuts=[585, 692, 792, 885, 992, 1094, 1212, 1370]),
+    # The labels over the take-off and rise rows touch the first heads
+    }, {"erase": [(360, 195, 620, 234), (20, 365, 250, 407)]}),
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
     }, TITAN_SHEET),
@@ -152,7 +168,7 @@ def label_blobs(mask):
     return labels, count
 DISPLAY_NAMES = {"johny": "JOHNNY"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "hunter": "150 175 215"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -240,11 +256,11 @@ def split_frames(pixels, region, effects_ahead=False, splits=(), effects=True):
     return frames
 
 
-def column_frames(pixels, region, cuts):
+def column_frames(pixels, region, cuts, solo=False):
     """Frames as the columns between `cuts`, each trimmed to its opaque pixels.
 
     A neighbour's hand or hair can poke across a boundary: only blobs at least a
-    tenth the size of the biggest one (the frame's own body) are kept.
+    tenth the size of the biggest one (the frame's own body) are kept, only the biggest with solo.
     """
     _, y0, _, y1 = region
     frames = []
@@ -252,7 +268,7 @@ def column_frames(pixels, region, cuts):
         labels, count = label_blobs(pixels[y0:y1, left:right, 3] > ALPHA)
         sizes = np.bincount(labels.ravel(), minlength=count + 1)
         sizes[0] = 0
-        mask = np.isin(labels, np.nonzero(sizes >= sizes.max() / 10)[0])
+        mask = labels == sizes.argmax() if solo else np.isin(labels, np.nonzero(sizes >= sizes.max() / 10)[0])
         ys, xs = np.nonzero(mask)
         box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
         frames.append(((left + box[0], y0 + box[1], left + box[2], y0 + box[3]),
@@ -275,7 +291,7 @@ def find_frames(pixels, spec, effects):
     if cuts and cuts[0] == "seams":
         cuts = seam_cuts(pixels, spec["region"], cuts[1])
     if cuts:
-        return column_frames(pixels, spec["region"], cuts)
+        return column_frames(pixels, spec["region"], cuts, spec["solo"])
     return split_frames(pixels, spec["region"], spec["effects_ahead"], spec["splits"], effects)
 
 
