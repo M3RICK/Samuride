@@ -19,14 +19,14 @@ struct Runner {
     int charge;             // eddies to fill the ultimate's gauge
 };
 
-// Prices and charges can be changed from assets/tuning.txt (tuning.cpp)
+// Prices and charges can be changed from assets/tuning.txt (tuning.cpp). The Hunter is on the branch
+// feature/hunter until he's ready: his weapons and ultimate are in, he isn't in this list.
 inline Runner RUNNERS[] = {
     {"johny",  0,   Weapon::Gun,     Ultimate::FireWave,      150},
     {"david",  100, Weapon::Gun,     Ultimate::Nuke,          150},
     {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150},
     {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears, 100},
     {"lucy",   750, Weapon::Hack,    Ultimate::Breach,        150},
-    {"hunter", 1000, Weapon::Cleaver, Ultimate::Moonlight,    150},
 };
 
 constexpr int RUNNER_COUNT = static_cast<int>(std::size(RUNNERS));

@@ -10,14 +10,6 @@ taken from this file. Players on different versions can't play together: update 
   (speeds, cooldowns, bounties, durations, ultimates, prices), each explained. Change a number and
   restart, no compiling. The run says CUSTOM TUNING while you play with changed values, and then
   doesn't save solo records. Not on Android.
-- **New runner: the Hunter** (Bloodborne), 1000 eddies. He flies on chained quicksteps. In CYBERPSYCHO, tap `F` for his Saw Cleaver, a very short and very fast cut. Hold `F`,
-  then let go, to fire his pistol: he has 3 quicksilver bullets, and only cleaver kills load new ones.
-  - A bullet **staggers a titan**: it stops dead, and your next cut tears it open (**visceral**, +40).
-  - **Parry a sniper** (+10): hold `F` while its laser tracks you, and let go the moment it freezes.
-    The reticle coaches you: "HOLD [F]" while it tracks, then it turns silver and says "RELEASE!".
-  - **Rally**: when your shield breaks, kill something with the cleaver within 2 s to get it back.
-  - Ultimate, **Moonlight Blade**: a wave of blue light slashed ahead at your height, razing a band
-    of the corridor.
 - **Arasaka snipers.** Past 150 m, every 5 to 10 s, a red laser sight crosses the screen and follows
   your height. It freezes and flickers, then a railgun shot sweeps the whole row: get off the line.
 - **Zapper corridors**: two long horizontal beams with a gap between them, to thread or to fly around.

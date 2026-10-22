@@ -24,7 +24,9 @@ Arcane, Attack on Titan.
   - Zaun: chemical gas rising from the floor
   - Night City, The Walls: to find
 
-## The Hunter (Bloodborne), built in v2.9
+## The Hunter (Bloodborne), on the branch feature/hunter
+
+Hidden from the game on 2.9 (his line out of `RUNNERS`, his test out): his code stays in.
 
 He makes you rush drones instead of dodging them. Played once (v2.9), not good enough yet: ugly
 animations, flat gameplay. What to improve:
