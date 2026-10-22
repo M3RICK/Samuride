@@ -198,7 +198,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawFlashAndCallout();
     drawEffects();
     titans.drawWarnings(titan_states);
-    snipers.draw(state.getSnipers());
+    bool aiming = players.count(me) && players.at(me).aiming && run.display_positions.count(me);
+    snipers.draw(state.getSnipers(), aiming ? run.display_positions[me].y + Run::PLAYER_HEIGHT / 2 : -1);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);

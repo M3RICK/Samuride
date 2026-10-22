@@ -32,7 +32,7 @@ void Server::releaseAttack(int client_fd)
         handleAttack(client_fd);
 }
 
-// A quicksilver bullet: it flies like a shot, and takes out a sniper whose sight is on its line
+// A quicksilver bullet: it flies like a shot, and takes out a sniper whose sight is frozen on its line
 void Server::firePistol(int client_fd, Player &player)
 {
     if (mode != GameMode::Cyberpsycho || phase != Phase::Running || !player.fireQuicksilver())

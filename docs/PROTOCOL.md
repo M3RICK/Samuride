@@ -147,7 +147,7 @@ A 13-byte record per player, 60 times per second:
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `g` | The Hunter's bullet staggered the titan at that column: it stands still 1.5 s |
 | `x` | The Hunter cut a staggered titan down (visceral), +40 |
-| `q` | The Hunter's bullet took out a sniper whose sight was on that row, +10 |
+| `q` | The Hunter's bullet took out a sniper whose sight was frozen on that row, +10 |
 | `y` | The Hunter's cleaver kill won his broken shield back (rally) |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 
@@ -174,7 +174,7 @@ or with no bullet, it is his Saw Cleaver: every drone within 1.8 tiles ahead goe
 staggered titan in reach (`x`); each kill loads a quicksilver bullet (3 at most) and, within 2 s of his
 shield breaking, brings the shield back (`y`). Held longer with a bullet, it fires his pistol: a
 projectile (run speed + 34) that downs a drone or staggers the first titan in its way (`g`), and takes
-out every sniper still aiming (tracking or frozen) within 1.5 tiles of his middle (`q`). Both share a 0.3 s cooldown. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
+out every sniper whose sight is frozen within 1.5 tiles of his middle (`q`). Both share a 0.3 s cooldown. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her

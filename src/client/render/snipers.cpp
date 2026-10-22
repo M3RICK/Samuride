@@ -5,6 +5,7 @@
 #include "canvas.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
+#include <cmath>
 
 using namespace Palette;
 
@@ -13,7 +14,8 @@ Snipers::Snipers(Canvas &canvas, Run &run, Audio &audio) : canvas(canvas), run(r
 
 // Tracking: a thin red line and a reticle on the right edge, following you. Aiming: the line
 // thickens and flickers, frozen. Firing: a white-hot beam with a red glow, the whole row.
-void Snipers::draw(const std::vector<SniperState> &snipers)
+// Frozen on your Hunter while he aims, it turns quicksilver and stops flickering: let go now to parry.
+void Snipers::draw(const std::vector<SniperState> &snipers, float parry_line)
 {
     float tile = run.view.tile_size;
     size_t now_firing = 0;
@@ -35,13 +37,15 @@ void Snipers::draw(const std::vector<SniperState> &snipers)
         }
 
         bool aiming = sniper.phase == SniperPhase::Aiming;
-        if (aiming && !canvas.blink())
+        bool parry = aiming && parry_line >= 0 && std::abs(sniper.y - parry_line) <= PARRY_REACH;
+        sf::Color color = parry ? QUICKSILVER : NEON_RED;
+        if (aiming && !parry && !canvas.blink())
             continue;
 
         float thickness = aiming ? 6 : 2;
         sf::RectangleShape line({Screen::WIDTH, thickness});
         line.setPosition({0, y - thickness / 2});
-        line.setFillColor(withAlpha(NEON_RED, aiming ? 230 : 140));
+        line.setFillColor(withAlpha(color, aiming ? 230 : 140));
         canvas.draw(line);
 
         sf::Vector2f center(Screen::WIDTH - 70, y);
@@ -49,14 +53,14 @@ void Snipers::draw(const std::vector<SniperState> &snipers)
         reticle.setOrigin({36, 36});
         reticle.setPosition(center);
         reticle.setFillColor(sf::Color::Transparent);
-        reticle.setOutlineColor(NEON_RED);
+        reticle.setOutlineColor(color);
         reticle.setOutlineThickness(4);
         canvas.draw(reticle);
 
         sf::RectangleShape cross({4, 96});
         cross.setOrigin({2, 48});
         cross.setPosition(center);
-        cross.setFillColor(NEON_RED);
+        cross.setFillColor(color);
         canvas.draw(cross);
     }
 

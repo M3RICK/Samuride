@@ -21,7 +21,8 @@ public:
     Snipers(Canvas &canvas, Run &run, Audio &audio);
 
     void reset() { firing = 0; }
-    void draw(const std::vector<SniperState> &snipers);
+    // parry_line: the middle of your Hunter while he aims his pistol, -1 otherwise
+    void draw(const std::vector<SniperState> &snipers, float parry_line);
 };
 
 #endif
