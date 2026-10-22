@@ -1,7 +1,8 @@
 // The authoritative game server: it runs the game, the clients only send inputs and draw what it says.
 // Split by theme: server.cpp (connections, messages), logic.cpp (lobby, physics, collisions),
-// combat.cpp (CYBERPSYCHO attacks and drones), ultimates.cpp, titans.cpp, snipers.cpp, shift.cpp (the Attack Titan
-// power-up) and powerups.cpp (shield, Sandevistan, Berserk).
+// combat.cpp (CYBERPSYCHO attacks, ultimates and drones; what each runner's do is in arsenal.cpp),
+// titans.cpp, snipers.cpp, shift.cpp (the Attack Titan power-up) and powerups.cpp (shield, Sandevistan,
+// Berserk).
 
 #ifndef SERVER_HPP
     #define SERVER_HPP
@@ -32,8 +33,6 @@ class Server {
 private:
     enum class Phase { Waiting, Countdown, Running, Over };
 
-    static constexpr int TICK_RATE = 60;
-    static constexpr float TICK_DT = 1.0f / TICK_RATE;
     static constexpr int COUNTDOWN_SECONDS = 3;
 
     // Endless run: the map is generated CHUNK_WIDTH columns at a time, LOOKAHEAD columns ahead of the leader
@@ -71,25 +70,6 @@ private:
         Weapon weapon;          // Mikasa's spears blow up where they stop
     };
 
-    // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
-    struct Sweep {
-        int owner_fd;
-        float start;    // in tiles
-        float front;
-        float range;
-        float speed;
-        int top;
-        int bottom;
-        float delay = 0;    // seconds before it sets off: Fishbones charges first
-    };
-
-    // David's nuke, falling
-    struct Nuke {
-        int owner_fd;
-        float impact;   // x where it lands, in tiles
-        float timer;    // seconds before it does
-    };
-
     ServerConfig config;
     int server_fd;
     std::atomic<bool> stopping;
@@ -114,8 +94,6 @@ private:
     std::set<std::pair<int, int>> destroyed_drones;
     std::vector<Projectile> projectiles;
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
-    std::vector<Sweep> sweeps;
-    std::vector<Nuke> nukes;
 
     std::vector<Titan> titans;
     float titan_timer;      // seconds before the next titan
@@ -134,7 +112,6 @@ private:
     //===========================================================================
     // Server Initialization
     //===========================================================================
-
 
     bool resetMap();
 
@@ -200,33 +177,22 @@ private:
     bool checkPlayerCollisions(Player &player);
 
     void attractCoins(Player &player);
-    void bounceHack(int client_fd, const Player &player, int from_x, int from_y);
 
     void sendGameState();
 
     void handlePlayerInput(int client_fd, bool jet_activated);
 
-    void notifyCollision(char collision_type, const Player &player, int x, int y);
-
     void endGame(int winner_number);
 
     //===========================================================================
-    // CYBERPSYCHO (combat.cpp)
+    // CYBERPSYCHO (combat.cpp); the runners' weapons and ultimates are in arsenal.cpp
     //===========================================================================
-
-
 
     void handleAttack(int client_fd);
 
+    void handleUltimate(int client_fd);
 
-    void announceShot(const Player &player, Weapon weapon);
-
-    void fireProjectile(int client_fd, const Player &player, Weapon weapon);
-
-    int strike(int client_fd, const Player &player, float reach);
-
-
-    bool hack(int client_fd, Player &player);
+    void updateUltimates();
 
     void updateProjectiles();
 
@@ -234,24 +200,7 @@ private:
 
     float spearHit(const Projectile &shot, float from_x);
 
-
     void spearBlast(int owner_fd, float x);
-
-    bool isLiveDrone(int x, int y) const;
-
-    void destroyDrone(int owner_fd, int x, int y);
-
-    //===========================================================================
-    // Ultimates (ultimates.cpp)
-    //===========================================================================
-
-    void handleUltimate(int client_fd);
-
-    void updateUltimates();
-
-    void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
-
-    void breach(int owner_fd, float start);
 
     //===========================================================================
     // Titans (titans.cpp)
@@ -267,8 +216,6 @@ private:
 
     Titan *titanInPath(float from_x, float to_x, float y);
 
-    int slashTitans(Player &player, float reach);
-
     void sendTitans();
 
     //===========================================================================
@@ -282,7 +229,6 @@ private:
     void updateSnipers();
 
     bool hitBySniper(const Player &player) const;
-
 
     void sendSnipers();
 
@@ -307,6 +253,9 @@ private:
     bool hurt(Player &player, char cause, int x, int y);
 
 public:
+    static constexpr int TICK_RATE = 60;
+    static constexpr float TICK_DT = 1.0f / TICK_RATE;
+
     explicit Server(const ServerConfig &config);
 
     ~Server();
@@ -316,6 +265,38 @@ public:
     // Runs until stop(), from any thread
     void run();
     void stop() { stopping = true; }
+
+    //===========================================================================
+    // What the runners' weapons and ultimates act on (arsenal.cpp)
+    //===========================================================================
+
+    const Map &map() const { return game_map; }
+
+    // Every client plays the attacker's attack animation and sound (MSG_SHOT)
+    void announceShot(const Player &player, Weapon weapon);
+
+    void fireProjectile(const Player &player, Weapon weapon);
+
+    // Every live drone within reach in front of the player goes down. Returns how many.
+    int strike(const Player &player, float reach);
+
+    // Every titan within reach in front of the player goes down. Returns how many.
+    int slashTitans(Player &player, float reach);
+
+    // Every column from `from` to `to` burns, rows top to bottom (floor to ceiling by default)
+    void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
+
+    bool isLiveDrone(int x, int y) const;
+
+    void destroyDrone(int owner_fd, int x, int y);
+
+    // A drone shot down, or a zapper switched off
+    bool isOff(int x, int y) const { return destroyed_drones.count({x, y}) || hacked_zappers.count({x, y}); }
+
+    // Off for at least that many seconds
+    void switchOffZapper(int x, int y, float seconds);
+
+    void notifyCollision(char collision_type, const Player &player, int x, int y);
 };
 
 #endif

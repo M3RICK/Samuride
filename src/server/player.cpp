@@ -6,7 +6,16 @@
 Player::Player(int client_fd)
     : client_fd(client_fd), player_number(0), x(0), y(0), y_velocity(0),
       score(0), jet_active(false), character(0), introduced(false), upgrades{}, attack_cooldown(0), form(Form::Normal), form_timer(0),
-      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ram(RAM_MAX), ram_timer(RAM_RECHARGE), ultimate_charge(0), spears(0), spear_cooldown(0), charge_timer(0), recoil_timer(0), burst_left(0), burst_timer(0) {
+      shield(false), sprint_timer(0), berserk_timer(0), grace_timer(0), ultimate_charge(0),
+      runner_weapon(makeWeapon(weaponOf(0))), runner_ultimate(makeUltimate(ultimateOf(0))) {
+}
+
+void Player::setCharacter(int id)
+{
+    character = id;
+    introduced = true;
+    runner_weapon = makeWeapon(weaponOf(id));
+    runner_ultimate = makeUltimate(ultimateOf(id));
 }
 
 void Player::reset(int number, float spawn_y)
@@ -23,14 +32,9 @@ void Player::reset(int number, float spawn_y)
     sprint_timer = 0;
     berserk_timer = 0;
     grace_timer = 0;
-    ram = RAM_MAX;
-    ram_timer = RAM_RECHARGE;
     ultimate_charge = 0;
-    spears = 0;
-    spear_cooldown = 0;
-    charge_timer = 0;
-    recoil_timer = 0;
-    burst_left = 0;
+    runner_weapon = makeWeapon(weaponOf(character));
+    runner_ultimate = makeUltimate(ultimateOf(character));
     collected_coins.clear();
 }
 
@@ -71,16 +75,6 @@ void Player::powerUp(char tile)
         berserk_timer = BERSERK_TIME;
 }
 
-// Their own cooldown: the blade keeps the attack key, Berserk included
-bool Player::throwSpear()
-{
-    if (spears == 0 || spear_cooldown > 0)
-        return false;
-    spears--;
-    spear_cooldown = statsOf(Weapon::Spear).cooldown;
-    return true;
-}
-
 bool Player::absorbHit()
 {
     if (!shield)
@@ -118,24 +112,13 @@ void Player::update(float dt, float forward_speed, float max_y)
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
     grace_timer = std::max(0.0f, grace_timer - dt);
-    spear_cooldown = std::max(0.0f, spear_cooldown - dt);
-    if (ram < RAM_MAX && (ram_timer -= dt * (isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
-        ram++;
-        ram_timer = RAM_RECHARGE;
-    }
 
-    // Fishbones: standing still while it charges, the recoil once it fires
-    bool charging = charge_timer > 0;
-    if (charging && (charge_timer -= dt) <= 0)
-        recoil_timer = FISHBONES_RECOIL_TIME;
-
-    // Standing still while the smoke rises; the titan runs on the floor. Fishbones' recoil throws Jinx
-    // backward, then she picks her pace back up.
-    float pace = isSprinting() ? SANDEVISTAN_SPEED : 1;
-    if (recoil_timer > 0 && !charging) {
-        pace *= 1 - (1 + FISHBONES_RECOIL_PUSH) * recoil_timer / FISHBONES_RECOIL_TIME;
-        recoil_timer = std::max(0.0f, recoil_timer - dt);
-    }
+    // Standing still while the smoke rises; the titan runs on the floor. Fishbones holds Jinx still in
+    // the air while it charges, then its recoil throws her backward and she picks her pace back up.
+    bool charging = runner_ultimate->holdsStill();
+    float pace = (isSprinting() ? SANDEVISTAN_SPEED : 1) * runner_ultimate->pace();
+    runner_weapon->tick(*this, dt);
+    runner_ultimate->tick(dt);
     if (form != Form::Shifting && !charging)
         x += forward_speed * pace * dt;
     if (sprint_timer > 0 && (sprint_timer -= dt) <= 0) {
@@ -163,13 +146,4 @@ void Player::update(float dt, float forward_speed, float max_y)
         y = std::clamp(y, 0.0f, max_y);
         y_velocity = 0;
     }
-}
-
-bool Player::burstShotDue(float dt)
-{
-    if (burst_left == 0 || (burst_timer -= dt) > 0)
-        return false;
-    burst_left--;
-    burst_timer = MINIGUN_BURST_GAP;
-    return true;
 }

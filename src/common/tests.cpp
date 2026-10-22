@@ -171,19 +171,21 @@ static void testHack()
     assert(hackTarget(lane, 0, 4, 2, none) == std::make_pair(4, 4));
     assert(hackTarget(lane, 0, 4, 2, [](int x, int) { return x == 4; }) == std::make_pair(-1, -1));
 
+    assert(weaponOf(4) == Weapon::Hack);
     Player lucy(-1);
+    lucy.setCharacter(4);
     lucy.reset(0, 0);
+    auto &hack = dynamic_cast<Hack &>(lucy.weapon());
     for (int i = 0; i < RAM_MAX; i++)
-        lucy.spendRam();
-    assert(lucy.getRam() == 0);
+        hack.spendRam();
+    assert(hack.charges() == 0);
     lucy.update(RAM_RECHARGE - 0.1f, 10, 8);
-    assert(lucy.getRam() == 0);
+    assert(hack.charges() == 0);
     lucy.update(0.2f, 10, 8);
-    assert(lucy.getRam() == 1);
+    assert(hack.charges() == 1);
     for (int i = 0; i < RAM_MAX; i++)
         lucy.update(RAM_RECHARGE + 0.1f, 10, 8);
-    assert(lucy.getRam() == RAM_MAX);
-    assert(weaponOf(4) == Weapon::Hack);
+    assert(hack.charges() == RAM_MAX);
 }
 
 // Every eddy charges the ultimate, up to full, and firing it empties the gauge
@@ -207,30 +209,33 @@ static void testUltimate()
     assert(ultimateOf(RUNNER_COUNT) == Ultimate::FireWave && weaponOf(-1) == Weapon::Gun);
 
     Player mikasa(-1);
-    mikasa.reset(3, 0);
-    mikasa.giveSpears();
+    mikasa.setCharacter(3);
+    mikasa.reset(0, 0);
+    auto &spears = dynamic_cast<ThunderSpears &>(mikasa.ultimate());
+    spears.give();
     // One spear per press, their own cooldown between two, none left after the last
-    assert(mikasa.throwSpear() && !mikasa.throwSpear());
+    assert(spears.throwSpear() && !spears.throwSpear());
     for (int i = 1; i < THUNDER_SPEARS; i++) {
         mikasa.update(1, 0, 8);
-        assert(mikasa.throwSpear());
+        assert(spears.throwSpear());
     }
     mikasa.update(1, 0, 8);
-    assert(mikasa.getSpears() == 0 && !mikasa.throwSpear());
+    assert(spears.charges() == 0 && !spears.throwSpear());
 
-    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing
-    Player jinx(-1);
-    jinx.reset(2, 0);
-    jinx.startBurst(MINIGUN_BURST - 1);
+    // Pow-Pow: the two bullets after the first come MINIGUN_BURST_GAP apart, then nothing. The first is
+    // fired by attack(), which needs a server: the burst is started by hand.
+    Minigun powpow;
+    powpow.startBurst();
     int fired = 0;
     for (int tick = 0; tick < 60; tick++)
-        fired += jinx.burstShotDue(1 / 60.f);
+        fired += powpow.burstShotDue(1 / 60.f);
     assert(fired == MINIGUN_BURST - 1);
 
     // Fishbones: Jinx stands still while it charges, its recoil throws her back, then she runs again
     Player thrown(-1);
-    thrown.reset(2, 4);
-    thrown.startFishbones();
+    thrown.setCharacter(2);
+    thrown.reset(0, 4);
+    dynamic_cast<Fishbones &>(thrown.ultimate()).charge();
     thrown.update(FISHBONES_CHARGE_TIME / 2, 10, 8);
     assert(thrown.getX() == 0 && thrown.getY() == 4);
     thrown.update(FISHBONES_CHARGE_TIME / 2 + 0.01f, 10, 8);

@@ -17,8 +17,6 @@ bool Server::resetMap()
     destroyed_drones.clear();
     projectiles.clear();
     hacked_zappers.clear();
-    sweeps.clear();
-    nukes.clear();
     resetTitans();
     resetSnipers();
 
@@ -157,9 +155,9 @@ void Server::updatePlayers()
         // Berserk attacks on its own, as soon as the cooldown allows
         if (player.isBerserk())
             handleAttack(client_fd);
-        // The rest of a Pow-Pow burst
-        if (player.burstShotDue(TICK_DT) && mode == GameMode::Cyberpsycho)
-            fireProjectile(client_fd, player, Weapon::Minigun);
+        // What the weapon does on its own: the rest of a Pow-Pow burst
+        if (mode == GameMode::Cyberpsycho)
+            player.weapon().act(*this, player);
         leader_x = std::max(leader_x, player.getX());
         rear_x = std::min(rear_x, player.getX());
     }
@@ -264,10 +262,10 @@ void Server::sendGameState()
         // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM, bit 7: Berserk
         state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
                              (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
-                             player.getRam() << 5 | (player.isBerserk() ? 1 : 0) << 7);
+                             player.weapon().charges() << 5 | (player.isBerserk() ? 1 : 0) << 7);
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
-        state_data.push_back(player.getSpears());
+        state_data.push_back(player.ultimate().charges());
         // bit 0: a second of grace (shield broken, Sandevistan or titan over)
         state_data.push_back(player.isGracing() ? 1 : 0);
     }

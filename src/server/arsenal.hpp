@@ -1,0 +1,164 @@
+// The runners' weapons and ultimates on the server: what each one does, and what it keeps between two
+// ticks (Lucy's RAM, Mikasa's spears, a fire wave sweeping on...). Every player owns one of each, made
+// from their runner's line in common/runners.hpp.
+//
+// A new weapon or ultimate: its id in common/weapons.hpp or common/ultimates.hpp (sent to the clients,
+// who draw it), a class here, and its case in makeWeapon or makeUltimate.
+
+#ifndef ARSENAL_HPP
+    #define ARSENAL_HPP
+
+#include <memory>
+#include <vector>
+#include "../common/weapons.hpp"
+#include "../common/ultimates.hpp"
+
+class Server;
+class Player;
+
+class RunnerWeapon {
+public:
+    virtual ~RunnerWeapon() = default;
+
+    // The attack key, or Berserk attacking on its own, once the cooldown is over. Returns the cooldown
+    // it starts, 0 when nothing happened.
+    virtual float attack(Server &server, Player &player) = 0;
+    // Every tick, timers only (no server: the tests run it alone)
+    virtual void tick(const Player &, float) {}
+    // Every tick of a CYBERPSYCHO run, after the players moved
+    virtual void act(Server &, Player &) {}
+    // Shown over the runner's head (Lucy's RAM), sent in 2 bits
+    virtual int charges() const { return 0; }
+};
+
+class RunnerUltimate {
+public:
+    virtual ~RunnerUltimate() = default;
+
+    // Fired with a full gauge, from `start` (just ahead of the runner) along `line` (the middle of their body)
+    virtual void fire(Server &server, Player &player, float start, float line) = 0;
+    // The ultimate key while it's still going: true when it used it (Mikasa throws a spear)
+    virtual bool press(Server &, Player &) { return false; }
+    virtual void tick(float) {}
+    virtual void act(Server &, Player &) {}
+    // Shown over the runner's head and on the HUD (Mikasa's spears)
+    virtual int charges() const { return 0; }
+    // The runner's pace, times the run speed, and whether they hang still in the air: Fishbones
+    virtual float pace() const { return 1; }
+    virtual bool holdsStill() const { return false; }
+};
+
+std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
+std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id);
+
+// Johnny, David: a bullet
+class Gun : public RunnerWeapon {
+public:
+    float attack(Server &server, Player &player) override;
+};
+
+// Jinx's Pow-Pow: bursts of MINIGUN_BURST bullets, a steady spray in Berserk
+class Minigun : public RunnerWeapon {
+    int burst_left = 0;     // bullets still to come in this burst
+    float burst_timer = 0;  // seconds before the next one
+
+public:
+    float attack(Server &server, Player &player) override;
+    void act(Server &server, Player &player) override;
+    // The bullets after the first
+    void startBurst() { burst_left = MINIGUN_BURST - 1; burst_timer = MINIGUN_BURST_GAP; }
+    // True when the next bullet of the burst is due after dt
+    bool burstShotDue(float dt);
+};
+
+// Mikasa: every drone and titan within reach goes down
+class Blade : public RunnerWeapon {
+public:
+    float attack(Server &server, Player &player) override;
+};
+
+// Lucy: the first drone or zapper in her way, for one charge of RAM; a hacked drone passes it on
+class Hack : public RunnerWeapon {
+    int ram = RAM_MAX;
+    float ram_timer = RAM_RECHARGE;     // seconds before the next charge comes back
+
+    void bounce(Server &server, const Player &player, int from_x, int from_y);
+
+public:
+    float attack(Server &server, Player &player) override;
+    void tick(const Player &player, float dt) override;
+    int charges() const override { return ram; }
+    void spendRam() { ram--; }
+};
+
+// A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
+struct Sweep {
+    float start;    // in tiles
+    float front;
+    float range;
+    float speed;
+    int top;
+    int bottom;
+    float delay = 0;    // seconds before it sets off: Fishbones charges first
+
+    // Moves on by a tick; false once it reached its range
+    bool advance(Server &server, const Player &owner);
+};
+
+class FireWave : public RunnerUltimate {
+    std::vector<Sweep> waves;
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    void act(Server &server, Player &player) override;
+};
+
+// David's nuke: it lands ahead after NUKE_DELAY
+class Nuke : public RunnerUltimate {
+    struct Shell {
+        float impact;   // x where it lands, in tiles
+        float timer;    // seconds before it does
+    };
+    std::vector<Shell> shells;
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    void act(Server &server, Player &player) override;
+};
+
+class Breach : public RunnerUltimate {
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+};
+
+// THUNDER_SPEARS, thrown one at a time with the ultimate key again (her blade keeps the attack key)
+class ThunderSpears : public RunnerUltimate {
+    int spears = 0;
+    float cooldown = 0;     // seconds before she can throw the next one
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    bool press(Server &server, Player &player) override;
+    void tick(float dt) override { cooldown = std::max(0.0f, cooldown - dt); }
+    int charges() const override { return spears; }
+    void give() { spears = THUNDER_SPEARS; }
+    // One spear, if she has one and its cooldown is over
+    bool throwSpear();
+};
+
+// She stops dead and hangs in the air while it charges, then its recoil throws her back
+class Fishbones : public RunnerUltimate {
+    std::vector<Sweep> rockets;
+    float charge_timer = 0;     // seconds left charging
+    float recoil_timer = 0;     // seconds of recoil left
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    void act(Server &server, Player &player) override;
+    void tick(float dt) override;
+    float pace() const override;
+    bool holdsStill() const override { return charge_timer > 0; }
+    void charge() { charge_timer = FISHBONES_CHARGE_TIME; }
+};
+
+#endif

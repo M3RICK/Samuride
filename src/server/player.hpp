@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -13,6 +14,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
 #include "../common/difficulty.hpp"
+#include "arsenal.hpp"
 
 class Player {
 private:
@@ -39,15 +41,10 @@ private:
     float sprint_timer;         // seconds of Sandevistan left
     float berserk_timer;        // seconds of Berserk left
     float grace_timer;          // seconds of invincibility left after a shield broke, a sprint or a titan
-    int ram;                    // Lucy's hack charges
-    float ram_timer;            // seconds before the next charge comes back
     int ultimate_charge;        // eddies earned since the last ultimate, up to its runner's charge
-    int spears;                 // Mikasa's thunder spears left
-    float spear_cooldown;       // seconds before she can throw the next one
-    float charge_timer;         // seconds left charging Fishbones: standing still in the air
-    float recoil_timer;         // seconds of Fishbones' recoil left
-    int burst_left;             // Pow-Pow bullets still to come in this burst
-    float burst_timer;          // seconds before the next one
+    // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
+    std::unique_ptr<RunnerWeapon> runner_weapon;
+    std::unique_ptr<RunnerUltimate> runner_ultimate;
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
@@ -90,22 +87,16 @@ public:
     // The gauge, in percent of what this player needs
     int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
     void spendUltimate() { ultimate_charge = 0; }
-    // Charges, then the recoil once it fires
-    void startFishbones() { charge_timer = FISHBONES_CHARGE_TIME; }
-    void startBurst(int bullets) { burst_left = bullets; burst_timer = MINIGUN_BURST_GAP; }
-    // True when the next bullet of the burst is due this tick
-    bool burstShotDue(float dt);
-    int getSpears() const { return spears; }
-    void giveSpears() { spears = THUNDER_SPEARS; }
-    bool throwSpear();
+    RunnerWeapon &weapon() { return *runner_weapon; }
+    const RunnerWeapon &weapon() const { return *runner_weapon; }
+    RunnerUltimate &ultimate() { return *runner_ultimate; }
+    const RunnerUltimate &ultimate() const { return *runner_ultimate; }
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }
-    int getRam() const { return ram; }
-    void spendRam() { ram--; }
 
     int getCharacter() const { return character; }
-    void setCharacter(int id) { character = id; introduced = true; }
+    void setCharacter(int id);
     void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
     const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
