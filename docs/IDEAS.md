@@ -60,6 +60,35 @@ animations, flat gameplay. What to improve:
 - **Ultimate (E)**: the Moonlight Blade, a wave of blue light razing a band at his height.
 - **Flight**: chained quicksteps in the air, a trail of grey mist (the Old Hunter Bone).
 
+## Easy to change, for friends testing the balance
+
+The goal: friends who never coded change the game and send real feedback. In English.
+
+- **Done (v2.9): `assets/tuning.txt`.** Every balance value, explained, read at startup by the game
+  and the server. CUSTOM TUNING on the HUD and no solo records while a value differs. The values live
+  in `src/common/tuning.cpp`; after changing a default in the code, `./Samuride_server -t >
+  assets/tuning.txt` (a test fails until then).
+- **Next, in this order:**
+  1. **Runners in a data file** (`assets/runners.txt`): folder, price, weapon, ultimate, charge. A new
+     runner is a folder and a line; any runner can take any existing weapon or ultimate. A new
+     mechanic (Dante's style meter) still needs code.
+  2. **A web page to slice sprite sheets**: drop the sheet, draw a box per animation, pick its role,
+     watch it play, set fps and scale, export what `tools/slice_sheets.py` reads. Replaces the pixel
+     coordinates typed by hand, the slowest part of adding the Hunter.
+  3. **Reload `tuning.txt` without restarting** (a key in a run), and **the host sending its tuning**
+     to whoever joins, so both draw the same game in versus.
+  4. **A modding guide** with recipes: change a price, make the game easier, add a runner from a
+     ChatGPT sheet, make a map (`maps/` are already text files).
+- Not planned: a scripting language for new weapons. A lot of work and bugs for friends who mostly
+  want to change numbers and add runners.
+
+## Where we stopped (2026-10-22)
+
+Branch `2.9`, nothing pushed. The Hunter is in and played (new Bloodborne sheet, tap/hold F, parry
+coached on the reticle, heavier cleaver, visceral), his list above is what's left on him. The tuning
+file is done. Next session: pick from the list just above, then Dante (needs his sprite sheet), then
+Adam Smasher.
+
 ## Later
 
 - **A mount per runner**, in place of the Attack Titan power-up for everyone: Mikasa rides Eren's
