@@ -23,9 +23,10 @@ static void setTile(Rows &rows, int x, int y, char tile)
 static int placeZapper(Rows &rows, std::mt19937 &rng, int x, float difficulty)
 {
     int height = rows.size();
-    // Always leave 4 free rows in a column: the player is 2 tiles tall
-    int max_len = std::clamp(2 + static_cast<int>(4 * difficulty), 2, height - 4);
-    int len = randInt(rng, 2, max_len);
+    // Always leave 4 free rows in a column: the player is 2 tiles tall. Long beams stay rare:
+    // the shorter of two rolls, 4 tiles only past ~1300 m and 5 at full difficulty
+    int max_len = std::clamp(2 + static_cast<int>(3 * difficulty), 2, height - 4);
+    int len = std::min(randInt(rng, 2, max_len), randInt(rng, 2, max_len));
 
     switch (randInt(rng, 0, 2)) {
         case 0: {

@@ -40,12 +40,12 @@ private:
     static constexpr size_t CHUNK_WIDTH = 40;
     static constexpr size_t SAFE_START = 14;
     static constexpr float LOOKAHEAD = 40;
-    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 12;
+    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 50;   // ~2000 m
 
-    // Run speed in tiles per second, ramps up over time
-    static constexpr float START_SPEED = 9.0f;
-    static constexpr float MAX_SPEED = 18.0f;
-    static constexpr float ACCELERATION = 0.15f;
+    // Run speed in tiles per second, ramps up over time: top speed after ~200 s, ~2300 m
+    static constexpr float START_SPEED = 8.0f;
+    static constexpr float MAX_SPEED = 15.0f;
+    static constexpr float ACCELERATION = 0.035f;
 
     struct Titan {
         TitanType type;

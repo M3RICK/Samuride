@@ -3,6 +3,14 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v2.9
+
+### Balance
+- **Easier runs, closer to Jetpack Joyride.** The run starts a bit slower and speeds up far more gently:
+  top speed is lower and only reached around 2300 m instead of 800 m. Obstacles get harder over ~2000 m
+  instead of ~500 m.
+- **Fewer tall zappers.** 4-tile zappers only show up past ~1300 m and stay rare; most beams are 2 or 3 tiles.
+
 ## v2.85
 
 ### New
