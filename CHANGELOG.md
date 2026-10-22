@@ -11,7 +11,7 @@ taken from this file. Players on different versions can't play together: update 
   then let go, to fire his pistol: he has 3 quicksilver bullets, and only cleaver kills load new ones.
   - A bullet **staggers a titan**: it stops dead, and your next cut tears it open (**visceral**, +40).
   - **Parry a sniper** (+10): hold `F` while its laser tracks you, and let go the moment it freezes.
-    Held on your line, the frozen sight turns silver: that's your cue.
+    The reticle coaches you: "HOLD [F]" while it tracks, then it turns silver and says "RELEASE!".
   - **Rally**: when your shield breaks, kill something with the cleaver within 2 s to get it back.
   - Ultimate, **Moonlight Blade**: a wave of blue light slashed ahead at your height, razing a band
     of the corridor.

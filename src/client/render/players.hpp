@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <map>
+#include <vector>
 #include "../state.hpp"
 
 class Canvas;
@@ -22,12 +23,25 @@ private:
         float time;
     };
 
+    // The Hunter's mist: soft puffs left in the world behind him, swelling, rising and fading
+    struct Puff {
+        sf::Vector2f pos;   // in tiles
+        sf::Color color;
+        sf::Clock age;
+    };
+    static constexpr float PUFF_LIFE = 0.7f;
+    static constexpr float PUFF_GAP = 1 / 30.f;     // seconds between two: as thick at 144 fps as at 30
+
     Canvas &canvas;
     const Sprites &sprites;
     Run &run;
     Audio &audio;
     Particles &particles;
+    std::vector<Puff> mist;
+    sf::Clock puff_clock;
 
+    void drawMist();
+    void drawMistGhosts(const sf::Sprite &sprite, sf::Color color, float tile_size);
     void emitExhaust(const std::map<int, PlayerState> &players);
     bool updateAirState(int player_num);
     AnimationFrame pickAnimation(int player_num, const PlayerState &player, bool on_ground);

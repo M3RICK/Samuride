@@ -3,12 +3,20 @@
 #ifndef SNIPERS_RENDER_HPP
     #define SNIPERS_RENDER_HPP
 
+#include <string>
 #include <vector>
 #include "../state.hpp"
 
 class Canvas;
 class Audio;
 struct Run;
+
+// Playing the Hunter with a bullet loaded: where he can parry from, and what to tell him
+struct ParryCue {
+    float line = -1;        // the middle of his body, -1 when he can't parry
+    bool aiming = false;    // holding the attack key long enough
+    std::string key;        // its name, for "HOLD [F]"
+};
 
 class Snipers {
 private:
@@ -21,8 +29,7 @@ public:
     Snipers(Canvas &canvas, Run &run, Audio &audio);
 
     void reset() { firing = 0; }
-    // parry_line: the middle of your Hunter while he aims his pistol, -1 otherwise
-    void draw(const std::vector<SniperState> &snipers, float parry_line);
+    void draw(const std::vector<SniperState> &snipers, const ParryCue &parry);
 };
 
 #endif

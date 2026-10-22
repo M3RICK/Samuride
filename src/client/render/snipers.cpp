@@ -5,6 +5,7 @@
 #include "canvas.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
+#include "../touch.hpp"
 
 using namespace Palette;
 
@@ -13,8 +14,9 @@ Snipers::Snipers(Canvas &canvas, Run &run, Audio &audio) : canvas(canvas), run(r
 
 // Tracking: a thin red line and a reticle on the right edge, following you. Aiming: the line
 // thickens and flickers, frozen. Firing: a white-hot beam with a red glow, the whole row.
-// Frozen on your Hunter while he aims, it turns quicksilver and stops flickering: let go now to parry.
-void Snipers::draw(const std::vector<SniperState> &snipers, float parry_line)
+// Playing the Hunter, the reticle on your line coaches the parry: "HOLD" while it tracks you, then frozen
+// while you aim it turns quicksilver, stops flickering and says "RELEASE".
+void Snipers::draw(const std::vector<SniperState> &snipers, const ParryCue &parry)
 {
     float tile = run.view.tile_size;
     size_t now_firing = 0;
@@ -36,9 +38,10 @@ void Snipers::draw(const std::vector<SniperState> &snipers, float parry_line)
         }
 
         bool aiming = sniper.phase == SniperPhase::Aiming;
-        bool parry = aiming && parry_line >= 0 && parryReaches(sniper.y, parry_line);
-        sf::Color color = parry ? QUICKSILVER : NEON_RED;
-        if (aiming && !parry && !canvas.blink())
+        bool on_you = parry.line >= 0 && parryReaches(sniper.y, parry.line);
+        bool release = aiming && on_you && parry.aiming;
+        sf::Color color = release ? QUICKSILVER : NEON_RED;
+        if (aiming && !release && !canvas.blink())
             continue;
 
         float thickness = aiming ? 6 : 2;
@@ -61,6 +64,12 @@ void Snipers::draw(const std::vector<SniperState> &snipers, float parry_line)
         cross.setPosition(center);
         cross.setFillColor(color);
         canvas.draw(cross);
+
+        if (release)
+            canvas.glitchText("RELEASE!", 40, QUICKSILVER, center - sf::Vector2f(150, 0));
+        else if (on_you && !aiming)
+            canvas.text(Touch::hint(("HOLD [" + parry.key + "]").c_str(), "HOLD ATTACK"), 30,
+                        parry.aiming ? QUICKSILVER : DIM_WHITE, center - sf::Vector2f(150, 0));
     }
 
     if (now_firing > firing) {

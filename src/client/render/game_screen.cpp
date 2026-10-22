@@ -80,6 +80,7 @@ void GameScreen::resetRun()
     new_drone_record = false;
     bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
+    attack_key = keyName(Settings::load().attack_key);
     ultimate_was_ready = false;
     spears_shown = 0;
     mood = Mood::Idle;
@@ -199,8 +200,14 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawFlashAndCallout();
     drawEffects();
     titans.drawWarnings(titan_states);
-    bool aiming = players.count(me) && players.at(me).aiming && run.display_positions.count(me);
-    snipers.draw(state.getSnipers(), aiming ? run.display_positions[me].y + Run::PLAYER_HEIGHT / 2 : -1);
+    ParryCue parry{.key = attack_key};
+    auto mine = players.find(me);
+    if (mine != players.end() && mine->second.quicksilver > 0 && run.display_positions.count(me) &&
+        run.cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Cleaver) {
+        parry.line = run.display_positions[me].y + Run::PLAYER_HEIGHT / 2;
+        parry.aiming = mine->second.aiming;
+    }
+    snipers.draw(state.getSnipers(), parry);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
