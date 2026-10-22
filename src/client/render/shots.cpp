@@ -23,27 +23,11 @@ void Shots::handle(GameState &state)
         sf::Clock &attack = run.attack_clocks[shot.player];
         if (shot.weapon != Weapon::Minigun || attack.getElapsedTime().asSeconds() > 0.3f)
             attack.restart();
-        run.player_anims[shot.player].strike = shot.weapon == Weapon::Pistol ? PlayerAnim::Strike::Shot : PlayerAnim::Strike::Cut;
 
         switch (shot.weapon) {
             case Weapon::Blade:
                 audio.play(Audio::Sfx::Slash);
                 particles.emit(muzzle + sf::Vector2f(1, 0), 10, sf::Color::White, 6, 0.25f, 0);
-                break;
-            case Weapon::Cleaver:
-                // A heavy serrated swing: felt even when it hits nothing, red sparks along the arc
-                if (shot.player == state.getMyPlayerNumber())
-                    run.shakeAtLeast(0.08f, 6);
-                audio.play(Audio::Sfx::Cleaver);
-                particles.emit(muzzle + sf::Vector2f(1.2f, -0.3f), 14, NEON_RED, 7, 0.25f, 0, {4, 2});
-                break;
-            case Weapon::Pistol:
-                // A heavy blunderbuss crack, felt by the shooter
-                if (shot.player == state.getMyPlayerNumber())
-                    run.shakeAtLeast(0.12f, 8);
-                audio.play(Audio::Sfx::Pistol);
-                particles.emit(muzzle, 14, QUICKSILVER, 6, 0.25f, 0);
-                trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
                 break;
             case Weapon::Hack:
                 audio.play(Audio::Sfx::Hack);
@@ -113,8 +97,7 @@ void Shots::draw()
     for (const Trail &trail : trails) {
         bool minigun = trail.weapon == Weapon::Minigun;
         bool spear = trail.weapon == Weapon::Spear;
-        bool quicksilver = trail.weapon == Weapon::Pistol;
-        sf::Color color = minigun ? NEON_PINK : spear ? sf::Color(200, 250, 255) : quicksilver ? QUICKSILVER : NEON_YELLOW;
+        sf::Color color = minigun ? NEON_PINK : spear ? sf::Color(200, 250, 255) : NEON_YELLOW;
         sf::Vector2f pos = positionOf(trail);
         sf::Vector2f size(tile_size * (minigun ? 0.35f : spear ? 1.3f : 0.5f), spear ? 8 : 5);
 

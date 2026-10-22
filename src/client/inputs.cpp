@@ -58,7 +58,7 @@ void InputManager::processInputs()
     // Focus check: two clients on the same machine must not share the keyboard
     bool thrust = window->hasFocus() && sf::Keyboard::isKeyPressed(jetpack_key);
     // The attack key from its events: polled, a held key could read as up for a frame, and its key
-    // repeats then pressed it again and again (a Hunter's hold turned into a flurry of cuts)
+    // repeats then pressed it again and again
     bool attack_down = window->hasFocus() && attack_key_down;
     pollTouches(thrust, attack_down);
 

@@ -81,7 +81,6 @@ void GameScreen::resetRun()
     new_drone_record = false;
     bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
-    attack_key = keyName(Settings::load().attack_key);
     ultimate_was_ready = false;
     spears_shown = 0;
     mood = Mood::Idle;
@@ -140,7 +139,7 @@ void GameScreen::update(GameState &state, const std::map<int, PlayerState> &play
     updateSpeedLines(world_dt);
     particles.update(world_dt);
 
-    // Shots first: a cleaver kill or a visceral comes on the same tick as the cut itself
+    // Shots first: a blade kill comes on the same tick as the cut itself
     shots.handle(state);
     for (const CollisionEffect &effect : state.takeEffects())
         addEffect(effect, me);
@@ -202,14 +201,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawFlashAndCallout();
     drawEffects();
     titans.drawWarnings(titan_states);
-    ParryCue parry{.key = attack_key};
-    auto mine = players.find(me);
-    if (mine != players.end() && mine->second.quicksilver > 0 && run.display_positions.count(me) &&
-        run.cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Cleaver) {
-        parry.line = run.display_positions[me].y + Run::PLAYER_HEIGHT / 2;
-        parry.aiming = mine->second.aiming;
-    }
-    snipers.draw(state.getSnipers(), parry);
+    snipers.draw(state.getSnipers());
     if (players.count(me))
         drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
@@ -335,18 +327,13 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         if (effect.player == me)
             react(Mood::Kill);
         last_drone[effect.player] = tile_center;
-        // Mikasa's blade or the Hunter's cleaver bites: a hard jolt and white sparks; any other kill, a light one
-        Weapon weapon = weaponOf(run.characterOf(me));
-        bool cleaver = weapon == Weapon::Cleaver && run.player_anims[me].strike != PlayerAnim::Strike::Shot;
-        if (effect.player == me && (weapon == Weapon::Blade || cleaver)) {
-            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm.
-            // The Hunter's saw bites harder, and bleeds.
-            hit_stop = cleaver ? HIT_STOP * 2 : HIT_STOP;
-            cuts.push_back({tile_center, sf::Clock(), cleaver ? NEON_RED : sf::Color::White});
-            run.shakeAtLeast(0.15f, cleaver ? 22 : 16);
+        // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
+        if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+            // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
+            hit_stop = HIT_STOP;
+            cuts.push_back({tile_center, sf::Clock()});
+            run.shakeAtLeast(0.15f, 16);
             particles.emit(tile_center, 16, sf::Color::White, 10, 0.25f, 0);
-            if (cleaver)
-                particles.emit(tile_center, 24, sf::Color(170, 0, 30), 8, 0.5f, 14);
         } else if (weaponOf(run.characterOf(effect.player)) == Weapon::Hack && run.display_positions.count(effect.player)) {
             // Lucy's hack lands: a bolt from her hand (the bounce brought its own), the drone glitching apart in purple
             if (!bounced.erase(effect.player))
@@ -360,38 +347,6 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         shots.land(effect.player, tile_center.x);
         particles.emit(tile_center, 30, NEON_ORANGE, 8, 0.6f, 6);
         particles.emit(tile_center, 15, NEON_RED, 5, 0.5f, 6);
-    } else if (effect.type == TITAN_STAGGER) {
-        // The Hunter's bullet stops a titan dead: its nape is open for a cut
-        audio.play(Audio::Sfx::Stomp);
-        run.shakeAtLeast(0.2f);
-        particles.emit(tile_center + sf::Vector2f(0, -3), 30, QUICKSILVER, 7, 0.5f, 0);
-    } else if (effect.type == VISCERAL) {
-        // ... and the cut tears it open: his extended cut, the world freezing on it, the screen bleeding
-        run.player_anims[effect.player].strike = PlayerAnim::Strike::Visceral;
-        run.attack_clocks[effect.player].restart();
-        if (effect.player == me) {
-            react(Mood::Kill);
-            hit_stop = HIT_STOP * 5;
-            run.flashScreen(NEON_RED, 0.3f);
-        }
-        audio.play(Audio::Sfx::Visceral);
-        run.shakeAtLeast(0.4f, 20);
-        particles.emit(tile_center + sf::Vector2f(0, -3), 70, NEON_RED, 10, 0.8f, 10);
-        particles.emit(tile_center + sf::Vector2f(0, -3), 30, sf::Color(120, 0, 20), 6, 1.0f, 12);
-    } else if (effect.type == SNIPER_PARRY) {
-        // His bullet runs up the frozen sight: the laser shatters along its row
-        if (effect.player == me)
-            react(Mood::Kill);
-        audio.play(Audio::Sfx::ShieldBreak);
-        for (int i = 0; i < 10; i++)
-            particles.emit({effect.x + 2.0f + i * 2, effect.y + 0.5f}, 4, i % 2 ? NEON_RED : QUICKSILVER, 5, 0.4f, 0);
-    } else if (effect.type == RALLY) {
-        // His shield comes back from the kill
-        if (effect.player == me)
-            react(Mood::Pickup);
-        audio.play(Audio::Sfx::Shield);
-        particles.emit(tile_center, 30, NEON_RED, 6, 0.5f, 0);
-        particles.emit(tile_center, 20, SHIELD_COLOR, 6, 0.5f, 0);
     } else if (effect.type == HACK_BOUNCE) {
         // The bolt jumps from the drone Lucy hacked to the next one (its blast comes next)
         sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : tile_center;
@@ -456,10 +411,9 @@ void GameScreen::drawCuts()
         slash.setOrigin(slash.getSize() / 2.f);
         slash.setPosition(run.toScreen(cut.pos));
         slash.setRotation(sf::degrees(-30));
-        slash.setFillColor(withAlpha(cut.color, static_cast<uint8_t>(255 * (1 - t))));
+        slash.setFillColor(withAlpha(sf::Color::White, static_cast<uint8_t>(255 * (1 - t))));
         canvas.draw(slash, sf::BlendAdd);
-        sf::Color glow = cut.color == sf::Color::White ? NEON_CYAN : cut.color;
-        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(glow, static_cast<uint8_t>(120 * (1 - t))));
+        canvas.halo(run.toScreen(cut.pos), tile_size * 0.6f * (1 - t), withAlpha(NEON_CYAN, static_cast<uint8_t>(120 * (1 - t))));
     }
 }
 
@@ -492,23 +446,6 @@ void GameScreen::drawZaps()
             }
             last = next;
         }
-    }
-}
-
-// The Hunter's moves, as they float up; empty for any other effect
-static std::string hunterMove(char type)
-{
-    switch (type) {
-        case TITAN_STAGGER:
-            return "STAGGER";
-        case VISCERAL:
-            return std::format("VISCERAL +{}", TITAN_BOUNTY + VISCERAL_BONUS);
-        case SNIPER_PARRY:
-            return std::format("PARRY +{}", PARRY_BOUNTY);
-        case RALLY:
-            return "RALLY";
-        default:
-            return "";
     }
 }
 
@@ -556,12 +493,6 @@ void GameScreen::drawEffects()
                 column.setFillColor(withAlpha(color, alpha));
                 canvas.draw(column, sf::BlendAdd);
             }
-        } else if (std::string move = hunterMove(active.effect.type); !move.empty()) {
-            // The Hunter's moves, named over where they happened
-            bool titan = active.effect.type == VISCERAL || active.effect.type == TITAN_STAGGER;
-            if (active.mine)
-                canvas.text(move, titan ? 44 : 34, withAlpha(active.effect.type == RALLY ? SHIELD_COLOR : QUICKSILVER, alpha),
-                            run.toScreen(tile + sf::Vector2f(0.5f, (titan ? -3 : 0) - t)));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
             if (active.mine)

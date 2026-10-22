@@ -4,43 +4,6 @@
 #include "../common/debug.hpp"
 #include <algorithm>
 
-// The attack key going down. The Hunter's waits for it to come back up: a tap cuts, a hold fires.
-void Server::pressAttack(int client_fd)
-{
-    auto it = players.find(client_fd);
-
-    if (it != players.end() && weaponOf(it->second.getCharacter()) == Weapon::Cleaver)
-        it->second.pressTrigger();
-    else
-        handleAttack(client_fd);
-}
-
-// The Hunter lets go: held long enough with a bullet loaded, the pistol; otherwise the cleaver
-void Server::releaseAttack(int client_fd)
-{
-    auto it = players.find(client_fd);
-
-    if (it == players.end() || weaponOf(it->second.getCharacter()) != Weapon::Cleaver)
-        return;
-    Player &player = it->second;
-    bool aimed = player.isAiming();
-    if (player.releaseTrigger() < 0)
-        return;
-    if (aimed)
-        firePistol(client_fd, player);
-    else
-        handleAttack(client_fd);
-}
-
-// A quicksilver bullet: it flies like a shot, and takes out a sniper whose sight is frozen on its line
-void Server::firePistol(int client_fd, Player &player)
-{
-    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || !player.fireQuicksilver())
-        return;
-    fireProjectile(client_fd, player, Weapon::Pistol);
-    parrySnipers(player);
-}
-
 // The attack key, or Berserk attacking on its own: what happens depends on the weapon (weapons.hpp)
 void Server::handleAttack(int client_fd)
 {
@@ -75,16 +38,10 @@ void Server::handleAttack(int client_fd)
             break;
         case Weapon::Spear:
             break;  // thrown with the ultimate key, see handleUltimate in ultimates.cpp
-        case Weapon::Pistol:
-            break;  // the attack key held then released, see releaseAttack
-        case Weapon::Cleaver:
-            announceShot(player, weapon);
-            cleave(client_fd, player, stats.reach);
-            break;
         case Weapon::Blade:
             announceShot(player, weapon);
             strike(client_fd, player, stats.reach);
-            slashTitans(player, stats.reach, false);
+            slashTitans(player, stats.reach);
             break;
         case Weapon::Hack:
             announceShot(player, weapon);   // hack() already did the rest
@@ -130,19 +87,6 @@ int Server::strike(int client_fd, const Player &player, float reach)
         }
     }
     return kills;
-}
-
-// The Hunter's cut: drones within reach go down, and a staggered titan is torn open (a visceral). Each
-// kill loads a bullet, and wins back a shield that just broke (the rally).
-void Server::cleave(int client_fd, Player &player, float reach)
-{
-    int kills = strike(client_fd, player, reach) + slashTitans(player, VISCERAL_REACH, true);
-
-    if (kills == 0)
-        return;
-    player.loadQuicksilver(kills);
-    if (player.rally())
-        notifyCollision(RALLY, player, player.getX(), player.getY() + 1);
 }
 
 // A drone in her way goes down, a zapper's beams go off
@@ -202,7 +146,7 @@ void Server::updateProjectiles()
                 spearBlast(shot.owner_fd, hit >= 0 ? hit : shot.max_x);
                 shot.x = shot.max_x;
             }
-        } else if (shot.weapon == Weapon::Pistol ? bulletHit(shot, from_x) : projectileHit(shot, from_x)) {
+        } else if (projectileHit(shot, from_x)) {
             shot.x = shot.max_x;
         }
     }
@@ -225,22 +169,6 @@ bool Server::projectileHit(const Projectile &shot, float from_x)
         }
     }
     return false;
-}
-
-// The Hunter's bullet: a drone goes down like with any shot, a titan in its way is staggered
-bool Server::bulletHit(const Projectile &shot, float from_x)
-{
-    if (projectileHit(shot, from_x))
-        return true;
-
-    Titan *titan = titanInPath(from_x, shot.x, shot.y);
-    auto owner = players.find(shot.owner_fd);
-    if (!titan)
-        return false;
-    titan->stagger = STAGGER_TIME;
-    if (owner != players.end())
-        notifyCollision(TITAN_STAGGER, owner->second, titan->x, game_map.getHeight() - 1);
-    return true;
 }
 
 // Where a spear sticks this tick: the first live drone near its line, or a titan tall enough

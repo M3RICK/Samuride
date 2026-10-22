@@ -46,7 +46,6 @@ private:
     struct Titan {
         TitanType type;
         float x;        // left edge, in tiles
-        float stagger = 0;  // seconds left standing still, shot by the Hunter: a cleaver cut kills it
     };
 
     struct Sniper {
@@ -69,10 +68,10 @@ private:
         float speed;
         float max_x;
         float radius;
-        Weapon weapon;          // Mikasa's spears blow up where they stop, the Hunter's bullets stagger titans
+        Weapon weapon;          // Mikasa's spears blow up where they stop
     };
 
-    // Johnny's fire wave, Jinx's Fishbones and the Hunter's Moonlight Blade, sweeping ahead and razing rows top to bottom
+    // Johnny's fire wave and Jinx's Fishbones, sweeping ahead and razing rows top to bottom
     struct Sweep {
         int owner_fd;
         float start;    // in tiles
@@ -215,13 +214,10 @@ private:
     // CYBERPSYCHO (combat.cpp)
     //===========================================================================
 
-    void pressAttack(int client_fd);
 
-    void releaseAttack(int client_fd);
 
     void handleAttack(int client_fd);
 
-    void firePistol(int client_fd, Player &player);
 
     void announceShot(const Player &player, Weapon weapon);
 
@@ -229,7 +225,6 @@ private:
 
     int strike(int client_fd, const Player &player, float reach);
 
-    void cleave(int client_fd, Player &player, float reach);
 
     bool hack(int client_fd, Player &player);
 
@@ -239,7 +234,6 @@ private:
 
     float spearHit(const Projectile &shot, float from_x);
 
-    bool bulletHit(const Projectile &shot, float from_x);
 
     void spearBlast(int owner_fd, float x);
 
@@ -273,7 +267,7 @@ private:
 
     Titan *titanInPath(float from_x, float to_x, float y);
 
-    int slashTitans(Player &player, float reach, bool staggered_only);
+    int slashTitans(Player &player, float reach);
 
     void sendTitans();
 
@@ -289,7 +283,6 @@ private:
 
     bool hitBySniper(const Player &player) const;
 
-    void parrySnipers(Player &player);
 
     void sendSnipers();
 

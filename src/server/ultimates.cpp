@@ -43,11 +43,6 @@ void Server::handleUltimate(int client_fd)
             player.startFishbones();
             break;
         }
-        case Ultimate::Moonlight: {
-            auto [top, bottom] = moonlightRows(line);
-            sweeps.push_back({client_fd, start, start, MOONLIGHT_RANGE, MOONLIGHT_SPEED, top, bottom});
-            break;
-        }
         case Ultimate::Nuke:
             nukes.push_back({client_fd, start + NUKE_DISTANCE, NUKE_DELAY});
             break;
@@ -62,7 +57,7 @@ void Server::handleUltimate(int client_fd)
     }
 }
 
-// The fire wave, Fishbones and the Moonlight Blade sweep on, the nukes land
+// The fire wave and Fishbones sweep on, the nukes land
 void Server::updateUltimates()
 {
     for (Sweep &sweep : sweeps) {

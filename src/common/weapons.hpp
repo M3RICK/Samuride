@@ -18,8 +18,6 @@ enum class Weapon : uint8_t {
     Blade,      // Mikasa: cuts what is right in front, titans included
     Hack,       // Lucy: switches off the first zapper or drone in her way
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
-    Cleaver,    // the Hunter's Saw Cleaver: a very short, very fast cut
-    Pistol,     // the Hunter's pistol: the attack key held, then released
 };
 
 struct WeaponStats {
@@ -50,28 +48,6 @@ inline float HACK_TIME = 2.0f;
 constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
 inline float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 
-// The Hunter: a tap of the attack key is a Saw Cleaver cut, holding it PISTOL_HOLD seconds then letting go
-// fires a quicksilver bullet. Only cleaver kills load bullets, up to QUICKSILVER_MAX.
-inline float PISTOL_HOLD = 0.3f;
-constexpr int QUICKSILVER_MAX = 3;  // sent in 2 bits: 3 at most
-// A bullet staggers a titan for STAGGER_TIME: it stops, and a cleaver cut takes it down (a visceral),
-// lunging up to VISCERAL_REACH tiles: closing on it at run speed, the cleaver's own reach left no time
-inline float STAGGER_TIME = 1.5f;
-inline float VISCERAL_REACH = 5;
-inline int VISCERAL_BONUS = 20;  // on top of the titan's bounty
-// Fired while a sniper's sight is frozen within PARRY_REACH tiles of his line, a bullet takes the sniper out.
-// The key can be held while the sight tracks him, to let go the moment it freezes.
-inline float PARRY_REACH = 1.5f;
-inline int PARRY_BOUNTY = 10;
-inline bool parryReaches(float sight_y, float line) { return std::abs(sight_y - line) <= PARRY_REACH; }
-// Rally: once his shield breaks, a cleaver kill within RALLY_TIME brings it back
-inline float RALLY_TIME = 2.0f;
-// Collision types
-constexpr char TITAN_STAGGER = 'g';
-constexpr char VISCERAL = 'x';
-constexpr char SNIPER_PARRY = 'q';
-constexpr char RALLY = 'y';
-
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {
     {0.25f, 30, 0, 0.4f},       // Gun
@@ -79,8 +55,6 @@ inline WeaponStats WEAPON_STATS[] = {
     {0.45f, 0, 2.5f, 0},        // Blade
     {0.45f, 0, 0, 0},           // Hack: its way is HACK_RANGE and HACK_LANE
     {0.45f, 28, 0, 0.6f},       // Spear
-    {0.3f, 0, 2.2f, 0},         // Cleaver
-    {0.3f, 34, 0, 0.5f},        // Pistol
 };
 
 // A weapon from a newer version of the game fires like a gun

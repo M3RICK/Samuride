@@ -48,9 +48,6 @@ private:
     float recoil_timer;         // seconds of Fishbones' recoil left
     int burst_left;             // Pow-Pow bullets still to come in this burst
     float burst_timer;          // seconds before the next one
-    int quicksilver;            // the Hunter's bullets
-    float trigger_time;         // seconds the attack key has been held, -1 while it's up (the Hunter's pistol)
-    float rally_timer;          // seconds left to win the shield back (the Hunter's rally)
     std::set<std::pair<int, int>> collected_coins;
 
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
@@ -101,17 +98,6 @@ public:
     int getSpears() const { return spears; }
     void giveSpears() { spears = THUNDER_SPEARS; }
     bool throwSpear();
-
-    int getQuicksilver() const { return quicksilver; }
-    void loadQuicksilver(int bullets) { quicksilver = std::min(QUICKSILVER_MAX, quicksilver + bullets); }
-    void pressTrigger() { trigger_time = 0; }
-    // Seconds it was held, -1 when it wasn't
-    float releaseTrigger() { return std::exchange(trigger_time, -1.0f); }
-    bool isAiming() const { return trigger_time >= PISTOL_HOLD && quicksilver > 0; }
-    bool fireQuicksilver();
-    bool isRallying() const { return rally_timer > 0; }
-    // A kill during the rally: the shield is back
-    bool rally();
 
     bool canAttack() const { return attack_cooldown <= 0; }
     void startCooldown(float seconds) { attack_cooldown = seconds; }

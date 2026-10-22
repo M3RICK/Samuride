@@ -49,20 +49,6 @@ bool Server::hitBySniper(const Player &player) const
     });
 }
 
-// The Hunter's bullet, fired while a sniper's sight is frozen near his line: that sniper is out
-void Server::parrySnipers(Player &player)
-{
-    float line = player.getY() + Player::HEIGHT / 2;
-
-    std::erase_if(snipers, [&](const Sniper &sniper) {
-        if (sniper.phase() != SniperPhase::Aiming || !parryReaches(sniper.y, line))
-            return false;
-        player.addScore(PARRY_BOUNTY);
-        notifyCollision(SNIPER_PARRY, player, player.getX(), sniper.y);
-        return true;
-    });
-}
-
 // [count]([phase][y in 1/100 tile, 2 bytes])...
 void Server::sendSnipers()
 {

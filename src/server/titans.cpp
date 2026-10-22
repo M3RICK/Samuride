@@ -31,13 +31,8 @@ void Server::spawnTitans(float leader_x)
 
 void Server::updateTitans(float rear_x)
 {
-    // A staggered one stands still a while
-    for (Titan &titan : titans) {
-        if (titan.stagger > 0)
-            titan.stagger -= TICK_DT;
-        else
-            titan.x -= titanStats(titan.type).speed * TICK_DT;
-    }
+    for (Titan &titan : titans)
+        titan.x -= titanStats(titan.type).speed * TICK_DT;
 
     // Gone once behind everyone
     std::erase_if(titans, [rear_x](const Titan &titan) { return titan.x < rear_x - 10; });
@@ -73,16 +68,15 @@ Server::Titan *Server::titanInPath(float from_x, float to_x, float y)
     return nullptr;
 }
 
-// CYBERPSYCHO: a strike within reach takes titans down. Mikasa's blade takes any; the Hunter's cleaver
-// only a staggered one, torn open (a visceral) for more. Returns how many.
-int Server::slashTitans(Player &player, float reach, bool staggered_only)
+// CYBERPSYCHO: Mikasa's blade takes down the titans within reach. Returns how many.
+int Server::slashTitans(Player &player, float reach)
 {
     return std::erase_if(titans, [&](const Titan &titan) {
         bool in_reach = titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
-        if (!in_reach || (staggered_only && titan.stagger <= 0))
+        if (!in_reach)
             return false;
-        player.addScore(staggered_only ? TITAN_BOUNTY + VISCERAL_BONUS : TITAN_BOUNTY);
-        notifyCollision(staggered_only ? VISCERAL : TITAN_KILL, player, titan.x, game_map.getHeight() - 1);
+        player.addScore(TITAN_BOUNTY);
+        notifyCollision(TITAN_KILL, player, titan.x, game_map.getHeight() - 1);
         return true;
     });
 }

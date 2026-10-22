@@ -65,7 +65,6 @@ private:
     struct Cut {
         sf::Vector2f pos;       // in tiles
         sf::Clock age;
-        sf::Color color;        // white for Mikasa's blade, red for the Hunter's cleaver
     };
     std::vector<Cut> cuts;
     // Lucy's hack: a crackling bolt from her to the drone, and from it to the one the hack jumps to
@@ -94,7 +93,6 @@ private:
     bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
     std::string ultimate_key;   // its name, read from the settings at the start of each run
-    std::string attack_key;     // likewise, for the Hunter's parry
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only

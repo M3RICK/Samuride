@@ -22,9 +22,6 @@ struct PlayerAnim {
     bool berserk = false;
     sf::Clock berserk_clock;
     sf::Clock shot_clock;   // since the last shot: Jinx's sprite kicks back on each bullet
-    // The Hunter's last attack, for its animation: his cleaver, his pistol, or a visceral
-    enum class Strike { Cut, Shot, Visceral };
-    Strike strike = Strike::Cut;
 };
 
 struct Run {

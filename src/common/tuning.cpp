@@ -113,18 +113,6 @@ std::vector<Entry> &entries()
             VALUE(HACK_TIME, "Seconds a hacked zapper stays off"),
             VALUE(HACK_BOUNCE_RANGE, "A hacked drone passes the hack to the nearest drone this close"),
             VALUE(RAM_RECHARGE, "Seconds to get one charge of RAM back (3 at most)"),
-            Entry("CLEAVER_COOLDOWN", &WEAPON_STATS[5].cooldown, "The Hunter's Saw Cleaver, a tap of the attack key"),
-            Entry("CLEAVER_REACH", &WEAPON_STATS[5].reach, ""),
-            Entry("PISTOL_COOLDOWN", &WEAPON_STATS[6].cooldown, "His pistol, the attack key held then released"),
-            Entry("PISTOL_SPEED", &WEAPON_STATS[6].speed, ""),
-            Entry("PISTOL_RADIUS", &WEAPON_STATS[6].radius, ""),
-            VALUE(PISTOL_HOLD, "Seconds to hold the attack key before letting go fires the pistol"),
-            VALUE(STAGGER_TIME, "Seconds a titan hit by his bullet stands still"),
-            VALUE(VISCERAL_REACH, "Tiles his cut reaches a staggered titan from"),
-            VALUE(VISCERAL_BONUS, "Eddies for a visceral, on top of the titan's bounty"),
-            VALUE(PARRY_REACH, "Tiles from his middle a frozen sniper sight can be parried"),
-            VALUE(PARRY_BOUNTY, "Eddies for a parried sniper"),
-            VALUE(RALLY_TIME, "Seconds after his shield breaks for a cleaver kill to win it back"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),
@@ -145,9 +133,6 @@ std::vector<Entry> &entries()
             VALUE(FISHBONES_CHARGE_TIME, "Seconds she hangs in the air charging it"),
             VALUE(FISHBONES_RECOIL_TIME, "Seconds its recoil lasts"),
             VALUE(FISHBONES_RECOIL_PUSH, "How hard the recoil throws her back, times the run speed"),
-            VALUE(MOONLIGHT_SPEED, "The Hunter: the Moonlight Blade's speed"),
-            VALUE(MOONLIGHT_RANGE, "How far it sweeps"),
-            VALUE(MOONLIGHT_HALF_HEIGHT, "Tiles razed above and below his line"),
 
             Entry("Runners: price in eddies, and eddies to charge the ultimate"),
         };

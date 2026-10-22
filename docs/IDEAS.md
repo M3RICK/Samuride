@@ -24,43 +24,11 @@ Arcane, Attack on Titan.
   - Zaun: chemical gas rising from the floor
   - Night City, The Walls: to find
 
-## The Hunter (Bloodborne), on the branch feature/hunter
+## The Hunter (Bloodborne): dropped
 
-Hidden from the game on 2.9 (his line out of `RUNNERS`, his test out): his code stays in.
-
-He makes you rush drones instead of dodging them. Played once (v2.9), not good enough yet: ugly
-animations, flat gameplay. What to improve:
-
-**Looks**
-- New sheet in (the platformer one): he flies on its glide. His mist is to
-  redo: square particles were invisible, soft puffs and two trailing ghosts looked bad (both out). It
-  has no flight of its own: a row of him floating forward, coat
-  dissolving into mist, would beat the glide. Its attack and shoot rows are drawn bigger, shrunk to fit.
-- His faces sheet, for the HUD's living face (only the portrait shows).
-- No take-off: the sheet's jump looked wrong. Its attack row cuts twice, only the second is played.
-- Unused rows that could serve: Hit/Stun (when his shield breaks), Shoot + Move.
-- A staggered titan shows nothing but a puff of silver: it should kneel or flash, so you know it's
-  open for the cut.
-
-**Feel**
-- Cleaver made heavier (2.2 tiles, its own rasp, a jolt on every swing, a red cut and blood with a
-  double hit-stop on a kill), and the visceral playable (lunges 5 tiles, the extended cut, a long
-  freeze, the screen flashing red): to judge in a run.
-- Bullets: check whether 3, loaded only by cleaver kills, is too stingy to ever use the pistol on
-  drones.
-- He must feel unlike Mikasa: the other melee runner, with spears for her ultimate.
-- The Moonlight Blade is a Fishbones without the recoil. The Old Hunter's bell (a phantom hunter
-  fighting at his side for a few seconds) would be his own.
-
-**His kit, as built**
-- **Tap F**: Saw Cleaver, very fast, very short.
-- **Hold F ~0.3 s, release**: Hunter Pistol shot, if a quicksilver bullet is left. Max 3, and only
-  melee kills refill them. A shot staggers a titan (next slash is a visceral: one-shot, bonus
-  eddies) and kills a sniper while its sight is frozen (hold during the tracking, let go on the freeze; the
-  sight turns silver as the cue). Any time the sight is on him was too easy. Berserk keeps the auto-cleaver.
-- **Rally**: when his shield breaks, kill a drone within ~2 s to get it back.
-- **Ultimate (E)**: the Moonlight Blade, a wave of blue light razing a band at his height.
-- **Flight**: chained quicksteps in the air, a trail of grey mist (the Old Hunter Bone).
+Dropped on 2026-10-23: no sprite sheet looked good enough. Everything about him is on the branch
+`feature/hunter`. What was liked: the ultimate, the Old Hunter's bell (a phantom of him flying ahead
+and cutting drones), to reuse for Dante's Doppelganger.
 
 ## Easy to change, for friends testing the balance
 
@@ -76,7 +44,7 @@ The goal: friends who never coded change the game and send real feedback. In Eng
      mechanic (Dante's style meter) still needs code.
   2. **A web page to slice sprite sheets**: drop the sheet, draw a box per animation, pick its role,
      watch it play, set fps and scale, export what `tools/slice_sheets.py` reads. Replaces the pixel
-     coordinates typed by hand, the slowest part of adding the Hunter.
+     coordinates typed by hand, the slowest part of adding a runner.
   3. **Reload `tuning.txt` without restarting** (a key in a run), and **the host sending its tuning**
      to whoever joins, so both draw the same game in versus.
   4. **A modding guide** with recipes: change a price, make the game easier, add a runner from a
