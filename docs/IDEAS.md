@@ -24,6 +24,18 @@ Arcane, Attack on Titan.
   - Zaun: chemical gas rising from the floor
   - Night City, The Walls: to find
 
+## Next runner: the Hunter (Bloodborne)
+
+After Smasher, before Dante. He makes you rush drones instead of dodging them.
+
+- **Tap F**: Saw Cleaver, very fast, very short.
+- **Hold F ~0.3 s, release**: Hunter Pistol shot, if a quicksilver bullet is left. Max 3, and only
+  melee kills refill them. A shot staggers a titan (next slash is a visceral: one-shot, bonus
+  eddies) and kills a sniper while its sight is frozen. Berserk keeps the auto-cleaver.
+- **Rally**: when his shield breaks, kill a drone within ~2 s to get it back.
+- **Ultimate (E)**: Moonlight Greatsword wave, or the Old Hunter's bell summoning a phantom hunter.
+- **Flight**: chained quicksteps in the air, a trail of grey mist (the Old Hunter Bone).
+
 ## Later
 
 - **A mount per runner**, in place of the Attack Titan power-up for everyone: Mikasa rides Eren's
