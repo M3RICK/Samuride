@@ -6,6 +6,10 @@ taken from this file. Players on different versions can't play together: update 
 ## v2.9
 
 ### New
+- **Tune the game yourself.** `assets/tuning.txt`, in the game's folder, holds every balance value
+  (speeds, cooldowns, bounties, durations, ultimates, prices), each explained. Change a number and
+  restart, no compiling. The run says CUSTOM TUNING while you play with changed values, and then
+  doesn't save solo records. Not on Android.
 - **New runner: the Hunter** (Bloodborne), 1000 eddies. He flies on chained quicksteps. In CYBERPSYCHO, tap `F` for his Saw Cleaver, a very short and very fast cut. Hold `F`,
   then let go, to fire his pistol: he has 3 quicksilver bullets, and only cleaver kills load new ones.
   - A bullet **staggers a titan**: it stops dead, and your next cut tears it open (**visceral**, +40).

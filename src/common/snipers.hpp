@@ -8,17 +8,17 @@
 #include <cstdint>
 
 // No shot before this distance, then one every SNIPER_MIN_INTERVAL to SNIPER_MAX_INTERVAL seconds
-constexpr float SNIPER_FIRST_DISTANCE = 150;
-constexpr float SNIPER_MIN_INTERVAL = 5;
-constexpr float SNIPER_MAX_INTERVAL = 10;
+inline float SNIPER_FIRST_DISTANCE = 150;
+inline float SNIPER_MIN_INTERVAL = 5;
+inline float SNIPER_MAX_INTERVAL = 10;
 
 // The sight follows its target this long, stays still this long, then the shot lasts this long
-constexpr float SNIPER_TRACK_TIME = 1.2f;
-constexpr float SNIPER_AIM_TIME = 0.6f;
-constexpr float SNIPER_FIRE_TIME = 0.25f;
+inline float SNIPER_TRACK_TIME = 1.2f;
+inline float SNIPER_AIM_TIME = 0.6f;
+inline float SNIPER_FIRE_TIME = 0.25f;
 
 // Half the height of the railgun's beam, in tiles
-constexpr float SNIPER_BEAM_HALF = 0.35f;
+inline float SNIPER_BEAM_HALF = 0.35f;
 
 enum class SniperPhase : uint8_t { Tracking, Aiming, Firing };
 

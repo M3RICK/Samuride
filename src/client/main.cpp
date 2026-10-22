@@ -8,6 +8,7 @@
 
 #include "../common/platform.hpp"
 #include "../common/socket.hpp"
+#include "../common/tuning.hpp"
 #include "../server/server.hpp"
 
 #include <iostream>
@@ -173,6 +174,8 @@ int main(int argc, char **argv)
     }
 
     moveToAssetsDirectory();
+    // Before anything uses a balance value: the sounds are cut to some of them
+    Tuning::load("assets/tuning.txt");
 
     Renderer renderer;
     if (!renderer.initialize()) {

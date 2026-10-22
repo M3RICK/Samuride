@@ -17,17 +17,17 @@ constexpr char BERSERK_TILE = 'r';
 // Collision type: a shield took a hit
 constexpr char SHIELD_BREAK = 'b';
 
-constexpr float SHIELD_GRACE = 1.0f;        // invincible after the shield breaks, to get clear
-constexpr float END_GRACE = 1.0f;           // and after the Sandevistan or the titan wears off
-constexpr float SANDEVISTAN_TIME = 3.0f;
-constexpr float SANDEVISTAN_SPEED = 1.7f;   // times the run speed
-constexpr float BERSERK_TIME = 8.0f;
-constexpr float BERSERK_ATTACK_RATE = 2.0f; // attack cooldowns run out this many times faster
-constexpr float BERSERK_RAM_RATE = 3.0f;    // and Lucy's RAM comes back this many times faster
+inline float SHIELD_GRACE = 1.0f;        // invincible after the shield breaks, to get clear
+inline float END_GRACE = 1.0f;           // and after the Sandevistan or the titan wears off
+inline float SANDEVISTAN_TIME = 3.0f;
+inline float SANDEVISTAN_SPEED = 1.7f;   // times the run speed
+inline float BERSERK_TIME = 8.0f;
+inline float BERSERK_ATTACK_RATE = 2.0f; // attack cooldowns run out this many times faster
+inline float BERSERK_RAM_RATE = 3.0f;    // and Lucy's RAM comes back this many times faster
 
 // Map chunks are 40 tiles: none in the first ~120 m, then this chance per chunk
-constexpr int POWERUP_FIRST_CHUNK = 3;
-constexpr float POWERUP_CHANCE = 0.2f;
+inline int POWERUP_FIRST_CHUNK = 3;
+inline float POWERUP_CHANCE = 0.2f;
 
 // Every power-up but the Attack Titan's orb: a new one goes here too
 inline constexpr char POWER_UPS[] = {SHIELD_TILE, SANDEVISTAN_TILE, BERSERK_TILE};

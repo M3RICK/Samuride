@@ -41,12 +41,7 @@ private:
     static constexpr size_t CHUNK_WIDTH = 40;
     static constexpr size_t SAFE_START = 14;
     static constexpr float LOOKAHEAD = 40;
-    static constexpr int CHUNKS_TO_MAX_DIFFICULTY = 30;   // ~1200 m
-
-    // Run speed in tiles per second, ramps up over time: top speed after ~2 min, ~1500 m
-    static constexpr float START_SPEED = 9.0f;
-    static constexpr float MAX_SPEED = 16.0f;
-    static constexpr float ACCELERATION = 0.06f;
+    // The run's speed and difficulty: common/difficulty.hpp
 
     struct Titan {
         TitanType type;

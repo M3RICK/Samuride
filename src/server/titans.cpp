@@ -22,7 +22,7 @@ void Server::spawnTitans(float leader_x)
     if (titan_timer > 0)
         return;
 
-    std::uniform_real_distribution<float> interval(TITAN_MIN_INTERVAL, TITAN_MAX_INTERVAL);
+    std::uniform_real_distribution<float> interval(TITAN_MIN_INTERVAL, std::max(TITAN_MIN_INTERVAL, TITAN_MAX_INTERVAL));
     std::uniform_int_distribution<int> type(0, TITAN_TYPES - 1);
 
     titan_timer = interval(rng);

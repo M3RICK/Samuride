@@ -12,6 +12,7 @@
 #include "../common/powerups.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
+#include "../common/difficulty.hpp"
 
 class Player {
 private:
@@ -55,11 +56,6 @@ private:
     // Bytes received but not yet forming a full packet, and bytes the socket couldn't take yet
     std::vector<uint8_t> recv_buffer;
     std::vector<uint8_t> send_buffer;
-
-    // Tuning knobs, in tiles and seconds. A modif si mal equilibré.
-    static constexpr float GRAVITY = 28.0f;
-    static constexpr float JET_POWER = -32.0f;
-    static constexpr float MAX_VELOCITY = 10.0f;
 
     void updateForm(float dt);
 

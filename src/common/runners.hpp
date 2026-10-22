@@ -19,7 +19,8 @@ struct Runner {
     int charge;             // eddies to fill the ultimate's gauge
 };
 
-inline constexpr Runner RUNNERS[] = {
+// Prices and charges can be changed from assets/tuning.txt (tuning.cpp)
+inline Runner RUNNERS[] = {
     {"johny",  0,   Weapon::Gun,     Ultimate::FireWave,      150},
     {"david",  100, Weapon::Gun,     Ultimate::Nuke,          150},
     {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150},

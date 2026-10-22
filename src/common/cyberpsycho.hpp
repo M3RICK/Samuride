@@ -10,6 +10,6 @@
 enum class GameMode : uint8_t { Classic, Cyberpsycho };
 
 // Eddies for a drone shot down (its tile, DRONE_TILE, is in map.hpp)
-constexpr int DRONE_BOUNTY = 5;
+inline int DRONE_BOUNTY = 5;
 
 #endif

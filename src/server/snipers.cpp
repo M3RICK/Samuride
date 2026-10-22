@@ -19,7 +19,7 @@ void Server::spawnSnipers(float leader_x)
     if (sniper_timer > 0)
         return;
 
-    std::uniform_real_distribution<float> interval(SNIPER_MIN_INTERVAL, SNIPER_MAX_INTERVAL);
+    std::uniform_real_distribution<float> interval(SNIPER_MIN_INTERVAL, std::max(SNIPER_MIN_INTERVAL, SNIPER_MAX_INTERVAL));
     auto target = std::next(players.begin(), std::uniform_int_distribution<size_t>(0, players.size() - 1)(rng));
 
     sniper_timer = interval(rng);

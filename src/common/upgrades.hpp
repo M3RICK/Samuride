@@ -30,8 +30,8 @@ inline constexpr UpgradeInfo UPGRADES[UPGRADE_COUNT] = {
 // A runner's level in each upgrade
 using UpgradeLevels = std::array<int, UPGRADE_COUNT>;
 
-constexpr float SANDEVISTAN_PER_LEVEL = 0.5f;
-constexpr float MAGNET_PER_LEVEL = 0.5f;
+inline float SANDEVISTAN_PER_LEVEL = 0.5f;
+inline float MAGNET_PER_LEVEL = 0.5f;
 
 inline float sandevistanTime(const UpgradeLevels &levels)
 {

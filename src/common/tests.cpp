@@ -7,6 +7,10 @@
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
 #include "snipers.hpp"
+#include "tuning.hpp"
+#include "difficulty.hpp"
+#include <fstream>
+#include <sstream>
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -283,6 +287,27 @@ static void testHunter()
     assert(!mikasa.isRallying());
 }
 
+// The tuning file: the shipped one is every default (regenerate it when one changes), a good line
+// sets its value, a bad one changes nothing
+static void testTuning()
+{
+    std::ifstream shipped("assets/tuning.txt");
+    std::stringstream text;
+    text << shipped.rdbuf();
+    if (text.str() != Tuning::defaults())
+        std::cerr << "assets/tuning.txt is out of date: ./Samuride_server -t > assets/tuning.txt" << std::endl;
+    assert(text.str() == Tuning::defaults());
+    assert(!Tuning::custom());
+
+    std::istringstream lines("START_SPEED 9.5   # faster\nNO_SUCH 3\nDRONE_BOUNTY 2.5\nDRONE_CHANCE 4\nTITAN_BOUNTY\n");
+    std::cerr.setstate(std::ios::failbit);
+    assert(Tuning::apply(lines, "test") == 1);
+    std::cerr.clear();
+    assert(START_SPEED == 9.5f && DRONE_BOUNTY == 5 && DRONE_CHANCE == 0.3f && Tuning::custom());
+    START_SPEED = 9;
+    assert(!Tuning::custom());
+}
+
 // Upgrades: bought level by level up to their max, and felt by the player once sent to the server
 static void testUpgrades()
 {
@@ -336,6 +361,7 @@ int main()
     testHack();
     testUltimate();
     testHunter();
+    testTuning();
     testWallet();
     testUpgrades();
     std::cout << "All tests passed" << std::endl;

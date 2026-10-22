@@ -24,15 +24,15 @@ inline TitanStats titanStats(TitanType type)
 }
 
 // No titan before this distance, then one every TITAN_MIN_INTERVAL to TITAN_MAX_INTERVAL seconds
-constexpr float TITAN_FIRST_DISTANCE = 300;
-constexpr float TITAN_MIN_INTERVAL = 7;
-constexpr float TITAN_MAX_INTERVAL = 14;
+inline float TITAN_FIRST_DISTANCE = 300;
+inline float TITAN_MIN_INTERVAL = 7;
+inline float TITAN_MAX_INTERVAL = 14;
 
 // They appear this far ahead of the leader: about a second and a half of warning
-constexpr float TITAN_SPAWN_AHEAD = 40;
+inline float TITAN_SPAWN_AHEAD = 40;
 
 // CYBERPSYCHO: whoever takes a titan down (Mikasa's blade, an ultimate) gets a fat bounty
-constexpr int TITAN_BOUNTY = 20;
+inline int TITAN_BOUNTY = 20;
 
 // MSG_COLLISION types: a titan ran a player down, or a player cut a titan down
 constexpr char TITAN_HIT = 't';

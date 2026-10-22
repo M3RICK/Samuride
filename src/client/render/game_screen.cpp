@@ -6,6 +6,7 @@
 #include "../audio.hpp"
 #include "../settings.hpp"
 #include "../wallet.hpp"
+#include "../../common/tuning.hpp"
 #include <algorithm>
 #include <format>
 
@@ -90,13 +91,14 @@ void GameScreen::resetRun()
     sandevistan_time = sandevistanTime(Wallet::load().upgrades);
 }
 
-// Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO
+// Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO. Not
+// with a custom tuning: an easier game would beat the real records.
 void GameScreen::recordSoloBests(GameState &state)
 {
     auto players = state.getPlayers();
     auto mine = players.find(state.getMyPlayerNumber());
 
-    if (players.size() != 1 || mine == players.end())
+    if (players.size() != 1 || mine == players.end() || Tuning::custom())
         return;
 
     int distance = static_cast<int>(mine->second.x);

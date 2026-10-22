@@ -2,6 +2,7 @@
 
 #include "generator.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/difficulty.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -95,8 +96,8 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
     return w;
 }
 
-// Gaps after obstacles don't shrink with difficulty: at top speed 6 columns is about the
-// time needed to switch lanes. Difficulty makes obstacles longer and more frequent instead.
+// Gaps after obstacles don't shrink with difficulty (ZAPPER_GAP_MIN, difficulty.hpp). Difficulty makes
+// obstacles longer and more frequent instead.
 // ponytail: fairness is statistical, add a reachability check if runs feel unfair
 std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t height, float difficulty,
                                        bool drones)
@@ -108,10 +109,10 @@ std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t h
     while (x < static_cast<int>(width)) {
         float roll = chance(rng);
 
-        if (drones && roll < 0.3f)
+        if (drones && roll < DRONE_CHANCE)
             x += placeDrones(rows, rng, x, difficulty) + randInt(rng, 5, 9);
-        else if (roll < 0.45f + 0.3f * difficulty)
-            x += placeZapper(rows, rng, x, difficulty) + randInt(rng, 6, 9);
+        else if (roll < DRONE_CHANCE + ZAPPER_CHANCE + ZAPPER_CHANCE_GROWTH * difficulty)
+            x += placeZapper(rows, rng, x, difficulty) + randInt(rng, ZAPPER_GAP_MIN, std::max(ZAPPER_GAP_MIN, ZAPPER_GAP_MAX));
         else
             x += placeCoins(rows, rng, x) + randInt(rng, 3, 6);
     }
