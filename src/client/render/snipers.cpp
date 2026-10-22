@@ -5,7 +5,6 @@
 #include "canvas.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
-#include <cmath>
 
 using namespace Palette;
 
@@ -37,7 +36,7 @@ void Snipers::draw(const std::vector<SniperState> &snipers, float parry_line)
         }
 
         bool aiming = sniper.phase == SniperPhase::Aiming;
-        bool parry = aiming && parry_line >= 0 && std::abs(sniper.y - parry_line) <= PARRY_REACH;
+        bool parry = aiming && parry_line >= 0 && parryReaches(sniper.y, parry_line);
         sf::Color color = parry ? QUICKSILVER : NEON_RED;
         if (aiming && !parry && !canvas.blink())
             continue;

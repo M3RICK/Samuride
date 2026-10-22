@@ -2,7 +2,6 @@
 
 #include "server.hpp"
 #include <algorithm>
-#include <cmath>
 
 void Server::resetSnipers()
 {
@@ -56,7 +55,7 @@ void Server::parrySnipers(Player &player)
     float line = player.getY() + Player::HEIGHT / 2;
 
     std::erase_if(snipers, [&](const Sniper &sniper) {
-        if (sniper.phase() != SniperPhase::Aiming || std::abs(sniper.y - line) > PARRY_REACH)
+        if (sniper.phase() != SniperPhase::Aiming || !parryReaches(sniper.y, line))
             return false;
         player.addScore(PARRY_BOUNTY);
         notifyCollision(SNIPER_PARRY, player, player.getX(), sniper.y);

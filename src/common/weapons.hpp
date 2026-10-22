@@ -60,6 +60,7 @@ constexpr int VISCERAL_BONUS = 20;  // on top of the titan's bounty
 // The key can be held while the sight tracks him, to let go the moment it freezes.
 constexpr float PARRY_REACH = 1.5f;
 constexpr int PARRY_BOUNTY = 10;
+inline bool parryReaches(float sight_y, float line) { return std::abs(sight_y - line) <= PARRY_REACH; }
 // Rally: once his shield breaks, a cleaver kill within RALLY_TIME brings it back
 constexpr float RALLY_TIME = 2.0f;
 // Collision types

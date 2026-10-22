@@ -242,7 +242,7 @@ private:
 
     bool projectileHit(const Projectile &shot, float from_x);
 
-    float spearHit(const Projectile &shot, float from_x) const;
+    float spearHit(const Projectile &shot, float from_x);
 
     bool bulletHit(const Projectile &shot, float from_x);
 
@@ -276,9 +276,9 @@ private:
 
     bool hitByTitan(const Player &player) const;
 
-    Titan *titanInPath(const Projectile &shot, float from_x);
+    Titan *titanInPath(float from_x, float to_x, float y);
 
-    void slashTitans(int client_fd, const Player &player, float reach);
+    int slashTitans(Player &player, float reach, bool staggered_only);
 
     void sendTitans();
 

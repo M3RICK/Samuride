@@ -84,7 +84,7 @@ void Server::handleAttack(int client_fd)
         case Weapon::Blade:
             announceShot(player, weapon);
             strike(client_fd, player, stats.reach);
-            slashTitans(client_fd, player, stats.reach);
+            slashTitans(player, stats.reach, false);
             break;
         case Weapon::Hack:
             announceShot(player, weapon);   // hack() already did the rest
@@ -136,17 +136,8 @@ int Server::strike(int client_fd, const Player &player, float reach)
 // kill loads a bullet, and wins back a shield that just broke (the rally).
 void Server::cleave(int client_fd, Player &player, float reach)
 {
-    int kills = strike(client_fd, player, reach);
+    int kills = strike(client_fd, player, reach) + slashTitans(player, reach, true);
 
-    std::erase_if(titans, [&](const Titan &titan) {
-        bool in_reach = titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
-        if (titan.stagger <= 0 || !in_reach)
-            return false;
-        player.addScore(TITAN_BOUNTY + VISCERAL_BONUS);
-        notifyCollision(VISCERAL, player, titan.x, game_map.getHeight() - 1);
-        kills++;
-        return true;
-    });
     if (kills == 0)
         return;
     player.loadQuicksilver(kills);
@@ -242,7 +233,7 @@ bool Server::bulletHit(const Projectile &shot, float from_x)
     if (projectileHit(shot, from_x))
         return true;
 
-    Titan *titan = titanInPath(shot, from_x);
+    Titan *titan = titanInPath(from_x, shot.x, shot.y);
     auto owner = players.find(shot.owner_fd);
     if (!titan)
         return false;
@@ -254,20 +245,15 @@ bool Server::bulletHit(const Projectile &shot, float from_x)
 
 // Where a spear sticks this tick: the first live drone near its line, or a titan tall enough
 // to stand in its way. -1 when it flies on.
-float Server::spearHit(const Projectile &shot, float from_x) const
+float Server::spearHit(const Projectile &shot, float from_x)
 {
-    float floor = game_map.getHeight();
-
     for (int x = static_cast<int>(from_x); x <= static_cast<int>(shot.x); x++) {
         for (int y = std::max(0, static_cast<int>(shot.y - shot.radius)); y <= static_cast<int>(shot.y + shot.radius); y++) {
             if (isLiveDrone(x, y))
                 return x + 0.5f;
         }
-        for (const Titan &titan : titans) {
-            TitanStats stats = titanStats(titan.type);
-            if (x + 1 > titan.x && x < titan.x + stats.width && shot.y > floor - stats.height)
-                return x + 0.5f;
-        }
+        if (titanInPath(x, x, shot.y))
+            return x + 0.5f;
     }
     return -1;
 }

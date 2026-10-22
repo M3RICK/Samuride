@@ -26,8 +26,28 @@ Arcane, Attack on Titan.
 
 ## The Hunter (Bloodborne), built in v2.9
 
-He makes you rush drones instead of dodging them. Still to do: his faces sheet for the HUD, a
-visceral animation (the sheet has one), and a phantom hunter ultimate if the Moonlight Blade bores.
+He makes you rush drones instead of dodging them. Played once (v2.9), not good enough yet: ugly
+animations, flat gameplay. What to improve:
+
+**Looks**
+- A new sheet, from Alex or from ChatGPT one row at a time: the Hunter is small and dark, take-off,
+  rise and flight barely differ, the mist melts into his body, and the dive (DESCENTE) was so ugly he
+  falls in his floating pose (IDLE) for now.
+- His faces sheet, for the HUD's living face (only the portrait shows).
+- The visceral: the sheet has its row (VISCÉRAL), the game still plays the plain cut.
+- A staggered titan shows nothing but a puff of silver: it should kneel or flash, so you know it's
+  open for the cut.
+
+**Feel**
+- The cleaver is too discreet: 1.8 tiles, a small slash. A bigger silver arc, a heavier hit-stop,
+  maybe more reach.
+- The visceral is too tight: you close on a stopped titan at run speed, about 0.2 s to cut. Let the
+  cut reach further on a staggered titan, or have the bullet knock it back.
+- Bullets: check whether 3, loaded only by cleaver kills, is too stingy to ever use the pistol on
+  drones.
+- He must feel unlike Mikasa: the other melee runner, with spears for her ultimate.
+- The Moonlight Blade is a Fishbones without the recoil. The Old Hunter's bell (a phantom hunter
+  fighting at his side for a few seconds) would be his own.
 
 - **Tap F**: Saw Cleaver, very fast, very short.
 - **Hold F ~0.3 s, release**: Hunter Pistol shot, if a quicksilver bullet is left. Max 3, and only
