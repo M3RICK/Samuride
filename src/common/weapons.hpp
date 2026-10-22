@@ -56,7 +56,7 @@ constexpr int STYLE_RANKS = 7;
 inline const char *STYLE_NAMES[STYLE_RANKS] = {"D", "C", "B", "A", "S", "SS", "SSS"};
 inline float STYLE_BOUNTY[STYLE_RANKS] = {1, 1, 1.5f, 2, 2, 2.5f, 3};    // times a drone's bounty
 inline int STYLE_KILLS = 2;
-inline float STYLE_DROP_TIME = 3;
+inline float STYLE_DROP_TIME = 6;
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

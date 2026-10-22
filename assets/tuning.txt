@@ -172,7 +172,7 @@ DOPPELGANGER_TIME 8
 # Kills in a row to go up a rank
 STYLE_KILLS 2
 # Seconds without a kill to drop a rank (a hit drops him to D)
-STYLE_DROP_TIME 3
+STYLE_DROP_TIME 6
 # A drone's bounty times this, at each rank
 STYLE_BOUNTY_D 1
 STYLE_BOUNTY_C 1
