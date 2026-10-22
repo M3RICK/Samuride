@@ -59,6 +59,7 @@ private:
     void drawFireWaves();
     void drawNukes();
     void drawBreaches();
+    void drawDoubles();
     void drawRockets();
 
 public:

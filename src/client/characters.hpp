@@ -32,6 +32,7 @@ struct Character {
     sf::Color exhaust{252, 238, 10};
 
     Animation run, takeoff, rise, hover, fall, death, attack;
+    Animation shoot;            // Dante's guns: his attack in the air, his sword being on the ground
     Animation smoke, emerge;    // Eren's transformation only
 
     bool load(const std::string &dir);

@@ -18,6 +18,8 @@ enum class Weapon : uint8_t {
     Blade,      // Mikasa: cuts what is right in front, titans included
     Hack,       // Lucy: switches off the first zapper or drone in her way
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
+    Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
+                // like Gun); its shots go out as those two, it has no stats of its own
 };
 
 struct WeaponStats {
@@ -47,6 +49,14 @@ inline int HACK_LANE = 1;
 inline float HACK_TIME = 2.0f;
 constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
 inline float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
+
+// Dante's style meter: kills in a row raise his rank, from D to SSS, and each rank pays more per drone.
+// STYLE_KILLS kills go up a rank; STYLE_DROP_TIME seconds without one drop a rank; a hit drops him to D.
+constexpr int STYLE_RANKS = 7;
+inline const char *STYLE_NAMES[STYLE_RANKS] = {"D", "C", "B", "A", "S", "SS", "SSS"};
+inline float STYLE_BOUNTY[STYLE_RANKS] = {1, 1, 1.5f, 2, 2, 2.5f, 3};    // times a drone's bounty
+inline int STYLE_KILLS = 2;
+inline float STYLE_DROP_TIME = 3;
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

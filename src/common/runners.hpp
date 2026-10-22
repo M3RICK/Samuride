@@ -26,6 +26,7 @@ inline Runner RUNNERS[] = {
     {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150},
     {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears, 100},
     {"lucy",   750, Weapon::Hack,    Ultimate::Breach,        150},
+    {"dante",  1000, Weapon::Rebellion, Ultimate::Doppelganger, 150},
 };
 
 constexpr int RUNNER_COUNT = static_cast<int>(std::size(RUNNERS));

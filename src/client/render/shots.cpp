@@ -24,10 +24,16 @@ void Shots::handle(GameState &state)
         if (shot.weapon != Weapon::Minigun || attack.getElapsedTime().asSeconds() > 0.3f)
             attack.restart();
 
+        // Dante's double repeats it from the opposite height, in red
+        bool doubled = run.doubled(shot.player);
+        sf::Vector2f double_muzzle(muzzle.x, run.doubleY(shot.player) + 1.0f);
+
         switch (shot.weapon) {
             case Weapon::Blade:
                 audio.play(Audio::Sfx::Slash);
                 particles.emit(muzzle + sf::Vector2f(1, 0), 10, sf::Color::White, 6, 0.25f, 0);
+                if (doubled)
+                    particles.emit(double_muzzle + sf::Vector2f(1, 0), 10, NEON_RED, 6, 0.25f, 0);
                 break;
             case Weapon::Hack:
                 audio.play(Audio::Sfx::Hack);
@@ -52,6 +58,10 @@ void Shots::handle(GameState &state)
                 audio.play(run.characterOf(shot.player) == 0 ? Audio::Sfx::JohnnyGun : Audio::Sfx::Gun);
                 particles.emit(muzzle, 5, NEON_YELLOW, 3, 0.15f, 0);
                 trails.push_back({shot.player, shot.weapon, muzzle.y, sf::Clock()});
+                if (doubled) {
+                    particles.emit(double_muzzle, 5, NEON_RED, 3, 0.15f, 0);
+                    trails.push_back({shot.player, shot.weapon, double_muzzle.y, sf::Clock()});
+                }
                 break;
         }
     }

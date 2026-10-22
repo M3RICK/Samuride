@@ -50,6 +50,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
                     26, NEON_RED, {24, y}, {0, 0});
     if (players.count(me))
         drawRunnerPanel(players.at(me), me, cyberpsycho && ultimateOf(run.characterOf(me)) != Ultimate::None);
+    if (players.count(me) && cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Rebellion)
+        drawStyle(players.at(me));
     if (Touch::ENABLED && cyberpsycho && players.count(me))
         drawTouchButtons(players.at(me), me);
 }
@@ -117,6 +119,29 @@ void GameScreen::drawRunnerPanel(const PlayerState &player, int me, bool ultimat
         canvas.text(label, 28, NEON_CYAN, label_pos);
     else
         canvas.glitchText(label, 30, look.color, label_pos);
+}
+
+// Dante's style rank, right of his face like DMC's: a big letter in the colour of the rank, popping
+// with a power chord each time it goes up
+void GameScreen::drawStyle(const PlayerState &player)
+{
+    static const sf::Color COLORS[STYLE_RANKS] = {DIM_WHITE, NEON_CYAN, NEON_CYAN, NEON_YELLOW, NEON_ORANGE,
+                                                  NEON_ORANGE, NEON_RED};
+    int rank = std::clamp(player.style, 0, STYLE_RANKS - 1);
+
+    if (rank > style_shown) {
+        audio.play(Audio::Sfx::StyleUp);
+        style_clock.restart();
+    }
+    style_shown = rank;
+
+    float pop = std::max(0.0f, 1 - style_clock.getElapsedTime().asSeconds() * 4);
+    sf::Vector2f center(Screen::WIDTH / 2 + 190, Screen::HEIGHT - 80);
+    unsigned size = static_cast<unsigned>(64 + 40 * pop + 6 * rank);
+    if (rank >= 4)
+        canvas.glitchText(STYLE_NAMES[rank], size, COLORS[rank], center);
+    else
+        canvas.text(STYLE_NAMES[rank], size, COLORS[rank], center);
 }
 
 // The gauge around the face, clockwise from the top, the `lit` share of it in colour.

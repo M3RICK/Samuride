@@ -74,6 +74,7 @@ bool Player::absorbHit()
         return false;
     shield = false;
     grace_timer = SHIELD_GRACE;
+    runner_weapon->hurt();
     return true;
 }
 

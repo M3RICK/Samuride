@@ -12,6 +12,7 @@
 #include <vector>
 #include "../common/weapons.hpp"
 #include "../common/ultimates.hpp"
+#include "../common/cyberpsycho.hpp"
 
 class Server;
 class Player;
@@ -29,6 +30,12 @@ public:
     virtual void act(Server &, Player &) {}
     // Shown over the runner's head (Lucy's RAM), sent in 2 bits
     virtual int charges() const { return 0; }
+    // A drone this runner took down, with their weapon or their ultimate: returns its bounty
+    virtual int droneDown() { return DRONE_BOUNTY; }
+    // Their shield broke
+    virtual void hurt() {}
+    // Dante's style rank, sent in 3 bits
+    virtual int style() const { return 0; }
 };
 
 class RunnerUltimate {
@@ -46,6 +53,8 @@ public:
     // The runner's pace, times the run speed, and whether they hang still in the air: Fishbones
     virtual float pace() const { return 1; }
     virtual bool holdsStill() const { return false; }
+    // True while a double repeats the runner's attacks: Dante's Doppelganger
+    virtual bool doubles() const { return false; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -89,6 +98,20 @@ public:
     void tick(const Player &player, float dt) override;
     int charges() const override { return ram; }
     void spendRam() { ram--; }
+};
+
+// Dante: his sword on the ground, Ebony & Ivory in the air, and his style meter (STYLE_* in weapons.hpp)
+class Rebellion : public RunnerWeapon {
+    int rank = 0;
+    int kills = 0;              // in a row at this rank
+    float drop_timer = 0;       // seconds before the rank drops
+
+public:
+    float attack(Server &server, Player &player) override;
+    void tick(const Player &player, float dt) override;
+    int droneDown() override;
+    void hurt() override { rank = kills = 0; }
+    int style() const override { return rank; }
 };
 
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
@@ -144,6 +167,16 @@ public:
     void give() { spears = THUNDER_SPEARS; }
     // One spear, if she has one and its cooldown is over
     bool throwSpear();
+};
+
+// His double at the opposite height, repeating his attacks (Rebellion::attack)
+class Doppelganger : public RunnerUltimate {
+    float timer = 0;        // seconds it still fights
+
+public:
+    void fire(Server &, Player &, float, float) override { timer = DOPPELGANGER_TIME; }
+    void tick(float dt) override { timer = std::max(0.0f, timer - dt); }
+    bool doubles() const override { return timer > 0; }
 };
 
 // She stops dead and hangs in the air while it charges, then its recoil throws her back

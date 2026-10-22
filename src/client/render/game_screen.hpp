@@ -26,6 +26,7 @@ private:
         CollisionEffect effect;
         sf::Clock clock;
         bool mine;      // caused by this player
+        int bounty = 0; // what it paid you, for the "+N"
     };
 
     // Screen-space streak sold as wind: more and faster as the run speeds up
@@ -95,6 +96,8 @@ private:
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
+    int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
+    sf::Clock style_clock;      // since it last went up
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
     enum class Mood { Idle, Pickup, Kill, Frenzy, Surprised, Shout };
@@ -145,6 +148,7 @@ private:
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
+    void drawStyle(const PlayerState &player);
     void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
     void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
     sf::Vector2i faceCell(const PlayerState &player, int me);

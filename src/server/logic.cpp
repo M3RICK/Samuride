@@ -266,8 +266,8 @@ void Server::sendGameState()
         // Ultimate gauge, in percent, and Mikasa's thunder spears left
         state_data.push_back(player.ultimatePercent());
         state_data.push_back(player.ultimate().charges());
-        // bit 0: a second of grace (shield broken, Sandevistan or titan over)
-        state_data.push_back(player.isGracing() ? 1 : 0);
+        // bit 0: a second of grace (shield broken, Sandevistan or titan over), bits 1-3: Dante's style rank
+        state_data.push_back((player.isGracing() ? 1 : 0) | player.weapon().style() << 1);
     }
 
     broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));

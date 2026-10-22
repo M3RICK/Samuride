@@ -83,6 +83,7 @@ void GameScreen::resetRun()
     ultimate_key = keyName(Settings::load().ultimate_key);
     ultimate_was_ready = false;
     spears_shown = 0;
+    style_shown = 0;
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;

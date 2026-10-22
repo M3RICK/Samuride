@@ -9,6 +9,7 @@
 #include "snipers.hpp"
 #include "tuning.hpp"
 #include "difficulty.hpp"
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -251,6 +252,42 @@ static void testUltimate()
     assert(top == 2 && bottom == 7);
 }
 
+// Dante: STYLE_KILLS kills go up a rank and the next drones pay more; a rank drops after
+// STYLE_DROP_TIME without a kill, a hit drops him to D. His Doppelganger lasts DOPPELGANGER_TIME.
+static void testDante()
+{
+    assert(weaponOf(5) == Weapon::Rebellion && ultimateOf(5) == Ultimate::Doppelganger);
+
+    Player dante(-1);
+    dante.setCharacter(5);
+    dante.reset(0, 0);
+    RunnerWeapon &rebellion = dante.weapon();
+    for (int i = 0; i < STYLE_KILLS; i++)
+        assert(rebellion.droneDown() == DRONE_BOUNTY);
+    assert(rebellion.style() == 1);
+    while (rebellion.style() < STYLE_RANKS - 1)
+        rebellion.droneDown();
+    assert(rebellion.droneDown() == static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[STYLE_RANKS - 1])));
+    assert(rebellion.style() == STYLE_RANKS - 1);
+
+    dante.update(STYLE_DROP_TIME - 0.1f, 10, 8);
+    assert(rebellion.style() == STYLE_RANKS - 1);
+    dante.update(0.2f, 10, 8);
+    assert(rebellion.style() == STYLE_RANKS - 2);
+    dante.powerUp(SHIELD_TILE);
+    assert(dante.absorbHit() && rebellion.style() == 0);
+
+    // Nobody else has a style rank
+    Player johnny(-1);
+    johnny.reset(0, 0);
+    assert(johnny.weapon().droneDown() == DRONE_BOUNTY && johnny.weapon().style() == 0);
+
+    assert(!dante.ultimate().doubles());
+    dante.ultimate().tick(1);
+    assert(!dante.ultimate().doubles());
+    assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
+}
+
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
 // sets its value, a bad one changes nothing
 static void testTuning()
@@ -324,6 +361,7 @@ int main()
     testPowerUps();
     testHack();
     testUltimate();
+    testDante();
     testTuning();
     testWallet();
     testUpgrades();

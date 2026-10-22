@@ -58,20 +58,24 @@ void Server::announceShot(const Player &player, Weapon weapon)
 // Fired from the hip, flying ahead of the shooter
 void Server::fireProjectile(const Player &player, Weapon weapon)
 {
+    announceShot(player, weapon);
+    fireProjectile(player, weapon, player.getY());
+}
+
+void Server::fireProjectile(const Player &player, Weapon weapon, float y)
+{
     WeaponStats stats = statsOf(weapon);
     float x = player.getX() + 0.9f;
 
-    announceShot(player, weapon);
-    projectiles.push_back({player.getClientFd(), x, player.getY() + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius,
-                           weapon});
+    projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
 }
 
-int Server::strike(const Player &player, float reach)
+int Server::strike(const Player &player, float reach, float y)
 {
     int kills = 0;
 
-    int top = static_cast<int>(player.getY()) - 1;
-    int bottom = static_cast<int>(player.getY() + Player::HEIGHT);
+    int top = static_cast<int>(y) - 1;
+    int bottom = static_cast<int>(y + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
     int end = static_cast<int>(player.getX() + 0.5f + reach);
 
@@ -211,7 +215,7 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
-    owner->second.addScore(DRONE_BOUNTY);
+    owner->second.addScore(owner->second.weapon().droneDown());
     notifyCollision(DRONE_TILE, owner->second, x, y);
     DEBUG_LOG("Player " + std::to_string(owner->second.getPlayerNumber()) + " destroyed a drone");
 }

@@ -30,6 +30,7 @@ struct PlayerState {
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
+    int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
 };
 
 // Someone attacked in CYBERPSYCHO

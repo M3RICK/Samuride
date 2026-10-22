@@ -133,9 +133,17 @@ std::vector<Entry> &entries()
             VALUE(FISHBONES_CHARGE_TIME, "Seconds she hangs in the air charging it"),
             VALUE(FISHBONES_RECOIL_TIME, "Seconds its recoil lasts"),
             VALUE(FISHBONES_RECOIL_PUSH, "How hard the recoil throws her back, times the run speed"),
+            VALUE(DOPPELGANGER_TIME, "Dante: seconds his Doppelganger repeats his attacks"),
 
-            Entry("Runners: price in eddies, and eddies to charge the ultimate"),
+            Entry("Dante's style meter: ranks D, C, B, A, S, SS, SSS"),
+            VALUE(STYLE_KILLS, "Kills in a row to go up a rank"),
+            VALUE(STYLE_DROP_TIME, "Seconds without a kill to drop a rank (a hit drops him to D)"),
+
         };
+        for (int rank = 0; rank < STYLE_RANKS; rank++)
+            all.emplace_back(std::string("STYLE_BOUNTY_") + STYLE_NAMES[rank], &STYLE_BOUNTY[rank],
+                             rank == 0 ? "A drone's bounty times this, at each rank" : "");
+        all.emplace_back("Runners: price in eddies, and eddies to charge the ultimate");
         for (Runner &runner : RUNNERS) {
             std::string name = runner.dir;
             std::ranges::transform(name, name.begin(), [](unsigned char c) { return std::toupper(c); });

@@ -3,6 +3,7 @@
 
 #include "arsenal.hpp"
 #include "server.hpp"
+#include <cmath>
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id)
 {
@@ -13,6 +14,8 @@ std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id)
             return std::make_unique<Blade>();
         case Weapon::Hack:
             return std::make_unique<Hack>();
+        case Weapon::Rebellion:
+            return std::make_unique<Rebellion>();
         default:
             return std::make_unique<Gun>();
     }
@@ -29,6 +32,8 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
             return std::make_unique<ThunderSpears>();
         case Ultimate::Fishbones:
             return std::make_unique<Fishbones>();
+        case Ultimate::Doppelganger:
+            return std::make_unique<Doppelganger>();
         default:
             return std::make_unique<FireWave>();
     }
@@ -131,6 +136,53 @@ void Hack::tick(const Player &player, float dt)
         ram++;
         ram_timer = RAM_RECHARGE;
     }
+}
+
+// The sword cuts like Mikasa's blade, the guns shoot like Johnny's: the clients draw them as those.
+// His Doppelganger repeats it from the opposite height (drones only: titans stay on the floor).
+float Rebellion::attack(Server &server, Player &player)
+{
+    float floor = server.map().getHeight();
+    bool grounded = player.getY() >= floor - Player::HEIGHT - 0.01f;
+    bool doubled = player.ultimate().doubles();
+    float double_y = mirrored(player.getY(), Player::HEIGHT, floor);
+
+    if (!grounded) {
+        server.fireProjectile(player, Weapon::Gun);
+        if (doubled)
+            server.fireProjectile(player, Weapon::Gun, double_y);
+        return statsOf(Weapon::Gun).cooldown;
+    }
+    WeaponStats sword = statsOf(Weapon::Blade);
+    server.announceShot(player, Weapon::Blade);
+    server.strike(player, sword.reach);
+    server.slashTitans(player, sword.reach);
+    if (doubled)
+        server.strike(player, sword.reach, double_y);
+    return sword.cooldown;
+}
+
+// Paid at the rank he had; STYLE_KILLS of them raise it
+int Rebellion::droneDown()
+{
+    int bounty = static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[rank]));
+
+    if (++kills >= STYLE_KILLS && rank < STYLE_RANKS - 1) {
+        rank++;
+        kills = 0;
+    }
+    drop_timer = STYLE_DROP_TIME;
+    return bounty;
+}
+
+// A rank down every STYLE_DROP_TIME without a kill
+void Rebellion::tick(const Player &, float dt)
+{
+    if (rank == 0 || (drop_timer -= dt) > 0)
+        return;
+    rank--;
+    kills = 0;
+    drop_timer = STYLE_DROP_TIME;
 }
 
 //=============================================================================

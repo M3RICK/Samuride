@@ -5,6 +5,7 @@
 #include "sprites.hpp"
 #include "../audio.hpp"
 #include <algorithm>
+#include <cmath>
 #include <format>
 
 using namespace Palette;
@@ -52,7 +53,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
                 return;
             }
     }
-    effects.push_back({effect, sf::Clock(), mine});
+    // Dante's drones pay at his style rank
+    int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
+    effects.push_back({effect, sf::Clock(), mine, bounty});
 }
 
 static sf::Vector2f centerOf(const CollisionEffect &effect)
@@ -260,7 +263,7 @@ void GameScreen::drawEffects()
             sf::Vector2f center = run.toScreen(tile + sf::Vector2f(0.5f, titan ? -3 : 0.5f));
             canvas.halo(center, run.view.tile_size * (0.3f + t) * (titan ? 3 : 1), withAlpha(NEON_ORANGE, alpha / 2));
             if (active.mine)
-                canvas.text(std::format("+{}", titan ? TITAN_BOUNTY : DRONE_BOUNTY), titan ? 48 : 34,
+                canvas.text(std::format("+{}", active.bounty), titan ? 48 : 34,
                             withAlpha(NEON_YELLOW, alpha), center - sf::Vector2f(0, t * run.view.tile_size));
         } else if (active.effect.type == SPEAR_BLAST) {
             // Lightning from floor to ceiling, a column as wide as the blast

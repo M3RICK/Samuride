@@ -61,6 +61,12 @@ void Ultimates::start(const UltimateEvent &ultimate)
         audio.play(Audio::Sfx::Thunder);
         run.flashScreen(NEON_CYAN, 0.25f);
         particles.emit(body, 40, NEON_CYAN, 7, 0.6f, 0);
+    } else if (ultimate.ultimate == Ultimate::Doppelganger) {
+        audio.play(Audio::Sfx::DanteUlt);
+        run.flashScreen(NEON_RED, 0.3f);
+        run.doubles[ultimate.player].restart();
+        sf::Vector2f double_body(body.x, run.doubleY(ultimate.player) + 1);
+        particles.emit(double_body, 40, NEON_RED, 6, 0.6f, 0);
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -271,6 +277,43 @@ void Ultimates::drawRockets()
     });
 }
 
+// Dante's double: him in see-through red over a red glow, at the opposite height, playing his animation
+// (his attacks are the double's too)
+void Ultimates::drawDoubles()
+{
+    static constexpr float FADE_TIME = 0.4f;
+    float tile_size = run.view.tile_size;
+
+    for (const auto &[player, since] : run.doubles) {
+        const Character &character = sprites.character(run.characterOf(player));
+        float t = since.getElapsedTime().asSeconds();
+        auto position = run.display_positions.find(player);
+        if (t > DOPPELGANGER_TIME || position == run.display_positions.end() || character.sheet.getSize().x == 0)
+            continue;
+
+        float fade = std::clamp(std::min(t, DOPPELGANGER_TIME - t) / FADE_TIME, 0.0f, 1.0f);
+        float y = run.doubleY(player);
+        bool on_ground = y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
+        auto attack = run.attack_clocks.find(player);
+        float since_attack = attack != run.attack_clocks.end() ? attack->second.getElapsedTime().asSeconds() : 1e9f;
+        const Animation &strike = !on_ground && character.shoot.frames > 0 ? character.shoot : character.attack;
+        bool striking = since_attack < strike.duration();
+        const Animation &anim = striking ? strike : on_ground ? character.run : character.hover;
+        sf::Vector2f feet = run.toScreen({position->second.x + 0.5f, y + Run::PLAYER_HEIGHT});
+
+        canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * 1.2f, withAlpha(NEON_RED, static_cast<uint8_t>(70 * fade)));
+        float scale = tile_size * Run::PLAYER_HEIGHT * 1.05f / character.body;
+        sf::Sprite ghost(character.sheet);
+        ghost.setTextureRect(character.frameRect(anim, anim.frameAt(striking ? since_attack : canvas.time())));
+        ghost.setOrigin({character.frame_size.x / 2.f, character.feet});
+        ghost.setScale({scale, scale});
+        ghost.setPosition(feet);
+        ghost.setColor(sf::Color(255, 90, 90, static_cast<uint8_t>(170 * fade)));
+        canvas.draw(ghost);
+    }
+    std::erase_if(run.doubles, [](const auto &entry) { return entry.second.getElapsedTime().asSeconds() > DOPPELGANGER_TIME; });
+}
+
 // The whole screen glitches purple for a moment
 void Ultimates::drawBreaches()
 {
@@ -299,4 +342,5 @@ void Ultimates::draw()
     drawNukes();
     drawBreaches();
     drawRockets();
+    drawDoubles();
 }

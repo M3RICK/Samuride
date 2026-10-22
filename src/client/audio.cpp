@@ -164,6 +164,7 @@ void Audio::loadLines()
         {Sfx::JohnnyUlt, {"johny_ult"}},
         {Sfx::JinxUlt, {"jinx_ult_byebye", "jinx_ult_catch", "jinx_ult_huh", "jinx_ult_seeya",
                         "jinx_ult_watchthis", "jinx_ult_wo"}},
+        {Sfx::DanteUlt, {"dante_ult_jackpot"}},
     };
 
     for (const auto &[sfx, names] : files)
@@ -194,6 +195,9 @@ void Audio::synthesize()
     buffers[Sfx::UltimateReady] = toBuffer(concat(concat(tone(Wave::Square, 660, 660, 0.08f, 0.18f),
                                                          tone(Wave::Square, 880, 880, 0.08f, 0.18f)),
                                                   tone(Wave::Square, 1320, 1320, 0.2f, 0.18f)));
+    // Dante's style rank going up: a short distorted power chord, like DMC's rank stingers
+    buffers[Sfx::StyleUp] = toBuffer(concat(mix(tone(Wave::Saw, 165, 165, 0.07f, 0.16f), tone(Wave::Saw, 247, 247, 0.07f, 0.12f)),
+                                            mix(tone(Wave::Saw, 220, 220, 0.18f, 0.16f), tone(Wave::Saw, 330, 330, 0.18f, 0.12f))));
     // Pow-Pow: short and sharp, it fires 8 times a second
     buffers[Sfx::Minigun] = toBuffer(tone(Wave::Square, 900, 450, 0.04f, 0.1f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));

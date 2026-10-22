@@ -225,9 +225,13 @@ public:
     void announceShot(const Player &player, Weapon weapon);
 
     void fireProjectile(const Player &player, Weapon weapon);
+    // ... from a body whose top is at y, with no announce: the clients draw it themselves (Dante's double)
+    void fireProjectile(const Player &player, Weapon weapon, float y);
 
     // Every live drone within reach in front of the player goes down. Returns how many.
-    int strike(const Player &player, float reach);
+    int strike(const Player &player, float reach) { return strike(player, reach, player.getY()); }
+    // ... in front of a body whose top is at y
+    int strike(const Player &player, float reach, float y);
 
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);

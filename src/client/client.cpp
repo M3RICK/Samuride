@@ -259,6 +259,7 @@ void Client::handleGameState(const std::vector<uint8_t> &payload)
             .ultimate = p[10],
             .spears = p[11],
             .grace = (p[12] & 1) != 0,
+            .style = (p[12] >> 1) & 7,
         });
     }
 }
