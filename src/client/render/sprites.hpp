@@ -22,6 +22,7 @@ struct Sprites {
     std::vector<Character> titans;      // one per TitanType
     Character shift;            // Eren's transformation: smoke and emerging
     Character eren_titan;       // Eren's titan running, sharper than the transformation sheet's
+    Character smasher;          // Adam Smasher, the boss
 
     void load();
     // Unknown ids fall back to the first character

@@ -1,18 +1,19 @@
-// Adam Smasher: his hulk, his rockets, his slam and his arm cannon, and his health bar.
-// ponytail: plain shapes until Smasher gets his sprite sheet
+// Adam Smasher: his sprite, his rockets, his slam and his arm cannon, and his health bar
 
 #include "boss.hpp"
 #include "canvas.hpp"
 #include "run.hpp"
+#include "sprites.hpp"
 #include "../audio.hpp"
+#include <algorithm>
 #include <cmath>
 
 using namespace Palette;
 
-static constexpr sf::Color STEEL{70, 74, 86};
 static constexpr sf::Color DARK_STEEL{38, 40, 50};
 
-Smasher::Smasher(Canvas &canvas, Run &run, Audio &audio) : canvas(canvas), run(run), audio(audio) {
+Smasher::Smasher(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio)
+    : canvas(canvas), sprites(sprites), run(run), audio(audio) {
 }
 
 static void rect(Canvas &canvas, sf::Vector2f pos, sf::Vector2f size, sf::Color color)
@@ -23,7 +24,8 @@ static void rect(Canvas &canvas, sf::Vector2f pos, sf::Vector2f size, sf::Color 
     canvas.draw(shape);
 }
 
-void Smasher::draw(const BossState &boss, bool cyberpsycho)
+// What changed since last frame: his entrance, an attack striking, a hit, his death
+void Smasher::react(const BossState &boss)
 {
     if (boss.fighting && !last.fighting) {
         audio.play(Audio::Sfx::Roar);
@@ -31,7 +33,14 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         run.callout = "ADAM SMASHER";
         run.callout_color = NEON_RED;
         run.callout_clock.restart();
+        since_entrance.restart();
     }
+    if (!boss.fighting && last.fighting && boss.health == 0) {
+        death_x = run.view.camera_x + shown_x;
+        since_death.restart();
+    }
+    if (boss.fighting && boss.health < last.health)
+        since_hit.restart();
     bool striking = boss.phase == BossPhase::Strike;
     if (boss.fighting && striking && (last.phase != BossPhase::Strike || last.attack != boss.attack)) {
         if (boss.attack == BossAttack::Rockets)
@@ -45,6 +54,12 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
             run.shakeAtLeast(0.25f);
         }
     }
+}
+
+void Smasher::draw(const BossState &boss, bool cyberpsycho)
+{
+    react(boss);
+
     // His x jumps when he leaps in for a slam and back: follow it in a few tenths of a second
     float dt = std::min(0.1f, frame_clock.restart().asSeconds());
     float ahead = boss.x - run.view.camera_x;
@@ -52,41 +67,81 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         shown_x = ahead;
     shown_x += (ahead - shown_x) * std::min(1.0f, dt * 10);
     last = boss;
+
+    const Character &look = sprites.smasher;
+    if (death_x >= 0) {
+        float t = since_death.getElapsedTime().asSeconds();
+        float fade = std::clamp(2 - t / look.death.duration(), 0.0f, 1.0f);
+        if (fade > 0)
+            drawBody(look.death, look.death.frameAt(t), death_x, 0, withAlpha(sf::Color::White, static_cast<uint8_t>(255 * fade)));
+    }
     if (!boss.fighting)
         return;
 
     drawAttack(boss);
-    drawBody(boss);
+    auto [anim, frame] = pose(boss);
+    float leap = std::min(std::abs(ahead - shown_x), 4.0f) * 0.6f;
+    bool hurt = since_hit.getElapsedTime().asSeconds() < 0.08f;
+    drawBody(*anim, frame, run.view.camera_x + shown_x, leap, hurt ? sf::Color(255, 120, 120) : sf::Color::White);
     if (cyberpsycho)
         drawHealth(boss);
 }
 
-// A hulking cyborg standing on the floor, 7 tiles tall: legs, torso, head with a red visor, and the arm
-// cannon pointing at the runners. He crouches before a slam, and is in the air while he leaps.
-void Smasher::drawBody(const BossState &boss)
+// Each attack's frames follow its phases: the slam lands and the cannon fires when the server strikes
+std::pair<const Animation *, int> Smasher::pose(const BossState &boss) const
 {
+    const Character &look = sprites.smasher;
+    float t = boss.time;
+    auto frames = [](const Animation &anim, float from, float to, float share) {
+        return std::pair{&anim, static_cast<int>(from + (to - from) * std::clamp(share, 0.0f, 0.999f))};
+    };
+
+    switch (boss.attack) {
+        case BossAttack::Rockets:
+            // The pods open during the warning, the rockets leave as it strikes
+            if (boss.phase == BossPhase::Warning)
+                return frames(look.rockets, 0, 3, t / BOSS_ROCKET_WARN);
+            return {&look.rockets, look.rockets.frameAt(t - BOSS_ROCKET_WARN + 3 / look.rockets.fps)};
+        case BossAttack::Slam:
+            // Crouch and leap during the warning, the impact at the strike, then getting back up
+            if (boss.phase == BossPhase::Warning)
+                return frames(look.slam, 0, 4, t / BOSS_SLAM_WARN);
+            return frames(look.slam, 4, static_cast<float>(look.slam.frames),
+                          (t - BOSS_SLAM_WARN) / (BOSS_SLAM_TIME + BOSS_SLAM_RECOVER));
+        case BossAttack::Cannon:
+            // Raised while it tracks, charging while it aims, the blast as it fires
+            if (boss.phase == BossPhase::Warning)
+                return frames(look.cannon, 0, 3, t / BOSS_CANNON_TRACK);
+            if (boss.phase == BossPhase::Aim)
+                return frames(look.cannon, 3, 5, (t - BOSS_CANNON_TRACK) / BOSS_CANNON_AIM);
+            return {&look.cannon, look.cannon.frames - 1};
+        default:
+            break;
+    }
+    float entering = since_entrance.getElapsedTime().asSeconds();
+    if (entering < look.entrance.duration())
+        return {&look.entrance, look.entrance.frameAt(entering)};
+    float hit = since_hit.getElapsedTime().asSeconds();
+    if (hit < look.hit.duration())
+        return {&look.hit, look.hit.frameAt(hit)};
+    return {&look.run, look.run.frameAt(canvas.time())};
+}
+
+// Feet on the floor, HEIGHT tiles tall, his body from x - 0.5 to x + 2.5 like the server's
+void Smasher::drawBody(const Animation &anim, int frame, float x, float lift, sf::Color color)
+{
+    const Character &look = sprites.smasher;
+    if (look.sheet.getSize().x == 0 || frame < 0)
+        return;
     float tile = run.view.tile_size;
-    float floor = run.toScreen({0, run.floor()}).y;
-    float left = run.toScreen({run.view.camera_x + shown_x - 0.5f, 0}).x;
-    float leap = std::abs(boss.x - run.view.camera_x - shown_x);
-    float bob = std::sin(canvas.time() * 3) * tile * 0.05f - std::min(leap, 4.0f) * tile * 0.6f;
-    if (boss.attack == BossAttack::Slam && boss.phase == BossPhase::Warning)
-        bob = tile * 0.3f;
-    float top = floor - tile * 7 + bob;
-
-    rect(canvas, {left + tile * 0.5f, top + tile * 4.5f}, {tile * 0.8f, floor - top - tile * 4.5f}, DARK_STEEL);
-    rect(canvas, {left + tile * 1.6f, top + tile * 4.5f}, {tile * 0.8f, floor - top - tile * 4.5f}, DARK_STEEL);
-    rect(canvas, {left, top + tile * 1.4f}, {tile * 3, tile * 3.3f}, STEEL);
-    rect(canvas, {left + tile * 0.3f, top + tile * 2}, {tile * 2.4f, tile * 0.25f}, NEON_RED);
-    rect(canvas, {left + tile * 0.8f, top}, {tile * 1.4f, tile * 1.4f}, STEEL);
-    rect(canvas, {left + tile * 0.8f, top + tile * 0.5f}, {tile * 1.4f, tile * 0.3f}, withAlpha(NEON_RED, canvas.blink() ? 255 : 180));
-
-    // The cannon arm, raised to the cannon's line while it aims
-    float arm_y = top + tile * 2.6f;
-    if (boss.attack == BossAttack::Cannon)
-        arm_y = run.toScreen({0, boss.y}).y - tile * 0.35f;
-    rect(canvas, {left - tile * 1.6f, arm_y}, {tile * 2, tile * 0.7f}, DARK_STEEL);
-    rect(canvas, {left - tile * 1.8f, arm_y + tile * 0.15f}, {tile * 0.3f, tile * 0.4f}, NEON_ORANGE);
+    float scale = tile * HEIGHT / look.body;
+    sf::Sprite sprite(look.sheet);
+    sprite.setTextureRect(look.frameRect(anim, frame));
+    sprite.setOrigin({look.frame_size.x / 2.f, look.feet});
+    sprite.setScale({scale, scale});
+    sprite.setPosition(run.toScreen({x + 1, run.floor() - lift}));
+    sprite.setColor(color);
+    canvas.draw(sprite);
 }
 
 void Smasher::drawAttack(const BossState &boss)

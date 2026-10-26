@@ -104,7 +104,7 @@ BOSS_DISTANCE 500
 # How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)
 BOSS_ARENA 400
 # Tiles ahead of the leader he stands
-BOSS_AHEAD 13
+BOSS_AHEAD 12
 # Seconds of his entrance before his first attack
 BOSS_INTRO_TIME 3
 # Seconds between two attacks

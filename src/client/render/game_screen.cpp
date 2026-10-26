@@ -15,7 +15,7 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), snipers(canvas, run, audio), smasher(canvas, run, audio), shots(canvas, run, audio, particles),
+      titans(canvas, sprites, run, audio), snipers(canvas, run, audio), smasher(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
       ultimates(canvas, sprites, run, audio, particles) {
 }
 

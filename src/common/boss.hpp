@@ -12,7 +12,7 @@
 inline float BOSS_DISTANCE = 500;
 inline float BOSS_ARENA = 400;
 // He stands this many tiles ahead of the leader: the right edge of the screen
-inline float BOSS_AHEAD = 13;
+inline float BOSS_AHEAD = 12;
 // Seconds of his entrance before the first attack, then between two attacks
 inline float BOSS_INTRO_TIME = 3;
 inline float BOSS_ATTACK_GAP = 1.2f;

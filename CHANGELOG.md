@@ -6,8 +6,8 @@ taken from this file. Players on different versions can't play together: update 
 ## v3.0
 
 ### New
-- **First boss: Adam Smasher**, at 500 m. The scenery clears and he keeps pace on the right of the
-  screen for 400 m, attacking in turn, each attack warned first:
+- **First boss: Adam Smasher**, at 500 m, with his own animations. The scenery clears, he lands on the
+  right of the screen and keeps pace for 400 m, attacking in turn, each attack warned first:
   - **Rockets**: a wall of them, warned by chevrons on the right edge. Fly into the gap.
   - **Ground slam**: the floor glows red, then he leaps at you and a shockwave runs along the floor. Be
     in the air. He then stays close for 2 seconds getting back up: the moment for the blades.

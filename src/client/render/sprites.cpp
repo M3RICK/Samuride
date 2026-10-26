@@ -29,6 +29,9 @@ void Sprites::load()
         !titan_face.loadFromFile("assets/titan_eren/portrait.png"))
         DEBUG_LOG("Failed to load the Attack Titan");
 
+    if (!smasher.load("assets/smasher"))
+        DEBUG_LOG("Failed to load Adam Smasher");
+
     titans.resize(TITAN_TYPES);
     for (int i = 0; i < TITAN_TYPES; i++) {
         if (!titans[i].load(std::string("assets/") + titan_dirs[i]))

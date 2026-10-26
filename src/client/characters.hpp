@@ -1,5 +1,5 @@
 // A character's looks: sprite sheet, portrait and animations, loaded from assets/<dir>/meta.txt.
-// The runners (common/runners.hpp) and the titans each have one.
+// The runners (common/runners.hpp), the titans and Adam Smasher each have one.
 
 #ifndef CHARACTERS_HPP
     #define CHARACTERS_HPP
@@ -34,6 +34,7 @@ struct Character {
     Animation run, takeoff, rise, hover, fall, death, attack;
     Animation shoot;            // Dante's guns: his attack when nothing is in his sword's reach
     Animation smoke, emerge;    // Eren's transformation only
+    Animation entrance, rockets, slam, cannon, hit;     // Adam Smasher only
 
     bool load(const std::string &dir);
     sf::IntRect frameRect(const Animation &anim, int index) const;

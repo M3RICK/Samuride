@@ -56,6 +56,7 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
 #   crops:          {file: box} extra pictures cut as they are, trimmed to their opaque pixels
+#   min_alpha:      pixels less opaque than this go: a see-through glow drawn behind the frames
 TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
 
 # Eren's transformation: smoke column, titan emerging from it, titan running.
@@ -121,6 +122,19 @@ CHARACTERS = {
         "shoot":  animation((90, 668, 1445, 778), 18, mode="once",
                             cuts=[90, 213, 342, 471, 591, 713, 833, 960, 1094, 1210, 1328, 1445], frames=[3, 4, 5]),
     }, {"key_black": True}),
+    # Adam Smasher, the boss (render/boss.cpp): drawn facing right over a glow, he faces the runners
+    "smasher": ("sources/Adam_Smasher.png", None, {
+        "run":      animation((15, 40, 740, 205), 8, ground=True),
+        "entrance": animation((775, 40, 1530, 205), 8, ground=True, mode="once"),
+        # Two puffs of smoke left behind by the rockets pass for frames: left out
+        "rockets":  animation((15, 250, 1030, 405), 10, ground=True, mode="once", effects_ahead=True,
+                              frames=[0, 1, 2, 3, 4, 7]),
+        "slam":     animation((15, 420, 1490, 615), 10, ground=True, mode="once", splits=[135]),
+        "cannon":   animation((15, 660, 1010, 810), 10, ground=True, mode="once", effects_ahead=True),
+        "hit":      animation((1055, 660, 1500, 810), 12, ground=True, mode="once"),
+        "death":    animation((15, 850, 1530, 1005), 8, ground=True, mode="once"),
+    # The leap's head reaches the "SLAM" label's height
+    }, {"min_alpha": 200, "mirror": True, "erase": [(10, 422, 210, 446)]}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
@@ -344,6 +358,10 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         sheet = key_background(sheet)
     if options.get("key_black"):
         sheet = key_black(sheet)
+    if options.get("min_alpha"):
+        px = np.array(sheet)
+        px[px[..., 3] < options["min_alpha"]] = 0
+        sheet = Image.fromarray(px)
     for box in options.get("erase", []):
         sheet.paste((0, 0, 0, 0), box)
     pixels = np.array(sheet)

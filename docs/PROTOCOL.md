@@ -245,7 +245,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
 
-Adam Smasher steps in at 500 tiles, 13 tiles ahead of the leader, and fights for the next 400 (the
+Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.
 Arm cannon: like a sniper's railgun, thicker. In CYBERPSYCHO the players' shots, Lucy's hack and the
 ultimates hurt him; `BOSS_KILL` ('K') in `MSG_COLLISION` when he goes down, `BOSS_HIT` ('m') when he
