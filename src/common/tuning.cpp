@@ -7,6 +7,7 @@
 #include "powerups.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "shift.hpp"
 #include "upgrades.hpp"
 #include <algorithm>
@@ -94,6 +95,29 @@ std::vector<Entry> &entries()
             VALUE(SNIPER_AIM_TIME, "Seconds it stays frozen before the shot"),
             VALUE(SNIPER_FIRE_TIME, "Seconds the railgun beam lasts"),
             VALUE(SNIPER_BEAM_HALF, "Half the height of the beam, in tiles"),
+
+            Entry("Adam Smasher, the boss"),
+            VALUE(BOSS_DISTANCE, "Tiles before his arena"),
+            VALUE(BOSS_ARENA, "How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)"),
+            VALUE(BOSS_AHEAD, "Tiles ahead of the leader he stands"),
+            VALUE(BOSS_INTRO_TIME, "Seconds of his entrance before his first attack"),
+            VALUE(BOSS_ATTACK_GAP, "Seconds between two attacks"),
+            VALUE(BOSS_HEALTH, "His health in CYBERPSYCHO", 1, 10000),
+            VALUE(BOSS_SHOT_DAMAGE, "A bullet's damage"),
+            VALUE(BOSS_SPEAR_DAMAGE, "A thunder spear's damage"),
+            VALUE(BOSS_HACK_DAMAGE, "Lucy's hack's damage"),
+            VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
+            VALUE(BOSS_BOUNTY, "Eddies for downing him"),
+            VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),
+            VALUE(BOSS_ROCKET_SPEED, "Their speed toward you, tiles per second"),
+            VALUE(BOSS_ROCKET_GAP, "Tiles of the gap in their wall", 2.5f, 10),
+            VALUE(BOSS_SLAM_WARN, "Seconds the slam is warned"),
+            VALUE(BOSS_SLAM_TIME, "Seconds its shockwave lasts"),
+            VALUE(BOSS_SLAM_HEIGHT, "Tiles of floor it covers", 0, 7),
+            VALUE(BOSS_CANNON_TRACK, "Seconds his cannon's sight follows you"),
+            VALUE(BOSS_CANNON_AIM, "Seconds it stays frozen"),
+            VALUE(BOSS_CANNON_TIME, "Seconds its beam lasts"),
+            VALUE(BOSS_CANNON_HALF, "Half the height of the beam, in tiles"),
 
             Entry("Weapons (CYBERPSYCHO): cooldown in seconds, speed in tiles per second on top of the run, reach and radius in tiles"),
             VALUE(PROJECTILE_RANGE, "Shots vanish this many tiles ahead"),

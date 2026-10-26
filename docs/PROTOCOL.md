@@ -35,6 +35,7 @@ Positions travel in hundredths of a tile.
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
 | 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
+| 15 | `MSG_BOSS` | server → client | Adam Smasher: where he is, his health, his attack, every tick |
 
 ### `MSG_CONNECT`
 
@@ -230,6 +231,25 @@ every 7 to 14 seconds, appearing 40 tiles ahead of the leader.
 Arasaka snipers shoot in both modes. The first one aims past 150 tiles, then one every 5 to 10
 seconds, at a random player: for 1.2 s its line follows the middle of that player, then it stays
 still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone in it included.
+
+### `MSG_BOSS`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | 1 while he fights, 0 before his arena and once he is gone |
+| 1 | Health, in percent |
+| 1 | Attack: 0 none, 1 rockets, 2 slam, 3 arm cannon |
+| 1 | Phase: 0 warning, 1 aim (the cannon frozen), 2 strike (it hurts) |
+| 4 | His X, in 1/100 tile |
+| 4 | The rockets' X, in 1/100 tile |
+| 2 | Y: the top of the rockets' gap, or the cannon's line |
+| 2 | Seconds into the attack, in 1/100 |
+
+Adam Smasher steps in at 500 tiles, 13 tiles ahead of the leader, and fights for the next 400 (the
+map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.
+Arm cannon: like a sniper's railgun, thicker. In CYBERPSYCHO the players' shots, Lucy's hack and the
+ultimates hurt him; `BOSS_KILL` ('K') in `MSG_COLLISION` when he goes down, `BOSS_HIT` ('m') when he
+kills a player. Every number is in `src/common/boss.hpp` and `assets/tuning.txt`.
 
 ## A game, step by step
 

@@ -84,14 +84,23 @@ float Blade::attack(Server &server, Player &player)
     return stats.cooldown;
 }
 
-// Only when there is something in her way and RAM to hack it: a drone goes down, a zapper's beams go off
+// Only when there is something in her way and RAM to hack it: a drone goes down, a zapper's beams go off,
+// Adam Smasher takes a hit
 float Hack::attack(Server &server, Player &player)
 {
     auto [x, y] = hackTarget(server.map(), player.getX(), player.getY(), Player::HEIGHT,
                              [&server](int x, int y) { return server.isOff(x, y); });
 
-    if (ram == 0 || x < 0)
+    if (ram == 0)
         return 0;
+    // Nothing in her way: Adam Smasher's cyberware, if he is there
+    if (x < 0) {
+        if (!server.hitBoss(player, BOSS_HACK_DAMAGE))
+            return 0;
+        ram--;
+        server.announceShot(player, Weapon::Hack);
+        return statsOf(Weapon::Hack).cooldown;
+    }
 
     ram--;
     if (server.isLiveDrone(x, y)) {

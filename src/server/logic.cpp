@@ -19,6 +19,7 @@ bool Server::resetMap()
     hacked_zappers.clear();
     titans.reset();
     snipers.reset();
+    boss.reset();
 
     if (!config.map_path.empty()) {
         if (!game_map.loadFromFile(config.map_path)) {
@@ -39,9 +40,14 @@ void Server::extendMap(float leader_x)
         float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
 
         bool drones = mode == GameMode::Cyberpsycho;
-        std::vector<std::string> rows = generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
-        placeShiftOrb(rows);
-        placePowerUp(rows);
+        // Adam Smasher's arena: nothing in the way but him
+        bool arena = inBossArena(from) || inBossArena(from + CHUNK_WIDTH - 1);
+        std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
+                                              : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
+        if (!arena) {
+            placeShiftOrb(rows);
+            placePowerUp(rows);
+        }
         game_map.appendChunk(rows);
 
         // Before the run, clients get the whole map in one go instead
@@ -164,6 +170,7 @@ void Server::updatePlayers()
 
     titans.update(rear_x, TICK_DT);
     snipers.update(TICK_DT, players);
+    boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -173,14 +180,18 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
-    titans.spawn(leader_x, TICK_DT, rng);
-    snipers.spawn(leader_x, TICK_DT, rng, players);
+    // No titan nor sniper in Smasher's arena, nor charging into it
+    if (!inBossArena(leader_x) && !inBossArena(leader_x + LOOKAHEAD)) {
+        titans.spawn(leader_x, TICK_DT, rng);
+        snipers.spawn(leader_x, TICK_DT, rng, players);
+    }
     updateProjectiles();
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
     broadcastToAllClients(Protocol::createPacket(MSG_TITANS, titans.serialize()));
     broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, snipers.serialize()));
+    broadcastToAllClients(Protocol::createPacket(MSG_BOSS, boss.serialize()));
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -229,6 +240,8 @@ bool Server::checkPlayerCollisions(Player &player)
         return hurt(player, TITAN_HIT, player.getX(), player.getY() + 1);
     if (!player.isInvincible() && snipers.hit(player))
         return hurt(player, SNIPER_HIT, player.getX(), player.getY() + 1);
+    if (!player.isInvincible() && boss.hit(player, game_map.getHeight()))
+        return hurt(player, BOSS_HIT, player.getX(), player.getY() + 1);
     return false;
 }
 

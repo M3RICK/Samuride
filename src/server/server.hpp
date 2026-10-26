@@ -19,6 +19,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -79,6 +80,7 @@ private:
 
     Horde titans;
     SniperSquad snipers;
+    Boss boss;
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -238,6 +240,9 @@ public:
 
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);
+
+    // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
+    bool hitBoss(Player &player, int damage);
 
     // Its bounty to whoever took it down, standing at x
     void titanDown(Player &player, float x);

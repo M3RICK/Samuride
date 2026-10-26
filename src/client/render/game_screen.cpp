@@ -15,7 +15,7 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), snipers(canvas, run, audio), shots(canvas, run, audio, particles),
+      titans(canvas, sprites, run, audio), snipers(canvas, run, audio), smasher(canvas, run, audio), shots(canvas, run, audio, particles),
       ultimates(canvas, sprites, run, audio, particles) {
 }
 
@@ -64,6 +64,7 @@ void GameScreen::resetRun()
     particles.clear();
     titans.reset();
     snipers.reset();
+    smasher.reset();
     shots.clear();
     ultimates.clear();
     effects.clear();
@@ -203,6 +204,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawEffects();
     titans.drawWarnings(titan_states);
     snipers.draw(state.getSnipers());
+    smasher.draw(state.getBoss(), state.getMode() == GameMode::Cyberpsycho);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
     drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);

@@ -23,7 +23,8 @@ enum MessageType : uint8_t {
     MSG_ULTIMATE = 13,    // CYBERPSYCHO: client fires its ultimate; server: someone did,
                           // payload = player number, ultimate, x where it starts (1/100 tile, 4 bytes),
                           // y of its line (1/100 tile, 2 bytes)
-    MSG_SNIPERS = 14      // Arasaka snipers aiming and firing, every tick
+    MSG_SNIPERS = 14,     // Arasaka snipers aiming and firing, every tick
+    MSG_BOSS = 15         // Adam Smasher: where he is, his health, his attack, every tick
 };
 
 struct MessageHeader {

@@ -23,7 +23,11 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             playerDown(effect, Audio::Sfx::Stomp, NEON_RED, 0.6f, 22);
             break;
         case SNIPER_HIT:
+        case BOSS_HIT:
             playerDown(effect, Audio::Sfx::Explosion, NEON_ORANGE, 0.6f, 22);
+            break;
+        case BOSS_KILL:
+            bossDown(effect, mine);
             break;
         case TITAN_KILL:
             titanDown(effect, mine);
@@ -58,7 +62,8 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             }
     }
     // Dante's drones pay at his style rank
-    int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
+    int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : effect.type == BOSS_KILL ? BOSS_BOUNTY
+                 : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
     effects.push_back({effect, sf::Clock(), mine, bounty});
 }
 
@@ -88,6 +93,20 @@ void GameScreen::titanDown(const CollisionEffect &effect, bool mine)
     run.shakeAtLeast(0.3f);
     particles.emit(nape, 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
     particles.emit(nape, 20, NEON_RED, 6, 0.6f, 8);
+}
+
+// Adam Smasher blowing up where he stood
+void GameScreen::bossDown(const CollisionEffect &effect, bool mine)
+{
+    sf::Vector2f chest = centerOf(effect) + sf::Vector2f(1, 1);
+
+    if (mine)
+        react(Mood::Frenzy);
+    audio.play(Audio::Sfx::Nuke);
+    run.shakeAtLeast(1.0f, 24);
+    particles.emit(chest, 80, NEON_ORANGE, 10, 1.2f, 4);
+    particles.emit(chest, 40, NEON_RED, 8, 1.0f, 8);
+    particles.emit(chest, 30, sf::Color::White, 6, 0.6f, 0);
 }
 
 void GameScreen::droneDown(const CollisionEffect &effect, int me)
@@ -261,9 +280,9 @@ void GameScreen::drawEffects()
                 tile += (taker->second + sf::Vector2f(0, 0.5f) - tile) * fly * fly;
             }
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
-        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
+        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL || active.effect.type == BOSS_KILL) {
             // Blast ring, and the bounty for whoever took it down
-            bool titan = active.effect.type == TITAN_KILL;
+            bool titan = active.effect.type != DRONE_TILE;
             sf::Vector2f center = run.toScreen(tile + sf::Vector2f(0.5f, titan ? -3 : 0.5f));
             canvas.halo(center, run.view.tile_size * (0.3f + t) * (titan ? 3 : 1), withAlpha(NEON_ORANGE, alpha / 2));
             if (active.mine)

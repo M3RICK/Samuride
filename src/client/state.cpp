@@ -16,6 +16,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     pending_ultimates.clear();
     titans.clear();
     snipers.clear();
+    boss = {};
     phase = Phase::Countdown;
     countdown = 0;
     winner = -1;
@@ -146,6 +147,20 @@ void GameState::setSnipers(std::vector<SniperState> list)
     std::lock_guard<std::mutex> lock(state_mutex);
 
     snipers = std::move(list);
+}
+
+void GameState::setBoss(BossState state)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    boss = state;
+}
+
+BossState GameState::getBoss() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return boss;
 }
 
 std::vector<SniperState> GameState::getSnipers() const

@@ -39,7 +39,7 @@ COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp sr
 # Server sources; the game links the server core too, to host solo and multiplayer runs itself
 SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
                    src/server/combat.cpp src/server/titans.cpp src/server/snipers.cpp src/server/shift.cpp \
-                   src/server/powerups.cpp src/server/arsenal.cpp
+                   src/server/powerups.cpp src/server/arsenal.cpp src/server/boss.cpp
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources

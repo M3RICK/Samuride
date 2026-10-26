@@ -39,6 +39,7 @@ void Server::handleUltimate(int client_fd)
     Protocol::pushU16(payload, line * POSITION_SCALE);
     broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, payload));
     player.ultimate().fire(*this, player, start, line);
+    hitBoss(player, BOSS_ULTIMATE_DAMAGE);
 }
 
 // What the ultimates do on their own every tick: the sweeps go on, the nukes land
@@ -113,7 +114,14 @@ void Server::updateProjectiles()
         float from_x = shot.x;
 
         shot.x += shot.speed * TICK_DT;
-        if (shot.weapon == Weapon::Spear) {
+        auto owner = players.find(shot.owner_fd);
+        if (boss.fighting() && shot.x >= boss.x() && owner != players.end()) {
+            bool spear = shot.weapon == Weapon::Spear;
+            if (spear)
+                spearBlast(shot.owner_fd, boss.x());
+            hitBoss(owner->second, spear ? BOSS_SPEAR_DAMAGE : BOSS_SHOT_DAMAGE);
+            shot.x = shot.max_x;
+        } else if (shot.weapon == Weapon::Spear) {
             float hit = spearHit(shot, from_x);
             if (hit >= 0 || shot.x >= shot.max_x) {
                 spearBlast(shot.owner_fd, hit >= 0 ? hit : shot.max_x);
@@ -201,6 +209,17 @@ void Server::slashTitans(Player &player, float reach)
 {
     for (float x : titans.takeDown(titanReached(player, reach)))
         titanDown(player, x);
+}
+
+bool Server::hitBoss(Player &player, int damage)
+{
+    if (mode != GameMode::Cyberpsycho || !boss.fighting())
+        return false;
+    if (boss.damage(damage)) {
+        player.addScore(BOSS_BOUNTY);
+        notifyCollision(BOSS_KILL, player, static_cast<int>(boss.x()), static_cast<int>(game_map.getHeight() / 2));
+    }
+    return true;
 }
 
 void Server::titanDown(Player &player, float x)

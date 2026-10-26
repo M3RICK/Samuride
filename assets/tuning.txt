@@ -98,6 +98,50 @@ SNIPER_FIRE_TIME 0.25
 # Half the height of the beam, in tiles
 SNIPER_BEAM_HALF 0.35
 
+## Adam Smasher, the boss
+# Tiles before his arena
+BOSS_DISTANCE 500
+# How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)
+BOSS_ARENA 400
+# Tiles ahead of the leader he stands
+BOSS_AHEAD 13
+# Seconds of his entrance before his first attack
+BOSS_INTRO_TIME 3
+# Seconds between two attacks
+BOSS_ATTACK_GAP 1.2
+# His health in CYBERPSYCHO
+BOSS_HEALTH 80
+# A bullet's damage
+BOSS_SHOT_DAMAGE 1
+# A thunder spear's damage
+BOSS_SPEAR_DAMAGE 8
+# Lucy's hack's damage
+BOSS_HACK_DAMAGE 8
+# Any ultimate's damage
+BOSS_ULTIMATE_DAMAGE 15
+# Eddies for downing him
+BOSS_BOUNTY 150
+# Seconds the rockets are warned
+BOSS_ROCKET_WARN 1.2
+# Their speed toward you, tiles per second
+BOSS_ROCKET_SPEED 22
+# Tiles of the gap in their wall
+BOSS_ROCKET_GAP 4
+# Seconds the slam is warned
+BOSS_SLAM_WARN 1
+# Seconds its shockwave lasts
+BOSS_SLAM_TIME 0.5
+# Tiles of floor it covers
+BOSS_SLAM_HEIGHT 3
+# Seconds his cannon's sight follows you
+BOSS_CANNON_TRACK 1.2
+# Seconds it stays frozen
+BOSS_CANNON_AIM 0.5
+# Seconds its beam lasts
+BOSS_CANNON_TIME 0.3
+# Half the height of the beam, in tiles
+BOSS_CANNON_HALF 0.6
+
 ## Weapons (CYBERPSYCHO): cooldown in seconds, speed in tiles per second on top of the run, reach and radius in tiles
 # Shots vanish this many tiles ahead
 PROJECTILE_RANGE 22

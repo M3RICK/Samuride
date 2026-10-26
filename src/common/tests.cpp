@@ -4,6 +4,7 @@
 #include "protocol.hpp"
 #include "../server/generator.hpp"
 #include "../server/player.hpp"
+#include "../server/boss.hpp"
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
 #include "snipers.hpp"
@@ -351,6 +352,37 @@ static void testWallet()
     assert(!map_wallet.buyDistrict(4) && !map_wallet.buyDistrict(3) && !map_wallet.buyDistrict(0));
 }
 
+// Adam Smasher: wakes up in his arena, the rocket wall leaves its gap free, the slam spares the air,
+// he goes down at 0 health and leaves at the arena's end
+static void testBoss()
+{
+    std::map<int, Player> players;
+    std::mt19937 rng(1);
+    players.emplace(3, Player(3));
+    players.at(3).reset(0, 8);
+
+    assert(!rocketsHit(0, 3, 3.5f, 10));        // inside the gap (rows 3 to 7)
+    assert(rocketsHit(0, 3, 0, 10) && rocketsHit(0, 3, 8, 10));
+    assert(!rocketsHit(5, 3, 0, 10));           // still far ahead
+    assert(bandHits(10 - BOSS_SLAM_HEIGHT, 10, 8) && !bandHits(10 - BOSS_SLAM_HEIGHT, 10, 4));
+    assert(Boss::phaseOf(BossAttack::Cannon, BOSS_CANNON_TRACK + 0.1f) == BossPhase::Aim);
+
+    Boss boss;
+    boss.reset();
+    boss.update(BOSS_DISTANCE - 1, 0.1f, rng, players, 10);
+    assert(!boss.fighting());
+    boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
+    assert(boss.fighting() && boss.x() == BOSS_DISTANCE + BOSS_AHEAD);
+    assert(!boss.hit(players.at(3), 10));       // his entrance: nothing yet
+    assert(!boss.damage(BOSS_HEALTH - 1) && boss.damage(1) && !boss.fighting());
+
+    boss.reset();
+    boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
+    boss.update(BOSS_DISTANCE + BOSS_ARENA, 0.1f, rng, players, 10);
+    assert(!boss.fighting());
+    assert(!inBossArena(BOSS_DISTANCE - 1) && inBossArena(BOSS_DISTANCE) && !inBossArena(BOSS_DISTANCE + BOSS_ARENA));
+}
+
 int main()
 {
     testPacketFraming();
@@ -358,6 +390,7 @@ int main()
     testMapChunks();
     testGenerator();
     testSniperHit();
+    testBoss();
     testPowerUps();
     testHack();
     testUltimate();

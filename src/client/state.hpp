@@ -12,6 +12,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "../common/titans.hpp"
 #include "../common/snipers.hpp"
+#include "../common/boss.hpp"
 #include "../common/shift.hpp"
 #include "../common/powerups.hpp"
 
@@ -57,6 +58,17 @@ struct SniperState {
     float y;        // its line, in tiles
 };
 
+struct BossState {
+    bool fighting = false;
+    int health = 100;       // percent
+    BossAttack attack = BossAttack::None;
+    BossPhase phase = BossPhase::Warning;
+    float x = 0;            // where he stands, in tiles
+    float rockets_x = 0;
+    float y = 0;            // the rockets' gap top, or the cannon's line
+    float time = 0;         // seconds into the phase
+};
+
 struct CollisionEffect {
     char type;
     int player;
@@ -83,6 +95,7 @@ private:
     std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
     std::vector<SniperState> snipers;
+    BossState boss;
     std::set<std::pair<int, int>> my_coins;
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
@@ -94,6 +107,7 @@ public:
     void pushUltimate(UltimateEvent ultimate);
     void setTitans(std::vector<TitanState> list);
     void setSnipers(std::vector<SniperState> list);
+    void setBoss(BossState state);
     void setCountdown(int value);
     void updatePlayer(int player_number, const PlayerState &player);
     void handleCollision(char type, int player, int x, int y);
@@ -114,6 +128,7 @@ public:
     std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;
     std::vector<SniperState> getSnipers() const;
+    BossState getBoss() const;
     std::set<std::pair<int, int>> getCollectedCoins() const;
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();

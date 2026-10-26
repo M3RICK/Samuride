@@ -177,6 +177,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_SNIPERS:
             handleSnipers(payload);
             break;
+        case MSG_BOSS:
+            handleBoss(payload);
+            break;
         case MSG_GAME_END:
             handleGameEnd(payload);
             break;
@@ -223,6 +226,17 @@ void Client::handleSnipers(const std::vector<uint8_t> &payload)
     for (size_t pos = 1; !payload.empty() && pos + 3 <= payload.size(); pos += 3)
         snipers.push_back({static_cast<SniperPhase>(payload[pos]), Protocol::readU16(payload.data() + pos + 1) / POSITION_SCALE});
     game_state.setSnipers(std::move(snipers));
+}
+
+// [fighting][health %][attack][phase][x, 4 bytes][rockets' x, 4 bytes][y, 2 bytes][seconds into the phase, 2 bytes]
+void Client::handleBoss(const std::vector<uint8_t> &payload)
+{
+    if (payload.size() < 16)
+        return;
+    const uint8_t *p = payload.data();
+    game_state.setBoss({p[0] != 0, p[1], static_cast<BossAttack>(p[2]), static_cast<BossPhase>(p[3]),
+                        Protocol::readU32(p + 4) / POSITION_SCALE, Protocol::readU32(p + 8) / POSITION_SCALE,
+                        Protocol::readU16(p + 12) / POSITION_SCALE, Protocol::readU16(p + 14) / POSITION_SCALE});
 }
 
 void Client::handleShot(const std::vector<uint8_t> &payload)

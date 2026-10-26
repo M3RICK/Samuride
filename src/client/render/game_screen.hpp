@@ -13,6 +13,7 @@
 #include "players.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
 #include "../audio.hpp"
@@ -53,6 +54,7 @@ private:
     Players runners;
     Titans titans;
     Snipers snipers;
+    Smasher smasher;
     Shots shots;
     Ultimates ultimates;
 
@@ -131,6 +133,7 @@ private:
     void addEffect(const CollisionEffect &effect, int me);
     void playerDown(const CollisionEffect &effect, Audio::Sfx sound, sf::Color color, float shake, float strength);
     void titanDown(const CollisionEffect &effect, bool mine);
+    void bossDown(const CollisionEffect &effect, bool mine);
     void droneDown(const CollisionEffect &effect, int me);
     void hackBounced(const CollisionEffect &effect);
     void spearBlast(const CollisionEffect &effect);
