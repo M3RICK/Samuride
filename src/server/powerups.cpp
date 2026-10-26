@@ -22,7 +22,9 @@ void Server::placePowerUp(std::vector<std::string> &rows)
 {
     std::uniform_real_distribution<float> chance(0, 1);
 
-    if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= POWERUP_CHANCE)
+    float odds = mode == GameMode::Cyberpsycho ? POWERUP_CHANCE_CYBERPSYCHO : POWERUP_CHANCE;
+
+    if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= odds)
         return;
     // Any power-up, but Berserk is no use without attacks: CYBERPSYCHO only
     std::vector<char> kinds;

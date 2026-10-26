@@ -25,9 +25,11 @@ inline float BERSERK_TIME = 8.0f;
 inline float BERSERK_ATTACK_RATE = 2.0f; // attack cooldowns run out this many times faster
 inline float BERSERK_RAM_RATE = 3.0f;    // and Lucy's RAM comes back this many times faster
 
-// Map chunks are 40 tiles: none in the first ~120 m, then this chance per chunk
+// Map chunks are 40 tiles: none in the first ~120 m, then this chance per chunk. Rarer in CYBERPSYCHO,
+// where they mostly come from drones: shooting one down is the risk that pays.
 inline int POWERUP_FIRST_CHUNK = 3;
 inline float POWERUP_CHANCE = 0.2f;
+inline float POWERUP_CHANCE_CYBERPSYCHO = 0.05f;
 
 // Every power-up but the Attack Titan's orb: a new one goes here too
 inline constexpr char POWER_UPS[] = {SHIELD_TILE, SANDEVISTAN_TILE, BERSERK_TILE};

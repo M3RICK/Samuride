@@ -63,6 +63,7 @@ std::vector<Entry> &entries()
             Entry("Power-ups"),
             VALUE(POWERUP_FIRST_CHUNK, "No power-up in the first this many 40-tile chunks"),
             VALUE(POWERUP_CHANCE, "Chance a chunk holds a power-up after that (0 to 1)", 0, 1),
+            VALUE(POWERUP_CHANCE_CYBERPSYCHO, "The same in CYBERPSYCHO, where drones drop them too", 0, 1),
             VALUE(SHIELD_GRACE, "Seconds of invincibility after the shield breaks"),
             VALUE(END_GRACE, "Seconds of invincibility after the Sandevistan or the Attack Titan ends"),
             VALUE(SANDEVISTAN_TIME, "Seconds of Sandevistan sprint"),

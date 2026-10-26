@@ -37,6 +37,8 @@ ZAPPER_GAP_MAX 9
 POWERUP_FIRST_CHUNK 3
 # Chance a chunk holds a power-up after that (0 to 1)
 POWERUP_CHANCE 0.2
+# The same in CYBERPSYCHO, where drones drop them too
+POWERUP_CHANCE_CYBERPSYCHO 0.05
 # Seconds of invincibility after the shield breaks
 SHIELD_GRACE 1
 # Seconds of invincibility after the Sandevistan or the Attack Titan ends
