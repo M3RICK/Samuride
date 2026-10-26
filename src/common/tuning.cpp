@@ -260,7 +260,24 @@ std::string Tuning::defaults()
         "# Distances are in tiles: a runner is 2 tiles tall, a tile is about a metre. Times are in seconds.\n"
         "# In versus, the host's file decides what happens; the other player only draws with theirs.\n"
         "# While a value isn't at its default, the game says CUSTOM TUNING in a corner.\n"
-        "# Testing something? Send this file with what you felt: it says exactly what you played.\n";
+        "# Testing something? Send this file with what you felt: it says exactly what you played.\n"
+        "#\n"
+        "# Words used below:\n"
+        "#   tile       the grid the map is drawn on: a square about a metre wide. The screen is 10 tiles\n"
+        "#              tall and 20 wide; a runner is 2 tiles tall. The distance on screen counts tiles.\n"
+        "#   row        a line of tiles across the screen, from top to bottom: 10 rows. Column: the same, upright.\n"
+        "#   chunk      the map is made 40 tiles at a time, as you run, each piece drawn at random: a chunk.\n"
+        "#              So 3 chunks is 120 m, 30 chunks is 1200 m.\n"
+        "#   chance     from 0 (never) to 1 (always): 0.2 is one time in five.\n"
+        "#   leader     the runner furthest ahead (in solo, you).\n"
+        "#   eddies     the money: the coins you pick up, and what drones and titans pay (their bounty).\n"
+        "#   CLASSIC    the mode without weapons: dodge. CYBERPSYCHO: the mode with weapons, drones and ultimates.\n"
+        "#   zapper     an electric beam between two nodes. Drone: a flying robot you can shoot (CYBERPSYCHO).\n"
+        "#   cooldown   seconds before you can attack again.\n"
+        "#   reach      how far ahead a melee attack lands. Radius: how close to a shot's line a drone gets hit.\n"
+        "#   ultimate   the big attack (E), ready once its gauge is full; eddies picked up fill it.\n"
+        "#   grace      a moment of invincibility, to get clear after a shield breaks or a power-up ends.\n"
+        "#   orb        the Attack Titan power-up: grab it to become a titan for a few seconds.\n";
 
     for (const Entry &entry : entries()) {
         if (entry.heading()) {

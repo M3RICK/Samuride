@@ -30,6 +30,9 @@ taken from this file. Players on different versions can't play together: update 
 ### Fixes
 - Johnny's gunshot is much quieter, in line with the other sounds.
 
+### Other
+- `assets/tuning.txt` starts with a glossary: tile, row, chunk, chance, leader, cooldown, reach...
+
 ## v2.95
 
 ### New
