@@ -270,14 +270,10 @@ std::string Tuning::defaults()
         "#              So 3 chunks is 120 m, 30 chunks is 1200 m.\n"
         "#   chance     from 0 (never) to 1 (always): 0.2 is one time in five.\n"
         "#   leader     the runner furthest ahead (in solo, you).\n"
-        "#   eddies     the money: the coins you pick up, and what drones and titans pay (their bounty).\n"
-        "#   CLASSIC    the mode without weapons: dodge. CYBERPSYCHO: the mode with weapons, drones and ultimates.\n"
-        "#   zapper     an electric beam between two nodes. Drone: a flying robot you can shoot (CYBERPSYCHO).\n"
         "#   cooldown   seconds before you can attack again.\n"
         "#   reach      how far ahead a melee attack lands. Radius: how close to a shot's line a drone gets hit.\n"
-        "#   ultimate   the big attack (E), ready once its gauge is full; eddies picked up fill it.\n"
-        "#   grace      a moment of invincibility, to get clear after a shield breaks or a power-up ends.\n"
-        "#   orb        the Attack Titan power-up: grab it to become a titan for a few seconds.\n";
+        "#   grace      a moment of invincibility, to get clear after a shield breaks or a power-up ends.\n";
+
 
     for (const Entry &entry : entries()) {
         if (entry.heading()) {

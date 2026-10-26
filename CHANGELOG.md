@@ -31,7 +31,7 @@ taken from this file. Players on different versions can't play together: update 
 - Johnny's gunshot is much quieter, in line with the other sounds.
 
 ### Other
-- `assets/tuning.txt` starts with a glossary: tile, row, chunk, chance, leader, cooldown, reach...
+- `assets/tuning.txt` starts with a glossary of its technical words: tile, row, chunk, chance, leader, cooldown, reach, grace.
 
 ## v2.95
 
