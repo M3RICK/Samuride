@@ -17,16 +17,18 @@ struct Runner {
     Weapon weapon;          // the attack, in CYBERPSYCHO (weapons.hpp)
     Ultimate ultimate;      // fired once the gauge is full, in CYBERPSYCHO (ultimates.hpp)
     int charge;             // eddies to fill the ultimate's gauge
+    float agility;          // the jetpack's lift and the fall, times this: how fast they turn in the air
 };
 
-// Prices and charges can be changed from assets/tuning.txt (tuning.cpp)
+// Prices, charges and agility can be changed from assets/tuning.txt (tuning.cpp).
+// Mikasa's ODM gear: she turns faster in the air than anyone.
 inline Runner RUNNERS[] = {
-    {"johny",  0,   Weapon::Gun,     Ultimate::FireWave,      150},
-    {"david",  100, Weapon::Gun,     Ultimate::Nuke,          150},
-    {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150},
-    {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears, 100},
-    {"lucy",   750, Weapon::Hack,    Ultimate::Breach,        150},
-    {"dante",  1000, Weapon::Rebellion, Ultimate::Doppelganger, 150},
+    {"johny",  0,   Weapon::Gun,     Ultimate::FireWave,      150, 1},
+    {"david",  100, Weapon::Gun,     Ultimate::Nuke,          150, 1},
+    {"jinx",   250, Weapon::Minigun, Ultimate::Fishbones,     150, 1},
+    {"mikasa", 500, Weapon::Blade,   Ultimate::ThunderSpears, 100, 1.4f},
+    {"lucy",   750, Weapon::Hack,    Ultimate::Breach,        150, 1},
+    {"dante",  1000, Weapon::Rebellion, Ultimate::Doppelganger, 150, 1},
 };
 
 constexpr int RUNNER_COUNT = static_cast<int>(std::size(RUNNERS));
@@ -40,5 +42,6 @@ inline const Runner &runner(int id)
 inline Weapon weaponOf(int id) { return runner(id).weapon; }
 inline Ultimate ultimateOf(int id) { return runner(id).ultimate; }
 inline int ultimateCharge(int id) { return runner(id).charge; }
+inline float agilityOf(int id) { return runner(id).agility; }
 
 #endif

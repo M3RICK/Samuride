@@ -175,12 +175,14 @@ std::vector<Entry> &entries()
         for (int rank = 0; rank < STYLE_RANKS; rank++)
             all.emplace_back(std::string("STYLE_HASTE_") + STYLE_NAMES[rank], &STYLE_HASTE[rank],
                              rank == 0 ? "His attack cooldowns times this, at each rank" : "");
-        all.emplace_back("Runners: price in eddies, and eddies to charge the ultimate");
+        all.emplace_back("Runners: price in eddies, eddies to charge the ultimate, and agility: the jetpack's lift "
+                         "and the fall times this, how fast they turn in the air (not their top speed)");
         for (Runner &runner : RUNNERS) {
             std::string name = runner.dir;
             std::ranges::transform(name, name.begin(), [](unsigned char c) { return std::toupper(c); });
             all.emplace_back(name + "_PRICE", &runner.price, "");
             all.emplace_back(name + "_ULTIMATE_CHARGE", &runner.charge, "", 1);
+            all.emplace_back(name + "_AGILITY", &runner.agility, "", 0.5f, 3);
         }
         return all;
     }();

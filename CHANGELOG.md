@@ -18,6 +18,8 @@ taken from this file. Players on different versions can't play together: update 
   from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
 
 ### Balance
+- **Mikasa's ODM gear**: in the air, her jetpack lifts and she drops 40% faster than the others, so she
+  turns on a dime. Same top speed.
 - **CYBERPSYCHO**: power-ups lying in the map are 4 times rarer. They come from the drones you shoot
   down now (one in three drops one): getting close to a drone is the risk that pays.
 - **Dante** swings his sword only when a drone or a titan is within its reach, and fires Ebony & Ivory

@@ -132,7 +132,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
 
     bool thrust = jet_active && form != Form::Shifting;
-    y_velocity += (thrust ? -JET_POWER : GRAVITY) * dt;
+    y_velocity += (thrust ? -JET_POWER : GRAVITY) * agilityOf(character) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
     y += y_velocity * dt;
 

@@ -256,16 +256,22 @@ STYLE_HASTE_S 0.8
 STYLE_HASTE_SS 0.7
 STYLE_HASTE_SSS 0.6
 
-## Runners: price in eddies, and eddies to charge the ultimate
+## Runners: price in eddies, eddies to charge the ultimate, and agility: the jetpack's lift and the fall times this, how fast they turn in the air (not their top speed)
 JOHNY_PRICE 0
 JOHNY_ULTIMATE_CHARGE 150
+JOHNY_AGILITY 1
 DAVID_PRICE 100
 DAVID_ULTIMATE_CHARGE 150
+DAVID_AGILITY 1
 JINX_PRICE 250
 JINX_ULTIMATE_CHARGE 150
+JINX_AGILITY 1
 MIKASA_PRICE 500
 MIKASA_ULTIMATE_CHARGE 100
+MIKASA_AGILITY 1.4
 LUCY_PRICE 750
 LUCY_ULTIMATE_CHARGE 150
+LUCY_AGILITY 1
 DANTE_PRICE 1000
 DANTE_ULTIMATE_CHARGE 150
+DANTE_AGILITY 1

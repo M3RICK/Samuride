@@ -191,6 +191,20 @@ static void testHack()
 }
 
 // Every eddy charges the ultimate, up to full, and firing it empties the gauge
+// Mikasa takes off quicker than Johnny, to the same top speed
+static void testAgility()
+{
+    Player johnny(-1), mikasa(-2);
+    johnny.setCharacter(0);
+    mikasa.setCharacter(3);
+    for (Player *player : {&johnny, &mikasa}) {
+        player->reset(0, 8);
+        player->setJetActive(true);
+        player->update(0.1f, 10, 8);
+    }
+    assert(agilityOf(3) > 1 && mikasa.getY() < johnny.getY());
+}
+
 static void testUltimate()
 {
     Player johnny(-1);
@@ -395,6 +409,7 @@ int main()
     testBoss();
     testPowerUps();
     testHack();
+    testAgility();
     testUltimate();
     testDante();
     testTuning();
