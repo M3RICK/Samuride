@@ -229,9 +229,11 @@ void Nuke::act(Server &server, Player &player)
 }
 
 // Lucy's network breach, from just behind her to the end of the screen: drones go down, zappers go off
-// for BREACH_TIME (the burnt ones stay out)
+// for BREACH_TIME (the burnt ones stay out), and her RAM comes back full
 void Breach::fire(Server &server, Player &player, float start, float)
 {
+    if (auto *hack = dynamic_cast<Hack *>(&player.weapon()))
+        hack->refill();
     for (int x = std::max(0, static_cast<int>(start - 2)); x <= static_cast<int>(start + BREACH_AHEAD); x++) {
         for (int y = 0; y < static_cast<int>(server.map().getHeight()); y++) {
             if (server.isLiveDrone(x, y))

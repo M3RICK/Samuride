@@ -5,6 +5,9 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v3.0
 
+### Balance
+- Lucy's network breach refills her RAM.
+
 ### Fixes
 - Johnny's gunshot is much quieter, in line with the other sounds.
 

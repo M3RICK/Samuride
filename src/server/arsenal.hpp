@@ -98,6 +98,7 @@ public:
     void tick(const Player &player, float dt) override;
     int charges() const override { return ram; }
     void spendRam() { ram--; }
+    void refill() { ram = RAM_MAX; ram_timer = RAM_RECHARGE; }
 };
 
 // Dante: his sword on the ground, Ebony & Ivory in the air, and his style meter (STYLE_* in weapons.hpp)
