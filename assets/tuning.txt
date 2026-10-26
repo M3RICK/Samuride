@@ -171,8 +171,10 @@ DOPPELGANGER_TIME 8
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
 STYLE_KILLS 2
-# Seconds without a kill to drop a rank (a hit drops him to D)
-STYLE_DROP_TIME 6
+# Seconds without a kill to drop a rank
+STYLE_DROP_TIME 10
+# Ranks a hit (his shield breaking) drops
+STYLE_HIT_DROP 2
 # A drone's bounty times this, at each rank
 STYLE_BOUNTY_D 1
 STYLE_BOUNTY_C 1
@@ -181,6 +183,14 @@ STYLE_BOUNTY_A 2
 STYLE_BOUNTY_S 2
 STYLE_BOUNTY_SS 2.5
 STYLE_BOUNTY_SSS 3
+# His attack cooldowns times this, at each rank
+STYLE_HASTE_D 1
+STYLE_HASTE_C 0.95
+STYLE_HASTE_B 0.9
+STYLE_HASTE_A 0.85
+STYLE_HASTE_S 0.8
+STYLE_HASTE_SS 0.7
+STYLE_HASTE_SSS 0.6
 
 ## Runners: price in eddies, and eddies to charge the ultimate
 JOHNY_PRICE 0

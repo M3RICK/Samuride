@@ -138,28 +138,27 @@ void Hack::tick(const Player &player, float dt)
     }
 }
 
-// The sword cuts like Mikasa's blade, the guns shoot like Johnny's: the clients draw them as those.
-// His Doppelganger repeats it from the opposite height (drones only: titans stay on the floor).
+// The sword cuts like Mikasa's blade when a drone or a titan is within its reach, the guns shoot like
+// Johnny's otherwise: the clients draw them as those. His Doppelganger repeats it from the opposite
+// height (drones only: titans stay on the floor). The higher his rank, the faster he attacks.
 float Rebellion::attack(Server &server, Player &player)
 {
-    float floor = server.map().getHeight();
-    bool grounded = player.getY() >= floor - Player::HEIGHT - 0.01f;
+    WeaponStats sword = statsOf(Weapon::Blade);
     bool doubled = player.ultimate().doubles();
-    float double_y = mirrored(player.getY(), Player::HEIGHT, floor);
+    float double_y = mirrored(player.getY(), Player::HEIGHT, server.map().getHeight());
 
-    if (!grounded) {
+    if (!server.inReach(player, sword.reach, player.getY())) {
         server.fireProjectile(player, Weapon::Gun);
         if (doubled)
             server.fireProjectile(player, Weapon::Gun, double_y);
-        return statsOf(Weapon::Gun).cooldown;
+        return statsOf(Weapon::Gun).cooldown * STYLE_HASTE[rank];
     }
-    WeaponStats sword = statsOf(Weapon::Blade);
     server.announceShot(player, Weapon::Blade);
     server.strike(player, sword.reach);
     server.slashTitans(player, sword.reach);
     if (doubled)
         server.strike(player, sword.reach, double_y);
-    return sword.cooldown;
+    return sword.cooldown * STYLE_HASTE[rank];
 }
 
 // Paid at the rank he had; STYLE_KILLS of them raise it

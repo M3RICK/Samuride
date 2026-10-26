@@ -253,7 +253,7 @@ static void testUltimate()
 }
 
 // Dante: STYLE_KILLS kills go up a rank and the next drones pay more; a rank drops after
-// STYLE_DROP_TIME without a kill, a hit drops him to D. His Doppelganger lasts DOPPELGANGER_TIME.
+// STYLE_DROP_TIME without a kill, a hit drops STYLE_HIT_DROP ranks. His Doppelganger lasts DOPPELGANGER_TIME.
 static void testDante()
 {
     assert(weaponOf(5) == Weapon::Rebellion && ultimateOf(5) == Ultimate::Doppelganger);
@@ -275,7 +275,7 @@ static void testDante()
     dante.update(0.2f, 10, 8);
     assert(rebellion.style() == STYLE_RANKS - 2);
     dante.powerUp(SHIELD_TILE);
-    assert(dante.absorbHit() && rebellion.style() == 0);
+    assert(dante.absorbHit() && rebellion.style() == STYLE_RANKS - 2 - STYLE_HIT_DROP);
 
     // Nobody else has a style rank
     Player johnny(-1);

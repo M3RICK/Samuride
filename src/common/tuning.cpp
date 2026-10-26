@@ -137,12 +137,16 @@ std::vector<Entry> &entries()
 
             Entry("Dante's style meter: ranks D, C, B, A, S, SS, SSS"),
             VALUE(STYLE_KILLS, "Kills in a row to go up a rank"),
-            VALUE(STYLE_DROP_TIME, "Seconds without a kill to drop a rank (a hit drops him to D)"),
+            VALUE(STYLE_DROP_TIME, "Seconds without a kill to drop a rank"),
+            VALUE(STYLE_HIT_DROP, "Ranks a hit (his shield breaking) drops", 0, 6),
 
         };
         for (int rank = 0; rank < STYLE_RANKS; rank++)
             all.emplace_back(std::string("STYLE_BOUNTY_") + STYLE_NAMES[rank], &STYLE_BOUNTY[rank],
                              rank == 0 ? "A drone's bounty times this, at each rank" : "");
+        for (int rank = 0; rank < STYLE_RANKS; rank++)
+            all.emplace_back(std::string("STYLE_HASTE_") + STYLE_NAMES[rank], &STYLE_HASTE[rank],
+                             rank == 0 ? "His attack cooldowns times this, at each rank" : "");
         all.emplace_back("Runners: price in eddies, and eddies to charge the ultimate");
         for (Runner &runner : RUNNERS) {
             std::string name = runner.dir;

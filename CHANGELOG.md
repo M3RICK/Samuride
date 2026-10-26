@@ -6,6 +6,11 @@ taken from this file. Players on different versions can't play together: update 
 ## v3.0
 
 ### Balance
+- **Dante** swings his sword only when a drone or a titan is within its reach, and fires Ebony & Ivory
+  otherwise, on the ground as in the air.
+- **Dante's style rank** is worth more than eddies: the higher it is, the faster he attacks (40% faster
+  at SSS). It drops a rank after 10 s without a kill instead of 6, and a hit drops it 2 ranks instead
+  of back to D.
 - Lucy's network breach refills her RAM.
 
 ### Fixes

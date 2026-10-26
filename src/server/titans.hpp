@@ -5,6 +5,7 @@
 #ifndef SERVER_TITANS_HPP
     #define SERVER_TITANS_HPP
 
+#include <algorithm>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -28,6 +29,8 @@ public:
     bool hit(const Player &player, float floor) const;
     // A shot flying along line y between the columns from_x and to_x crossed a titan tall enough
     bool inPath(float from_x, float to_x, float y, float floor) const;
+    template <typename Reached>
+    bool any(Reached reached) const { return std::ranges::any_of(titans, reached); }
     // Takes down every titan `reached` says yes to; returns where they stood
     template <typename Reached>
     std::vector<float> takeDown(Reached reached)

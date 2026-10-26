@@ -233,6 +233,9 @@ public:
     // ... in front of a body whose top is at y
     int strike(const Player &player, float reach, float y);
 
+    // The live drones a strike would take down, or a titan in its reach: Dante cuts only then
+    bool inReach(const Player &player, float reach, float y) const;
+
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);
 

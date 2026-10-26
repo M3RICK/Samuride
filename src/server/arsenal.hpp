@@ -111,7 +111,7 @@ public:
     float attack(Server &server, Player &player) override;
     void tick(const Player &player, float dt) override;
     int droneDown() override;
-    void hurt() override { rank = kills = 0; }
+    void hurt() override { rank = std::max(0, rank - STYLE_HIT_DROP); kills = 0; }
     int style() const override { return rank; }
 };
 

@@ -9,6 +9,7 @@ void Run::reset()
     player_anims.clear();
     death_clocks.clear();
     attack_clocks.clear();
+    attack_weapons.clear();
     doubles.clear();
     hacked_zappers.clear();
     flash = {};
@@ -114,6 +115,14 @@ void Run::announce(const UltimateLook &look)
     callout = look.name;
     callout_color = look.color;
     callout_clock.restart();
+}
+
+const Animation &Run::strikeOf(int player_num, const Character &character) const
+{
+    auto weapon = attack_weapons.find(player_num);
+    bool shot = weapon != attack_weapons.end() && weapon->second == Weapon::Gun;
+
+    return shot && character.shoot.frames > 0 ? character.shoot : character.attack;
 }
 
 bool Run::doubled(int player_num) const

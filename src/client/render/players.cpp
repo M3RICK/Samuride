@@ -72,8 +72,7 @@ Players::AnimationFrame Players::pickAnimation(int player_num, const PlayerState
 
     if (death != run.death_clocks.end() && character.death.frames > 0)
         return {&character.death, death->second.getElapsedTime().asSeconds()};
-    // In the air, a runner with guns of their own shoots them (Dante)
-    const Animation &strike = !on_ground && character.shoot.frames > 0 ? character.shoot : character.attack;
+    const Animation &strike = run.strikeOf(player_num, character);
     if (attack != run.attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < strike.duration())
         return {&strike, attack->second.getElapsedTime().asSeconds()};
     if (on_ground)

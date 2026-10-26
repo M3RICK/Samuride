@@ -70,24 +70,41 @@ void Server::fireProjectile(const Player &player, Weapon weapon, float y)
     projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
 }
 
-int Server::strike(const Player &player, float reach, float y)
+// The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y
+static std::vector<std::pair<int, int>> dronesInReach(const Server &server, const Player &player, float reach, float y)
 {
-    int kills = 0;
-
+    std::vector<std::pair<int, int>> drones;
     int top = static_cast<int>(y) - 1;
     int bottom = static_cast<int>(y + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
     int end = static_cast<int>(player.getX() + 0.5f + reach);
 
-    for (int x = front; x <= end; x++) {
-        for (int y = std::max(0, top); y <= bottom; y++) {
-            if (isLiveDrone(x, y)) {
-                destroyDrone(player.getClientFd(), x, y);
-                kills++;
-            }
-        }
-    }
-    return kills;
+    for (int x = front; x <= end; x++)
+        for (int y = std::max(0, top); y <= bottom; y++)
+            if (server.isLiveDrone(x, y))
+                drones.emplace_back(x, y);
+    return drones;
+}
+
+static auto titanReached(const Player &player, float reach)
+{
+    return [&player, reach](const Horde::Titan &titan) {
+        return titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
+    };
+}
+
+int Server::strike(const Player &player, float reach, float y)
+{
+    std::vector<std::pair<int, int>> drones = dronesInReach(*this, player, reach, y);
+
+    for (auto [x, y] : drones)
+        destroyDrone(player.getClientFd(), x, y);
+    return static_cast<int>(drones.size());
+}
+
+bool Server::inReach(const Player &player, float reach, float y) const
+{
+    return !dronesInReach(*this, player, reach, y).empty() || titans.any(titanReached(player, reach));
 }
 
 void Server::updateProjectiles()
@@ -182,10 +199,7 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from, int t
 
 void Server::slashTitans(Player &player, float reach)
 {
-    auto reached = [&](const Horde::Titan &titan) {
-        return titan.x > player.getX() - 0.5f && titan.x < player.getX() + 0.5f + reach;
-    };
-    for (float x : titans.takeDown(reached))
+    for (float x : titans.takeDown(titanReached(player, reach)))
         titanDown(player, x);
 }
 
