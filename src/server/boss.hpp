@@ -18,8 +18,8 @@ public:
     void update(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players, float floor);
     // In the arena and still standing
     bool fighting() const { return stage == Stage::Fighting; }
-    // Where he stands, in tiles: shots reaching it hit him
-    float x() const { return leader + BOSS_AHEAD; }
+    // Where he stands, in tiles: shots reaching it hit him. Close by after a slam.
+    float x() const;
     bool hit(const Player &player, float floor) const;
     // Takes `amount` off his health; true when it downed him
     bool damage(int amount);

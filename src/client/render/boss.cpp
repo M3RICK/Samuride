@@ -45,6 +45,12 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
             run.shakeAtLeast(0.25f);
         }
     }
+    // His x jumps when he leaps in for a slam and back: follow it in a few tenths of a second
+    float dt = std::min(0.1f, frame_clock.restart().asSeconds());
+    float ahead = boss.x - run.view.camera_x;
+    if (!last.fighting)
+        shown_x = ahead;
+    shown_x += (ahead - shown_x) * std::min(1.0f, dt * 10);
     last = boss;
     if (!boss.fighting)
         return;
@@ -56,15 +62,16 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
 }
 
 // A hulking cyborg standing on the floor, 7 tiles tall: legs, torso, head with a red visor, and the arm
-// cannon pointing at the runners. He crouches before a slam and leaps while it lands.
+// cannon pointing at the runners. He crouches before a slam, and is in the air while he leaps.
 void Smasher::drawBody(const BossState &boss)
 {
     float tile = run.view.tile_size;
     float floor = run.toScreen({0, run.floor()}).y;
-    float left = run.toScreen({boss.x - 0.5f, 0}).x;
-    float bob = std::sin(canvas.time() * 3) * tile * 0.05f;
-    if (boss.attack == BossAttack::Slam)
-        bob = boss.phase == BossPhase::Warning ? tile * 0.3f : -tile * 1.5f * (1 - boss.time / (BOSS_SLAM_WARN + BOSS_SLAM_TIME));
+    float left = run.toScreen({run.view.camera_x + shown_x - 0.5f, 0}).x;
+    float leap = std::abs(boss.x - run.view.camera_x - shown_x);
+    float bob = std::sin(canvas.time() * 3) * tile * 0.05f - std::min(leap, 4.0f) * tile * 0.6f;
+    if (boss.attack == BossAttack::Slam && boss.phase == BossPhase::Warning)
+        bob = tile * 0.3f;
     float top = floor - tile * 7 + bob;
 
     rect(canvas, {left + tile * 0.5f, top + tile * 4.5f}, {tile * 0.8f, floor - top - tile * 4.5f}, DARK_STEEL);

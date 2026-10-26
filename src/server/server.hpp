@@ -243,6 +243,8 @@ public:
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);
+    // ... with a blade, if he is within its reach (close by after a slam)
+    bool slashBoss(Player &player, float reach);
 
     // Its bounty to whoever took it down, standing at x
     void titanDown(Player &player, float x);

@@ -22,6 +22,7 @@ inline int BOSS_HEALTH = 80;
 inline int BOSS_SHOT_DAMAGE = 1;        // a bullet: Johnny, David, Jinx, Dante
 inline int BOSS_SPEAR_DAMAGE = 8;       // one of Mikasa's thunder spears
 inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a charge of RAM
+inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
 
@@ -30,10 +31,14 @@ inline int BOSS_BOUNTY = 150;
 inline float BOSS_ROCKET_WARN = 1.2f;
 inline float BOSS_ROCKET_SPEED = 22;    // tiles per second, toward the runners
 inline float BOSS_ROCKET_GAP = 4;
-// Ground slam: the floor glows, then a shockwave runs along it, BOSS_SLAM_HEIGHT tiles tall: be in the air
+// Ground slam: the floor glows, then he leaps and lands BOSS_SLAM_LAND tiles ahead of the leader, a
+// shockwave BOSS_SLAM_HEIGHT tiles tall running along the floor: be in the air. He then gets back up for
+// BOSS_SLAM_RECOVER seconds, close enough for the blades, and leaps back.
 inline float BOSS_SLAM_WARN = 1.0f;
 inline float BOSS_SLAM_TIME = 0.5f;
 inline float BOSS_SLAM_HEIGHT = 3;
+inline float BOSS_SLAM_LAND = 2.5f;
+inline float BOSS_SLAM_RECOVER = 2.0f;
 // Arm cannon: like a sniper, his sight follows a runner, freezes, fires along the row
 inline float BOSS_CANNON_TRACK = 1.2f;
 inline float BOSS_CANNON_AIM = 0.5f;
@@ -42,7 +47,8 @@ inline float BOSS_CANNON_HALF = 0.6f;   // half the beam's height
 
 enum class BossAttack : uint8_t { None, Rockets, Slam, Cannon };
 // Warning: the threat is shown, harmless. Strike: it hurts. Aim: the cannon frozen before it fires.
-enum class BossPhase : uint8_t { Warning, Aim, Strike };
+// Recover: back on his feet after a slam, close by.
+enum class BossPhase : uint8_t { Warning, Aim, Strike, Recover };
 
 // MSG_COLLISION types: he hit a player; he went down (x where he stood)
 constexpr char BOSS_HIT = 'm';

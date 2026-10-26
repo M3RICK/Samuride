@@ -20,7 +20,7 @@ float Boss::durationOf(BossAttack attack)
             // Until the wall is well past the runners
             return BOSS_ROCKET_WARN + (BOSS_AHEAD + 3) / BOSS_ROCKET_SPEED;
         case BossAttack::Slam:
-            return BOSS_SLAM_WARN + BOSS_SLAM_TIME;
+            return BOSS_SLAM_WARN + BOSS_SLAM_TIME + BOSS_SLAM_RECOVER;
         case BossAttack::Cannon:
             return BOSS_CANNON_TRACK + BOSS_CANNON_AIM + BOSS_CANNON_TIME;
         default:
@@ -34,7 +34,9 @@ BossPhase Boss::phaseOf(BossAttack attack, float time)
         case BossAttack::Rockets:
             return time < BOSS_ROCKET_WARN ? BossPhase::Warning : BossPhase::Strike;
         case BossAttack::Slam:
-            return time < BOSS_SLAM_WARN ? BossPhase::Warning : BossPhase::Strike;
+            if (time < BOSS_SLAM_WARN)
+                return BossPhase::Warning;
+            return time < BOSS_SLAM_WARN + BOSS_SLAM_TIME ? BossPhase::Strike : BossPhase::Recover;
         case BossAttack::Cannon:
             if (time < BOSS_CANNON_TRACK)
                 return BossPhase::Warning;
@@ -44,10 +46,17 @@ BossPhase Boss::phaseOf(BossAttack attack, float time)
     }
 }
 
+float Boss::x() const
+{
+    bool landed = attack == BossAttack::Slam && phaseOf(attack, time) != BossPhase::Warning;
+
+    return leader + (landed ? BOSS_SLAM_LAND : BOSS_AHEAD);
+}
+
 float Boss::rocketsX() const
 {
     float flying = std::max(0.0f, time - BOSS_ROCKET_WARN);
-    return x() - flying * BOSS_ROCKET_SPEED;
+    return leader + BOSS_AHEAD - flying * BOSS_ROCKET_SPEED;
 }
 
 void Boss::update(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players, float floor)

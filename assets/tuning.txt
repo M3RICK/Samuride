@@ -117,6 +117,8 @@ BOSS_SHOT_DAMAGE 1
 BOSS_SPEAR_DAMAGE 8
 # Lucy's hack's damage
 BOSS_HACK_DAMAGE 8
+# A blade's damage (Mikasa, Dante's sword), while he is close after a slam
+BOSS_SLASH_DAMAGE 5
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
 # Eddies for downing him
@@ -133,6 +135,10 @@ BOSS_SLAM_WARN 1
 BOSS_SLAM_TIME 0.5
 # Tiles of floor it covers
 BOSS_SLAM_HEIGHT 3
+# Tiles ahead of you he lands
+BOSS_SLAM_LAND 2.5
+# Seconds he stays there, in reach of the blades
+BOSS_SLAM_RECOVER 2
 # Seconds his cannon's sight follows you
 BOSS_CANNON_TRACK 1.2
 # Seconds it stays frozen

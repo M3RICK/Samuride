@@ -103,9 +103,21 @@ int Server::strike(const Player &player, float reach, float y)
     return static_cast<int>(drones.size());
 }
 
+// His body starts half a tile before his x
+static bool bossReached(const Boss &boss, const Player &player, float reach)
+{
+    return boss.fighting() && boss.x() - 0.5f < player.getX() + 0.5f + reach && boss.x() + 2.5f > player.getX();
+}
+
 bool Server::inReach(const Player &player, float reach, float y) const
 {
-    return !dronesInReach(*this, player, reach, y).empty() || titans.any(titanReached(player, reach));
+    return !dronesInReach(*this, player, reach, y).empty() || titans.any(titanReached(player, reach)) ||
+           (mode == GameMode::Cyberpsycho && bossReached(boss, player, reach));
+}
+
+bool Server::slashBoss(Player &player, float reach)
+{
+    return bossReached(boss, player, reach) && hitBoss(player, BOSS_SLASH_DAMAGE);
 }
 
 void Server::updateProjectiles()

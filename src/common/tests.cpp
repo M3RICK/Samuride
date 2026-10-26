@@ -352,7 +352,8 @@ static void testWallet()
     assert(!map_wallet.buyDistrict(4) && !map_wallet.buyDistrict(3) && !map_wallet.buyDistrict(0));
 }
 
-// Adam Smasher: wakes up in his arena, the rocket wall leaves its gap free, the slam spares the air,
+// Adam Smasher: wakes up in his arena, the rocket wall leaves its gap free, the slam spares the air and
+// leaves him close by for a while,
 // he goes down at 0 health and leaves at the arena's end
 static void testBoss()
 {
@@ -366,6 +367,7 @@ static void testBoss()
     assert(!rocketsHit(5, 3, 0, 10));           // still far ahead
     assert(bandHits(10 - BOSS_SLAM_HEIGHT, 10, 8) && !bandHits(10 - BOSS_SLAM_HEIGHT, 10, 4));
     assert(Boss::phaseOf(BossAttack::Cannon, BOSS_CANNON_TRACK + 0.1f) == BossPhase::Aim);
+    assert(Boss::phaseOf(BossAttack::Slam, BOSS_SLAM_WARN + BOSS_SLAM_TIME + 0.1f) == BossPhase::Recover);
 
     Boss boss;
     boss.reset();

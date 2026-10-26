@@ -81,6 +81,7 @@ float Blade::attack(Server &server, Player &player)
     server.announceShot(player, Weapon::Blade);
     server.strike(player, stats.reach);
     server.slashTitans(player, stats.reach);
+    server.slashBoss(player, stats.reach);
     return stats.cooldown;
 }
 
@@ -165,6 +166,7 @@ float Rebellion::attack(Server &server, Player &player)
     server.announceShot(player, Weapon::Blade);
     server.strike(player, sword.reach);
     server.slashTitans(player, sword.reach);
+    server.slashBoss(player, sword.reach);
     if (doubled)
         server.strike(player, sword.reach, double_y);
     return sword.cooldown * STYLE_HASTE[rank];

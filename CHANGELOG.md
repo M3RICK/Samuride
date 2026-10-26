@@ -9,10 +9,11 @@ taken from this file. Players on different versions can't play together: update 
 - **First boss: Adam Smasher**, at 500 m. The scenery clears and he keeps pace on the right of the
   screen for 400 m, attacking in turn, each attack warned first:
   - **Rockets**: a wall of them, warned by chevrons on the right edge. Fly into the gap.
-  - **Ground slam**: the floor glows red, then a shockwave runs along it. Be in the air.
+  - **Ground slam**: the floor glows red, then he leaps at you and a shockwave runs along the floor. Be
+    in the air. He then stays close for 2 seconds getting back up: the moment for the blades.
   - **Arm cannon**: his sight follows you like a sniper's, freezes, then fires a thick beam along the row.
-  - CLASSIC: survive him. CYBERPSYCHO: bullets, Lucy's hack, thunder spears and every ultimate hurt
-    him; down him before the end of his arena for 150 eddies.
+  - CLASSIC: survive him. CYBERPSYCHO: bullets, Lucy's hack, thunder spears, every ultimate and, after
+    a slam, Mikasa's blade and Dante's sword hurt him; down him before the end of his arena for 150 eddies.
 - **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
   from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
 
