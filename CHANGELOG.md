@@ -5,6 +5,10 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v3.0
 
+### New
+- **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
+  from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
+
 ### Balance
 - **Dante** swings his sword only when a drone or a titan is within its reach, and fires Ebony & Ivory
   otherwise, on the ground as in the air.

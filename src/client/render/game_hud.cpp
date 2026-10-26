@@ -121,27 +121,39 @@ void GameScreen::drawRunnerPanel(const PlayerState &player, int me, bool ultimat
         canvas.glitchText(label, 30, look.color, label_pos);
 }
 
-// Dante's style rank, right of his face like DMC's: a big letter in the colour of the rank, popping
-// with a power chord each time it goes up
+// Dante's style rank, right of his face like DMC's: a big letter in the colour of the rank and its word.
+// Each rank up slams the letter in with a flash and a power chord, the word sliding in after it.
 void GameScreen::drawStyle(const PlayerState &player)
 {
     static const sf::Color COLORS[STYLE_RANKS] = {DIM_WHITE, NEON_CYAN, NEON_CYAN, NEON_YELLOW, NEON_ORANGE,
                                                   NEON_ORANGE, NEON_RED};
+    static const char *WORDS[STYLE_RANKS] = {"Dismal", "Crazy!", "Badass!", "Apocalyptic!", "Savage!",
+                                             "Sick Skills!!", "Smokin' Sexy Style!!!"};
     int rank = std::clamp(player.style, 0, STYLE_RANKS - 1);
 
     if (rank > style_shown) {
         audio.play(Audio::Sfx::StyleUp);
         style_clock.restart();
+        if (rank >= 4)
+            run.shakeAtLeast(0.15f, 6);
     }
     style_shown = rank;
 
-    float pop = std::max(0.0f, 1 - style_clock.getElapsedTime().asSeconds() * 4);
+    float t = style_clock.getElapsedTime().asSeconds();
+    float slam = std::max(0.0f, 1 - t * 5);     // 0.2 s from huge down to its size
+    float flash = std::max(0.0f, 1 - t * 2.5f);
+    float slide = std::max(0.0f, 1 - t * 4);
     sf::Vector2f center(Screen::WIDTH / 2 + 190, Screen::HEIGHT - 80);
-    unsigned size = static_cast<unsigned>(64 + 40 * pop + 6 * rank);
+    unsigned size = static_cast<unsigned>((64 + 6 * rank) * (1 + 1.5f * slam * slam));
+
+    if (flash > 0)
+        canvas.halo(center, 50 + 110 * (1 - flash), withAlpha(COLORS[rank], static_cast<uint8_t>(140 * flash)));
     if (rank >= 4)
         canvas.glitchText(STYLE_NAMES[rank], size, COLORS[rank], center);
     else
         canvas.text(STYLE_NAMES[rank], size, COLORS[rank], center);
+    if (rank > 0)
+        canvas.text(WORDS[rank], 26 + 2 * rank, COLORS[rank], center + sf::Vector2f(60 + 260 * slide * slide, 12), {0, 0.5f});
 }
 
 // The gauge around the face, clockwise from the top, the `lit` share of it in colour.
