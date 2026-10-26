@@ -3,6 +3,11 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.0
+
+### Fixes
+- Johnny's gunshot is much quieter, in line with the other sounds.
+
 ## v2.95
 
 ### New
