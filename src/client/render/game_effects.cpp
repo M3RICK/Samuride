@@ -198,6 +198,12 @@ void GameScreen::powerUpTaken(const CollisionEffect &effect, bool mine)
         {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
         {BERSERK_TILE, Audio::Sfx::Berserk}};
 
+    // Taken again while it runs: the server starts its timer over, so does the gauge
+    PlayerAnim &anim = run.player_anims[effect.player];
+    if (effect.type == SANDEVISTAN_TILE)
+        anim.sprint_clock.restart();
+    if (effect.type == BERSERK_TILE)
+        anim.berserk_clock.restart();
     if (mine) {
         audio.play(sounds.at(effect.type));
         react(Mood::Pickup);

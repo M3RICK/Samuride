@@ -44,6 +44,8 @@ taken from this file. Players on different versions can't play together: update 
 - Lucy's network breach refills her RAM.
 
 ### Fixes
+- Taking a Sandevistan or a Berserk while one is already running fills its gauge again: the gauge
+  used to stay empty while the power-up went on.
 - Johnny's gunshot is much quieter, in line with the other sounds.
 - The host's district and mode always count, even when the friend joining connects at the same moment.
 
