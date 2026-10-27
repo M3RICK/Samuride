@@ -152,6 +152,15 @@ void Server::updatePlayers()
     float rear_x = 1e9f;
     std::vector<int> survivors;
 
+    // The Trauma Team at work on someone: the whole run waits for it
+    bool waiting = false;
+    for (auto &[client_fd, player] : players)
+        waiting |= player.awaitRescue(TICK_DT, max_y);
+    if (waiting) {
+        sendGameState();
+        return;
+    }
+
     run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
 
     for (auto &[client_fd, player] : players) {

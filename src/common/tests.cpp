@@ -425,6 +425,9 @@ static void testUpgrades()
     rescued.addScore(101);
     assert(rescued.callTraumaTeam() && rescued.getScore() == 51 && rescued.isInvincible());
     assert(!rescued.callTraumaTeam());
+    // Down on the floor while it works, then back with its grace
+    assert(rescued.awaitRescue(TRAUMA_RESCUE_TIME - 0.1f, 8) && rescued.getY() == 8 && rescued.isGracing());
+    assert(rescued.awaitRescue(0.2f, 8) && !rescued.awaitRescue(0.1f, 8));
     rescued.reset(0, 0);
     assert(rescued.callTraumaTeam());
     assert(!player.callTraumaTeam());

@@ -24,8 +24,9 @@ taken from this file. Players on different versions can't play together: update 
 - **Your upgrades show at every start**, under the countdown, and a red cross sits next to your name
   while the Trauma Team can still come.
 - **Four new upgrades** in the shop, now on two rows:
-  - **Trauma Team** (5000): once per run, a death becomes a rescue. You get 2 seconds to get clear,
-    and they bill you half the eddies of the run.
+  - **Trauma Team** (5000): once per run, a death becomes a rescue. You drop to the floor and the run
+    waits while their AV flies in and a medic slides down to inject you back up. You then get 2 seconds
+    to get clear, and they bill you half the eddies of the run.
   - **Lucky Chip** (3 levels): each eddy has a 2/4/6% chance to hit the jackpot, worth 10.
   - **Titan Serum** (3 levels): the Attack Titan lasts 1 second longer per level, and its eddies count double.
   - **Drone Pinata** (3 levels, CYBERPSYCHO): drones that would drop nothing burst into a power-up

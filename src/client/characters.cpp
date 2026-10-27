@@ -34,7 +34,8 @@ bool Character::load(const std::string &dir)
     std::map<std::string, Animation *> animations = {
         {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
         {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"smoke", &smoke}, {"emerge", &emerge},
-        {"entrance", &entrance}, {"rockets", &rockets}, {"slam", &slam}, {"cannon", &cannon}, {"hit", &hit}
+        {"entrance", &entrance}, {"rockets", &rockets}, {"slam", &slam}, {"cannon", &cannon}, {"hit", &hit},
+        {"arrive", &arrive}, {"leave", &leave}, {"revive", &revive}
     };
     std::string key;
 

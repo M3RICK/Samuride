@@ -23,6 +23,8 @@ struct Sprites {
     Character shift;            // Eren's transformation: smoke and emerging
     Character eren_titan;       // Eren's titan running, sharper than the transformation sheet's
     Character smasher;          // Adam Smasher, the boss
+    Character trauma_av;        // the Trauma Team's AV, "run" is its hover
+    Character trauma_medic;     // and its medic, "run" is him standing
 
     void load();
     // Unknown ids fall back to the first character

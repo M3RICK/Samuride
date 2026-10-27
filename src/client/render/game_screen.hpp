@@ -146,6 +146,8 @@ private:
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
     void traumaRescue(const CollisionEffect &effect, bool mine);
+    void drawTraumaTeam();
+    void drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height);
     void jackpot(const CollisionEffect &effect, bool mine);
     void pinataBurst(const CollisionEffect &effect);
     void powerUpTaken(const CollisionEffect &effect, bool mine);

@@ -81,6 +81,8 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Seconds the run waits while the Trauma Team picks you up
+TRAUMA_RESCUE_TIME 3.5
 # Seconds of invincibility after the Trauma Team picks you up
 TRAUMA_GRACE 2
 # Share of the run's eddies the Trauma Team bills (0 to 1)

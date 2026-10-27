@@ -6,6 +6,7 @@
 #include "particles.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
+#include "../../common/upgrades.hpp"
 #include <cmath>
 #include <cstdlib>
 
@@ -61,6 +62,12 @@ bool Players::updateAirState(int player_num)
     return on_ground;
 }
 
+// A death that ends on the floor, not one that vanishes (Jinx blowing up)
+static bool fallsDead(const Character &character)
+{
+    return character.death.frames > 0 && character.death.mode == Animation::Mode::Once;
+}
+
 // Animation follows what the player does: run, take off, rise, hover at the ceiling, fall, attack, die
 Players::AnimationFrame Players::pickAnimation(int player_num, const PlayerState &player, bool on_ground)
 {
@@ -72,6 +79,10 @@ Players::AnimationFrame Players::pickAnimation(int player_num, const PlayerState
 
     if (death != run.death_clocks.end() && character.death.frames > 0)
         return {&character.death, death->second.getElapsedTime().asSeconds()};
+    // Down until the Trauma Team's medic is done: their death if it ends on the floor, held on its last frame
+    float rescue = run.rescueShare(player_num);
+    if (rescue >= 0 && rescue < Run::RESCUE_UP)
+        return {fallsDead(character) ? &character.death : &character.fall, rescue * TRAUMA_RESCUE_TIME};
     const Animation &strike = run.strikeOf(player_num, character);
     if (attack != run.attack_clocks.end() && attack->second.getElapsedTime().asSeconds() < strike.duration())
         return {&strike, attack->second.getElapsedTime().asSeconds()};
@@ -124,6 +135,13 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition(feet);
+    // Down without a death that falls: their fall, laid on its back, head toward the medic on the left
+    float rescue = run.rescueShare(player_num);
+    bool down = rescue >= 0 && rescue < Run::RESCUE_UP;
+    if (down && !fallsDead(character)) {
+        sprite.setRotation(sf::degrees(-90));
+        sprite.setPosition(feet + sf::Vector2f(tile_size, -tile_size * 0.45f));
+    }
 
     if (player.sprinting)
         drawAfterimages(sprite, tile_size);
@@ -134,7 +152,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
         drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
-    else if (player.grace && std::fmod(canvas.time(), 0.16f) < 0.08f)
+    else if (player.grace && !down && std::fmod(canvas.time(), 0.16f) < 0.08f)
         sprite.setColor(sf::Color(255, 255, 255, 60));
     else if (!is_me)
         sprite.setColor(sf::Color(255, 255, 255, 215));
@@ -143,7 +161,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     if (shocked && std::rand() % 2)
         canvas.draw(sprite, sf::BlendAdd);
 
-    sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (Run::PLAYER_HEIGHT + 0.25f));
+    sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (down ? 1.2f : Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
 
     // Lucy's RAM, over her head where it can be read without looking away from the run: thin red bars,

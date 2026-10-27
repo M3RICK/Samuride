@@ -29,6 +29,8 @@ struct PlayerAnim {
 struct Run {
     // Players are 2 tiles tall, like their server hitbox
     static constexpr float PLAYER_HEIGHT = 2.0f;
+    // Share of the rescue when the runner gets back up, the medic's injector done
+    static constexpr float RESCUE_UP = 0.64f;
 
     // Rebuilt from the chunks the server streams
     Map map;
@@ -39,6 +41,7 @@ struct Run {
     std::map<int, sf::Vector2f> display_positions;
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
+    std::map<int, sf::Clock> rescues;      // since the Trauma Team came for each player
     std::map<int, sf::Clock> attack_clocks;
     std::map<int, Weapon> attack_weapons;  // what each player last attacked with
     std::map<int, sf::Clock> doubles;      // since each Dante's Doppelganger came out
@@ -77,6 +80,8 @@ struct Run {
 
     sf::Vector2f toScreen(sf::Vector2f world) const { return view.toScreen(world); }
     float floor() const { return map.getHeight(); }
+    // Share of the Trauma Team's rescue gone by for this player, 0 to 1; -1 when it isn't at work on them
+    float rescueShare(int player_num) const;
     int characterOf(int player_num) const;
     // The attack animation to play: Dante's guns when his last attack was a shot, else the attack
     const Animation &strikeOf(int player_num, const Character &character) const;

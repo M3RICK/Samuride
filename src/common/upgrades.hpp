@@ -42,6 +42,8 @@ inline float SANDEVISTAN_PER_LEVEL = 0.5f;
 inline float MAGNET_PER_LEVEL = 0.5f;
 // Trauma Team: a dead runner picked up once per run, back in with some grace, the run's eddies cut by the bill
 inline float TRAUMA_GRACE = 2.0f;
+// The rescue itself: the runner down, the AV flying in and the medic at work, the whole run waiting
+inline float TRAUMA_RESCUE_TIME = 3.5f;
 inline float TRAUMA_BILL = 0.5f;
 // Lucky Chip: each eddy may be a jackpot worth this many
 inline float JACKPOT_PER_LEVEL = 0.02f;

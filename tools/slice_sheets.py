@@ -135,6 +135,19 @@ CHARACTERS = {
         "death":    animation((15, 850, 1530, 1005), 8, ground=True, mode="once"),
     # The leap's head reaches the "SLAM" label's height
     }, {"min_alpha": 200, "mirror": True, "erase": [(10, 422, 210, 446)]}),
+    # The Trauma Team (render/trauma.cpp): its AV flies in, hovers and leaves, drawn facing left over a glow.
+    # "run" is the hover. The rows with the AV and the medic together are left out: the game draws the cable.
+    "trauma_av": ("sources/Trauma Team Medevac Sprite Sheet.png", None, {
+        "run":    animation((30, 205, 1320, 335), 10),
+        # The sheet's last arrival frame is two AVs on top of each other: left out
+        "arrive": animation((25, 30, 1525, 180), 8, mode="once", frames=[0, 1, 2, 3, 4]),
+        "leave":  animation((25, 858, 1500, 1010), 8, mode="hide"),
+    }, {"min_alpha": 200}),
+    # Its medic: standing (the drop row's last frame, "run"), then kneeling over the runner with the injector
+    "trauma_medic": ("sources/Trauma Team Medevac Sprite Sheet.png", None, {
+        "run":    animation((1310, 455, 1410, 556), 1, ground=True),
+        "revive": animation((55, 575, 1480, 672), 8, ground=True, mode="once", effects_ahead=True),
+    }, {"min_alpha": 200}),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),

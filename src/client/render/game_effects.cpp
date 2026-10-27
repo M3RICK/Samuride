@@ -211,19 +211,97 @@ void GameScreen::powerUpTaken(const CollisionEffect &effect, bool mine)
     particles.emit(centerOf(effect), 24, powerUpColor(effect.type), 6, 0.5f, 0);
 }
 
-// The Trauma Team's AV swoops in: sirens, a white-and-blue flash, and the bill
+// The Trauma Team is called: sirens, and the runner down while it comes (drawTraumaTeam), then the bill
 void GameScreen::traumaRescue(const CollisionEffect &effect, bool mine)
 {
     audio.play(Audio::Sfx::Siren);
     run.shakeAtLeast(0.4f);
-    particles.emit(centerOf(effect), 40, sf::Color::White, 8, 0.6f, -4);
-    particles.emit(centerOf(effect), 30, NEON_CYAN, 7, 0.6f, -4);
+    run.rescues[effect.player].restart();
     if (!mine)
         return;
     react(Mood::Surprised);
     trauma_ready = false;
     run.announce({"TRAUMA TEAM", NEON_CYAN});
-    run.flash = {withAlpha(sf::Color::White, 120), 0.5f, sf::Clock()};
+}
+
+// The rescue's steps, in shares of it: the AV flies in and hovers, its medic slides down the cable,
+// kneels over the runner (back up at Run::RESCUE_UP), climbs back, and the AV leaves
+static constexpr float AV_IN = 0.08f, AV_HOVER = 0.3f, MEDIC_DOWN = 0.42f, MEDIC_UP = 0.68f, MEDIC_IN = 0.8f,
+                       AV_OUT = 0.84f;
+static constexpr float AV_HEIGHT = 2.4f;        // tiles, the AV's body
+static constexpr float AV_BELLY = 5.5f;         // tiles over the floor while it hovers
+static constexpr float MEDIC_HEIGHT = 1.8f;
+static const sf::Vector2f AV_PATH{-14, -10};    // where it comes from and goes back to, from its hover
+
+static float stepOf(float share, float from, float to)
+{
+    return std::clamp((share - from) / (to - from), 0.0f, 1.0f);
+}
+
+// Frame `share` of the way through an animation
+static int frameOf(const Animation &anim, float share)
+{
+    return std::min(static_cast<int>(share * anim.frames), anim.frames - 1);
+}
+
+void GameScreen::drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height)
+{
+    if (look.sheet.getSize().x == 0 || frame < 0)
+        return;
+    float scale = run.view.tile_size * height / look.body;
+    sf::Sprite sprite(look.sheet);
+    sprite.setTextureRect(look.frameRect(anim, frame));
+    sprite.setOrigin({look.frame_size.x / 2.f, look.feet});
+    sprite.setScale({scale, scale});
+    sprite.setPosition(run.toScreen(feet));
+    canvas.draw(sprite);
+}
+
+// The AV over each runner it picks up, and its medic on the cable or kneeling over them
+void GameScreen::drawTraumaTeam()
+{
+    const Character &av = sprites.trauma_av;
+    const Character &medic = sprites.trauma_medic;
+
+    for (const auto &[player_num, since] : run.rescues) {
+        float share = run.rescueShare(player_num);
+        if (share < AV_IN)
+            continue;
+        float floor = run.floor();
+        float medic_x = run.display_positions[player_num].x - 1.3f;
+        sf::Vector2f hover{medic_x, floor - AV_BELLY};
+
+        // The medic: down the cable, kneeling with the injector, back up
+        if (share >= AV_HOVER && share < MEDIC_IN) {
+            float drop = share < MEDIC_DOWN ? stepOf(share, AV_HOVER, MEDIC_DOWN) : 1 - stepOf(share, MEDIC_UP, MEDIC_IN);
+            float feet = hover.y + MEDIC_HEIGHT + (floor - hover.y - MEDIC_HEIGHT) * drop;
+            sf::Vector2f top = run.toScreen({medic_x, hover.y - 0.4f});
+            sf::RectangleShape cable({3, run.toScreen({medic_x, feet - MEDIC_HEIGHT}).y - top.y});
+            cable.setPosition(top - sf::Vector2f(1.5f, 0));
+            cable.setFillColor(sf::Color(150, 160, 180));
+            canvas.draw(cable);
+            bool kneeling = share >= MEDIC_DOWN && share < MEDIC_UP;
+            drawLook(medic, kneeling ? medic.revive : medic.run,
+                     kneeling ? frameOf(medic.revive, stepOf(share, MEDIC_DOWN, Run::RESCUE_UP)) : 0,
+                     {medic_x, feet}, MEDIC_HEIGHT);
+            // The injector's flash as the runner gets up
+            float flash = 1 - std::abs(share - Run::RESCUE_UP) / 0.05f;
+            if (flash > 0)
+                canvas.halo(run.toScreen({medic_x + 1.2f, floor - 0.5f}), run.view.tile_size * 2.5f * flash,
+                            withAlpha(NEON_CYAN, static_cast<uint8_t>(200 * flash)));
+        }
+
+        // The AV, drawn over the cable's end
+        if (share < AV_HOVER) {
+            float step = stepOf(share, AV_IN, AV_HOVER);
+            drawLook(av, av.arrive, frameOf(av.arrive, step), hover + AV_PATH * (1 - step) * (1 - step), AV_HEIGHT);
+        } else if (share < AV_OUT) {
+            drawLook(av, av.run, av.run.frameAt(canvas.time()), hover, AV_HEIGHT);
+        } else {
+            float step = stepOf(share, AV_OUT, 1);
+            drawLook(av, av.leave, frameOf(av.leave, step), hover + AV_PATH * step * step, AV_HEIGHT);
+        }
+    }
 }
 
 void GameScreen::jackpot(const CollisionEffect &effect, bool mine)

@@ -1,0 +1,9 @@
+name TRAUMA_AV
+sheet sheet.png
+portrait portrait.png
+frame 306 160
+feet 123
+body 106
+run 0 4 10 loop
+arrive 1 5 8 once
+leave 2 7 8 hide

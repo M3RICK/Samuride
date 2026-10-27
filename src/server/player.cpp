@@ -23,6 +23,7 @@ void Player::reset(int number, float spawn_y)
     form_timer = 0;
     shield = upgrades[UPGRADE_SHIELD] > 0;
     rescued = false;
+    rescue_timer = 0;
     sprint_timer = 0;
     berserk_timer = 0;
     grace_timer = 0;
@@ -87,7 +88,18 @@ bool Player::callTraumaTeam()
     rescued = true;
     score -= static_cast<int>(score * TRAUMA_BILL);
     grace_timer = TRAUMA_GRACE;
+    rescue_timer = TRAUMA_RESCUE_TIME;
     runner_weapon->hurt();
+    return true;
+}
+
+bool Player::awaitRescue(float dt, float max_y)
+{
+    if (rescue_timer <= 0)
+        return false;
+    rescue_timer -= dt;
+    y = max_y;
+    y_velocity = 0;
     return true;
 }
 

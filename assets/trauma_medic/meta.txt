@@ -1,0 +1,8 @@
+name TRAUMA_MEDIC
+sheet sheet.png
+portrait portrait.png
+frame 138 95
+feet 91
+body 87
+run 0 1 1 loop
+revive 1 6 8 once

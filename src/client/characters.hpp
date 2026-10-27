@@ -35,6 +35,7 @@ struct Character {
     Animation shoot;            // Dante's guns: his attack when nothing is in his sword's reach
     Animation smoke, emerge;    // Eren's transformation only
     Animation entrance, rockets, slam, cannon, hit;     // Adam Smasher only
+    Animation arrive, leave, revive;                    // the Trauma Team's AV and medic only
 
     bool load(const std::string &dir);
     sf::IntRect frameRect(const Animation &anim, int index) const;

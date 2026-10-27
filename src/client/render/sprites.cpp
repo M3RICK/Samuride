@@ -31,6 +31,8 @@ void Sprites::load()
 
     if (!smasher.load("assets/smasher"))
         DEBUG_LOG("Failed to load Adam Smasher");
+    if (!trauma_av.load("assets/trauma_av") || !trauma_medic.load("assets/trauma_medic"))
+        DEBUG_LOG("Failed to load the Trauma Team");
 
     titans.resize(TITAN_TYPES);
     for (int i = 0; i < TITAN_TYPES; i++) {

@@ -199,6 +199,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     });
     run.cyberpsycho = state.getMode() == GameMode::Cyberpsycho;
     runners.draw(players, me, phase == Phase::Running);
+    drawTraumaTeam();
     ultimates.draw();
     shots.draw();
     drawCuts();
