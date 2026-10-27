@@ -110,3 +110,17 @@ bool Wallet::buyUpgrade(int upgrade)
     level++;
     return true;
 }
+
+Wallet::Goal Wallet::nextGoal() const
+{
+    Goal goal;
+
+    if (unlocked < RUNNER_COUNT)
+        goal = {unlocked, -1, RUNNERS[unlocked].price};
+    for (int i = 0; i < UPGRADE_COUNT; i++) {
+        int price = upgrades[i] < UPGRADES[i].max_level ? UPGRADES[i].prices[upgrades[i]] : -1;
+        if (price >= 0 && (goal.price < 0 || price < goal.price))
+            goal = {-1, i, price};
+    }
+    return goal;
+}

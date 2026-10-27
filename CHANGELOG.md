@@ -17,6 +17,11 @@ taken from this file. Players on different versions can't play together: update 
 - **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
   from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
 
+- **The results say what got you** (fried on a zapper, rammed a drone, run down by a titan, sniped by
+  Arasaka, smashed by Adam Smasher) and **what your eddies buy next**: the cheapest runner or upgrade
+  left, and how far you are from it.
+- **Your upgrades show at every start**, under the countdown, and a red cross sits next to your name
+  while the Trauma Team can still come.
 - **Four new upgrades** in the shop, now on two rows:
   - **Trauma Team** (5000): once per run, a death becomes a rescue. You get 2 seconds to get clear,
     and they bill you half the eddies of the run.

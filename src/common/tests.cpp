@@ -443,6 +443,26 @@ static void testUpgrades()
     }
 }
 
+// The results screen's next goal: the cheapest runner or upgrade level left
+static void testNextGoal()
+{
+    Wallet wallet;
+    wallet.unlocked = 1;
+    Wallet::Goal goal = wallet.nextGoal();
+    assert(goal.runner == 1 && goal.price == RUNNERS[1].price);
+
+    wallet.unlocked = RUNNER_COUNT;
+    goal = wallet.nextGoal();
+    assert(goal.runner < 0 && goal.upgrade >= 0 && goal.price == UPGRADES[goal.upgrade].prices[0]);
+
+    for (int i = 0; i < UPGRADE_COUNT; i++)
+        wallet.upgrades[i] = UPGRADES[i].max_level;
+    assert(wallet.nextGoal().price < 0);
+    wallet.upgrades[UPGRADE_LUCKY] = 1;
+    goal = wallet.nextGoal();
+    assert(goal.upgrade == UPGRADE_LUCKY && goal.price == UPGRADES[UPGRADE_LUCKY].prices[1]);
+}
+
 // Runners are bought in order, with enough eddies
 static void testWallet()
 {
@@ -625,6 +645,7 @@ int main()
     testTuning();
     testWallet();
     testUpgrades();
+    testNextGoal();
     std::cout << "All tests passed" << std::endl;
     return 0;
 }

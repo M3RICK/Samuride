@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "run.hpp"
+#include "../wallet.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
 #include "players.hpp"
@@ -114,6 +115,10 @@ private:
     bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
     float titan_time = TITAN_TIME;              // the same with the Titan Serum
+    UpgradeLevels upgrades{};                   // yours, read at the start of each run
+    bool trauma_ready = false;                  // the Trauma Team can still come this run
+    char death_cause = 0;                       // what downed you (a MSG_COLLISION type), 0 while alive
+    Wallet::Goal next_goal;                     // what the eddies buy next, once this run's are in
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -165,6 +170,9 @@ private:
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
+    void drawLoadout();
+    void drawDeathCause(sf::Vector2f pos);
+    void drawNextGoal(sf::Vector2f pos);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
     void drawSoloResults(const PlayerState &me);
     void drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me);

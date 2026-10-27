@@ -89,9 +89,11 @@ void GameScreen::resetRun()
     kill_streak = 0;
     head = head_target = 0;
     head_until = 0;
-    UpgradeLevels upgrades = Wallet::load().upgrades;
+    upgrades = Wallet::load().upgrades;
     sandevistan_time = sandevistanTime(upgrades);
     titan_time = titanTime(upgrades);
+    trauma_ready = upgrades[UPGRADE_TRAUMA] > 0;
+    death_cause = 0;
 }
 
 // Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO. Not
@@ -125,7 +127,9 @@ void GameScreen::bankEddies(GameState &state)
     if (mine == players.end())
         return;
     Wallet::earn(mine->second.score);
-    wallet = Wallet::load().eddies;
+    Wallet saved = Wallet::load();
+    wallet = saved.eddies;
+    next_goal = saved.nextGoal();
 }
 
 //=============================================================================

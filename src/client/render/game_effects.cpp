@@ -15,6 +15,10 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 {
     bool mine = effect.player == me;
 
+    // A drone's contact is reported as a zapper's: the map tells them apart
+    if (mine && (effect.type == ZAPPER_TILE || effect.type == TITAN_HIT || effect.type == SNIPER_HIT || effect.type == BOSS_HIT))
+        death_cause = effect.type == ZAPPER_TILE && run.map.getTile(effect.x, effect.y) == DRONE_TILE ? DRONE_TILE : effect.type;
+
     switch (effect.type) {
         case ZAPPER_TILE:
             playerDown(effect, Audio::Sfx::Zap, NEON_CYAN, 0.5f, 18);
@@ -211,6 +215,7 @@ void GameScreen::traumaRescue(const CollisionEffect &effect, bool mine)
     if (!mine)
         return;
     react(Mood::Surprised);
+    trauma_ready = false;
     run.announce({"TRAUMA TEAM", NEON_CYAN});
     run.flash = {withAlpha(sf::Color::White, 120), 0.5f, sf::Clock()};
 }

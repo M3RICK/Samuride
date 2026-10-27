@@ -6,6 +6,7 @@
 #include "../touch.hpp"
 #include "../../common/tuning.hpp"
 #include <algorithm>
+#include <cctype>
 #include <format>
 #include <map>
 #include <vector>
@@ -15,6 +16,15 @@ using namespace Palette;
 static std::string playerLabel(int player_num, int me)
 {
     return player_num == me ? "YOU" : "CHOOM";
+}
+
+// "LUCKY CHIP II"; the one-level upgrades go without a number
+static std::string upgradeLabel(int upgrade, int level)
+{
+    static const char *numerals[] = {"", "I", "II", "III", "IV", "V"};
+    std::string name = UPGRADES[upgrade].name;
+
+    return UPGRADES[upgrade].max_level > 1 ? name + " " + numerals[std::clamp(level, 0, 5)] : name;
 }
 
 //=============================================================================
@@ -346,9 +356,25 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
     canvas.image(sprites.character(run.characterOf(player_num)).portrait, {24, y - 2}, 34, {0, 0}, sf::Color::White);
     canvas.draw(text);
 
+    sf::FloatRect bounds = text.getGlobalBounds();
+    float x = bounds.position.x + bounds.size.x + 26;
     if (player.shielded) {
-        sf::FloatRect bounds = text.getGlobalBounds();
-        canvas.hexagon({bounds.position.x + bounds.size.x + 26, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
+        canvas.hexagon({x, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
+        x += 34;
+    }
+    // The Trauma Team on call: a white tag with a red cross, until it comes
+    if (player_num == me && trauma_ready) {
+        sf::RectangleShape tag({26, 26});
+        tag.setOrigin({13, 13});
+        tag.setPosition({x, bounds.getCenter().y});
+        canvas.draw(tag);
+        for (sf::Vector2f size : {sf::Vector2f(18, 6), sf::Vector2f(6, 18)}) {
+            sf::RectangleShape bar(size);
+            bar.setOrigin(size / 2.f);
+            bar.setPosition(tag.getPosition());
+            bar.setFillColor(NEON_RED);
+            canvas.draw(bar);
+        }
     }
 
 }
@@ -404,10 +430,28 @@ void GameScreen::drawBanner()
 
 void GameScreen::drawCountdown(Phase phase, int countdown)
 {
-    if (phase == Phase::Countdown && countdown > 0)
+    if (phase == Phase::Countdown && countdown > 0) {
         canvas.glitchText(std::to_string(countdown), 220, NEON_YELLOW, Screen::CENTER);
+        drawLoadout();
+    }
     else if (phase == Phase::Running && phase_clock.getElapsedTime().asSeconds() < 1.2f)
         canvas.glitchText("BURN THE CITY", 120, NEON_RED, Screen::CENTER);
+}
+
+// What you bought, under the countdown: the shop's work shows at every start
+void GameScreen::drawLoadout()
+{
+    std::string line;
+
+    for (int i = 0; i < UPGRADE_COUNT; i++) {
+        if (upgrades[i] == 0)
+            continue;
+        if (!line.empty())
+            line += "     ";
+        line += upgradeLabel(i, upgrades[i]);
+    }
+    if (!line.empty())
+        canvas.text(line, 24, NEON_CYAN, Screen::CENTER + sf::Vector2f(0, 170));
 }
 
 //=============================================================================
@@ -426,7 +470,8 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
     else
         drawVersusResults(players, state.getWinner(), me);
 
-    canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 160));
+    canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
+    drawNextGoal(Screen::CENTER + sf::Vector2f(0, 192));
     if (phase_clock.getElapsedTime().asSeconds() >= PROMPT_DELAY)
         drawRematchPrompt(state, solo);
 }
@@ -439,6 +484,7 @@ void GameScreen::drawSoloResults(const PlayerState &me)
                              : std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
 
     canvas.glitchText("FLATLINED", 140, NEON_RED, center + sf::Vector2f(0, -150));
+    drawDeathCause(center + sf::Vector2f(0, -55));
     canvas.text(result, 44, sf::Color::White, center + sf::Vector2f(0, 10));
 
     if (new_record || new_drone_record)
@@ -460,8 +506,10 @@ void GameScreen::drawVersusResults(const std::map<int, PlayerState> &players, in
 
     if (winner == me)
         canvas.glitchText("LEGEND OF THE AFTERLIFE", 90, NEON_YELLOW, title_pos);
-    else if (winner >= 0)
+    else if (winner >= 0) {
         canvas.glitchText("FLATLINED", 140, NEON_RED, title_pos);
+        drawDeathCause(center + sf::Vector2f(0, -55));
+    }
     else
         canvas.glitchText("NO WINNERS IN NIGHT CITY", 90, NEON_CYAN, title_pos);
 
@@ -476,9 +524,35 @@ void GameScreen::drawVersusResults(const std::map<int, PlayerState> &players, in
     canvas.text(scores, 34, DIM_WHITE, center + sf::Vector2f(0, 80));
 }
 
+void GameScreen::drawDeathCause(sf::Vector2f pos)
+{
+    static const std::map<char, const char *> causes = {
+        {ZAPPER_TILE, "FRIED ON A ZAPPER"}, {DRONE_TILE, "RAMMED A DRONE"}, {TITAN_HIT, "RUN DOWN BY A TITAN"},
+        {SNIPER_HIT, "SNIPED BY ARASAKA"}, {BOSS_HIT, "SMASHED BY ADAM SMASHER"}};
+    auto cause = causes.find(death_cause);
+
+    if (cause != causes.end())
+        canvas.text(cause->second, 34, DIM_WHITE, pos);
+}
+
+// A reason for one more run: the cheapest thing left in the shop, and how far it is
+void GameScreen::drawNextGoal(sf::Vector2f pos)
+{
+    if (next_goal.price < 0)
+        return;
+    std::string name = next_goal.runner >= 0 ? sprites.character(next_goal.runner).name
+                                             : upgradeLabel(next_goal.upgrade, upgrades[next_goal.upgrade] + 1);
+    for (char &c : name)
+        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    if (wallet >= next_goal.price)
+        canvas.text(std::format("NEXT: {}, YOURS IN THE SHOP", name), 26, NEON_GREEN, pos);
+    else
+        canvas.text(std::format("NEXT: {}, {} EDDIES TO GO", name, next_goal.price - wallet), 26, DIM_WHITE, pos);
+}
+
 void GameScreen::drawRematchPrompt(GameState &state, bool solo)
 {
-    sf::Vector2f pos = Screen::CENTER + sf::Vector2f(0, 220);
+    sf::Vector2f pos = Screen::CENTER + sf::Vector2f(0, 250);
 
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
