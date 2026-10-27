@@ -47,6 +47,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case SHIELD_BREAK:
             shieldBroken(effect, mine);
             break;
+        case TRAUMA_RESCUE:
+            traumaRescue(effect, mine);
+            break;
+        case JACKPOT:
+            jackpot(effect, mine);
+            break;
+        case PINATA_DROP:
+            pinataBurst(effect);
+            return;
         case SHIFT_TILE:
             // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
             if (mine)
@@ -192,6 +201,37 @@ void GameScreen::powerUpTaken(const CollisionEffect &effect, bool mine)
     particles.emit(centerOf(effect), 24, powerUpColor(effect.type), 6, 0.5f, 0);
 }
 
+// The Trauma Team's AV swoops in: sirens, a white-and-blue flash, and the bill
+void GameScreen::traumaRescue(const CollisionEffect &effect, bool mine)
+{
+    audio.play(Audio::Sfx::Siren);
+    run.shakeAtLeast(0.4f);
+    particles.emit(centerOf(effect), 40, sf::Color::White, 8, 0.6f, -4);
+    particles.emit(centerOf(effect), 30, NEON_CYAN, 7, 0.6f, -4);
+    if (!mine)
+        return;
+    react(Mood::Surprised);
+    run.announce({"TRAUMA TEAM", NEON_CYAN});
+    run.flash = {withAlpha(sf::Color::White, 120), 0.5f, sf::Clock()};
+}
+
+void GameScreen::jackpot(const CollisionEffect &effect, bool mine)
+{
+    if (!mine)
+        return;
+    audio.play(Audio::Sfx::Jackpot);
+    particles.emit(centerOf(effect), 30, NEON_YELLOW, 7, 0.7f, 6);
+    particles.emit(centerOf(effect), 12, sf::Color::White, 5, 0.5f, 6);
+}
+
+// Confetti in every colour: the drone burst open
+void GameScreen::pinataBurst(const CollisionEffect &effect)
+{
+    audio.play(Audio::Sfx::Pinata);
+    for (sf::Color color : {NEON_PINK, NEON_YELLOW, NEON_CYAN, NEON_GREEN, NEON_PURPLE})
+        particles.emit(centerOf(effect), 10, color, 7, 0.8f, 8);
+}
+
 // A row of eddies taken at once counts up on one "+N", where the last one was
 void GameScreen::eddyTaken(const CollisionEffect &effect)
 {
@@ -299,6 +339,14 @@ void GameScreen::drawEffects()
                 column.setFillColor(withAlpha(color, alpha));
                 canvas.draw(column, sf::BlendAdd);
             }
+        } else if (active.effect.type == JACKPOT || active.effect.type == TRAUMA_RESCUE) {
+            // The jackpot pays out over the eddy; the Trauma Team's bill floats up over the runner
+            bool jackpot = active.effect.type == JACKPOT;
+            if (active.mine)
+                canvas.text(jackpot ? std::format("JACKPOT +{}", JACKPOT_EDDIES)
+                                    : std::format("BILLED {}% OF THE RUN", static_cast<int>(TRAUMA_BILL * 100)),
+                            jackpot ? 40 : 34, withAlpha(jackpot ? NEON_YELLOW : NEON_CYAN, alpha),
+                            run.toScreen(tile + sf::Vector2f(0.5f, -1 - t)));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
             if (active.mine)

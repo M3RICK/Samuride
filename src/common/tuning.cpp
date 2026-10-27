@@ -80,6 +80,12 @@ std::vector<Entry> &entries()
             VALUE(EMERGE_TIME, "Seconds bursting out of the titan, still invincible"),
             VALUE(SANDEVISTAN_PER_LEVEL, "Seconds of Sandevistan each shop level adds"),
             VALUE(MAGNET_PER_LEVEL, "Tiles each eddie magnet level reaches"),
+            VALUE(TRAUMA_GRACE, "Seconds of invincibility after the Trauma Team picks you up"),
+            VALUE(TRAUMA_BILL, "Share of the run's eddies the Trauma Team bills (0 to 1)", 0, 1),
+            VALUE(JACKPOT_PER_LEVEL, "Chance an eddy hits the jackpot, per Lucky Chip level (0 to 1)", 0, 1),
+            VALUE(JACKPOT_EDDIES, "Eddies a jackpot is worth"),
+            VALUE(SERUM_PER_LEVEL, "Seconds of Attack Titan each Titan Serum level adds"),
+            VALUE(PINATA_PER_LEVEL, "Chance a drone that drops nothing drops a power-up, per Drone Pinata level (0 to 1)", 0, 1),
 
             Entry("Enemies"),
             VALUE(DRONE_BOUNTY, "Eddies for a drone down"),

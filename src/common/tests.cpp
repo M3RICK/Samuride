@@ -414,6 +414,33 @@ static void testUpgrades()
     player.powerUp(SANDEVISTAN_TILE);
     player.update(SANDEVISTAN_TIME + 0.5f, 10, 8);
     assert(player.isSprinting());
+
+    // Trauma Team: once per run, with grace, half the run's eddies billed; back after a reset
+    levels = {};
+    levels[UPGRADE_TRAUMA] = 1;
+    levels[UPGRADE_SERUM] = 2;
+    Player rescued(-1);
+    rescued.setUpgrades(levels);
+    rescued.reset(0, 0);
+    rescued.addScore(101);
+    assert(rescued.callTraumaTeam() && rescued.getScore() == 51 && rescued.isInvincible());
+    assert(!rescued.callTraumaTeam());
+    rescued.reset(0, 0);
+    assert(rescued.callTraumaTeam());
+    assert(!player.callTraumaTeam());
+
+    // Titan Serum: the titan lasts a second longer per level
+    assert(titanTime(levels) == TITAN_TIME + 2 * SERUM_PER_LEVEL);
+    rescued.startShift();
+    rescued.update(SHIFT_TIME + 0.01f, 10, 8);
+    rescued.update(TITAN_TIME + 1.5f, 10, 8);
+    assert(rescued.getForm() == Form::Titan);
+
+    // Drone Pinata: a drone that drops nothing drops a power-up; the others keep theirs
+    for (int x = 0; x < 50; x++) {
+        char drop = droneDrop(x, 3);
+        assert(isPowerUp(droneDrop(x, 3, true)) && (drop == EMPTY_TILE || droneDrop(x, 3, true) == drop));
+    }
 }
 
 // Runners are bought in order, with enough eddies

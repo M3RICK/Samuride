@@ -55,7 +55,7 @@ server's, or never came (a build from before it existed), the server answers its
 | 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
-| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
+| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor, Trauma Team, Lucky Chip, Titan Serum, Drone Pinata |
 
 District and mode are only taken from the host: the first player in the lobby, whoever their
 `MSG_CONNECT` came after, or the one who stayed when the host left. Whoever joins sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
@@ -158,6 +158,9 @@ A 13-byte record per player, 60 times per second:
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
+| `T` | The Trauma Team (upgrade) picked the player up instead of a death: 2 s of invincibility, half the run's eddies billed |
+| `J` | The eddy just taken on that tile hit the Lucky Chip's jackpot (upgrade): +10 in all |
+| `P` | The drone on that tile, just destroyed, drops a power-up thanks to the Drone Pinata (upgrade): `droneDrop(x, y, true)` |
 
 ### `MSG_GAME_END`
 

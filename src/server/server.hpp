@@ -76,6 +76,7 @@ private:
 
     // CYBERPSYCHO
     std::set<std::pair<int, int>> destroyed_drones;
+    std::set<std::pair<int, int>> pinata_drops;         // drones the Drone Pinata made drop a power-up
     std::vector<Projectile> projectiles;
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
 
@@ -160,6 +161,8 @@ private:
     bool checkPlayerCollisions(Player &player);
 
     void attractCoins(Player &player);
+
+    void collectEddy(Player &player, int x, int y);
 
     void sendGameState();
 

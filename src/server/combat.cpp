@@ -259,5 +259,11 @@ void Server::destroyDrone(int owner_fd, int x, int y)
 
     owner->second.addScore(owner->second.weapon().droneDown());
     notifyCollision(DRONE_TILE, owner->second, x, y);
+
+    float pinata = pinataChance(owner->second.getUpgrades());
+    if (droneDrop(x, y) == EMPTY_TILE && pinata > 0 && std::uniform_real_distribution<float>(0, 1)(rng) < pinata) {
+        pinata_drops.insert({x, y});
+        notifyCollision(PINATA_DROP, owner->second, x, y);
+    }
     DEBUG_LOG("Player " + std::to_string(owner->second.getPlayerNumber()) + " destroyed a drone");
 }

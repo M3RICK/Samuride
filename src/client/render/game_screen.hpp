@@ -113,6 +113,7 @@ private:
     float head_until = 0;       // when it picks a new target
     bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
+    float titan_time = TITAN_TIME;              // the same with the Titan Serum
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -139,6 +140,9 @@ private:
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
+    void traumaRescue(const CollisionEffect &effect, bool mine);
+    void jackpot(const CollisionEffect &effect, bool mine);
+    void pinataBurst(const CollisionEffect &effect);
     void powerUpTaken(const CollisionEffect &effect, bool mine);
     void eddyTaken(const CollisionEffect &effect);
     void drawEffects();

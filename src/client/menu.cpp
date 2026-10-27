@@ -205,7 +205,7 @@ void Menu::handleUpgradesEvent(const sf::Event &event)
         state.screen = MenuState::Screen::Main;
         return;
     }
-    if (!navigate(event, state.upgrade, UPGRADE_COUNT, UPGRADE_COUNT, MenuLayout::upgradeBox))
+    if (!navigate(event, state.upgrade, UPGRADE_COUNT, MenuLayout::UPGRADE_COLUMNS, MenuLayout::upgradeBox))
         return;
 
     Wallet &wallet = state.wallet;

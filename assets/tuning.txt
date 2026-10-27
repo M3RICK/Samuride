@@ -81,6 +81,18 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Seconds of invincibility after the Trauma Team picks you up
+TRAUMA_GRACE 2
+# Share of the run's eddies the Trauma Team bills (0 to 1)
+TRAUMA_BILL 0.5
+# Chance an eddy hits the jackpot, per Lucky Chip level (0 to 1)
+JACKPOT_PER_LEVEL 0.02
+# Eddies a jackpot is worth
+JACKPOT_EDDIES 10
+# Seconds of Attack Titan each Titan Serum level adds
+SERUM_PER_LEVEL 1
+# Chance a drone that drops nothing drops a power-up, per Drone Pinata level (0 to 1)
+PINATA_PER_LEVEL 0.15
 
 ## Enemies
 # Eddies for a drone down

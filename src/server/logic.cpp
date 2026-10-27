@@ -15,6 +15,7 @@ bool Server::resetMap()
     chunks_generated = 0;
     last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;
     destroyed_drones.clear();
+    pinata_drops.clear();
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -215,8 +216,8 @@ bool Server::checkPlayerCollisions(Player &player)
 
         char power = powerUpAt(tile_x, tile_y);
 
-        if (tile == COIN_TILE && player.collectCoin(tile_x, tile_y)) {
-            notifyCollision(COIN_TILE, player, tile_x, tile_y);
+        if (tile == COIN_TILE) {
+            collectEddy(player, tile_x, tile_y);
         } else if (power != EMPTY_TILE && player.takePickup(tile_x, tile_y)) {
             player.powerUp(power);
             notifyCollision(power, player, tile_x, tile_y);
@@ -254,9 +255,25 @@ void Server::attractCoins(Player &player)
         for (int y = std::max(0, static_cast<int>(top - reach)); y <= top + Player::HEIGHT + reach; y++) {
             float dx = std::max({left - x - 0.5f, x + 0.5f - left - 1, 0.0f});
             float dy = std::max({top - y - 0.5f, y + 0.5f - top - Player::HEIGHT, 0.0f});
-            if (dx * dx + dy * dy <= reach * reach && game_map.getTile(x, y) == COIN_TILE && player.collectCoin(x, y))
-                notifyCollision(COIN_TILE, player, x, y);
+            if (dx * dx + dy * dy <= reach * reach && game_map.getTile(x, y) == COIN_TILE)
+                collectEddy(player, x, y);
         }
+    }
+}
+
+// Each eddy once per player: double for the titan on the Titan Serum, and the Lucky Chip's jackpot
+void Server::collectEddy(Player &player, int x, int y)
+{
+    if (!player.collectCoin(x, y))
+        return;
+    notifyCollision(COIN_TILE, player, x, y);
+    if (player.getForm() == Form::Titan && player.getUpgrades()[UPGRADE_SERUM] > 0)
+        player.addScore(1);
+
+    float jackpot = jackpotChance(player.getUpgrades());
+    if (jackpot > 0 && std::uniform_real_distribution<float>(0, 1)(rng) < jackpot) {
+        player.addScore(JACKPOT_EDDIES - 1);
+        notifyCollision(JACKPOT, player, x, y);
     }
 }
 

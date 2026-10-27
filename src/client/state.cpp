@@ -12,6 +12,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     district = run_district;
     mode = run_mode;
     destroyed_drones.clear();
+    pinata_drops.clear();
     pending_shots.clear();
     pending_ultimates.clear();
     titans.clear();
@@ -50,6 +51,8 @@ void GameState::handleCollision(char type, int player, int x, int y)
         my_coins.insert({x, y});
     if (type == DRONE_TILE)
         destroyed_drones.insert({x, y});
+    if (type == PINATA_DROP)
+        pinata_drops.insert({x, y});
     pending_effects.push_back({type, player, x, y});
 }
 
@@ -182,6 +185,13 @@ std::set<std::pair<int, int>> GameState::getDestroyedDrones() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return destroyed_drones;
+}
+
+std::set<std::pair<int, int>> GameState::getPinataDrops() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return pinata_drops;
 }
 
 std::vector<ShotEvent> GameState::takeShots()

@@ -39,6 +39,7 @@ private:
     Form form = Form::Normal;
     float form_timer = 0;       // seconds left in the current form
     bool shield = false;
+    bool rescued = false;       // the Trauma Team came this run
     float sprint_timer = 0;     // seconds of Sandevistan left
     float berserk_timer = 0;    // seconds of Berserk left
     float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
@@ -81,6 +82,8 @@ public:
     void powerUp(char tile);
     // Returns true when the shield took the hit
     bool absorbHit();
+    // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
+    bool callTraumaTeam();
     void startShift();
     void addScore(int points);
     int getUltimateCharge() const { return ultimate_charge; }

@@ -252,16 +252,16 @@ void MenuScreens::drawCharacterPreview(const Character &character, sf::FloatRect
 
 void MenuScreens::drawUpgrades(const MenuState &menu)
 {
-    canvas.glitchText("UPGRADES", 80, NEON_YELLOW, {Screen::WIDTH / 2, 150});
-    canvas.text(std::format("{} EDDIES", menu.wallet.eddies), 36, NEON_PINK, {Screen::WIDTH / 2, 235});
+    canvas.glitchText("UPGRADES", 72, NEON_YELLOW, {Screen::WIDTH / 2, 120});
+    canvas.text(std::format("{} EDDIES", menu.wallet.eddies), 34, NEON_PINK, {Screen::WIDTH / 2, 200});
 
     for (int i = 0; i < UPGRADE_COUNT; i++)
         drawUpgradeCard(i, i == menu.upgrade, menu.wallet);
 
     if (!menu.error.empty())
-        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 900});
-    canvas.text("For every runner. Kept small: they reward playing a lot.", 26, DIM_WHITE, {Screen::WIDTH / 2, 960});
-    canvas.text(Touch::hint("[LEFT / RIGHT] CHOOSE     [ENTER] BUY     [ESC] BACK", "TAP TO BUY     [BACK] BACK"), 24,
+        canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 930});
+    canvas.text("For every runner. Kept small: they reward playing a lot.", 26, DIM_WHITE, {Screen::WIDTH / 2, 978});
+    canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] BUY     [ESC] BACK", "TAP TO BUY     [BACK] BACK"), 24,
                 HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
@@ -278,32 +278,31 @@ void MenuScreens::drawUpgradeCard(int index, bool selected, const Wallet &wallet
 
     canvas.card(box, selected);
     if (selected)
-        canvas.glitchText(info.name, 40, NEON_YELLOW, {center_x, top + 70});
+        canvas.glitchText(info.name, 36, NEON_YELLOW, {center_x, top + 48});
     else
-        canvas.text(info.name, 36, DIM_WHITE, {center_x, top + 70});
-    canvas.text(info.effect, 24, selected ? NEON_CYAN : HINT_GREY, {center_x, top + 150});
+        canvas.text(info.name, 32, DIM_WHITE, {center_x, top + 48});
+    canvas.text(info.effect, 22, selected ? NEON_CYAN : HINT_GREY, {center_x, top + 105});
 
     // One pip per level, lit when bought
-    float pips_x = center_x - (info.max_level - 1) * 30;
+    float pips_x = center_x - (info.max_level - 1) * 28;
     for (int i = 0; i < info.max_level; i++) {
-        sf::RectangleShape pip({40, 40});
-        pip.setOrigin({20, 20});
-        pip.setPosition({pips_x + i * 60, top + 250});
+        sf::RectangleShape pip({34, 34});
+        pip.setOrigin({17, 17});
+        pip.setPosition({pips_x + i * 56, top + 165});
         pip.setFillColor(i < level ? NEON_GREEN : sf::Color::Transparent);
         pip.setOutlineColor(i < level ? NEON_GREEN : HINT_GREY);
         pip.setOutlineThickness(3);
         canvas.draw(pip);
     }
-    canvas.text(std::format("LEVEL {} / {}", level, info.max_level), 26, DIM_WHITE, {center_x, top + 310});
 
     if (maxed) {
-        canvas.text("MAXED", 36, NEON_GREEN, {center_x, top + 390});
+        canvas.text("MAXED", 32, NEON_GREEN, {center_x, top + 228});
         return;
     }
-    canvas.text(std::format("{} EDDIES", info.prices[level]), 32, affordable ? NEON_YELLOW : HINT_GREY,
-                {center_x, top + 390});
+    canvas.text(std::format("{} EDDIES", info.prices[level]), 30, affordable ? NEON_YELLOW : HINT_GREY,
+                {center_x, top + 228});
     if (selected && affordable)
-        canvas.text(Touch::hint("[ENTER] BUY", "TAP TO BUY"), 24, NEON_CYAN, {center_x, top + 435});
+        canvas.text(Touch::hint("[ENTER] BUY", "TAP TO BUY"), 22, NEON_CYAN, {center_x, top + 268});
 }
 
 //=============================================================================

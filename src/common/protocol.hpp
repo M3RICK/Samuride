@@ -31,7 +31,7 @@ enum MessageType : uint8_t {
 
 // Bumped whenever a packet changes: builds that don't speak the same one can't play together.
 // Builds from before it existed send no MSG_VERSION: version 0.
-constexpr uint8_t PROTOCOL_VERSION = 1;
+constexpr uint8_t PROTOCOL_VERSION = 2;
 
 struct MessageHeader {
     MessageType type;

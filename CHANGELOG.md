@@ -17,6 +17,14 @@ taken from this file. Players on different versions can't play together: update 
 - **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
   from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
 
+- **Four new upgrades** in the shop, now on two rows:
+  - **Trauma Team** (5000): once per run, a death becomes a rescue. You get 2 seconds to get clear,
+    and they bill you half the eddies of the run.
+  - **Lucky Chip** (3 levels): each eddy has a 2/4/6% chance to hit the jackpot, worth 10.
+  - **Titan Serum** (3 levels): the Attack Titan lasts 1 second longer per level, and its eddies count double.
+  - **Drone Pinata** (3 levels, CYBERPSYCHO): drones that would drop nothing burst into a power-up
+    15/30/45% of the time.
+
 ### Balance
 - **Mikasa's ODM gear**: in the air, her jetpack lifts and she drops 40% faster than the others, so she
   turns on a dime. Same top speed.

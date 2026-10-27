@@ -231,6 +231,14 @@ void Audio::synthesize()
     buffers[Sfx::ShieldBreak] = toBuffer(mix(burst(0.35f, 0.35f, 0.9f), tone(Wave::Square, 1800, 400, 0.25f, 0.15f)));
     buffers[Sfx::Sandevistan] = toBuffer(mix(tone(Wave::Saw, 200, 1400, 0.4f, 0.2f), burst(0.4f, 0.2f, 0.6f)));
 
+    // Trauma Team: a two-tone siren; Lucky Chip: a slot machine paying out; Drone Pinata: a pop, then a chime
+    buffers[Sfx::Siren] = toBuffer(concat(concat(tone(Wave::Square, 960, 960, 0.18f, 0.16f), tone(Wave::Square, 720, 720, 0.18f, 0.16f)),
+                                          concat(tone(Wave::Square, 960, 960, 0.18f, 0.16f), tone(Wave::Square, 720, 720, 0.25f, 0.16f))));
+    buffers[Sfx::Jackpot] = toBuffer(concat(concat(concat(tone(Wave::Square, 1047, 1047, 0.06f, 0.2f), tone(Wave::Square, 1319, 1319, 0.06f, 0.2f)),
+                                                   concat(tone(Wave::Square, 1568, 1568, 0.06f, 0.2f), tone(Wave::Square, 2093, 2093, 0.06f, 0.2f))),
+                                            mix(tone(Wave::Square, 2093, 2093, 0.3f, 0.15f), burst(0.3f, 0.1f, 0.95f))));
+    buffers[Sfx::Pinata] = toBuffer(concat(burst(0.08f, 0.5f, 0.7f), tone(Wave::Sine, 1568, 2093, 0.25f, 0.25f)));
+
     // No envelope: it loops
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
 }

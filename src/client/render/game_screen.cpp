@@ -89,7 +89,9 @@ void GameScreen::resetRun()
     kill_streak = 0;
     head = head_target = 0;
     head_until = 0;
-    sandevistan_time = sandevistanTime(Wallet::load().upgrades);
+    UpgradeLevels upgrades = Wallet::load().upgrades;
+    sandevistan_time = sandevistanTime(upgrades);
+    titan_time = titanTime(upgrades);
 }
 
 // Solo runs chase the personal bests: the distance in each mode, the drones down in CYBERPSYCHO. Not
@@ -183,7 +185,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawDistrict(state.getDistrict());
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
-    tiles.draw(state.getCollectedCoins(), destroyed);
+    tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops());
     if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
         drawHackTarget(players, me, destroyed);
     std::vector<TitanState> titan_states = state.getTitans();

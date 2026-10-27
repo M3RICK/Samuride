@@ -41,14 +41,18 @@ inline bool isPowerUp(char tile)
 
 // One destroyed drone in three leaves a power-up behind (EMPTY_TILE for none), any of them. Picked from
 // its position, so the server and the clients agree without a word on the network.
-inline char droneDrop(int x, int y)
+// `pinata`: the Drone Pinata upgrade made one that would drop nothing drop one too (PINATA_DROP).
+inline char droneDrop(int x, int y, bool pinata = false)
 {
     unsigned hash = static_cast<unsigned>(x) * 2654435761u ^ static_cast<unsigned>(y) * 40503u;
 
     hash ^= hash >> 13;
     if (hash % 3 != 0)
-        return EMPTY_TILE;
+        return pinata ? POWER_UPS[(hash / 7) % std::size(POWER_UPS)] : EMPTY_TILE;
     return POWER_UPS[(hash / 3) % std::size(POWER_UPS)];
 }
+
+// Collision type: a drone burst like a pinata, dropping a power-up it wouldn't have
+constexpr char PINATA_DROP = 'P';
 
 #endif

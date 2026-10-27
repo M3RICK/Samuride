@@ -29,6 +29,7 @@ private:
     int district = 0;
     GameMode mode = GameMode::Classic;
     std::set<std::pair<int, int>> destroyed_drones;
+    std::set<std::pair<int, int>> pinata_drops;     // drones the Drone Pinata made drop a power-up
     std::vector<ShotEvent> pending_shots;
     std::vector<UltimateEvent> pending_ultimates;
     std::vector<TitanState> titans;
@@ -62,6 +63,7 @@ public:
     int getDistrict() const;
     GameMode getMode() const;
     std::set<std::pair<int, int>> getDestroyedDrones() const;
+    std::set<std::pair<int, int>> getPinataDrops() const;
     std::vector<ShotEvent> takeShots();
     std::vector<UltimateEvent> takeUltimates();
     std::vector<TitanState> getTitans() const;

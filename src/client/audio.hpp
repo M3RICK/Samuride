@@ -15,6 +15,7 @@ public:
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
         Stomp, Roar, Steam,                                         // titans and the Attack Titan
         Shield, ShieldBreak, Sandevistan, Berserk,                  // power-ups
+        Siren, Jackpot, Pinata,                                     // upgrades
         FireWave, Nuke, Breach, Charge, UltimateReady,              // ultimates
         StyleUp,                                                    // Dante's style rank going up
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
