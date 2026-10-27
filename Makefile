@@ -50,6 +50,13 @@ CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 # Object files, out of the sources: src/a/b.cpp -> build/obj/src/a/b.o
 OBJ_DIR = build/obj
+
+# SANITIZE=1 (make SANITIZE=1 tests): memory errors and undefined behavior stop the run, objects apart
+ifdef SANITIZE
+OBJ_DIR = build/san
+CFLAGS += -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+LDFLAGS += -fsanitize=address,undefined
+endif
 COMMON_OBJS = $(COMMON_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_OBJS = $(SERVER_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:%.cpp=$(OBJ_DIR)/%.o)
