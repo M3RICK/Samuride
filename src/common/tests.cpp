@@ -6,6 +6,8 @@
 #include "../server/generator.hpp"
 #include "../server/player.hpp"
 #include "../server/boss.hpp"
+#include "../server/server.hpp"
+#include "socket.hpp"
 #include "../client/wallet.hpp"
 #include "cyberpsycho.hpp"
 #include "snipers.hpp"
@@ -17,6 +19,8 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include <optional>
+#include <thread>
 
 static void testPacketFraming()
 {
@@ -464,11 +468,108 @@ static void testBoss()
     assert(!inBossArena(BOSS_DISTANCE - 1) && inBossArena(BOSS_DISTANCE) && !inBossArena(BOSS_DISTANCE + BOSS_ARENA));
 }
 
+// A bare client for the end-to-end test: it talks to a real server over loopback
+struct TestClient {
+    int fd;
+    std::vector<uint8_t> stream;
+
+    explicit TestClient(int port) : fd(Socket::connect("127.0.0.1", port, 1000)) { assert(fd >= 0); }
+
+    void send(MessageType type, const std::vector<uint8_t> &payload)
+    {
+        assert(Socket::send(fd, Protocol::createPacket(type, payload)) > 0);
+    }
+
+    // The next packet of that type, the others skipped; nothing after 5 s
+    std::optional<std::vector<uint8_t>> await(MessageType type)
+    {
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        MessageHeader header;
+        std::vector<uint8_t> payload;
+
+        while (std::chrono::steady_clock::now() < deadline) {
+            while (Protocol::extractPacket(stream, header, payload))
+                if (header.type == type)
+                    return payload;
+            std::vector<Socket::PollEntry> entries = {{fd}};
+            if (Socket::poll(entries, 50) && entries[0].readable && !Socket::receive(fd, stream))
+                return std::nullopt;
+        }
+        return std::nullopt;
+    }
+
+    // This player's latest state, a few ticks from now
+    PlayerState latest(int number)
+    {
+        std::map<int, PlayerState> players;
+        for (int ticks = 0; ticks < 10; ticks++) {
+            auto payload = await(MSG_GAME_STATE);
+            assert(payload && Message::decode(*payload, players));
+        }
+        return players.at(number);
+    }
+};
+
+// Two players over real sockets: lobby, start, countdown, the run, someone leaving
+static void testServerRun()
+{
+    const int port = 47123;
+    ServerConfig config;
+    config.port = port;
+    config.quiet = true;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+
+    // The host's district counts only while alone in the lobby: Bob joins a moment later, as a friend would
+    TestClient alice(port);
+    alice.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 2, .district = 1, .mode = 0}));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestClient bob(port);
+    bob.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 4}));
+
+    // Everyone gets the map, then the same roster with their own number
+    GameStart a_start;
+    GameStart b_start;
+    assert(alice.await(MSG_MAP_DATA) && bob.await(MSG_MAP_DATA));
+    auto a_payload = alice.await(MSG_GAME_START);
+    auto b_payload = bob.await(MSG_GAME_START);
+    assert(a_payload && Message::decode(*a_payload, a_start));
+    assert(b_payload && Message::decode(*b_payload, b_start));
+    assert(a_start.my_number != b_start.my_number && a_start.roster == b_start.roster);
+    assert(a_start.roster.at(a_start.my_number) == 2 && a_start.roster.at(b_start.my_number) == 4);
+    assert(a_start.district == 1 && a_start.mode == GameMode::Classic);
+
+    // Countdown down to 0, then the runners move: Alice holds her jetpack, Bob stays on the floor
+    for (;;) {
+        auto count = alice.await(MSG_COUNTDOWN);
+        assert(count && !count->empty());
+        if ((*count)[0] == 0)
+            break;
+    }
+    PlayerState a0 = alice.latest(a_start.my_number);
+    alice.send(MSG_PLAYER_INPUT, {1});
+    PlayerState a1 = alice.latest(a_start.my_number);
+    PlayerState b1 = alice.latest(b_start.my_number);
+    assert(a1.x > a0.x && a1.jet_active && a1.y < a0.y);
+    assert(!b1.jet_active && b1.y == a0.y);
+
+    // Bob leaves: Alice wins
+    Socket::close(bob.fd);
+    auto end = alice.await(MSG_GAME_END);
+    assert(end && !end->empty() && (*end)[0] == a_start.my_number);
+
+    Socket::close(alice.fd);
+    server.stop();
+    loop.join();
+}
+
 int main()
 {
     testPacketFraming();
     testIntegers();
     testMessages();
+    testServerRun();
     testMapChunks();
     testGenerator();
     testSniperHit();
