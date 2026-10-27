@@ -130,15 +130,8 @@ bool Boss::damage(int amount)
     return true;
 }
 
-std::vector<uint8_t> Boss::serialize() const
+BossState Boss::state() const
 {
-    std::vector<uint8_t> data = {static_cast<uint8_t>(fighting()),
-                                 static_cast<uint8_t>(std::clamp(health * 100 / std::max(1, BOSS_HEALTH), 0, 100)),
-                                 static_cast<uint8_t>(attack), static_cast<uint8_t>(phaseOf(attack, time))};
-
-    Protocol::pushU32(data, x() * POSITION_SCALE);
-    Protocol::pushU32(data, std::max(0.0f, rocketsX()) * POSITION_SCALE);
-    Protocol::pushU16(data, std::max(0.0f, y) * POSITION_SCALE);
-    Protocol::pushU16(data, std::max(0.0f, time) * POSITION_SCALE);
-    return data;
+    return {fighting(), std::clamp(health * 100 / std::max(1, BOSS_HEALTH), 0, 100), attack, phaseOf(attack, time),
+            x(), rocketsX(), y, time};
 }

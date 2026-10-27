@@ -9,72 +9,10 @@
 #include <utility>
 #include <cstdint>
 #include <vector>
-#include "../common/cyberpsycho.hpp"
-#include "../common/titans.hpp"
-#include "../common/snipers.hpp"
-#include "../common/boss.hpp"
-#include "../common/shift.hpp"
+#include "../common/messages.hpp"
 #include "../common/powerups.hpp"
 
 enum class Phase { Waiting, Countdown, Running, Over };
-
-struct PlayerState {
-    float x = 0;
-    float y = 0;
-    int score = 0;
-    bool jet_active = false;
-    Form form = Form::Normal;
-    bool shielded = false;
-    bool sprinting = false;     // Sandevistan
-    int ram = 0;                // Lucy's hack charges
-    bool berserk = false;
-    int ultimate = 0;           // gauge, in percent
-    int spears = 0;             // Mikasa's thunder spears left
-    bool grace = false;         // invincible for a second after a shield, a sprint or a titan
-    int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
-};
-
-// Someone attacked in CYBERPSYCHO
-struct ShotEvent {
-    int player;
-    Weapon weapon;
-};
-
-// Someone fired their ultimate
-struct UltimateEvent {
-    int player;
-    Ultimate ultimate;
-    float x;    // where it starts, in tiles
-    float y;    // the line it follows, for Fishbones
-};
-
-struct TitanState {
-    TitanType type;
-    float x;    // left edge, in tiles
-};
-
-struct SniperState {
-    SniperPhase phase;
-    float y;        // its line, in tiles
-};
-
-struct BossState {
-    bool fighting = false;
-    int health = 100;       // percent
-    BossAttack attack = BossAttack::None;
-    BossPhase phase = BossPhase::Warning;
-    float x = 0;            // where he stands, in tiles
-    float rockets_x = 0;
-    float y = 0;            // the rockets' gap top, or the cannon's line
-    float time = 0;         // seconds into the phase
-};
-
-struct CollisionEffect {
-    char type;
-    int player;
-    int x;
-    int y;
-};
 
 // Written by the network thread, read by the render thread
 class GameState {

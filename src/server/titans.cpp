@@ -51,13 +51,11 @@ bool Horde::inPath(float from_x, float to_x, float y, float floor) const
     });
 }
 
-std::vector<uint8_t> Horde::serialize() const
+std::vector<TitanState> Horde::states() const
 {
-    std::vector<uint8_t> data = {static_cast<uint8_t>(titans.size())};
+    std::vector<TitanState> states;
 
-    for (const Titan &titan : titans) {
-        data.push_back(static_cast<uint8_t>(titan.type));
-        Protocol::pushU32(data, std::max(0.0f, titan.x) * POSITION_SCALE);
-    }
-    return data;
+    for (const Titan &titan : titans)
+        states.push_back({titan.type, titan.x});
+    return states;
 }

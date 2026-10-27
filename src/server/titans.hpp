@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <random>
 #include <vector>
-#include "../common/titans.hpp"
+#include "../common/messages.hpp"
 
 class Player;
 
@@ -45,8 +45,8 @@ public:
         return down;
     }
 
-    // [count]([type][x in 1/100 tile, 4 bytes])...
-    std::vector<uint8_t> serialize() const;
+    // What the clients see of them, for MSG_TITANS
+    std::vector<TitanState> states() const;
 
 private:
     std::vector<Titan> titans;

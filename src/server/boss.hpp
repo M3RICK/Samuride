@@ -8,7 +8,7 @@
 #include <map>
 #include <random>
 #include <vector>
-#include "../common/boss.hpp"
+#include "../common/messages.hpp"
 
 class Player;
 
@@ -24,8 +24,8 @@ public:
     // Takes `amount` off his health; true when it downed him
     bool damage(int amount);
 
-    // [fighting][health %][attack][phase][his x, 4 bytes][the rockets' x, 4 bytes][y, 2 bytes][seconds into the phase, 2 bytes]
-    std::vector<uint8_t> serialize() const;
+    // What the clients see of him, for MSG_BOSS
+    BossState state() const;
 
     // The attack and its phase `time` seconds into it, None once it's over
     static BossPhase phaseOf(BossAttack attack, float time);

@@ -85,24 +85,21 @@ bool Server::lobbyReady() const
 void Server::startGame()
 {
     int player_num = 0;
-    std::vector<uint8_t> roster = { static_cast<uint8_t>(players.size()) };
+    GameStart start;
+    start.district = district;
+    start.mode = mode;
 
     broadcastToAllClients(Protocol::createPacket(MSG_MAP_DATA, game_map.serialize()));
 
     for (auto &[client_fd, player] : players) {
         player.reset(player_num, game_map.getHeight() - Player::HEIGHT);
-        roster.push_back(player_num++);
-        roster.push_back(player.getCharacter());
+        start.roster[player_num++] = player.getCharacter();
     }
-
-    roster.push_back(district);
-    roster.push_back(static_cast<uint8_t>(mode));
 
     // Each client gets its own number first, then who plays which character, then the district
     for (auto &[client_fd, player] : players) {
-        std::vector<uint8_t> payload = { static_cast<uint8_t>(player.getPlayerNumber()) };
-        payload.insert(payload.end(), roster.begin(), roster.end());
-        sendToClient(client_fd, Protocol::createPacket(MSG_GAME_START, payload));
+        start.my_number = player.getPlayerNumber();
+        sendToClient(client_fd, Protocol::createPacket(MSG_GAME_START, Message::encode(start)));
     }
 
     phase = Phase::Countdown;
@@ -189,9 +186,9 @@ void Server::updatePlayers()
     updateUltimates();
     extendMap(leader_x);
     sendGameState();
-    broadcastToAllClients(Protocol::createPacket(MSG_TITANS, titans.serialize()));
-    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, snipers.serialize()));
-    broadcastToAllClients(Protocol::createPacket(MSG_BOSS, boss.serialize()));
+    broadcastToAllClients(Protocol::createPacket(MSG_TITANS, Message::encode(titans.states())));
+    broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, Message::encode(snipers.states())));
+    broadcastToAllClients(Protocol::createPacket(MSG_BOSS, Message::encode(boss.state())));
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
@@ -265,25 +262,27 @@ void Server::attractCoins(Player &player)
 
 void Server::sendGameState()
 {
-    std::vector<uint8_t> state_data;
+    std::map<int, PlayerState> states;
 
     for (const auto &[client_fd, player] : players) {
-        state_data.push_back(player.getPlayerNumber());
-        Protocol::pushU32(state_data, player.getX() * POSITION_SCALE);
-        Protocol::pushU16(state_data, player.getY() * POSITION_SCALE);
-        Protocol::pushU16(state_data, player.getScore());
-        // bit 0: jetpack, bits 1-2: form, bit 3: shield, bit 4: Sandevistan, bits 5-6: RAM, bit 7: Berserk
-        state_data.push_back((player.isJetActive() ? 1 : 0) | static_cast<uint8_t>(player.getForm()) << 1 |
-                             (player.hasShield() ? 1 : 0) << 3 | (player.isSprinting() ? 1 : 0) << 4 |
-                             player.weapon().charges() << 5 | (player.isBerserk() ? 1 : 0) << 7);
-        // Ultimate gauge, in percent, and Mikasa's thunder spears left
-        state_data.push_back(player.ultimatePercent());
-        state_data.push_back(player.ultimate().charges());
-        // bit 0: a second of grace (shield broken, Sandevistan or titan over), bits 1-3: Dante's style rank
-        state_data.push_back((player.isGracing() ? 1 : 0) | player.weapon().style() << 1);
+        states[player.getPlayerNumber()] = {
+            .x = player.getX(),
+            .y = player.getY(),
+            .score = player.getScore(),
+            .jet_active = player.isJetActive(),
+            .form = player.getForm(),
+            .shielded = player.hasShield(),
+            .sprinting = player.isSprinting(),
+            .ram = player.weapon().charges(),
+            .berserk = player.isBerserk(),
+            .ultimate = player.ultimatePercent(),
+            .spears = player.ultimate().charges(),  // Mikasa's thunder spears left
+            .grace = player.isGracing(),            // shield broken, Sandevistan or titan over
+            .style = player.weapon().style(),
+        };
     }
 
-    broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, state_data));
+    broadcastToAllClients(Protocol::createPacket(MSG_GAME_STATE, Message::encode(states)));
 }
 
 void Server::handlePlayerInput(int client_fd, bool jet_activated)
@@ -300,14 +299,9 @@ void Server::handlePlayerInput(int client_fd, bool jet_activated)
 
 void Server::notifyCollision(char collision_type, const Player &player, int x, int y)
 {
-    std::vector<uint8_t> collision_data;
+    CollisionEffect collision{collision_type, player.getPlayerNumber(), x, y};
 
-    collision_data.push_back(collision_type);
-    collision_data.push_back(player.getPlayerNumber());
-    Protocol::pushU32(collision_data, x);
-    Protocol::pushU16(collision_data, y);
-
-    broadcastToAllClients(Protocol::createPacket(MSG_COLLISION, collision_data));
+    broadcastToAllClients(Protocol::createPacket(MSG_COLLISION, Message::encode(collision)));
 }
 
 void Server::endGame(int winner_number)

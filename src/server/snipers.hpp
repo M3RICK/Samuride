@@ -8,7 +8,7 @@
 #include <map>
 #include <random>
 #include <vector>
-#include "../common/snipers.hpp"
+#include "../common/messages.hpp"
 
 class Player;
 
@@ -21,8 +21,8 @@ public:
     // The beam hits everyone in its row, the whole time it lasts
     bool hit(const Player &player) const;
 
-    // [count]([phase][y in 1/100 tile, 2 bytes])...
-    std::vector<uint8_t> serialize() const;
+    // What the clients see of them, for MSG_SNIPERS
+    std::vector<SniperState> states() const;
 
 private:
     struct Sniper {

@@ -33,11 +33,8 @@ void Server::handleUltimate(int client_fd)
 
     float start = player.getX() + 1;
     float line = player.getY() + Player::HEIGHT / 2;
-    std::vector<uint8_t> payload = {static_cast<uint8_t>(player.getPlayerNumber()),
-                                    static_cast<uint8_t>(ultimateOf(player.getCharacter()))};
-    Protocol::pushU32(payload, start * POSITION_SCALE);
-    Protocol::pushU16(payload, line * POSITION_SCALE);
-    broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, payload));
+    UltimateEvent fired{player.getPlayerNumber(), ultimateOf(player.getCharacter()), start, line};
+    broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, Message::encode(fired)));
     player.ultimate().fire(*this, player, start, line);
     hitBoss(player, BOSS_ULTIMATE_DAMAGE);
 }
@@ -51,9 +48,9 @@ void Server::updateUltimates()
 
 void Server::announceShot(const Player &player, Weapon weapon)
 {
-    std::vector<uint8_t> shot = {static_cast<uint8_t>(player.getPlayerNumber()), static_cast<uint8_t>(weapon)};
+    ShotEvent shot{player.getPlayerNumber(), weapon};
 
-    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, shot));
+    broadcastToAllClients(Protocol::createPacket(MSG_SHOT, Message::encode(shot)));
 }
 
 // Fired from the hip, flying ahead of the shooter

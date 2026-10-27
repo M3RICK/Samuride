@@ -220,22 +220,23 @@ void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
 
     if (phase != Phase::Waiting)
         return;
+    ConnectRequest connect;
+    Message::decode(payload, connect);
     Player &player = players.at(client_fd);
-    player.setCharacter(payload.empty() ? 0 : payload[0]);
+    player.setCharacter(connect.character);
 
     // The upgrade levels, each kept within what the shop sells
-    UpgradeLevels levels{};
-    for (int i = 0; i < UPGRADE_COUNT && 3 + i < static_cast<int>(payload.size()); i++)
-        levels[i] = std::min<int>(payload[3 + i], UPGRADES[i].max_level);
-    player.setUpgrades(levels);
+    for (int i = 0; i < UPGRADE_COUNT; i++)
+        connect.upgrades[i] = std::min(connect.upgrades[i], UPGRADES[i].max_level);
+    player.setUpgrades(connect.upgrades);
 
     if (players.size() != 1)
         return;
-    if (payload.size() >= 2 && payload[1] != NOT_PICKED)
-        district = payload[1];
+    if (connect.district != NOT_PICKED)
+        district = connect.district;
 
     // CYBERPSYCHO needs a map with drones
-    GameMode wanted = payload.size() >= 3 && payload[2] == 1 ? GameMode::Cyberpsycho : GameMode::Classic;
+    GameMode wanted = connect.mode == 1 ? GameMode::Cyberpsycho : GameMode::Classic;
     if (wanted != mode) {
         mode = wanted;
         resetMap();

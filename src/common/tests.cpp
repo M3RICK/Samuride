@@ -2,6 +2,7 @@
 
 #include "map.hpp"
 #include "protocol.hpp"
+#include "messages.hpp"
 #include "../server/generator.hpp"
 #include "../server/player.hpp"
 #include "../server/boss.hpp"
@@ -45,6 +46,70 @@ static void testIntegers()
     Protocol::pushU32(data, 4000000000u);
     assert(Protocol::readU16(data.data()) == 8700);
     assert(Protocol::readU32(data.data() + 2) == 4000000000u);
+}
+
+// Each message read back as it was written; a cut payload is refused
+template <typename T, typename Same>
+static void assertRoundTrip(const T &sent, Same same)
+{
+    std::vector<uint8_t> payload = Message::encode(sent);
+    T read{};
+    assert(Message::decode(payload, read) && same(sent, read));
+    payload.pop_back();
+    assert(!Message::decode(payload, read));
+}
+
+static void testMessages()
+{
+    PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
+                       .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5};
+    std::map<int, PlayerState> players = {{1, player}, {0, {}}};
+    assertRoundTrip(players, [](auto &a, auto &b) {
+        return a.size() == b.size() && std::ranges::all_of(a, [&](auto &entry) {
+            auto [n, p] = entry;
+            auto &q = b.at(n);
+            return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
+                   p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
+                   p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style;
+        });
+    });
+    // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
+    assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 11}));
+
+    GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
+    assertRoundTrip(start, [](auto &a, auto &b) {
+        return a.my_number == b.my_number && a.roster == b.roster && a.district == b.district && a.mode == b.mode;
+    });
+    assert(Message::encode(start) == (std::vector<uint8_t>{1, 2, 0, 3, 1, 5, 2, 1}));
+
+    assertRoundTrip(ShotEvent{2, Weapon::Spear}, [](auto &a, auto &b) {
+        return a.player == b.player && a.weapon == b.weapon;
+    });
+    assertRoundTrip(UltimateEvent{1, Ultimate::Nuke, 140.5f, 4.75f}, [](auto &a, auto &b) {
+        return a.player == b.player && a.ultimate == b.ultimate && a.x == b.x && a.y == b.y;
+    });
+    assertRoundTrip(std::vector<TitanState>{{TitanType::Armored, 320.25f}, {TitanType::Female, 9}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].type == b[0].type && a[0].x == b[0].x && a[1].type == b[1].type;
+    });
+    assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
+    });
+    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f}, [](auto &a, auto &b) {
+        return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
+               a.x == b.x && a.rockets_x == b.rockets_x && a.y == b.y && a.time == b.time;
+    });
+    assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
+        return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
+    });
+
+    // Connect: a short one from an older client still goes through, the missing parts left out
+    ConnectRequest connect{.character = 4, .district = 1, .mode = 1, .upgrades = {}};
+    connect.upgrades[0] = 2;
+    ConnectRequest read;
+    assert(Message::decode(Message::encode(connect), read) && read.character == 4 && read.district == 1 &&
+           read.mode == 1 && read.upgrades == connect.upgrades);
+    assert(Message::decode({3}, read) && read.character == 3 && read.district == NOT_PICKED && read.upgrades == UpgradeLevels{});
 }
 
 static void assertSameMap(const Map &a, const Map &b)
@@ -403,6 +468,7 @@ int main()
 {
     testPacketFraming();
     testIntegers();
+    testMessages();
     testMapChunks();
     testGenerator();
     testSniperHit();
