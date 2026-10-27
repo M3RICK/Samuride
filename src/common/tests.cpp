@@ -473,7 +473,12 @@ struct TestClient {
     int fd;
     std::vector<uint8_t> stream;
 
-    explicit TestClient(int port) : fd(Socket::connect("127.0.0.1", port, 1000)) { assert(fd >= 0); }
+    explicit TestClient(int port, int version = PROTOCOL_VERSION) : fd(Socket::connect("127.0.0.1", port, 1000))
+    {
+        assert(fd >= 0);
+        if (version > 0)
+            send(MSG_VERSION, {static_cast<uint8_t>(version)});
+    }
 
     void send(MessageType type, const std::vector<uint8_t> &payload)
     {
@@ -521,12 +526,23 @@ static void testServerRun()
     assert(server.initialize());
     std::thread loop(&Server::run, &server);
 
-    // The host's district counts only while alone in the lobby: Bob joins a moment later, as a friend would
+    // Builds on another protocol, or from before there was one, are told ours and let go
+    for (int version : {0, PROTOCOL_VERSION + 1}) {
+        TestClient stranger(port, version);
+        stranger.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 1, .district = 3, .mode = 1}));
+        auto refusal = stranger.await(MSG_VERSION);
+        assert(refusal && refusal->size() == 1 && (*refusal)[0] == PROTOCOL_VERSION);
+        assert(!stranger.await(MSG_GAME_START));
+        Socket::close(stranger.fd);
+    }
+
+    // Alice, first in, hosts: her district holds even when Bob's connect comes before hers
     TestClient alice(port);
-    alice.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 2, .district = 1, .mode = 0}));
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     TestClient bob(port);
     bob.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 4}));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    alice.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 2, .district = 1, .mode = 0}));
 
     // Everyone gets the map, then the same roster with their own number
     GameStart a_start;

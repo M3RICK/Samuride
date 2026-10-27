@@ -109,6 +109,8 @@ void Server::acceptNewClient()
         return;
     }
 
+    if (players.empty())
+        host_fd = client_fd;
     poll_fds.push_back({client_fd});
     players.try_emplace(client_fd, client_fd);
 
@@ -121,6 +123,8 @@ void Server::removeClient(int client_fd)
         return;
 
     ready_clients.erase(client_fd);
+    if (client_fd == host_fd)
+        host_fd = players.empty() ? -1 : players.begin()->first;
     Socket::close(client_fd);
     std::erase_if(poll_fds, [client_fd](const Socket::PollEntry &entry) { return entry.fd == client_fd; });
 
@@ -169,8 +173,12 @@ void Server::handleClientData(int client_fd)
     MessageHeader header;
     std::vector<uint8_t> payload;
 
-    while (Protocol::extractPacket(stream, header, payload))
-        processClientMessage(client_fd, header, payload);
+    while (Protocol::extractPacket(stream, header, payload)) {
+        if (!processClientMessage(client_fd, header, payload)) {
+            removeClient(client_fd);
+            return;
+        }
+    }
 
     // Clients only send tiny packets, anything this big is garbage
     if (stream.size() > MAX_PENDING_BYTES) {
@@ -179,12 +187,16 @@ void Server::handleClientData(int client_fd)
     }
 }
 
-void Server::processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload)
+bool Server::processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload)
 {
     switch (header.type) {
-        case MSG_CONNECT:
-            handleConnect(client_fd, payload);
+        case MSG_VERSION:
+            if (!payload.empty())
+                players.at(client_fd).setVersion(payload[0]);
             break;
+
+        case MSG_CONNECT:
+            return handleConnect(client_fd, payload);
 
         case MSG_PLAYER_INPUT:
             if (!payload.empty())
@@ -208,21 +220,29 @@ void Server::processClientMessage(int client_fd, const MessageHeader &header, co
         default:
             break;
     }
+    return true;
 }
 
 // Payload: the runner picked, the district and the mode (NOT_PICKED when joining: the host picks),
 // then the upgrade levels (see docs/PROTOCOL.md). District and mode are the first player's call: the
 // host, who launched the server. Only heard in the lobby: sent again during a run, it would rebuild
-// the map under the players.
-void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
+// the map under the players. A build that doesn't speak our protocol is told ours and let go.
+bool Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
 {
     DEBUG_LOG("Client " + std::to_string(client_fd) + " sent connect message");
 
     if (phase != Phase::Waiting)
-        return;
+        return true;
+    Player &player = players.at(client_fd);
+    if (player.getVersion() != PROTOCOL_VERSION) {
+        announce("Refused a player on protocol " + std::to_string(player.getVersion()) + ", ours is " +
+                 std::to_string(PROTOCOL_VERSION));
+        sendToClient(client_fd, Protocol::createPacket(MSG_VERSION, {PROTOCOL_VERSION}));
+        return false;
+    }
+
     ConnectRequest connect;
     Message::decode(payload, connect);
-    Player &player = players.at(client_fd);
     player.setCharacter(connect.character);
 
     // The upgrade levels, each kept within what the shop sells
@@ -230,8 +250,8 @@ void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
         connect.upgrades[i] = std::min(connect.upgrades[i], UPGRADES[i].max_level);
     player.setUpgrades(connect.upgrades);
 
-    if (players.size() != 1)
-        return;
+    if (client_fd != host_fd)
+        return true;
     if (connect.district != NOT_PICKED)
         district = connect.district;
 
@@ -241,6 +261,7 @@ void Server::handleConnect(int client_fd, const std::vector<uint8_t> &payload)
         mode = wanted;
         resetMap();
     }
+    return true;
 }
 
 //=============================================================================

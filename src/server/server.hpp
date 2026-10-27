@@ -69,7 +69,8 @@ private:
     int countdown_ticks = 0;
     std::set<int> ready_clients;
 
-    // Picked by the first player in the lobby: the host
+    // Picked by the host: the first player in the lobby, or whoever stayed when they left
+    int host_fd = -1;
     uint8_t district = 0;
     GameMode mode = GameMode::Classic;
 
@@ -114,9 +115,10 @@ private:
 
     void handleClientData(int client_fd);
 
-    void processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
+    // False when the client has to go
+    bool processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
 
-    void handleConnect(int client_fd, const std::vector<uint8_t> &payload);
+    bool handleConnect(int client_fd, const std::vector<uint8_t> &payload);
 
     //===========================================================================
     // Socket Event Processing

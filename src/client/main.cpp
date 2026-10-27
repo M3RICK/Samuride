@@ -137,6 +137,16 @@ static std::string connectionError(const MenuChoice &choice)
     return "CAN'T REACH " + choice.host + ":" + std::to_string(choice.port);
 }
 
+// Why a run ended on the menu, if it didn't end well; empty otherwise
+static std::string runError(Client::RunResult result, bool connected, const std::string &unreachable)
+{
+    if (result == Client::RunResult::Outdated)
+        return "YOUR SAMURIDE IS OUT OF DATE: UPDATE IT";
+    if (result == Client::RunResult::HostOutdated)
+        return "THE HOST'S SAMURIDE IS OUT OF DATE";
+    return connected ? "" : unreachable;
+}
+
 // Menu, run, back to the menu, until the player quits
 static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
 {
@@ -156,11 +166,11 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
         renderer.setLobbyInfo(hosting ? "YOUR CHOOM JOINS ON  " + Socket::lanAddress() + ":" + std::to_string(HOST_PORT) : "");
 
         Loadout loadout = {choice.character, choice.district, choice.game_mode, Wallet::load().upgrades};
-        if (play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected)
-            == Client::RunResult::Quit)
+        auto result = play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected);
+        if (result == Client::RunResult::Quit)
             return;
-        if (!connected)
-            menu.setError(connectionError(choice));
+        if (std::string error = runError(result, connected, connectionError(choice)); !error.empty())
+            menu.setError(error);
     }
 }
 
@@ -192,11 +202,12 @@ int main(int argc, char **argv)
     // Direct connection from the command line, then the menu as usual
     if (!options.host.empty()) {
         bool connected = true;
-        if (play(renderer, options.host, options.port, {options.character}, settings, options.debug_mode, connected)
-            == Client::RunResult::Quit)
+        auto result = play(renderer, options.host, options.port, {options.character}, settings, options.debug_mode, connected);
+        if (result == Client::RunResult::Quit)
             return EXIT_SUCCESS;
-        if (!connected)
-            menu.setError("CAN'T REACH " + options.host + ":" + std::to_string(options.port));
+        if (std::string error = runError(result, connected, "CAN'T REACH " + options.host + ":" + std::to_string(options.port));
+            !error.empty())
+            menu.setError(error);
     }
 
     menuLoop(renderer, menu, options.debug_mode);

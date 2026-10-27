@@ -36,6 +36,17 @@ Positions travel in hundredths of a tile.
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
 | 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
 | 15 | `MSG_BOSS` | server → client | Adam Smasher: where he is, his health, his attack, every tick |
+| 16 | `MSG_VERSION` | both | Client: my protocol version, before `MSG_CONNECT`. Server: not mine, which is this |
+
+### `MSG_VERSION`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | `PROTOCOL_VERSION` (`src/common/protocol.hpp`), bumped whenever a packet changes |
+
+The client sends it right after connecting, before `MSG_CONNECT`. When it doesn't match the
+server's, or never came (a build from before it existed), the server answers its own version to
+`MSG_CONNECT` and hangs up: the client tells the player which side has to update.
 
 ### `MSG_CONNECT`
 
@@ -46,8 +57,8 @@ Positions travel in hundredths of a tile.
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
 | 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
 
-District and mode are only taken from the first player in the lobby, the host; whoever joins
-sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
+District and mode are only taken from the host: the first player in the lobby, whoever their
+`MSG_CONNECT` came after, or the one who stayed when the host left. Whoever joins sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
 `MSG_CONNECT` is ignored outside the lobby.
 
 ### `MSG_MAP_DATA`
@@ -253,7 +264,7 @@ kills a player. Every number is in `src/common/boss.hpp` and `assets/tuning.txt`
 
 ## A game, step by step
 
-1. The client connects and sends `MSG_CONNECT`.
+1. The client connects and sends `MSG_VERSION`, then `MSG_CONNECT`.
 2. Once the lobby is full (extra clients are refused) and everyone sent `MSG_CONNECT`, the server
    sends the map (`MSG_MAP_DATA`) and `MSG_GAME_START` to each client, then `MSG_COUNTDOWN` once
    per second: 3, 2, 1, 0.

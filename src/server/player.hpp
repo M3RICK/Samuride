@@ -32,6 +32,7 @@ private:
     int score = 0;
     bool jet_active = false;
     int character = 0;
+    int version = 0;            // PROTOCOL_VERSION it sent, 0 if none
     bool introduced = false;    // sent MSG_CONNECT: the character is the one picked
     UpgradeLevels upgrades{};   // bought in the shop, sent with MSG_CONNECT
     float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
@@ -100,6 +101,8 @@ public:
     void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
     const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
+    void setVersion(int sent) { version = sent; }
+    int getVersion() const { return version; }
 
     bool isJetActive() const { return jet_active; }
     void setJetActive(bool active) { jet_active = active; }

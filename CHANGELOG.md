@@ -31,8 +31,11 @@ taken from this file. Players on different versions can't play together: update 
 
 ### Fixes
 - Johnny's gunshot is much quieter, in line with the other sounds.
+- The host's district and mode always count, even when the friend joining connects at the same moment.
 
 ### Other
+- Joining a game on another version of Samuride now says which side has to update, instead of the
+  connection just dropping. From this version on: older versions only see the connection drop.
 - `assets/tuning.txt` starts with a glossary of its technical words: tile, row, chunk, chance, leader, cooldown, reach, grace.
 
 ## v2.95

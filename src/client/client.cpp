@@ -52,6 +52,7 @@ bool Client::connectToServer(int timeout_ms)
 
     DEBUG_LOG("Connected to server: " + server_ip + ":" + std::to_string(server_port));
     connected = true;
+    sendToServer(Protocol::createPacket(MSG_VERSION, {PROTOCOL_VERSION}));
     sendConnectMessage();
     return true;
 }
@@ -80,7 +81,7 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
 
     while (true) {
         input.processInputs();
-        if (input.closeRequested() || input.backRequested())
+        if (input.closeRequested() || input.backRequested() || server_version >= 0)
             break;
 
         Phase phase = game_state.getPhase();
@@ -98,7 +99,11 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
     }
 
     stop();
-    return input.closeRequested() ? RunResult::Quit : RunResult::Menu;
+    if (input.closeRequested())
+        return RunResult::Quit;
+    if (server_version >= 0)
+        return server_version > PROTOCOL_VERSION ? RunResult::Outdated : RunResult::HostOutdated;
+    return RunResult::Menu;
 }
 
 void Client::stop()
@@ -149,6 +154,10 @@ void Client::readIncomingData()
 void Client::processMessage(const MessageHeader &header, const std::vector<uint8_t> &payload)
 {
     switch (header.type) {
+        case MSG_VERSION:
+            if (!payload.empty())
+                server_version = payload[0];
+            break;
         case MSG_MAP_DATA:
             game_state.pushMapData(payload);
             break;

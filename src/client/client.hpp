@@ -39,6 +39,7 @@ private:
 
     std::thread network_thread;
     std::atomic<bool> running;
+    std::atomic<int> server_version = -1;   // set when the server refused ours (MSG_VERSION)
 
     std::vector<uint8_t> stream;    // bytes received, not yet a full packet
 
@@ -65,7 +66,8 @@ private:
     void handleGameEnd(const std::vector<uint8_t> &payload);
 
 public:
-    enum class RunResult { Menu, Quit };
+    // Outdated: the server speaks a newer protocol than this build; HostOutdated: an older one
+    enum class RunResult { Menu, Quit, Outdated, HostOutdated };
 
     Client(const std::string &server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state);
     ~Client();
