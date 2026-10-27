@@ -42,7 +42,7 @@ void Server::extendMap(float leader_x)
 
         bool drones = mode == GameMode::Cyberpsycho;
         // Adam Smasher's arena: nothing in the way but him
-        bool arena = inBossArena(from) || inBossArena(from + CHUNK_WIDTH - 1);
+        bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
                                               : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
         if (!arena) {
@@ -179,7 +179,7 @@ void Server::updatePlayers()
     }
 
     // No titan nor sniper in Smasher's arena, nor charging into it
-    if (!inBossArena(leader_x) && !inBossArena(leader_x + LOOKAHEAD)) {
+    if (!boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
         titans.spawn(leader_x, TICK_DT, rng);
         snipers.spawn(leader_x, TICK_DT, rng, players);
     }

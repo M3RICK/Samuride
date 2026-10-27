@@ -8,6 +8,7 @@
 #include <map>
 #include <random>
 #include <vector>
+#include "../common/boss.hpp"
 #include "../common/messages.hpp"
 
 class Player;
@@ -18,6 +19,8 @@ public:
     void update(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players, float floor);
     // In the arena and still standing
     bool fighting() const { return stage == Stage::Fighting; }
+    // In his arena while he can still be there: once he is down, the run goes back to normal
+    bool holds(float x) const { return stage != Stage::Gone && inBossArena(x); }
     // Where he stands, in tiles: shots reaching it hit him. Close by after a slam.
     float x() const;
     bool hit(const Player &player, float floor) const;

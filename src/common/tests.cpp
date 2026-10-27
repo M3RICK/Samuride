@@ -507,6 +507,7 @@ static void testBoss()
     assert(boss.fighting() && boss.x() == BOSS_DISTANCE + BOSS_AHEAD);
     assert(!boss.hit(players.at(3), 10));       // his entrance: nothing yet
     assert(!boss.damage(BOSS_HEALTH - 1) && boss.damage(1) && !boss.fighting());
+    assert(!boss.holds(BOSS_DISTANCE + 1));     // downed: the rest of his arena is a normal run
 
     boss.reset();
     boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);

@@ -14,6 +14,7 @@ taken from this file. Players on different versions can't play together: update 
   - **Arm cannon**: his sight follows you like a sniper's, freezes, then fires a thick beam along the row.
   - CLASSIC: survive him. CYBERPSYCHO: bullets, Lucy's hack, thunder spears, every ultimate and, after
     a slam, Mikasa's blade and Dante's sword hurt him; down him before the end of his arena for 150 eddies.
+    Down him and the run picks up again right away instead of an empty road to the end of his arena.
 - **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
   from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
 
