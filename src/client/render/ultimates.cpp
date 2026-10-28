@@ -296,7 +296,7 @@ void Ultimates::drawDoubles()
         bool on_ground = y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
         auto attack = run.attack_clocks.find(player);
         float since_attack = attack != run.attack_clocks.end() ? attack->second.getElapsedTime().asSeconds() : 1e9f;
-        const Animation &strike = !on_ground && character.shoot.frames > 0 ? character.shoot : character.attack;
+        const Animation &strike = run.strikeOf(player, character);
         bool striking = since_attack < strike.duration();
         const Animation &anim = striking ? strike : on_ground ? character.run : character.hover;
         sf::Vector2f feet = run.toScreen({position->second.x + 0.5f, y + Run::PLAYER_HEIGHT});

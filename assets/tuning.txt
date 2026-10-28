@@ -5,6 +5,18 @@
 # In versus, the host's file decides what happens; the other player only draws with theirs.
 # While a value isn't at its default, the game says CUSTOM TUNING in a corner.
 # Testing something? Send this file with what you felt: it says exactly what you played.
+#
+# Words used below:
+#   tile       the grid the map is drawn on: a square about a metre wide. The screen is 10 tiles
+#              tall and 20 wide; a runner is 2 tiles tall. The distance on screen counts tiles.
+#   row        a line of tiles across the screen, from top to bottom: 10 rows. Column: the same, upright.
+#   chunk      the map is made 40 tiles at a time, as you run, each piece drawn at random: a chunk.
+#              So 3 chunks is 120 m, 30 chunks is 1200 m.
+#   chance     from 0 (never) to 1 (always): 0.2 is one time in five.
+#   leader     the runner furthest ahead (in solo, you).
+#   cooldown   seconds before you can attack again.
+#   reach      how far ahead a melee attack lands. Radius: how close to a shot's line a drone gets hit.
+#   grace      a moment of invincibility, to get clear after a shield breaks or a power-up ends.
 
 ## The run
 # Run speed when a run starts, in tiles per second
@@ -37,6 +49,8 @@ ZAPPER_GAP_MAX 9
 POWERUP_FIRST_CHUNK 3
 # Chance a chunk holds a power-up after that (0 to 1)
 POWERUP_CHANCE 0.2
+# The same in CYBERPSYCHO, where drones drop them too
+POWERUP_CHANCE_CYBERPSYCHO 0.05
 # Seconds of invincibility after the shield breaks
 SHIELD_GRACE 1
 # Seconds of invincibility after the Sandevistan or the Attack Titan ends
@@ -67,6 +81,20 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Seconds the run waits while the Trauma Team picks you up
+TRAUMA_RESCUE_TIME 3.5
+# Seconds of invincibility after the Trauma Team picks you up
+TRAUMA_GRACE 2
+# Share of the run's eddies the Trauma Team bills (0 to 1)
+TRAUMA_BILL 0.5
+# Chance an eddy hits the jackpot, per Lucky Chip level (0 to 1)
+JACKPOT_PER_LEVEL 0.02
+# Eddies a jackpot is worth
+JACKPOT_EDDIES 10
+# Seconds of Attack Titan each Titan Serum level adds
+SERUM_PER_LEVEL 1
+# Chance a drone that drops nothing drops a power-up, per Drone Pinata level (0 to 1)
+PINATA_PER_LEVEL 0.15
 
 ## Enemies
 # Eddies for a drone down
@@ -95,6 +123,60 @@ SNIPER_AIM_TIME 0.6
 SNIPER_FIRE_TIME 0.25
 # Half the height of the beam, in tiles
 SNIPER_BEAM_HALF 0.35
+
+## Adam Smasher, the boss
+# Tiles before his arena
+BOSS_DISTANCE 500
+# How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)
+BOSS_ARENA 400
+# Tiles ahead of the leader he stands
+BOSS_AHEAD 12
+# Seconds of his entrance before his first attack
+BOSS_INTRO_TIME 3
+# Seconds between two attacks
+BOSS_ATTACK_GAP 1.2
+# Share of his health under which his Sandevistan kicks in, as it does halfway through his arena (0 to 1)
+BOSS_SANDEVISTAN_HEALTH 0.4
+# How many times faster he attacks under his Sandevistan
+BOSS_SANDEVISTAN_RATE 1.5
+# His health in CYBERPSYCHO
+BOSS_HEALTH 80
+# A bullet's damage
+BOSS_SHOT_DAMAGE 1
+# A thunder spear's damage
+BOSS_SPEAR_DAMAGE 8
+# Lucy's hack's damage
+BOSS_HACK_DAMAGE 8
+# A blade's damage (Mikasa, Dante's sword), while he is close after a slam
+BOSS_SLASH_DAMAGE 5
+# Any ultimate's damage
+BOSS_ULTIMATE_DAMAGE 15
+# Eddies for downing him
+BOSS_BOUNTY 150
+# Seconds the rockets are warned
+BOSS_ROCKET_WARN 1.2
+# Their speed toward you, tiles per second
+BOSS_ROCKET_SPEED 22
+# Tiles of the gap in their wall
+BOSS_ROCKET_GAP 4
+# Seconds the slam is warned
+BOSS_SLAM_WARN 1
+# Seconds its shockwave lasts
+BOSS_SLAM_TIME 0.5
+# Tiles of floor it covers
+BOSS_SLAM_HEIGHT 3
+# Tiles ahead of you he lands
+BOSS_SLAM_LAND 2.5
+# Seconds he stays there, in reach of the blades
+BOSS_SLAM_RECOVER 2
+# Seconds his cannon's sight follows you
+BOSS_CANNON_TRACK 1.2
+# Seconds it stays frozen
+BOSS_CANNON_AIM 0.5
+# Seconds its beam lasts
+BOSS_CANNON_TIME 0.3
+# Half the height of the beam, in tiles
+BOSS_CANNON_HALF 0.6
 
 ## Weapons (CYBERPSYCHO): cooldown in seconds, speed in tiles per second on top of the run, reach and radius in tiles
 # Shots vanish this many tiles ahead
@@ -171,8 +253,10 @@ DOPPELGANGER_TIME 8
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
 STYLE_KILLS 2
-# Seconds without a kill to drop a rank (a hit drops him to D)
-STYLE_DROP_TIME 6
+# Seconds without a kill to drop a rank
+STYLE_DROP_TIME 10
+# Ranks a hit (his shield breaking) drops
+STYLE_HIT_DROP 2
 # A drone's bounty times this, at each rank
 STYLE_BOUNTY_D 1
 STYLE_BOUNTY_C 1
@@ -181,17 +265,31 @@ STYLE_BOUNTY_A 2
 STYLE_BOUNTY_S 2
 STYLE_BOUNTY_SS 2.5
 STYLE_BOUNTY_SSS 3
+# His attack cooldowns times this, at each rank
+STYLE_HASTE_D 1
+STYLE_HASTE_C 0.95
+STYLE_HASTE_B 0.9
+STYLE_HASTE_A 0.85
+STYLE_HASTE_S 0.8
+STYLE_HASTE_SS 0.7
+STYLE_HASTE_SSS 0.6
 
-## Runners: price in eddies, and eddies to charge the ultimate
+## Runners: price in eddies, eddies to charge the ultimate, and agility: the jetpack's lift and the fall times this, how fast they turn in the air (not their top speed)
 JOHNY_PRICE 0
 JOHNY_ULTIMATE_CHARGE 150
+JOHNY_AGILITY 1
 DAVID_PRICE 100
 DAVID_ULTIMATE_CHARGE 150
+DAVID_AGILITY 1
 JINX_PRICE 250
 JINX_ULTIMATE_CHARGE 150
+JINX_AGILITY 1
 MIKASA_PRICE 500
 MIKASA_ULTIMATE_CHARGE 100
+MIKASA_AGILITY 1.4
 LUCY_PRICE 750
 LUCY_ULTIMATE_CHARGE 150
+LUCY_AGILITY 1
 DANTE_PRICE 1000
 DANTE_ULTIMATE_CHARGE 150
+DANTE_AGILITY 1

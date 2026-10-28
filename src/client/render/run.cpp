@@ -1,6 +1,7 @@
 // What the parts of the game screen share about the run on screen: map, camera, players' motion
 
 #include "run.hpp"
+#include "../../common/upgrades.hpp"
 #include <algorithm>
 
 void Run::reset()
@@ -8,7 +9,9 @@ void Run::reset()
     display_positions.clear();
     player_anims.clear();
     death_clocks.clear();
+    rescues.clear();
     attack_clocks.clear();
+    attack_weapons.clear();
     doubles.clear();
     hacked_zappers.clear();
     flash = {};
@@ -116,6 +119,14 @@ void Run::announce(const UltimateLook &look)
     callout_clock.restart();
 }
 
+const Animation &Run::strikeOf(int player_num, const Character &character) const
+{
+    auto weapon = attack_weapons.find(player_num);
+    bool shot = weapon != attack_weapons.end() && weapon->second == Weapon::Gun;
+
+    return shot && character.shoot.frames > 0 ? character.shoot : character.attack;
+}
+
 bool Run::doubled(int player_num) const
 {
     auto it = doubles.find(player_num);
@@ -126,4 +137,13 @@ float Run::doubleY(int player_num) const
 {
     auto it = display_positions.find(player_num);
     return mirrored(it != display_positions.end() ? it->second.y : 0, PLAYER_HEIGHT, floor());
+}
+
+float Run::rescueShare(int player_num) const
+{
+    auto rescue = rescues.find(player_num);
+    if (rescue == rescues.end())
+        return -1;
+    float share = rescue->second.getElapsedTime().asSeconds() / TRAUMA_RESCUE_TIME;
+    return share < 1 ? share : -1;
 }

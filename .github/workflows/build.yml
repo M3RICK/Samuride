@@ -12,3 +12,4 @@ jobs:
       - run: pacman -Syu --noconfirm base-devel sfml
       - run: make -j"$(nproc)"
       - run: make tests
+      - run: make SANITIZE=1 tests

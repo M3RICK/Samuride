@@ -33,7 +33,9 @@ bool Character::load(const std::string &dir)
     std::istringstream meta(text);
     std::map<std::string, Animation *> animations = {
         {"run", &run}, {"takeoff", &takeoff}, {"rise", &rise}, {"hover", &hover}, {"fall", &fall},
-        {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"smoke", &smoke}, {"emerge", &emerge}
+        {"death", &death}, {"attack", &attack}, {"shoot", &shoot}, {"smoke", &smoke}, {"emerge", &emerge},
+        {"entrance", &entrance}, {"rockets", &rockets}, {"slam", &slam}, {"cannon", &cannon}, {"hit", &hit},
+        {"arrive", &arrive}, {"leave", &leave}, {"revive", &revive}
     };
     std::string key;
 
@@ -56,6 +58,8 @@ bool Character::load(const std::string &dir)
             meta >> feet;
         } else if (key == "body") {
             meta >> body;
+        } else if (key == "height") {
+            meta >> height;
         } else if (key == "exhaust") {
             int r, g, b;
             meta >> r >> g >> b;

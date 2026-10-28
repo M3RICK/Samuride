@@ -1,0 +1,13 @@
+name SMASHER
+sheet sheet.png
+portrait portrait.png
+frame 310 164
+feet 160
+body 156
+run 0 6 8 loop
+entrance 1 6 8 once
+rockets 2 6 10 once
+slam 3 10 10 once
+cannon 4 6 10 once
+hit 5 3 12 once
+death 6 9 8 once

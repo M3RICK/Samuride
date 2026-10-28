@@ -8,11 +8,13 @@
 #include <string>
 #include <vector>
 #include "run.hpp"
+#include "../wallet.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
 #include "players.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "shots.hpp"
 #include "ultimates.hpp"
 #include "../audio.hpp"
@@ -53,6 +55,7 @@ private:
     Players runners;
     Titans titans;
     Snipers snipers;
+    Smasher smasher;
     Shots shots;
     Ultimates ultimates;
 
@@ -111,6 +114,11 @@ private:
     float head_until = 0;       // when it picks a new target
     bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
+    float titan_time = TITAN_TIME;              // the same with the Titan Serum
+    UpgradeLevels upgrades{};                   // yours, read at the start of each run
+    bool trauma_ready = false;                  // the Trauma Team can still come this run
+    char death_cause = 0;                       // what downed you (a MSG_COLLISION type), 0 while alive
+    Wallet::Goal next_goal;                     // what the eddies buy next, once this run's are in
 
     Phase last_phase = Phase::Waiting;
     sf::Clock phase_clock;
@@ -131,11 +139,17 @@ private:
     void addEffect(const CollisionEffect &effect, int me);
     void playerDown(const CollisionEffect &effect, Audio::Sfx sound, sf::Color color, float shake, float strength);
     void titanDown(const CollisionEffect &effect, bool mine);
+    void bossDown(const CollisionEffect &effect, bool mine);
     void droneDown(const CollisionEffect &effect, int me);
     void hackBounced(const CollisionEffect &effect);
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
+    void traumaRescue(const CollisionEffect &effect, bool mine);
+    void drawTraumaTeam();
+    void drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height);
+    void jackpot(const CollisionEffect &effect, bool mine);
+    void pinataBurst(const CollisionEffect &effect);
     void powerUpTaken(const CollisionEffect &effect, bool mine);
     void eddyTaken(const CollisionEffect &effect);
     void drawEffects();
@@ -158,6 +172,9 @@ private:
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
+    void drawLoadout();
+    void drawDeathCause(sf::Vector2f pos);
+    void drawNextGoal(sf::Vector2f pos);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
     void drawSoloResults(const PlayerState &me);
     void drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me);

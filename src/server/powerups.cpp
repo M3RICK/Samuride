@@ -22,7 +22,9 @@ void Server::placePowerUp(std::vector<std::string> &rows)
 {
     std::uniform_real_distribution<float> chance(0, 1);
 
-    if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= POWERUP_CHANCE)
+    float odds = mode == GameMode::Cyberpsycho ? POWERUP_CHANCE_CYBERPSYCHO : POWERUP_CHANCE;
+
+    if (chunks_generated < POWERUP_FIRST_CHUNK || chance(rng) >= odds)
         return;
     // Any power-up, but Berserk is no use without attacks: CYBERPSYCHO only
     std::vector<char> kinds;
@@ -41,15 +43,20 @@ char Server::powerUpAt(int x, int y) const
     if (isPowerUp(tile))
         return tile;
     if (tile == DRONE_TILE && destroyed_drones.count({x, y}))
-        return droneDrop(x, y);
+        return droneDrop(x, y, pinata_drops.count({x, y}));
     return EMPTY_TILE;
 }
 
-// A deadly hit: the shield takes it if there is one. Returns true when the player dies.
+// A deadly hit: the shield takes it if there is one, the Trauma Team comes if it can. Returns true when
+// the player dies.
 bool Server::hurt(Player &player, char cause, int x, int y)
 {
     if (player.absorbHit()) {
         notifyCollision(SHIELD_BREAK, player, x, y);
+        return false;
+    }
+    if (player.callTraumaTeam()) {
+        notifyCollision(TRAUMA_RESCUE, player, x, y);
         return false;
     }
     notifyCollision(cause, player, x, y);

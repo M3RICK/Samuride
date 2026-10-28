@@ -22,6 +22,8 @@ void Player::reset(int number, float spawn_y)
     form = Form::Normal;
     form_timer = 0;
     shield = upgrades[UPGRADE_SHIELD] > 0;
+    rescued = false;
+    rescue_timer = 0;
     sprint_timer = 0;
     berserk_timer = 0;
     grace_timer = 0;
@@ -78,6 +80,29 @@ bool Player::absorbHit()
     return true;
 }
 
+// The bill: a share of the run's eddies, what goes to the wallet at its end
+bool Player::callTraumaTeam()
+{
+    if (upgrades[UPGRADE_TRAUMA] == 0 || rescued)
+        return false;
+    rescued = true;
+    score -= static_cast<int>(score * TRAUMA_BILL);
+    grace_timer = TRAUMA_GRACE;
+    rescue_timer = TRAUMA_RESCUE_TIME;
+    runner_weapon->hurt();
+    return true;
+}
+
+bool Player::awaitRescue(float dt, float max_y)
+{
+    if (rescue_timer <= 0)
+        return false;
+    rescue_timer -= dt;
+    y = max_y;
+    y_velocity = 0;
+    return true;
+}
+
 // Shifting -> Titan -> Emerging -> Normal; bursting out of the smoke throws you up
 void Player::updateForm(float dt)
 {
@@ -90,7 +115,7 @@ void Player::updateForm(float dt)
 
     if (form == Form::Shifting) {
         form = Form::Titan;
-        form_timer = TITAN_TIME;
+        form_timer = titanTime(upgrades);
     } else if (form == Form::Titan) {
         form = Form::Emerging;
         form_timer = EMERGE_TIME;
@@ -132,7 +157,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
 
     bool thrust = jet_active && form != Form::Shifting;
-    y_velocity += (thrust ? -JET_POWER : GRAVITY) * dt;
+    y_velocity += (thrust ? -JET_POWER : GRAVITY) * agilityOf(character) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
     y += y_velocity * dt;
 

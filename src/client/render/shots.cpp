@@ -23,6 +23,7 @@ void Shots::handle(GameState &state)
         sf::Clock &attack = run.attack_clocks[shot.player];
         if (shot.weapon != Weapon::Minigun || attack.getElapsedTime().asSeconds() > 0.3f)
             attack.restart();
+        run.attack_weapons[shot.player] = shot.weapon;
 
         // Dante's double repeats it from the opposite height, in red
         bool doubled = run.doubled(shot.player);

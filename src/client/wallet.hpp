@@ -33,6 +33,15 @@ struct Wallet {
 
     // The next level, when it isn't maxed and the eddies are there; returns whether it was bought
     bool buyUpgrade(int upgrade);
+
+    // The cheapest thing left to buy: the next runner, or an upgrade's next level. Price -1 once
+    // everything is bought.
+    struct Goal {
+        int runner = -1;
+        int upgrade = -1;
+        int price = -1;
+    };
+    Goal nextGoal() const;
 };
 
 #endif

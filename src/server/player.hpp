@@ -32,12 +32,15 @@ private:
     int score = 0;
     bool jet_active = false;
     int character = 0;
+    int version = 0;            // PROTOCOL_VERSION it sent, 0 if none
     bool introduced = false;    // sent MSG_CONNECT: the character is the one picked
     UpgradeLevels upgrades{};   // bought in the shop, sent with MSG_CONNECT
     float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
     Form form = Form::Normal;
     float form_timer = 0;       // seconds left in the current form
     bool shield = false;
+    bool rescued = false;       // the Trauma Team came this run
+    float rescue_timer = 0;     // seconds the Trauma Team is still at work on them
     float sprint_timer = 0;     // seconds of Sandevistan left
     float berserk_timer = 0;    // seconds of Berserk left
     float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
@@ -80,6 +83,10 @@ public:
     void powerUp(char tile);
     // Returns true when the shield took the hit
     bool absorbHit();
+    // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
+    bool callTraumaTeam();
+    // While it works: on the floor, still, and true, the run waits
+    bool awaitRescue(float dt, float max_y);
     void startShift();
     void addScore(int points);
     int getUltimateCharge() const { return ultimate_charge; }
@@ -100,6 +107,8 @@ public:
     void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
     const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
+    void setVersion(int sent) { version = sent; }
+    int getVersion() const { return version; }
 
     bool isJetActive() const { return jet_active; }
     void setJetActive(bool active) { jet_active = active; }

@@ -14,7 +14,8 @@ Tiles::Tiles(Canvas &canvas, const Sprites &sprites, const Run &run)
     : canvas(canvas), sprites(sprites), run(run) {
 }
 
-void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed)
+void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed,
+                 const std::set<std::pair<int, int>> &pinata)
 {
     const WorldView &view = run.view;
     int start_x = std::max(0, static_cast<int>(view.camera_x) - 1);
@@ -28,7 +29,7 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
 
             // A destroyed drone may have left a power-up behind
             if (tile == DRONE_TILE && destroyed.count({x, y}))
-                tile = droneDrop(x, y);
+                tile = droneDrop(x, y, pinata.count({x, y}));
 
             if (tile == ZAPPER_TILE && run.burnt_zappers.count({x, y}))
                 drawSprite(sprites.zapper, {static_cast<float>(x), static_cast<float>(y)}, 0.5f, sf::Color(70, 50, 45, 170));

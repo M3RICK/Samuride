@@ -19,6 +19,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "player.hpp"
 
 struct ServerConfig {
@@ -68,17 +69,20 @@ private:
     int countdown_ticks = 0;
     std::set<int> ready_clients;
 
-    // Picked by the first player in the lobby: the host
+    // Picked by the host: the first player in the lobby, or whoever stayed when they left
+    int host_fd = -1;
     uint8_t district = 0;
     GameMode mode = GameMode::Classic;
 
     // CYBERPSYCHO
     std::set<std::pair<int, int>> destroyed_drones;
+    std::set<std::pair<int, int>> pinata_drops;         // drones the Drone Pinata made drop a power-up
     std::vector<Projectile> projectiles;
     std::map<std::pair<int, int>, float> hacked_zappers;   // node -> seconds before it's live again (hacked or burnt)
 
     Horde titans;
     SniperSquad snipers;
+    Boss boss;
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -112,9 +116,10 @@ private:
 
     void handleClientData(int client_fd);
 
-    void processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
+    // False when the client has to go
+    bool processClientMessage(int client_fd, const MessageHeader &header, const std::vector<uint8_t> &payload);
 
-    void handleConnect(int client_fd, const std::vector<uint8_t> &payload);
+    bool handleConnect(int client_fd, const std::vector<uint8_t> &payload);
 
     //===========================================================================
     // Socket Event Processing
@@ -156,6 +161,8 @@ private:
     bool checkPlayerCollisions(Player &player);
 
     void attractCoins(Player &player);
+
+    void collectEddy(Player &player, int x, int y);
 
     void sendGameState();
 
@@ -233,8 +240,16 @@ public:
     // ... in front of a body whose top is at y
     int strike(const Player &player, float reach, float y);
 
+    // The live drones a strike would take down, or a titan in its reach: Dante cuts only then
+    bool inReach(const Player &player, float reach, float y) const;
+
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);
+
+    // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
+    bool hitBoss(Player &player, int damage);
+    // ... with a blade, if he is within its reach (close by after a slam)
+    bool slashBoss(Player &player, float reach);
 
     // Its bounty to whoever took it down, standing at x
     void titanDown(Player &player, float x);

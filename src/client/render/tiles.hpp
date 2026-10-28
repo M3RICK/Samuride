@@ -30,7 +30,8 @@ public:
     Tiles(Canvas &canvas, const Sprites &sprites, const Run &run);
 
     // The tiles on screen, minus what you collected and the drones shot down
-    void draw(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed);
+    void draw(const std::set<std::pair<int, int>> &collected, const std::set<std::pair<int, int>> &destroyed,
+              const std::set<std::pair<int, int>> &pinata);
     // Fits a texture inside the tile at world position, centered
     void drawSprite(const sf::Texture &texture, sf::Vector2f world, float fill, sf::Color color);
 };

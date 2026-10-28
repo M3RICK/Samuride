@@ -81,17 +81,27 @@ float Blade::attack(Server &server, Player &player)
     server.announceShot(player, Weapon::Blade);
     server.strike(player, stats.reach);
     server.slashTitans(player, stats.reach);
+    server.slashBoss(player, stats.reach);
     return stats.cooldown;
 }
 
-// Only when there is something in her way and RAM to hack it: a drone goes down, a zapper's beams go off
+// Only when there is something in her way and RAM to hack it: a drone goes down, a zapper's beams go off,
+// Adam Smasher takes a hit
 float Hack::attack(Server &server, Player &player)
 {
     auto [x, y] = hackTarget(server.map(), player.getX(), player.getY(), Player::HEIGHT,
                              [&server](int x, int y) { return server.isOff(x, y); });
 
-    if (ram == 0 || x < 0)
+    if (ram == 0)
         return 0;
+    // Nothing in her way: Adam Smasher's cyberware, if he is there
+    if (x < 0) {
+        if (!server.hitBoss(player, BOSS_HACK_DAMAGE))
+            return 0;
+        ram--;
+        server.announceShot(player, Weapon::Hack);
+        return statsOf(Weapon::Hack).cooldown;
+    }
 
     ram--;
     if (server.isLiveDrone(x, y)) {
@@ -138,28 +148,28 @@ void Hack::tick(const Player &player, float dt)
     }
 }
 
-// The sword cuts like Mikasa's blade, the guns shoot like Johnny's: the clients draw them as those.
-// His Doppelganger repeats it from the opposite height (drones only: titans stay on the floor).
+// The sword cuts like Mikasa's blade when a drone or a titan is within its reach, the guns shoot like
+// Johnny's otherwise: the clients draw them as those. His Doppelganger repeats it from the opposite
+// height (drones only: titans stay on the floor). The higher his rank, the faster he attacks.
 float Rebellion::attack(Server &server, Player &player)
 {
-    float floor = server.map().getHeight();
-    bool grounded = player.getY() >= floor - Player::HEIGHT - 0.01f;
+    WeaponStats sword = statsOf(Weapon::Blade);
     bool doubled = player.ultimate().doubles();
-    float double_y = mirrored(player.getY(), Player::HEIGHT, floor);
+    float double_y = mirrored(player.getY(), Player::HEIGHT, server.map().getHeight());
 
-    if (!grounded) {
+    if (!server.inReach(player, sword.reach, player.getY())) {
         server.fireProjectile(player, Weapon::Gun);
         if (doubled)
             server.fireProjectile(player, Weapon::Gun, double_y);
-        return statsOf(Weapon::Gun).cooldown;
+        return statsOf(Weapon::Gun).cooldown * STYLE_HASTE[rank];
     }
-    WeaponStats sword = statsOf(Weapon::Blade);
     server.announceShot(player, Weapon::Blade);
     server.strike(player, sword.reach);
     server.slashTitans(player, sword.reach);
+    server.slashBoss(player, sword.reach);
     if (doubled)
         server.strike(player, sword.reach, double_y);
-    return sword.cooldown;
+    return sword.cooldown * STYLE_HASTE[rank];
 }
 
 // Paid at the rank he had; STYLE_KILLS of them raise it
@@ -229,9 +239,11 @@ void Nuke::act(Server &server, Player &player)
 }
 
 // Lucy's network breach, from just behind her to the end of the screen: drones go down, zappers go off
-// for BREACH_TIME (the burnt ones stay out)
+// for BREACH_TIME (the burnt ones stay out), and her RAM comes back full
 void Breach::fire(Server &server, Player &player, float start, float)
 {
+    if (auto *hack = dynamic_cast<Hack *>(&player.weapon()))
+        hack->refill();
     for (int x = std::max(0, static_cast<int>(start - 2)); x <= static_cast<int>(start + BREACH_AHEAD); x++) {
         for (int y = 0; y < static_cast<int>(server.map().getHeight()); y++) {
             if (server.isLiveDrone(x, y))

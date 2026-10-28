@@ -29,7 +29,8 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
               solo=False, scale=1):
     """One animation of a sheet.
 
-    region:         box (x0, y0, x1, y1) holding the frames, labels left out
+    region:         box (x0, y0, x1, y1) holding the frames, labels left out; or a list of them, one per
+                    row, for an animation laid on several rows
     ground:         feet on the floor (run) rather than flying
     mode:           "loop", "once" (holds the last frame) or "hide" (vanishes after the last frame)
     frames:         indices to keep, all by default
@@ -56,6 +57,7 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
 #   crops:          {file: box} extra pictures cut as they are, trimmed to their opaque pixels
+#   min_alpha:      pixels less opaque than this go: a see-through glow drawn behind the frames
 TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
 
 # Eren's transformation: smoke column, titan emerging from it, titan running.
@@ -121,6 +123,43 @@ CHARACTERS = {
         "shoot":  animation((90, 668, 1445, 778), 18, mode="once",
                             cuts=[90, 213, 342, 471, 591, 713, 833, 960, 1094, 1210, 1328, 1445], frames=[3, 4, 5]),
     }, {"key_black": True}),
+    # Adam Smasher, the boss (render/boss.cpp): drawn facing right over a glow, he faces the runners
+    "smasher": ("sources/Adam_Smasher.png", None, {
+        "run":      animation((15, 40, 740, 205), 8, ground=True),
+        "entrance": animation((775, 40, 1530, 205), 8, ground=True, mode="once"),
+        # Two puffs of smoke left behind by the rockets pass for frames: left out
+        "rockets":  animation((15, 250, 1030, 405), 10, ground=True, mode="once", effects_ahead=True,
+                              frames=[0, 1, 2, 3, 4, 7]),
+        "slam":     animation((15, 420, 1490, 615), 10, ground=True, mode="once", splits=[135]),
+        "cannon":   animation((15, 660, 1010, 810), 10, ground=True, mode="once", effects_ahead=True),
+        "hit":      animation((1055, 660, 1500, 810), 12, ground=True, mode="once"),
+        "death":    animation((15, 850, 1530, 1005), 8, ground=True, mode="once"),
+    # The leap's head reaches the "SLAM" label's height
+    }, {"min_alpha": 200, "mirror": True, "erase": [(10, 422, 210, 446)]}),
+    # The Trauma Team (render/trauma.cpp): its AV flies in, hovers and leaves, drawn facing left over a glow.
+    # "run" is the hover. The rows with the AV and the medic together are left out: the game draws the cable.
+    "trauma_av": ("sources/Trauma Team Medevac Sprite Sheet.png", None, {
+        "run":    animation((30, 205, 1320, 335), 10),
+        # The sheet's last arrival frame is two AVs on top of each other: left out
+        "arrive": animation((25, 30, 1525, 180), 8, mode="once", frames=[0, 1, 2, 3, 4]),
+        "leave":  animation((25, 858, 1500, 1010), 8, mode="hide"),
+    }, {"min_alpha": 200}),
+    # Its medic: standing (the drop row's last frame, "run"), then kneeling over the runner with the injector
+    "trauma_medic": ("sources/Trauma Team Medevac Sprite Sheet.png", None, {
+        "run":    animation((1310, 455, 1410, 556), 1, ground=True),
+        "revive": animation((55, 575, 1480, 672), 8, ground=True, mode="once", effects_ahead=True),
+    }, {"min_alpha": 200}),
+    # The mounts, in place of Eren's titan for their runner (render/players.cpp): from Alex, on several rows
+    "johny_mount": ("../Samuride Files/Animation files/Johnny/Johnny_Porsche_NoBG.png", None, {
+        "run": animation([(0, 85, 1408, 205), (0, 257, 1408, 377), (0, 444, 1408, 565), (0, 632, 1408, 754)], 14,
+                         ground=True),
+    }),
+    "david_mount": ("../Samuride Files/Animation files/David/David_Cyberpsycho_NoBG.png", None, {
+        "run": animation([(0, 55, 1408, 368), (0, 415, 1408, 725)], 12, ground=True),
+    }),
+    "jinx_mount": ("../Samuride Files/Animation files/Jinx/Warwick_Jinx_Mount_Alt_NoBG.png", None, {
+        "run": animation([(0, 0, 1408, 250), (0, 260, 1408, 505), (0, 515, 1408, 758)], 14, ground=True),
+    }),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
@@ -168,8 +207,11 @@ def label_blobs(mask):
                         labels[ny, nx] = count
                         queue.append((ny, nx))
     return labels, count
-DISPLAY_NAMES = {"johny": "JOHNNY"}
+DISPLAY_NAMES = {"johny": "JOHNNY", "johny_mount": "PORSCHE", "david_mount": "CYBERPSYCHO", "jinx_mount": "WARWICK"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
+# Tiles tall in the game, for the mounts (Eren's titan is TITAN_FORM_HEIGHT): a car is not a giant
+HEIGHTS = {"johny_mount": 2.2, "david_mount": 3.6, "jinx_mount": 3.6}
+
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
@@ -289,6 +331,8 @@ def seam_cuts(pixels, region, centres):
 
 
 def find_frames(pixels, spec, effects):
+    if isinstance(spec["region"], list):
+        return [frame for region in spec["region"] for frame in find_frames(pixels, {**spec, "region": region}, effects)]
     cuts = spec["cuts"]
     if cuts and cuts[0] == "seams":
         cuts = seam_cuts(pixels, spec["region"], cuts[1])
@@ -344,6 +388,10 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         sheet = key_background(sheet)
     if options.get("key_black"):
         sheet = key_black(sheet)
+    if options.get("min_alpha"):
+        px = np.array(sheet)
+        px[px[..., 3] < options["min_alpha"]] = 0
+        sheet = Image.fromarray(px)
     for box in options.get("erase", []):
         sheet.paste((0, 0, 0, 0), box)
     pixels = np.array(sheet)
@@ -401,6 +449,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in HEIGHTS:
+        lines.append(f"height {HEIGHTS[name]}")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)
@@ -415,7 +465,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         overlay = sheet.copy()
         draw = ImageDraw.Draw(overlay)
         for anim, spec in animations.items():
-            draw.rectangle(spec["region"], outline=(255, 255, 0, 255))
+            for region in spec["region"] if isinstance(spec["region"], list) else [spec["region"]]:
+                draw.rectangle(region, outline=(255, 255, 0, 255))
             for box, _ in find_frames(pixels, spec, effects):
                 draw.rectangle(box, outline=(255, 0, 60, 255))
         overlay.save(Path(debug_dir) / f"{name}_regions.png")

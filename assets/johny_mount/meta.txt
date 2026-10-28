@@ -1,0 +1,8 @@
+name PORSCHE
+sheet sheet.png
+portrait portrait.png
+frame 371 119
+feet 115
+body 111
+height 2.2
+run 0 14 14 loop

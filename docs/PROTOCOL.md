@@ -35,6 +35,18 @@ Positions travel in hundredths of a tile.
 | 12 | `MSG_TITANS` | server → client | Titans, every tick |
 | 13 | `MSG_ULTIMATE` | both | Client: fire my ultimate. Server: someone did |
 | 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
+| 15 | `MSG_BOSS` | server → client | Adam Smasher: where he is, his health, his attack, every tick |
+| 16 | `MSG_VERSION` | both | Client: my protocol version, before `MSG_CONNECT`. Server: not mine, which is this |
+
+### `MSG_VERSION`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | `PROTOCOL_VERSION` (`src/common/protocol.hpp`), bumped whenever a packet changes |
+
+The client sends it right after connecting, before `MSG_CONNECT`. When it doesn't match the
+server's, or never came (a build from before it existed), the server answers its own version to
+`MSG_CONNECT` and hangs up: the client tells the player which side has to update.
 
 ### `MSG_CONNECT`
 
@@ -43,10 +55,10 @@ Positions travel in hundredths of a tile.
 | 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
-| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor |
+| 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor, Trauma Team, Lucky Chip, Titan Serum, Drone Pinata |
 
-District and mode are only taken from the first player in the lobby, the host; whoever joins
-sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
+District and mode are only taken from the host: the first player in the lobby, whoever their
+`MSG_CONNECT` came after, or the one who stayed when the host left. Whoever joins sends `0xFF` for both. The server caps each upgrade level at what the shop sells. A game only starts once every player in the lobby sent theirs, and
 `MSG_CONNECT` is ignored outside the lobby.
 
 ### `MSG_MAP_DATA`
@@ -146,6 +158,9 @@ A 13-byte record per player, 60 times per second:
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
+| `T` | The Trauma Team (upgrade) picked the player up instead of a death: 2 s of invincibility, half the run's eddies billed |
+| `J` | The eddy just taken on that tile hit the Lucky Chip's jackpot (upgrade): +10 in all |
+| `P` | The drone on that tile, just destroyed, drops a power-up thanks to the Drone Pinata (upgrade): `droneDrop(x, y, true)` |
 
 ### `MSG_GAME_END`
 
@@ -231,9 +246,28 @@ Arasaka snipers shoot in both modes. The first one aims past 150 tiles, then one
 seconds, at a random player: for 1.2 s its line follows the middle of that player, then it stays
 still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone in it included.
 
+### `MSG_BOSS`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | 1 while he fights, 0 before his arena and once he is gone |
+| 1 | Health, in percent |
+| 1 | Attack: 0 none, 1 rockets, 2 slam, 3 arm cannon |
+| 1 | Phase: 0 warning, 1 aim (the cannon frozen), 2 strike (it hurts) |
+| 4 | His X, in 1/100 tile |
+| 4 | The rockets' X, in 1/100 tile |
+| 2 | Y: the top of the rockets' gap, or the cannon's line |
+| 2 | Seconds into the attack, in 1/100 |
+
+Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
+map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.
+Arm cannon: like a sniper's railgun, thicker. In CYBERPSYCHO the players' shots, Lucy's hack and the
+ultimates hurt him; `BOSS_KILL` ('K') in `MSG_COLLISION` when he goes down, `BOSS_HIT` ('m') when he
+kills a player. Every number is in `src/common/boss.hpp` and `assets/tuning.txt`.
+
 ## A game, step by step
 
-1. The client connects and sends `MSG_CONNECT`.
+1. The client connects and sends `MSG_VERSION`, then `MSG_CONNECT`.
 2. Once the lobby is full (extra clients are refused) and everyone sent `MSG_CONNECT`, the server
    sends the map (`MSG_MAP_DATA`) and `MSG_GAME_START` to each client, then `MSG_COUNTDOWN` once
    per second: 3, 2, 1, 0.

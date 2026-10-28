@@ -7,6 +7,7 @@
 #include "powerups.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
+#include "boss.hpp"
 #include "shift.hpp"
 #include "upgrades.hpp"
 #include <algorithm>
@@ -63,6 +64,7 @@ std::vector<Entry> &entries()
             Entry("Power-ups"),
             VALUE(POWERUP_FIRST_CHUNK, "No power-up in the first this many 40-tile chunks"),
             VALUE(POWERUP_CHANCE, "Chance a chunk holds a power-up after that (0 to 1)", 0, 1),
+            VALUE(POWERUP_CHANCE_CYBERPSYCHO, "The same in CYBERPSYCHO, where drones drop them too", 0, 1),
             VALUE(SHIELD_GRACE, "Seconds of invincibility after the shield breaks"),
             VALUE(END_GRACE, "Seconds of invincibility after the Sandevistan or the Attack Titan ends"),
             VALUE(SANDEVISTAN_TIME, "Seconds of Sandevistan sprint"),
@@ -78,6 +80,13 @@ std::vector<Entry> &entries()
             VALUE(EMERGE_TIME, "Seconds bursting out of the titan, still invincible"),
             VALUE(SANDEVISTAN_PER_LEVEL, "Seconds of Sandevistan each shop level adds"),
             VALUE(MAGNET_PER_LEVEL, "Tiles each eddie magnet level reaches"),
+            VALUE(TRAUMA_RESCUE_TIME, "Seconds the run waits while the Trauma Team picks you up"),
+            VALUE(TRAUMA_GRACE, "Seconds of invincibility after the Trauma Team picks you up"),
+            VALUE(TRAUMA_BILL, "Share of the run's eddies the Trauma Team bills (0 to 1)", 0, 1),
+            VALUE(JACKPOT_PER_LEVEL, "Chance an eddy hits the jackpot, per Lucky Chip level (0 to 1)", 0, 1),
+            VALUE(JACKPOT_EDDIES, "Eddies a jackpot is worth"),
+            VALUE(SERUM_PER_LEVEL, "Seconds of Attack Titan each Titan Serum level adds"),
+            VALUE(PINATA_PER_LEVEL, "Chance a drone that drops nothing drops a power-up, per Drone Pinata level (0 to 1)", 0, 1),
 
             Entry("Enemies"),
             VALUE(DRONE_BOUNTY, "Eddies for a drone down"),
@@ -93,6 +102,34 @@ std::vector<Entry> &entries()
             VALUE(SNIPER_AIM_TIME, "Seconds it stays frozen before the shot"),
             VALUE(SNIPER_FIRE_TIME, "Seconds the railgun beam lasts"),
             VALUE(SNIPER_BEAM_HALF, "Half the height of the beam, in tiles"),
+
+            Entry("Adam Smasher, the boss"),
+            VALUE(BOSS_DISTANCE, "Tiles before his arena"),
+            VALUE(BOSS_ARENA, "How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)"),
+            VALUE(BOSS_AHEAD, "Tiles ahead of the leader he stands"),
+            VALUE(BOSS_INTRO_TIME, "Seconds of his entrance before his first attack"),
+            VALUE(BOSS_ATTACK_GAP, "Seconds between two attacks"),
+            VALUE(BOSS_SANDEVISTAN_HEALTH, "Share of his health under which his Sandevistan kicks in, as it does halfway through his arena (0 to 1)", 0, 1),
+            VALUE(BOSS_SANDEVISTAN_RATE, "How many times faster he attacks under his Sandevistan"),
+            VALUE(BOSS_HEALTH, "His health in CYBERPSYCHO", 1, 10000),
+            VALUE(BOSS_SHOT_DAMAGE, "A bullet's damage"),
+            VALUE(BOSS_SPEAR_DAMAGE, "A thunder spear's damage"),
+            VALUE(BOSS_HACK_DAMAGE, "Lucy's hack's damage"),
+            VALUE(BOSS_SLASH_DAMAGE, "A blade's damage (Mikasa, Dante's sword), while he is close after a slam"),
+            VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
+            VALUE(BOSS_BOUNTY, "Eddies for downing him"),
+            VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),
+            VALUE(BOSS_ROCKET_SPEED, "Their speed toward you, tiles per second"),
+            VALUE(BOSS_ROCKET_GAP, "Tiles of the gap in their wall", 2.5f, 10),
+            VALUE(BOSS_SLAM_WARN, "Seconds the slam is warned"),
+            VALUE(BOSS_SLAM_TIME, "Seconds its shockwave lasts"),
+            VALUE(BOSS_SLAM_HEIGHT, "Tiles of floor it covers", 0, 7),
+            VALUE(BOSS_SLAM_LAND, "Tiles ahead of you he lands"),
+            VALUE(BOSS_SLAM_RECOVER, "Seconds he stays there, in reach of the blades"),
+            VALUE(BOSS_CANNON_TRACK, "Seconds his cannon's sight follows you"),
+            VALUE(BOSS_CANNON_AIM, "Seconds it stays frozen"),
+            VALUE(BOSS_CANNON_TIME, "Seconds its beam lasts"),
+            VALUE(BOSS_CANNON_HALF, "Half the height of the beam, in tiles"),
 
             Entry("Weapons (CYBERPSYCHO): cooldown in seconds, speed in tiles per second on top of the run, reach and radius in tiles"),
             VALUE(PROJECTILE_RANGE, "Shots vanish this many tiles ahead"),
@@ -137,18 +174,24 @@ std::vector<Entry> &entries()
 
             Entry("Dante's style meter: ranks D, C, B, A, S, SS, SSS"),
             VALUE(STYLE_KILLS, "Kills in a row to go up a rank"),
-            VALUE(STYLE_DROP_TIME, "Seconds without a kill to drop a rank (a hit drops him to D)"),
+            VALUE(STYLE_DROP_TIME, "Seconds without a kill to drop a rank"),
+            VALUE(STYLE_HIT_DROP, "Ranks a hit (his shield breaking) drops", 0, 6),
 
         };
         for (int rank = 0; rank < STYLE_RANKS; rank++)
             all.emplace_back(std::string("STYLE_BOUNTY_") + STYLE_NAMES[rank], &STYLE_BOUNTY[rank],
                              rank == 0 ? "A drone's bounty times this, at each rank" : "");
-        all.emplace_back("Runners: price in eddies, and eddies to charge the ultimate");
+        for (int rank = 0; rank < STYLE_RANKS; rank++)
+            all.emplace_back(std::string("STYLE_HASTE_") + STYLE_NAMES[rank], &STYLE_HASTE[rank],
+                             rank == 0 ? "His attack cooldowns times this, at each rank" : "");
+        all.emplace_back("Runners: price in eddies, eddies to charge the ultimate, and agility: the jetpack's lift "
+                         "and the fall times this, how fast they turn in the air (not their top speed)");
         for (Runner &runner : RUNNERS) {
             std::string name = runner.dir;
             std::ranges::transform(name, name.begin(), [](unsigned char c) { return std::toupper(c); });
             all.emplace_back(name + "_PRICE", &runner.price, "");
             all.emplace_back(name + "_ULTIMATE_CHARGE", &runner.charge, "", 1);
+            all.emplace_back(name + "_AGILITY", &runner.agility, "", 0.5f, 3);
         }
         return all;
     }();
@@ -228,7 +271,20 @@ std::string Tuning::defaults()
         "# Distances are in tiles: a runner is 2 tiles tall, a tile is about a metre. Times are in seconds.\n"
         "# In versus, the host's file decides what happens; the other player only draws with theirs.\n"
         "# While a value isn't at its default, the game says CUSTOM TUNING in a corner.\n"
-        "# Testing something? Send this file with what you felt: it says exactly what you played.\n";
+        "# Testing something? Send this file with what you felt: it says exactly what you played.\n"
+        "#\n"
+        "# Words used below:\n"
+        "#   tile       the grid the map is drawn on: a square about a metre wide. The screen is 10 tiles\n"
+        "#              tall and 20 wide; a runner is 2 tiles tall. The distance on screen counts tiles.\n"
+        "#   row        a line of tiles across the screen, from top to bottom: 10 rows. Column: the same, upright.\n"
+        "#   chunk      the map is made 40 tiles at a time, as you run, each piece drawn at random: a chunk.\n"
+        "#              So 3 chunks is 120 m, 30 chunks is 1200 m.\n"
+        "#   chance     from 0 (never) to 1 (always): 0.2 is one time in five.\n"
+        "#   leader     the runner furthest ahead (in solo, you).\n"
+        "#   cooldown   seconds before you can attack again.\n"
+        "#   reach      how far ahead a melee attack lands. Radius: how close to a shot's line a drone gets hit.\n"
+        "#   grace      a moment of invincibility, to get clear after a shield breaks or a power-up ends.\n";
+
 
     for (const Entry &entry : entries()) {
         if (entry.heading()) {

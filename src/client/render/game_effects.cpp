@@ -15,6 +15,10 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
 {
     bool mine = effect.player == me;
 
+    // A drone's contact is reported as a zapper's: the map tells them apart
+    if (mine && (effect.type == ZAPPER_TILE || effect.type == TITAN_HIT || effect.type == SNIPER_HIT || effect.type == BOSS_HIT))
+        death_cause = effect.type == ZAPPER_TILE && run.map.getTile(effect.x, effect.y) == DRONE_TILE ? DRONE_TILE : effect.type;
+
     switch (effect.type) {
         case ZAPPER_TILE:
             playerDown(effect, Audio::Sfx::Zap, NEON_CYAN, 0.5f, 18);
@@ -23,7 +27,11 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             playerDown(effect, Audio::Sfx::Stomp, NEON_RED, 0.6f, 22);
             break;
         case SNIPER_HIT:
+        case BOSS_HIT:
             playerDown(effect, Audio::Sfx::Explosion, NEON_ORANGE, 0.6f, 22);
+            break;
+        case BOSS_KILL:
+            bossDown(effect, mine);
             break;
         case TITAN_KILL:
             titanDown(effect, mine);
@@ -43,6 +51,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case SHIELD_BREAK:
             shieldBroken(effect, mine);
             break;
+        case TRAUMA_RESCUE:
+            traumaRescue(effect, mine);
+            break;
+        case JACKPOT:
+            jackpot(effect, mine);
+            break;
+        case PINATA_DROP:
+            pinataBurst(effect);
+            return;
         case SHIFT_TILE:
             // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
             if (mine)
@@ -58,7 +75,8 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             }
     }
     // Dante's drones pay at his style rank
-    int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
+    int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : effect.type == BOSS_KILL ? BOSS_BOUNTY
+                 : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
     effects.push_back({effect, sf::Clock(), mine, bounty});
 }
 
@@ -88,6 +106,20 @@ void GameScreen::titanDown(const CollisionEffect &effect, bool mine)
     run.shakeAtLeast(0.3f);
     particles.emit(nape, 50, sf::Color(230, 230, 230), 7, 1.0f, -4);
     particles.emit(nape, 20, NEON_RED, 6, 0.6f, 8);
+}
+
+// Adam Smasher blowing up where he stood
+void GameScreen::bossDown(const CollisionEffect &effect, bool mine)
+{
+    sf::Vector2f chest = centerOf(effect) + sf::Vector2f(1, 1);
+
+    if (mine)
+        react(Mood::Frenzy);
+    audio.play(Audio::Sfx::Nuke);
+    run.shakeAtLeast(1.0f, 24);
+    particles.emit(chest, 80, NEON_ORANGE, 10, 1.2f, 4);
+    particles.emit(chest, 40, NEON_RED, 8, 1.0f, 8);
+    particles.emit(chest, 30, sf::Color::White, 6, 0.6f, 0);
 }
 
 void GameScreen::droneDown(const CollisionEffect &effect, int me)
@@ -166,11 +198,127 @@ void GameScreen::powerUpTaken(const CollisionEffect &effect, bool mine)
         {SHIELD_TILE, Audio::Sfx::Shield}, {SANDEVISTAN_TILE, Audio::Sfx::Sandevistan},
         {BERSERK_TILE, Audio::Sfx::Berserk}};
 
+    // Taken again while it runs: the server starts its timer over, so does the gauge
+    PlayerAnim &anim = run.player_anims[effect.player];
+    if (effect.type == SANDEVISTAN_TILE)
+        anim.sprint_clock.restart();
+    if (effect.type == BERSERK_TILE)
+        anim.berserk_clock.restart();
     if (mine) {
         audio.play(sounds.at(effect.type));
         react(Mood::Pickup);
     }
     particles.emit(centerOf(effect), 24, powerUpColor(effect.type), 6, 0.5f, 0);
+}
+
+// The Trauma Team is called: sirens, and the runner down while it comes (drawTraumaTeam), then the bill
+void GameScreen::traumaRescue(const CollisionEffect &effect, bool mine)
+{
+    audio.play(Audio::Sfx::Siren);
+    run.shakeAtLeast(0.4f);
+    run.rescues[effect.player].restart();
+    if (!mine)
+        return;
+    react(Mood::Surprised);
+    trauma_ready = false;
+    run.announce({"TRAUMA TEAM", NEON_CYAN});
+}
+
+// The rescue's steps, in shares of it: the AV flies in and hovers, its medic slides down the cable,
+// kneels over the runner (back up at Run::RESCUE_UP), climbs back, and the AV leaves
+static constexpr float AV_IN = 0.08f, AV_HOVER = 0.3f, MEDIC_DOWN = 0.42f, MEDIC_UP = 0.68f, MEDIC_IN = 0.8f,
+                       AV_OUT = 0.84f;
+static constexpr float AV_HEIGHT = 2.4f;        // tiles, the AV's body
+static constexpr float AV_BELLY = 5.5f;         // tiles over the floor while it hovers
+static constexpr float MEDIC_HEIGHT = 1.8f;
+static const sf::Vector2f AV_PATH{-14, -10};    // where it comes from and goes back to, from its hover
+
+static float stepOf(float share, float from, float to)
+{
+    return std::clamp((share - from) / (to - from), 0.0f, 1.0f);
+}
+
+// Frame `share` of the way through an animation
+static int frameOf(const Animation &anim, float share)
+{
+    return std::min(static_cast<int>(share * anim.frames), anim.frames - 1);
+}
+
+void GameScreen::drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height)
+{
+    if (look.sheet.getSize().x == 0 || frame < 0)
+        return;
+    float scale = run.view.tile_size * height / look.body;
+    sf::Sprite sprite(look.sheet);
+    sprite.setTextureRect(look.frameRect(anim, frame));
+    sprite.setOrigin({look.frame_size.x / 2.f, look.feet});
+    sprite.setScale({scale, scale});
+    sprite.setPosition(run.toScreen(feet));
+    canvas.draw(sprite);
+}
+
+// The AV over each runner it picks up, and its medic on the cable or kneeling over them
+void GameScreen::drawTraumaTeam()
+{
+    const Character &av = sprites.trauma_av;
+    const Character &medic = sprites.trauma_medic;
+
+    for (const auto &[player_num, since] : run.rescues) {
+        float share = run.rescueShare(player_num);
+        if (share < AV_IN)
+            continue;
+        float floor = run.floor();
+        float medic_x = run.display_positions[player_num].x - 1.3f;
+        sf::Vector2f hover{medic_x, floor - AV_BELLY};
+
+        // The medic: down the cable, kneeling with the injector, back up
+        if (share >= AV_HOVER && share < MEDIC_IN) {
+            float drop = share < MEDIC_DOWN ? stepOf(share, AV_HOVER, MEDIC_DOWN) : 1 - stepOf(share, MEDIC_UP, MEDIC_IN);
+            float feet = hover.y + MEDIC_HEIGHT + (floor - hover.y - MEDIC_HEIGHT) * drop;
+            sf::Vector2f top = run.toScreen({medic_x, hover.y - 0.4f});
+            sf::RectangleShape cable({3, run.toScreen({medic_x, feet - MEDIC_HEIGHT}).y - top.y});
+            cable.setPosition(top - sf::Vector2f(1.5f, 0));
+            cable.setFillColor(sf::Color(150, 160, 180));
+            canvas.draw(cable);
+            bool kneeling = share >= MEDIC_DOWN && share < MEDIC_UP;
+            drawLook(medic, kneeling ? medic.revive : medic.run,
+                     kneeling ? frameOf(medic.revive, stepOf(share, MEDIC_DOWN, Run::RESCUE_UP)) : 0,
+                     {medic_x, feet}, MEDIC_HEIGHT);
+            // The injector's flash as the runner gets up
+            float flash = 1 - std::abs(share - Run::RESCUE_UP) / 0.05f;
+            if (flash > 0)
+                canvas.halo(run.toScreen({medic_x + 1.2f, floor - 0.5f}), run.view.tile_size * 2.5f * flash,
+                            withAlpha(NEON_CYAN, static_cast<uint8_t>(200 * flash)));
+        }
+
+        // The AV, drawn over the cable's end
+        if (share < AV_HOVER) {
+            float step = stepOf(share, AV_IN, AV_HOVER);
+            drawLook(av, av.arrive, frameOf(av.arrive, step), hover + AV_PATH * (1 - step) * (1 - step), AV_HEIGHT);
+        } else if (share < AV_OUT) {
+            drawLook(av, av.run, av.run.frameAt(canvas.time()), hover, AV_HEIGHT);
+        } else {
+            float step = stepOf(share, AV_OUT, 1);
+            drawLook(av, av.leave, frameOf(av.leave, step), hover + AV_PATH * step * step, AV_HEIGHT);
+        }
+    }
+}
+
+void GameScreen::jackpot(const CollisionEffect &effect, bool mine)
+{
+    if (!mine)
+        return;
+    audio.play(Audio::Sfx::Jackpot);
+    particles.emit(centerOf(effect), 30, NEON_YELLOW, 7, 0.7f, 6);
+    particles.emit(centerOf(effect), 12, sf::Color::White, 5, 0.5f, 6);
+}
+
+// Confetti in every colour: the drone burst open
+void GameScreen::pinataBurst(const CollisionEffect &effect)
+{
+    audio.play(Audio::Sfx::Pinata);
+    for (sf::Color color : {NEON_PINK, NEON_YELLOW, NEON_CYAN, NEON_GREEN, NEON_PURPLE})
+        particles.emit(centerOf(effect), 10, color, 7, 0.8f, 8);
 }
 
 // A row of eddies taken at once counts up on one "+N", where the last one was
@@ -261,9 +409,9 @@ void GameScreen::drawEffects()
                 tile += (taker->second + sf::Vector2f(0, 0.5f) - tile) * fly * fly;
             }
             tiles.drawSprite(sprites.coin, tile, 0.55f + t, withAlpha(sf::Color::White, alpha));
-        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL) {
+        } else if (active.effect.type == DRONE_TILE || active.effect.type == TITAN_KILL || active.effect.type == BOSS_KILL) {
             // Blast ring, and the bounty for whoever took it down
-            bool titan = active.effect.type == TITAN_KILL;
+            bool titan = active.effect.type != DRONE_TILE;
             sf::Vector2f center = run.toScreen(tile + sf::Vector2f(0.5f, titan ? -3 : 0.5f));
             canvas.halo(center, run.view.tile_size * (0.3f + t) * (titan ? 3 : 1), withAlpha(NEON_ORANGE, alpha / 2));
             if (active.mine)
@@ -280,6 +428,14 @@ void GameScreen::drawEffects()
                 column.setFillColor(withAlpha(color, alpha));
                 canvas.draw(column, sf::BlendAdd);
             }
+        } else if (active.effect.type == JACKPOT || active.effect.type == TRAUMA_RESCUE) {
+            // The jackpot pays out over the eddy; the Trauma Team's bill floats up over the runner
+            bool jackpot = active.effect.type == JACKPOT;
+            if (active.mine)
+                canvas.text(jackpot ? std::format("JACKPOT +{}", JACKPOT_EDDIES)
+                                    : std::format("BILLED {}% OF THE RUN", static_cast<int>(TRAUMA_BILL * 100)),
+                            jackpot ? 40 : 34, withAlpha(jackpot ? NEON_YELLOW : NEON_CYAN, alpha),
+                            run.toScreen(tile + sf::Vector2f(0.5f, -1 - t)));
         } else if (isPowerUp(active.effect.type)) {
             // What you just grabbed floats up
             if (active.mine)

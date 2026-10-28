@@ -3,6 +3,64 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.0
+
+### New
+- **First boss: Adam Smasher**, at 500 m, with his own animations. The scenery clears, he lands on the
+  right of the screen and keeps pace for 400 m, attacking in turn, each attack warned first:
+  - **Rockets**: a wall of them, warned by chevrons on the right edge. Fly into the gap.
+  - **Ground slam**: the floor glows red, then he leaps at you and a shockwave runs along the floor. Be
+    in the air. He then stays close for 2 seconds getting back up: the moment for the blades.
+  - **Arm cannon**: his sight follows you like a sniper's, freezes, then fires a thick beam along the row.
+  - CLASSIC: survive him. CYBERPSYCHO: bullets, Lucy's hack, thunder spears, every ultimate and, after
+    a slam, Mikasa's blade and Dante's sword hurt him; down him before the end of his arena for 150 eddies.
+    Down him and the run picks up again right away instead of an empty road to the end of his arena.
+- **Adam Smasher's Sandevistan**: under 40% of his health, or halfway through his arena, he kicks in
+  his own Sandevistan and attacks 1.5 times faster, warnings, rockets and pauses included. Magenta
+  ghosts flicker around him while it lasts.
+- **Mounts**: the Attack Titan's orb now gives each runner their own ride, the same power-up for all.
+  Johnny drives his Porsche 911, Jinx rides Warwick, David goes cyberpsycho, and Mikasa sits on Eren's
+  titan's shoulder. Lucy and Dante still become the titan. Sprites by Alex.
+- **Dante's rank ups, DMC style**: each new rank slams in with a flash and its word slides in next to it,
+  from Crazy! to Smokin' Sexy Style!!!. From S up, the screen shakes.
+
+- **The results say what got you** (fried on a zapper, rammed a drone, run down by a titan, sniped by
+  Arasaka, smashed by Adam Smasher) and **what your eddies buy next**: the cheapest runner or upgrade
+  left, and how far you are from it.
+- **Your upgrades show at every start**, under the countdown, and a red cross sits next to your name
+  while the Trauma Team can still come.
+- **Four new upgrades** in the shop, now on two rows:
+  - **Trauma Team** (5000): once per run, a death becomes a rescue. You drop to the floor and the run
+    waits while their AV flies in and a medic slides down to inject you back up. You then get 2 seconds
+    to get clear, and they bill you half the eddies of the run.
+  - **Lucky Chip** (3 levels): each eddy has a 2/4/6% chance to hit the jackpot, worth 10.
+  - **Titan Serum** (3 levels): the Attack Titan lasts 1 second longer per level, and its eddies count double.
+  - **Drone Pinata** (3 levels, CYBERPSYCHO): drones that would drop nothing burst into a power-up
+    15/30/45% of the time.
+
+### Balance
+- **Mikasa's ODM gear**: in the air, her jetpack lifts and she drops 40% faster than the others, so she
+  turns on a dime. Same top speed.
+- **CYBERPSYCHO**: power-ups lying in the map are 4 times rarer. They come from the drones you shoot
+  down now (one in three drops one): getting close to a drone is the risk that pays.
+- **Dante** swings his sword only when a drone or a titan is within its reach, and fires Ebony & Ivory
+  otherwise, on the ground as in the air.
+- **Dante's style rank** is worth more than eddies: the higher it is, the faster he attacks (40% faster
+  at SSS). It drops a rank after 10 s without a kill instead of 6, and a hit drops it 2 ranks instead
+  of back to D.
+- Lucy's network breach refills her RAM.
+
+### Fixes
+- Taking a Sandevistan or a Berserk while one is already running fills its gauge again: the gauge
+  used to stay empty while the power-up went on.
+- Johnny's gunshot is much quieter, in line with the other sounds.
+- The host's district and mode always count, even when the friend joining connects at the same moment.
+
+### Other
+- Joining a game on another version of Samuride now says which side has to update, instead of the
+  connection just dropping. From this version on: older versions only see the connection drop.
+- `assets/tuning.txt` starts with a glossary of its technical words: tile, row, chunk, chance, leader, cooldown, reach, grace.
+
 ## v2.95
 
 ### New

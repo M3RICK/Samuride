@@ -52,21 +52,22 @@ bool Client::connectToServer(int timeout_ms)
 
     DEBUG_LOG("Connected to server: " + server_ip + ":" + std::to_string(server_port));
     connected = true;
+    sendToServer(Protocol::createPacket(MSG_VERSION, {PROTOCOL_VERSION}));
     sendConnectMessage();
     return true;
 }
 
-// [runner][district][mode][upgrade levels...]; when joining, the host's district and mode apply
+// When joining, the host's district and mode apply
 void Client::sendConnectMessage()
 {
     bool joining = loadout.district < 0 || loadout.mode < 0;
-    std::vector<uint8_t> payload = {static_cast<uint8_t>(loadout.character),
-                                    joining ? NOT_PICKED : static_cast<uint8_t>(loadout.district),
-                                    joining ? NOT_PICKED : static_cast<uint8_t>(loadout.mode)};
+    ConnectRequest connect{.character = loadout.character, .upgrades = loadout.upgrades};
 
-    for (int level : loadout.upgrades)
-        payload.push_back(level);
-    sendToServer(Protocol::createPacket(MSG_CONNECT, payload));
+    if (!joining) {
+        connect.district = loadout.district;
+        connect.mode = loadout.mode;
+    }
+    sendToServer(Protocol::createPacket(MSG_CONNECT, Message::encode(connect)));
 }
 
 Client::RunResult Client::run(InputManager &input, Renderer &renderer)
@@ -80,7 +81,7 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
 
     while (true) {
         input.processInputs();
-        if (input.closeRequested() || input.backRequested())
+        if (input.closeRequested() || input.backRequested() || server_version >= 0)
             break;
 
         Phase phase = game_state.getPhase();
@@ -98,7 +99,11 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
     }
 
     stop();
-    return input.closeRequested() ? RunResult::Quit : RunResult::Menu;
+    if (input.closeRequested())
+        return RunResult::Quit;
+    if (server_version >= 0)
+        return server_version > PROTOCOL_VERSION ? RunResult::Outdated : RunResult::HostOutdated;
+    return RunResult::Menu;
 }
 
 void Client::stop()
@@ -149,6 +154,10 @@ void Client::readIncomingData()
 void Client::processMessage(const MessageHeader &header, const std::vector<uint8_t> &payload)
 {
     switch (header.type) {
+        case MSG_VERSION:
+            if (!payload.empty())
+                server_version = payload[0];
+            break;
         case MSG_MAP_DATA:
             game_state.pushMapData(payload);
             break;
@@ -177,6 +186,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_SNIPERS:
             handleSnipers(payload);
             break;
+        case MSG_BOSS:
+            handleBoss(payload);
+            break;
         case MSG_GAME_END:
             handleGameEnd(payload);
             break;
@@ -185,92 +197,70 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
     }
 }
 
-// [my number][player count]([number][character])...[district][mode]
 void Client::handleGameStart(const std::vector<uint8_t> &payload)
 {
-    std::map<int, int> roster;
+    GameStart start;
 
-    if (payload.size() < 2)
-        return;
-
-    size_t count = payload[1];
-    for (size_t i = 0; i < count && 3 + 2 * i < payload.size(); i++)
-        roster[payload[2 + 2 * i]] = payload[3 + 2 * i];
-
-    size_t district_pos = 2 + 2 * count;
-    int district = district_pos < payload.size() ? payload[district_pos] : 0;
-    auto mode = static_cast<GameMode>(district_pos + 1 < payload.size() ? payload[district_pos + 1] : 0);
-    game_state.startCountdown(payload[0], roster, district, mode);
+    if (Message::decode(payload, start))
+        game_state.startCountdown(start.my_number, start.roster, start.district, start.mode);
 }
 
-// [count]([type][x in 1/100 tile, 4 bytes])...
 void Client::handleTitans(const std::vector<uint8_t> &payload)
 {
     std::vector<TitanState> titans;
 
-    for (size_t pos = 1; !payload.empty() && pos + 5 <= payload.size(); pos += 5) {
-        auto type = static_cast<TitanType>(payload[pos]);
-        titans.push_back({type, Protocol::readU32(payload.data() + pos + 1) / POSITION_SCALE});
-    }
-    game_state.setTitans(std::move(titans));
+    if (Message::decode(payload, titans))
+        game_state.setTitans(std::move(titans));
 }
 
-// [count]([phase][y in 1/100 tile, 2 bytes])...
 void Client::handleSnipers(const std::vector<uint8_t> &payload)
 {
     std::vector<SniperState> snipers;
 
-    for (size_t pos = 1; !payload.empty() && pos + 3 <= payload.size(); pos += 3)
-        snipers.push_back({static_cast<SniperPhase>(payload[pos]), Protocol::readU16(payload.data() + pos + 1) / POSITION_SCALE});
-    game_state.setSnipers(std::move(snipers));
+    if (Message::decode(payload, snipers))
+        game_state.setSnipers(std::move(snipers));
+}
+
+void Client::handleBoss(const std::vector<uint8_t> &payload)
+{
+    BossState boss;
+
+    if (Message::decode(payload, boss))
+        game_state.setBoss(boss);
 }
 
 void Client::handleShot(const std::vector<uint8_t> &payload)
 {
-    if (payload.size() >= 2)
-        game_state.pushShot({payload[0], static_cast<Weapon>(payload[1])});
+    ShotEvent shot;
+
+    if (Message::decode(payload, shot))
+        game_state.pushShot(shot);
 }
 
-// [player][ultimate][x in 1/100 tile, 4 bytes][y in 1/100 tile, 2 bytes]
 void Client::handleUltimate(const std::vector<uint8_t> &payload)
 {
-    if (payload.size() >= 8)
-        game_state.pushUltimate({payload[0], static_cast<Ultimate>(payload[1]),
-                                 Protocol::readU32(payload.data() + 2) / POSITION_SCALE,
-                                 Protocol::readU16(payload.data() + 6) / POSITION_SCALE});
+    UltimateEvent ultimate;
+
+    if (Message::decode(payload, ultimate))
+        game_state.pushUltimate(ultimate);
 }
 
 void Client::handleGameState(const std::vector<uint8_t> &payload)
 {
-    for (size_t pos = 0; pos + 13 <= payload.size(); pos += 13) {
-        const uint8_t *p = payload.data() + pos;
+    std::map<int, PlayerState> players;
 
-        // docs/PROTOCOL.md, MSG_GAME_STATE
-        game_state.updatePlayer(p[0], {
-            .x = Protocol::readU32(p + 1) / POSITION_SCALE,
-            .y = Protocol::readU16(p + 5) / POSITION_SCALE,
-            .score = Protocol::readU16(p + 7),
-            .jet_active = (p[9] & 1) != 0,
-            .form = static_cast<Form>((p[9] >> 1) & 3),
-            .shielded = (p[9] & 8) != 0,
-            .sprinting = (p[9] & 16) != 0,
-            .ram = (p[9] >> 5) & 3,
-            .berserk = (p[9] & 128) != 0,
-            .ultimate = p[10],
-            .spears = p[11],
-            .grace = (p[12] & 1) != 0,
-            .style = (p[12] >> 1) & 7,
-        });
-    }
+    if (!Message::decode(payload, players))
+        return;
+    for (const auto &[number, player] : players)
+        game_state.updatePlayer(number, player);
 }
 
 void Client::handleCollision(const std::vector<uint8_t> &payload)
 {
-    if (payload.size() < 8)
-        return;
+    CollisionEffect collision;
 
-    game_state.handleCollision(payload[0], payload[1],
-        Protocol::readU32(payload.data() + 2), Protocol::readU16(payload.data() + 6));
+    if (Message::decode(payload, collision))
+        game_state.handleCollision(collision.type, collision.player, collision.x, collision.y);
 }
 
 void Client::handleGameEnd(const std::vector<uint8_t> &payload)

@@ -51,12 +51,15 @@ constexpr int RAM_MAX = 3;          // sent in 2 bits: 3 at most
 inline float RAM_RECHARGE = 3.5f;    // seconds to get one charge back
 
 // Dante's style meter: kills in a row raise his rank, from D to SSS, and each rank pays more per drone.
-// STYLE_KILLS kills go up a rank; STYLE_DROP_TIME seconds without one drop a rank; a hit drops him to D.
+// STYLE_KILLS kills go up a rank; STYLE_DROP_TIME seconds without one drop a rank; a hit drops
+// STYLE_HIT_DROP ranks. He also attacks faster: his cooldowns times STYLE_HASTE.
 constexpr int STYLE_RANKS = 7;
 inline const char *STYLE_NAMES[STYLE_RANKS] = {"D", "C", "B", "A", "S", "SS", "SSS"};
 inline float STYLE_BOUNTY[STYLE_RANKS] = {1, 1, 1.5f, 2, 2, 2.5f, 3};    // times a drone's bounty
 inline int STYLE_KILLS = 2;
-inline float STYLE_DROP_TIME = 6;
+inline float STYLE_HASTE[STYLE_RANKS] = {1, 0.95f, 0.9f, 0.85f, 0.8f, 0.7f, 0.6f};
+inline float STYLE_DROP_TIME = 10;
+inline int STYLE_HIT_DROP = 2;
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

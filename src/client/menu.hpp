@@ -4,6 +4,7 @@
     #define MENU_HPP
 
 #include <SFML/Graphics.hpp>
+#include <algorithm>
 #include <functional>
 #include <string>
 #include "settings.hpp"
@@ -107,10 +108,15 @@ namespace MenuLayout {
         return centeredBox({x, y}, {CARD_WIDTH, CARD_HEIGHT});
     }
 
-    // Upgrades shop: one card each, in a row
+    // Upgrades shop: one card each, four to a row, a short last row centered
+    constexpr int UPGRADE_COLUMNS = 4;
+
     inline sf::FloatRect upgradeBox(int index)
     {
-        return centeredBox({960 + (index - (UPGRADE_COUNT - 1) / 2.0f) * 440, 580}, {400, 480});
+        int row = index / UPGRADE_COLUMNS;
+        int in_row = std::min(UPGRADE_COUNT - row * UPGRADE_COLUMNS, UPGRADE_COLUMNS);
+        float x = 960 + (index % UPGRADE_COLUMNS - (in_row - 1) / 2.0f) * 450;
+        return centeredBox({x, 420 + row * 320.0f}, {420, 300});
     }
 
     inline sf::FloatRect districtBox(int index)

@@ -33,13 +33,13 @@ endif
 endif
 
 # Common sources
-COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/map.cpp src/common/socket.cpp src/common/platform.cpp \
+COMMON_SRCS = src/common/debug.cpp src/common/protocol.cpp src/common/messages.cpp src/common/map.cpp src/common/socket.cpp src/common/platform.cpp \
               src/common/tuning.cpp
 
 # Server sources; the game links the server core too, to host solo and multiplayer runs itself
 SERVER_CORE_SRCS = src/server/server.cpp src/server/logic.cpp src/server/player.cpp src/server/generator.cpp \
                    src/server/combat.cpp src/server/titans.cpp src/server/snipers.cpp src/server/shift.cpp \
-                   src/server/powerups.cpp src/server/arsenal.cpp
+                   src/server/powerups.cpp src/server/arsenal.cpp src/server/boss.cpp
 SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
@@ -50,6 +50,13 @@ CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 # Object files, out of the sources: src/a/b.cpp -> build/obj/src/a/b.o
 OBJ_DIR = build/obj
+
+# SANITIZE=1 (make SANITIZE=1 tests): memory errors and undefined behavior stop the run, objects apart
+ifdef SANITIZE
+OBJ_DIR = build/san
+CFLAGS += -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+LDFLAGS += -fsanitize=address,undefined
+endif
 COMMON_OBJS = $(COMMON_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_OBJS = $(SERVER_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:%.cpp=$(OBJ_DIR)/%.o)

@@ -52,13 +52,11 @@ bool SniperSquad::hit(const Player &player) const
     });
 }
 
-std::vector<uint8_t> SniperSquad::serialize() const
+std::vector<SniperState> SniperSquad::states() const
 {
-    std::vector<uint8_t> data = {static_cast<uint8_t>(snipers.size())};
+    std::vector<SniperState> states;
 
-    for (const Sniper &sniper : snipers) {
-        data.push_back(static_cast<uint8_t>(sniper.phase()));
-        Protocol::pushU16(data, std::max(0.0f, sniper.y) * POSITION_SCALE);
-    }
-    return data;
+    for (const Sniper &sniper : snipers)
+        states.push_back({sniper.phase(), sniper.y});
+    return states;
 }

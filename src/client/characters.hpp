@@ -1,5 +1,5 @@
 // A character's looks: sprite sheet, portrait and animations, loaded from assets/<dir>/meta.txt.
-// The runners (common/runners.hpp) and the titans each have one.
+// The runners (common/runners.hpp), the titans and Adam Smasher each have one.
 
 #ifndef CHARACTERS_HPP
     #define CHARACTERS_HPP
@@ -29,11 +29,14 @@ struct Character {
     sf::Vector2i frame_size;
     float feet = 0;     // y of the feet inside a cell
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
+    float height = 0;   // tiles tall in the game, for a mount; 0: the titan's
     sf::Color exhaust{252, 238, 10};
 
     Animation run, takeoff, rise, hover, fall, death, attack;
-    Animation shoot;            // Dante's guns: his attack in the air, his sword being on the ground
+    Animation shoot;            // Dante's guns: his attack when nothing is in his sword's reach
     Animation smoke, emerge;    // Eren's transformation only
+    Animation entrance, rockets, slam, cannon, hit;     // Adam Smasher only
+    Animation arrive, leave, revive;                    // the Trauma Team's AV and medic only
 
     bool load(const std::string &dir);
     sf::IntRect frameRect(const Animation &anim, int index) const;

@@ -20,20 +20,33 @@ void Sprites::load()
     loadTexture(fishbones, "assets/jinx/fishbones.png", false);
 
     characters.resize(RUNNER_COUNT);
+    mounts.resize(RUNNER_COUNT);
     for (int i = 0; i < RUNNER_COUNT; i++) {
         if (!characters[i].load(std::string("assets/") + RUNNERS[i].dir))
             DEBUG_LOG(std::string("Failed to load runner: ") + RUNNERS[i].dir);
+        mounts[i].load(std::string("assets/") + RUNNERS[i].dir + "_mount");
     }
 
     if (!shift.load("assets/eren_shift") || !eren_titan.load("assets/titan_eren") ||
         !titan_face.loadFromFile("assets/titan_eren/portrait.png"))
         DEBUG_LOG("Failed to load the Attack Titan");
 
+    if (!smasher.load("assets/smasher"))
+        DEBUG_LOG("Failed to load Adam Smasher");
+    if (!trauma_av.load("assets/trauma_av") || !trauma_medic.load("assets/trauma_medic"))
+        DEBUG_LOG("Failed to load the Trauma Team");
+
     titans.resize(TITAN_TYPES);
     for (int i = 0; i < TITAN_TYPES; i++) {
         if (!titans[i].load(std::string("assets/") + titan_dirs[i]))
             DEBUG_LOG(std::string("Failed to load titan: ") + titan_dirs[i]);
     }
+}
+
+const Character &Sprites::mount(int id) const
+{
+    int index = std::clamp(id, 0, static_cast<int>(mounts.size()) - 1);
+    return mounts.empty() || mounts[index].run.frames == 0 ? eren_titan : mounts[index];
 }
 
 const Character &Sprites::character(int id) const
