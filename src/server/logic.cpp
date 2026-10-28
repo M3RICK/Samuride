@@ -16,6 +16,7 @@ bool Server::resetMap()
     last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;
     destroyed_drones.clear();
     pinata_drops.clear();
+    trauma_offers.clear();
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -152,6 +153,19 @@ void Server::updatePlayers()
     float rear_x = 1e9f;
     std::vector<int> survivors;
 
+    // A deadly hit asking whether to call the Trauma Team: the run waits for the answer, which is yes
+    // once it is late
+    if (!trauma_offers.empty()) {
+        std::vector<int> late;
+        for (auto &[client_fd, offer] : trauma_offers) {
+            if ((offer.left -= TICK_DT) <= 0)
+                late.push_back(client_fd);
+        }
+        for (int client_fd : late)
+            answerTraumaTeam(client_fd, true);
+        sendGameState();
+        return;
+    }
     // The Trauma Team at work on someone: the whole run waits for it
     bool waiting = false;
     for (auto &[client_fd, player] : players)

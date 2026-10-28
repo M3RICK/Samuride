@@ -218,6 +218,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (state.isTraumaOffered() && players.count(me))
+        drawTraumaOffer(players.at(me));
 
     // Leave time to watch the zap before the curtain falls
     if (phase == Phase::Over && phase_clock.getElapsedTime().asSeconds() > GAME_OVER_DELAY)

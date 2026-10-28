@@ -14,6 +14,7 @@
 #include "tuning.hpp"
 #include "difficulty.hpp"
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -519,6 +520,13 @@ static void testBoss()
     assert(!boss.sandevistan());
     boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
     assert(boss.sandevistan());                 // halfway: his Sandevistan, even unhurt
+    // It hurries the gap before his next attack, not that attack's warning
+    float before = boss.state().time;
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
+    assert(std::abs(boss.state().time - before - 0.1f * BOSS_SANDEVISTAN_RATE) < 1e-4f);
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, BOSS_INTRO_TIME, rng, players, 10);
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
+    assert(boss.state().phase == BossPhase::Warning && std::abs(boss.state().time - 0.1f) < 1e-4f);
     boss.update(BOSS_DISTANCE + BOSS_ARENA, 0.1f, rng, players, 10);
     assert(!boss.fighting());
     assert(!inBossArena(BOSS_DISTANCE - 1) && inBossArena(BOSS_DISTANCE) && !inBossArena(BOSS_DISTANCE + BOSS_ARENA));
@@ -636,12 +644,76 @@ static void testServerRun()
     loop.join();
 }
 
+// The Trauma Team asking first, over real sockets: a solo run into a wall of zappers, answered no, yes,
+// then not at all
+static void testTraumaOffer()
+{
+    std::string map_path = (std::filesystem::temp_directory_path() / "samuride_trauma_test.txt").string();
+    {
+        std::ofstream map(map_path);
+        for (int row = 0; row < 10; row++)     // the height of the map the server makes
+            map << std::string(20, EMPTY_TILE) << ZAPPER_TILE << std::string(20, EMPTY_TILE) << '\n';
+    }
+    float offer_time = TRAUMA_OFFER_TIME;
+    TRAUMA_OFFER_TIME = 0.5f;
+
+    // Into the wall with the Trauma Team bought; the next collision that isn't an eddy
+    auto runInto = [&](int port, std::optional<bool> answer) {
+        ServerConfig config;
+        config.port = port;
+        config.quiet = true;
+        config.solo = true;
+        config.map_path = map_path;
+        Server server(config);
+        assert(server.initialize());
+        std::thread loop(&Server::run, &server);
+        TestClient runner(port);
+        ConnectRequest connect{.character = 0, .district = 0, .mode = 0};
+        connect.upgrades[UPGRADE_TRAUMA] = 1;
+        runner.send(MSG_CONNECT, Message::encode(connect));
+        auto collision = [&] {
+            CollisionEffect effect{};
+            do {
+                auto payload = runner.await(MSG_COLLISION);
+                assert(payload && Message::decode(*payload, effect));
+            } while (effect.type == COIN_TILE || effect.type == JACKPOT);
+            return effect.type;
+        };
+
+        for (;;) {
+            auto count = runner.await(MSG_COUNTDOWN);
+            assert(count && !count->empty());
+            if ((*count)[0] == 0)
+                break;
+        }
+        assert(collision() == TRAUMA_OFFER);
+        // The run waits on the answer
+        float x = runner.latest(0).x;
+        assert(runner.latest(0).x == x);
+        if (answer)
+            runner.send(MSG_TRAUMA, {static_cast<uint8_t>(*answer)});
+        char outcome = collision();
+        bool over = runner.await(MSG_GAME_END).has_value();
+        Socket::close(runner.fd);
+        server.stop();
+        loop.join();
+        return std::pair{outcome, over};
+    };
+
+    assert(runInto(47124, false) == std::pair(ZAPPER_TILE, true));
+    assert(runInto(47125, true).first == TRAUMA_RESCUE);
+    assert(runInto(47126, std::nullopt).first == TRAUMA_RESCUE);   // too late: it comes
+    TRAUMA_OFFER_TIME = offer_time;
+    std::filesystem::remove(map_path);
+}
+
 int main()
 {
     testPacketFraming();
     testIntegers();
     testMessages();
     testServerRun();
+    testTraumaOffer();
     testMapChunks();
     testGenerator();
     testSniperHit();

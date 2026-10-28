@@ -3,6 +3,21 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.01
+
+### New
+- **The Trauma Team asks first**: when a hit should kill you and the Trauma Team is on call, the run
+  freezes and a pop-up asks whether to call them, with the bill shown. `Y` (or `Enter`) calls them, `N`
+  lets you die and keep all your eddies; on phones, tap one of the two buttons. Without an answer in
+  5 seconds, they come.
+
+### Balance
+- **Adam Smasher's Sandevistan** is much milder: his warnings now always last as long as without it, only
+  his strikes and the pauses between his attacks speed up, and by 1.3 times instead of 1.5.
+
+### Other
+- 3.0 and 3.01 can't play together: update both sides.
+
 ## v3.0
 
 ### New

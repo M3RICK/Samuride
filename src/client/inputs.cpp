@@ -1,4 +1,4 @@
-// Keyboard or touch screen: jetpack, attack, ultimate, confirm and back
+// Keyboard or touch screen: jetpack, attack, ultimate, the Trauma Team's question, confirm and back
 
 #include "inputs.hpp"
 #include "client.hpp"
@@ -30,6 +30,11 @@ void InputManager::processInputs()
             }
             if (key->code == ultimate_key)
                 client->sendUltimate();
+            // The Trauma Team's question: Y (or confirm) calls it, N lets go
+            if (key->code == sf::Keyboard::Key::Y || key->code == sf::Keyboard::Key::Enter)
+                client->answerTraumaTeam(true);
+            if (key->code == sf::Keyboard::Key::N)
+                client->answerTraumaTeam(false);
         } else if (const auto *released = event->getIf<sf::Event::KeyReleased>()) {
             if (released->code == attack_key)
                 attack_key_down = false;
@@ -44,6 +49,12 @@ void InputManager::processInputs()
                 back_requested = true;
             else
                 confirm_pressed = true;
+            if (Touch::ENABLED && client->traumaOffered()) {
+                if (Touch::onBox(Touch::TRAUMA_CALL, Touch::TRAUMA_BUTTON_SIZE, pos))
+                    client->answerTraumaTeam(true);
+                else if (Touch::onBox(Touch::TRAUMA_DECLINE, Touch::TRAUMA_BUTTON_SIZE, pos))
+                    client->answerTraumaTeam(false);
+            }
             if (onButton(Touch::ATTACK, pos))
                 pressAttack();
             else if (onButton(Touch::ULTIMATE, pos))

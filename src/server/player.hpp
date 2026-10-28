@@ -83,6 +83,8 @@ public:
     void powerUp(char tile);
     // Returns true when the shield took the hit
     bool absorbHit();
+    // Bought, and not come yet this run
+    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued; }
     // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
     bool callTraumaTeam();
     // While it works: on the floor, still, and true, the run waits

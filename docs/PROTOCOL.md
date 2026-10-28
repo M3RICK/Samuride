@@ -37,6 +37,7 @@ Positions travel in hundredths of a tile.
 | 14 | `MSG_SNIPERS` | server → client | Arasaka snipers aiming and firing, every tick |
 | 15 | `MSG_BOSS` | server → client | Adam Smasher: where he is, his health, his attack, every tick |
 | 16 | `MSG_VERSION` | both | Client: my protocol version, before `MSG_CONNECT`. Server: not mine, which is this |
+| 17 | `MSG_TRAUMA` | client → server | My answer to the Trauma Team's offer (`O`): 1 call it, 0 let me die |
 
 ### `MSG_VERSION`
 
@@ -158,7 +159,8 @@ A 13-byte record per player, 60 times per second:
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
-| `T` | The Trauma Team (upgrade) picked the player up instead of a death: 2 s of invincibility, half the run's eddies billed |
+| `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
+| `T` | The Trauma Team (upgrade) picked the player up instead of a death: the run waits 3.5 s while it works, then 2 s of invincibility, half the run's eddies billed |
 | `J` | The eddy just taken on that tile hit the Lucky Chip's jackpot (upgrade): +10 in all |
 | `P` | The drone on that tile, just destroyed, drops a power-up thanks to the Drone Pinata (upgrade): `droneDrop(x, y, true)` |
 
@@ -258,6 +260,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 4 | The rockets' X, in 1/100 tile |
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
+| 1 | 1 under his Sandevistan: low on health or past half his arena, his strikes and gaps sped up |
 
 Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.

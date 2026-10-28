@@ -39,6 +39,7 @@ private:
     std::vector<CollisionEffect> pending_effects;
     std::vector<std::vector<uint8_t>> pending_map_data;
     bool rematch_requested = false;
+    bool trauma_offer = false;      // the Trauma Team asks me whether to come, until I answer
 
 public:
     void startCountdown(int my_number, const std::map<int, int> &roster, int district, GameMode mode);
@@ -73,6 +74,9 @@ public:
     std::vector<CollisionEffect> takeEffects();
     std::vector<std::vector<uint8_t>> takeMapData();
     bool isRematchRequested() const;
+    bool isTraumaOffered() const;
+    // Answered: true if there was a question to answer
+    bool answerTraumaOffer();
 };
 
 #endif

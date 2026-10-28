@@ -26,9 +26,9 @@ inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, whi
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
 // His Sandevistan: under this share of his health, or past half his arena (in CLASSIC nothing hurts him),
-// his attacks run this many times faster, their warnings and the gaps between them too
+// his strikes and the gaps between his attacks run this many times faster; the warnings don't
 inline float BOSS_SANDEVISTAN_HEALTH = 0.4f;
-inline float BOSS_SANDEVISTAN_RATE = 1.5f;
+inline float BOSS_SANDEVISTAN_RATE = 1.3f;
 
 // Rockets: a wall of them along every row but a gap BOSS_ROCKET_GAP tall, warned on the right edge,
 // then flying at the runners

@@ -54,6 +54,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
+        case TRAUMA_OFFER:
+            // The hit that should have killed you: the run waits on your answer (drawTraumaOffer)
+            run.shakeAtLeast(0.4f);
+            if (mine) {
+                audio.play(Audio::Sfx::ShieldBreak);
+                react(Mood::Surprised);
+                trauma_offer_clock.restart();
+            }
+            return;
         case JACKPOT:
             jackpot(effect, mine);
             break;

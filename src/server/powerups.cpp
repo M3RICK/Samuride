@@ -47,18 +47,42 @@ char Server::powerUpAt(int x, int y) const
     return EMPTY_TILE;
 }
 
-// A deadly hit: the shield takes it if there is one, the Trauma Team comes if it can. Returns true when
-// the player dies.
+// A deadly hit: the shield takes it if there is one, the Trauma Team offers to come if it can. Returns true
+// when the player dies.
 bool Server::hurt(Player &player, char cause, int x, int y)
 {
     if (player.absorbHit()) {
         notifyCollision(SHIELD_BREAK, player, x, y);
         return false;
     }
-    if (player.callTraumaTeam()) {
-        notifyCollision(TRAUMA_RESCUE, player, x, y);
+    // The Trauma Team asks first: the run waits for the answer (answerTraumaTeam)
+    if (player.canCallTraumaTeam()) {
+        if (trauma_offers.try_emplace(player.getClientFd(), TraumaOffer{cause, x, y, TRAUMA_OFFER_TIME}).second)
+            notifyCollision(TRAUMA_OFFER, player, x, y);
         return false;
     }
     notifyCollision(cause, player, x, y);
     return true;
+}
+
+void Server::answerTraumaTeam(int client_fd, bool call)
+{
+    auto offer = trauma_offers.find(client_fd);
+    if (offer == trauma_offers.end())
+        return;
+    TraumaOffer hit = offer->second;
+    trauma_offers.erase(offer);
+    Player &player = players.at(client_fd);
+
+    if (call && player.callTraumaTeam()) {
+        notifyCollision(TRAUMA_RESCUE, player, hit.x, hit.y);
+        return;
+    }
+    notifyCollision(hit.cause, player, hit.x, hit.y);
+    std::vector<int> survivors;
+    for (const auto &[fd, other] : players) {
+        if (fd != client_fd)
+            survivors.push_back(other.getPlayerNumber());
+    }
+    endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
 }
