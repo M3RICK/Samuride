@@ -519,6 +519,13 @@ static void testBoss()
     assert(!boss.sandevistan());
     boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
     assert(boss.sandevistan());                 // halfway: his Sandevistan, even unhurt
+    // It hurries the gap before his next attack, not that attack's warning
+    float before = boss.state().time;
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
+    assert(std::abs(boss.state().time - before - 0.1f * BOSS_SANDEVISTAN_RATE) < 1e-4f);
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, BOSS_INTRO_TIME, rng, players, 10);
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
+    assert(boss.state().phase == BossPhase::Warning && std::abs(boss.state().time - 0.1f) < 1e-4f);
     boss.update(BOSS_DISTANCE + BOSS_ARENA, 0.1f, rng, players, 10);
     assert(!boss.fighting());
     assert(!inBossArena(BOSS_DISTANCE - 1) && inBossArena(BOSS_DISTANCE) && !inBossArena(BOSS_DISTANCE + BOSS_ARENA));

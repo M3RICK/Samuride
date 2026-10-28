@@ -73,7 +73,10 @@ void Boss::update(float leader_x, float dt, std::mt19937 &rng, const std::map<in
         return;
     }
 
-    time += dt * (sandevistan() ? BOSS_SANDEVISTAN_RATE : 1);
+    // His Sandevistan hurries the strikes and the gaps, never the warnings: they stay readable
+    BossPhase phase = phaseOf(attack, time);
+    bool warning = attack != BossAttack::None && (phase == BossPhase::Warning || phase == BossPhase::Aim);
+    time += dt * (sandevistan() && !warning ? BOSS_SANDEVISTAN_RATE : 1);
     if (attack == BossAttack::None && time >= 0)
         start(rng, players, floor);
     if (attack == BossAttack::Cannon && phaseOf(attack, time) == BossPhase::Warning) {

@@ -3,6 +3,12 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.01
+
+### Balance
+- **Adam Smasher's Sandevistan** is much milder: his warnings now always last as long as without it, only
+  his strikes and the pauses between his attacks speed up, and by 1.3 times instead of 1.5.
+
 ## v3.0
 
 ### New

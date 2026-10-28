@@ -110,7 +110,7 @@ std::vector<Entry> &entries()
             VALUE(BOSS_INTRO_TIME, "Seconds of his entrance before his first attack"),
             VALUE(BOSS_ATTACK_GAP, "Seconds between two attacks"),
             VALUE(BOSS_SANDEVISTAN_HEALTH, "Share of his health under which his Sandevistan kicks in, as it does halfway through his arena (0 to 1)", 0, 1),
-            VALUE(BOSS_SANDEVISTAN_RATE, "How many times faster he attacks under his Sandevistan"),
+            VALUE(BOSS_SANDEVISTAN_RATE, "How many times faster his strikes and the gaps between them go under his Sandevistan (warnings stay as they are)"),
             VALUE(BOSS_HEALTH, "His health in CYBERPSYCHO", 1, 10000),
             VALUE(BOSS_SHOT_DAMAGE, "A bullet's damage"),
             VALUE(BOSS_SPEAR_DAMAGE, "A thunder spear's damage"),
