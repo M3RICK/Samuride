@@ -117,6 +117,7 @@ private:
     float titan_time = TITAN_TIME;              // the same with the Titan Serum
     UpgradeLevels upgrades{};                   // yours, read at the start of each run
     bool trauma_ready = false;                  // the Trauma Team can still come this run
+    sf::Clock trauma_offer_clock;               // since it asked whether to come
     char death_cause = 0;                       // what downed you (a MSG_COLLISION type), 0 while alive
     Wallet::Goal next_goal;                     // what the eddies buy next, once this run's are in
 
@@ -169,6 +170,7 @@ private:
     void react(Mood new_mood);
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
+    void drawTraumaOffer(const PlayerState &me);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);

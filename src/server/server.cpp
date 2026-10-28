@@ -123,6 +123,7 @@ void Server::removeClient(int client_fd)
         return;
 
     ready_clients.erase(client_fd);
+    trauma_offers.erase(client_fd);
     if (client_fd == host_fd)
         host_fd = players.empty() ? -1 : players.begin()->first;
     Socket::close(client_fd);
@@ -215,6 +216,11 @@ bool Server::processClientMessage(int client_fd, const MessageHeader &header, co
 
         case MSG_ULTIMATE:
             handleUltimate(client_fd);
+            break;
+
+        case MSG_TRAUMA:
+            if (!payload.empty() && phase == Phase::Running)
+                answerTraumaTeam(client_fd, payload[0] != 0);
             break;
 
         default:

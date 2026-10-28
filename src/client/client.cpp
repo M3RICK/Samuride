@@ -299,6 +299,17 @@ bool Client::runEnded() const
     return !connected || game_state.getPhase() == Phase::Over;
 }
 
+void Client::answerTraumaTeam(bool call)
+{
+    if (game_state.answerTraumaOffer())
+        sendToServer(Protocol::createPacket(MSG_TRAUMA, {static_cast<uint8_t>(call)}));
+}
+
+bool Client::traumaOffered() const
+{
+    return game_state.isTraumaOffered();
+}
+
 void Client::sendUltimate()
 {
     sendToServer(Protocol::createPacket(MSG_ULTIMATE, {}));

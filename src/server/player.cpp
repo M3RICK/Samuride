@@ -83,7 +83,7 @@ bool Player::absorbHit()
 // The bill: a share of the run's eddies, what goes to the wallet at its end
 bool Player::callTraumaTeam()
 {
-    if (upgrades[UPGRADE_TRAUMA] == 0 || rescued)
+    if (!canCallTraumaTeam())
         return false;
     rescued = true;
     score -= static_cast<int>(score * TRAUMA_BILL);

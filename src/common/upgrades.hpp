@@ -42,6 +42,8 @@ inline float SANDEVISTAN_PER_LEVEL = 0.5f;
 inline float MAGNET_PER_LEVEL = 0.5f;
 // Trauma Team: a dead runner picked up once per run, back in with some grace, the run's eddies cut by the bill
 inline float TRAUMA_GRACE = 2.0f;
+// A deadly hit asks first whether to call it: seconds the run waits for the answer, then it comes
+inline float TRAUMA_OFFER_TIME = 5.0f;
 // The rescue itself: the runner down, the AV flying in and the medic at work, the whole run waiting
 inline float TRAUMA_RESCUE_TIME = 3.5f;
 inline float TRAUMA_BILL = 0.5f;
@@ -55,6 +57,8 @@ inline float PINATA_PER_LEVEL = 0.15f;
 
 // MSG_COLLISION types: the Trauma Team picked a player up; an eddy hit the jackpot
 constexpr char TRAUMA_RESCUE = 'T';
+// ... and the Trauma Team asking a player hit for good whether to come
+constexpr char TRAUMA_OFFER = 'O';
 constexpr char JACKPOT = 'J';
 
 inline float sandevistanTime(const UpgradeLevels &levels)

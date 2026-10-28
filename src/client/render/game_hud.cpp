@@ -574,6 +574,32 @@ void GameScreen::drawMenuButton()
     canvas.text("MENU", 40, NEON_YELLOW, Touch::MENU_BUTTON);
 }
 
+// A deadly hit with the Trauma Team on call: come or not, the bill shown, the time left draining
+void GameScreen::drawTraumaOffer(const PlayerState &me)
+{
+    canvas.overlay(170);
+    sf::Vector2f center = Screen::CENTER;
+    canvas.glitchText("FLATLINING", 110, NEON_RED, center + sf::Vector2f(0, -250));
+    canvas.text("CALL THE TRAUMA TEAM?", 60, NEON_CYAN, center + sf::Vector2f(0, -120));
+    canvas.text(std::format("THEY BILL HALF THE RUN: {} EDDIES", static_cast<int>(me.score * TRAUMA_BILL)), 34,
+                sf::Color::White, center + sf::Vector2f(0, -45));
+
+    float left = std::clamp(1 - trauma_offer_clock.getElapsedTime().asSeconds() / TRAUMA_OFFER_TIME, 0.0f, 1.0f);
+    sf::RectangleShape bar({600 * left, 10});
+    bar.setPosition(center + sf::Vector2f(-300, 30));
+    bar.setFillColor(NEON_CYAN);
+    canvas.draw(bar);
+    canvas.text("THEY COME ON THEIR OWN WHEN IT RUNS OUT", 24, withAlpha(sf::Color::White, 170),
+                center + sf::Vector2f(0, 70));
+
+    for (bool call : {true, false}) {
+        sf::Vector2f pos = call ? Touch::TRAUMA_CALL : Touch::TRAUMA_DECLINE;
+        canvas.card(sf::FloatRect(pos - Touch::TRAUMA_BUTTON_SIZE / 2.f, Touch::TRAUMA_BUTTON_SIZE), call);
+        canvas.text(call ? Touch::hint("[Y] CALL THEM", "CALL THEM") : Touch::hint("[N] LET ME DIE", "LET ME DIE"), 40,
+                    call ? NEON_CYAN : NEON_RED, pos);
+    }
+}
+
 void GameScreen::drawConnectionLost()
 {
     canvas.target().setView(canvas.screenView());

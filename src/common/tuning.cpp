@@ -80,6 +80,7 @@ std::vector<Entry> &entries()
             VALUE(EMERGE_TIME, "Seconds bursting out of the titan, still invincible"),
             VALUE(SANDEVISTAN_PER_LEVEL, "Seconds of Sandevistan each shop level adds"),
             VALUE(MAGNET_PER_LEVEL, "Tiles each eddie magnet level reaches"),
+            VALUE(TRAUMA_OFFER_TIME, "Seconds you get to say whether to call the Trauma Team, after which it comes"),
             VALUE(TRAUMA_RESCUE_TIME, "Seconds the run waits while the Trauma Team picks you up"),
             VALUE(TRAUMA_GRACE, "Seconds of invincibility after the Trauma Team picks you up"),
             VALUE(TRAUMA_BILL, "Share of the run's eddies the Trauma Team bills (0 to 1)", 0, 1),

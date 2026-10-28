@@ -1,4 +1,4 @@
-// Keyboard or touch screen: jetpack, attack, ultimate, confirm and back
+// Keyboard or touch screen: jetpack, attack, ultimate, the Trauma Team's question, confirm and back
 
 #ifndef INPUTS_HPP
     #define INPUTS_HPP

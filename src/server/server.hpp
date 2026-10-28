@@ -83,6 +83,14 @@ private:
     Horde titans;
     SniperSquad snipers;
     Boss boss;
+    // Deadly hits waiting on their player's answer, whether to call the Trauma Team: client fd -> the hit
+    struct TraumaOffer {
+        char cause;
+        int x;
+        int y;
+        float left;     // seconds before it comes anyway
+    };
+    std::map<int, TraumaOffer> trauma_offers;
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -207,6 +215,8 @@ private:
     char powerUpAt(int x, int y) const;
 
     bool hurt(Player &player, char cause, int x, int y);
+    // Yes: the rescue; no: the death the hit was
+    void answerTraumaTeam(int client_fd, bool call);
 
 public:
     static constexpr int TICK_RATE = 60;

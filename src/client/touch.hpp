@@ -24,10 +24,20 @@ namespace Touch {
     constexpr sf::Vector2f MENU_BUTTON{1920 / 2, 1080 - 110};
     constexpr sf::Vector2f MENU_BUTTON_SIZE{380, 100};
 
+    // The Trauma Team's question, in the middle: call it, or let me die
+    constexpr sf::Vector2f TRAUMA_CALL{1920 / 2 - 240, 1080 / 2 + 170};
+    constexpr sf::Vector2f TRAUMA_DECLINE{1920 / 2 + 240, 1080 / 2 + 170};
+    constexpr sf::Vector2f TRAUMA_BUTTON_SIZE{420, 110};
+
+    inline bool onBox(sf::Vector2f center, sf::Vector2f size, sf::Vector2f pos)
+    {
+        sf::Vector2f offset = pos - center;
+        return std::abs(offset.x) < size.x / 2 && std::abs(offset.y) < size.y / 2;
+    }
+
     inline bool onMenuButton(sf::Vector2f pos)
     {
-        sf::Vector2f offset = pos - MENU_BUTTON;
-        return std::abs(offset.x) < MENU_BUTTON_SIZE.x / 2 && std::abs(offset.y) < MENU_BUTTON_SIZE.y / 2;
+        return onBox(MENU_BUTTON, MENU_BUTTON_SIZE, pos);
     }
 
     // A help line: the keys on desktop, the gestures on phones (where the back button is Escape)
