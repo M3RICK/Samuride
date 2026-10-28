@@ -3,6 +3,13 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.1
+
+### New
+- **Mounts**: the Attack Titan's orb now gives each runner their own ride, the same power-up for all.
+  Johnny drives his Porsche 911, Jinx rides Warwick, David goes cyberpsycho, and Mikasa sits on Eren's
+  titan's shoulder. Lucy and Dante still become the titan. Sprites by Alex.
+
 ## v3.0
 
 ### New

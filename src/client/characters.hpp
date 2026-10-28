@@ -29,6 +29,7 @@ struct Character {
     sf::Vector2i frame_size;
     float feet = 0;     // y of the feet inside a cell
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
+    float height = 0;   // tiles tall in the game, for a mount; 0: the titan's
     sf::Color exhaust{252, 238, 10};
 
     Animation run, takeoff, rise, hover, fall, death, attack;

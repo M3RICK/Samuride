@@ -240,6 +240,10 @@ void Players::drawShieldBubble(sf::Vector2f center, float tile_size)
 // Attack Titan
 //=============================================================================
 
+// Where Mikasa sits on Eren's titan: tiles ahead of his centre, and over the floor
+static constexpr float SHOULDER_X = -0.3f;
+static constexpr float SHOULDER_Y = 3.4f;
+
 // Notices form changes: plays their sound, restarts the form clock, remembers where the titan stood
 void Players::updateForm(int player_num, const PlayerState &player, bool is_me)
 {
@@ -262,27 +266,46 @@ void Players::updateForm(int player_num, const PlayerState &player, bool is_me)
     }
 }
 
-// Smoke column, then the titan rising from it, then the titan running; feet on the floor
+// Smoke column, then the titan rising from it (or the runner's mount coming out of it), then running;
+// feet on the floor
 void Players::drawShift(int player_num, const PlayerState &player, bool is_me)
 {
     const PlayerAnim &state = run.player_anims[player_num];
     float time = state.form_clock.getElapsedTime().asSeconds();
     float center_x = run.display_positions[player_num].x + TITAN_FORM_WIDTH / 2;
     uint8_t alpha = is_me ? 255 : 215;
+    const Character &mount = sprites.mount(run.characterOf(player_num));
+    bool titan = &mount == &sprites.eren_titan;
 
     if (player.form == Form::Shifting) {
         const Animation &smoke = sprites.shift.smoke;
-        const Animation &anim = time < smoke.duration() ? smoke : sprites.shift.emerge;
-        float anim_time = &anim == &smoke ? time : time - smoke.duration();
-        drawShiftFrame(sprites.shift, anim, anim.frameAt(anim_time), center_x, alpha);
+        if (titan || time < smoke.duration()) {
+            const Animation &anim = time < smoke.duration() ? smoke : sprites.shift.emerge;
+            float anim_time = &anim == &smoke ? time : time - smoke.duration();
+            drawShiftFrame(sprites.shift, anim, anim.frameAt(anim_time), center_x, alpha);
+            return;
+        }
+        // The mount shows through the smoke as it clears
+        float clear = std::clamp((time - smoke.duration()) / std::max(0.1f, SHIFT_TIME - smoke.duration()), 0.0f, 1.0f);
+        drawShiftFrame(mount, mount.run, 0, center_x, static_cast<uint8_t>(alpha * clear), false, mount.height);
+        drawShiftFrame(sprites.shift, smoke, smoke.frames - 1, center_x, static_cast<uint8_t>(alpha * (1 - clear)));
         return;
     }
 
+    if (!titan) {
+        drawShiftFrame(mount, mount.run, mount.run.frameAt(run.run_phase), center_x, alpha, false, mount.height);
+        return;
+    }
     // Heavy steps; the titan sheet runs to the left, flipped to run with you
-    const Character &titan = sprites.eren_titan;
     if (static_cast<int>(run.run_phase * 2.2f) != static_cast<int>((run.run_phase - 1 / 60.f) * 2.2f))
         run.shakeAtLeast(is_me ? 0.08f : 0.04f);
-    drawShiftFrame(titan, titan.run, titan.run.frameAt(run.run_phase), center_x, alpha, true);
+    int frame = mount.run.frameAt(run.run_phase);
+    drawShiftFrame(mount, mount.run, frame, center_x, alpha, true);
+    // Mikasa rides on his shoulder, crouched (her death's fourth frame), rocked by his steps
+    const Character &runner = sprites.character(run.characterOf(player_num));
+    if (runner.name == "MIKASA" && runner.death.frames > 3)
+        drawShiftFrame(runner, runner.death, 3, center_x + SHOULDER_X, alpha, false, 2.0f,
+                       SHOULDER_Y + 0.08f * std::sin(frame * 3.14159f / 3));
 }
 
 // Bursting out: the smoke the titan left shrinks and fades where it stood
@@ -298,20 +321,20 @@ void Players::drawSteamPuff(int player_num)
     drawShiftFrame(sprites.shift, smoke, frame, state.smoke_x, static_cast<uint8_t>(230 * (1 - t)));
 }
 
-// Feet on the floor, `sheet`'s standing height scaled to the titan form's
+// Feet on the floor (or `lift` tiles over it), `sheet`'s standing height scaled to `height` tiles
 void Players::drawShiftFrame(const Character &sheet, const Animation &anim, int frame, float center_x, uint8_t alpha,
-                             bool flip)
+                             bool flip, float height, float lift)
 {
     if (frame < 0 || sheet.sheet.getSize().x == 0)
         return;
 
-    float scale = run.view.tile_size * TITAN_FORM_HEIGHT / sheet.body;
+    float scale = run.view.tile_size * (height > 0 ? height : TITAN_FORM_HEIGHT) / sheet.body;
     sf::Sprite sprite(sheet.sheet);
 
     sprite.setTextureRect(sheet.frameRect(anim, frame));
     sprite.setOrigin({sheet.frame_size.x / 2.f, sheet.feet});
     sprite.setScale({flip ? -scale : scale, scale});
-    sprite.setPosition(run.toScreen({center_x, run.floor()}));
+    sprite.setPosition(run.toScreen({center_x, run.floor() - lift}));
     sprite.setColor(withAlpha(sf::Color::White, alpha));
     canvas.draw(sprite);
 }

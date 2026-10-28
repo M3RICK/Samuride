@@ -1,0 +1,8 @@
+name WARWICK
+sheet sheet.png
+portrait portrait.png
+frame 348 244
+feet 240
+body 236
+height 3.6
+run 0 12 14 loop

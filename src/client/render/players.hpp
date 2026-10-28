@@ -41,7 +41,7 @@ private:
     void drawShift(int player_num, const PlayerState &player, bool is_me);
     void drawSteamPuff(int player_num);
     void drawShiftFrame(const Character &sheet, const Animation &anim, int frame, float center_x, uint8_t alpha,
-                        bool flip = false);
+                        bool flip = false, float height = TITAN_FORM_HEIGHT, float lift = 0);
 
 public:
     Players(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio, Particles &particles);

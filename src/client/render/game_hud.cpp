@@ -386,7 +386,8 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
     float y = 40;
 
     if (player.form == Form::Titan) {
-        drawGauge("ATTACK TITAN", NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / titan_time, y);
+        const Character &mount = sprites.mount(run.characterOf(me));
+        drawGauge(&mount == &sprites.eren_titan ? "ATTACK TITAN" : mount.name, NEON_ORANGE, 1 - anim.form_clock.getElapsedTime().asSeconds() / titan_time, y);
         y += 80;
     } else if (player.sprinting) {
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});

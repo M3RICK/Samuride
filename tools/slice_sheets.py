@@ -29,7 +29,8 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
               solo=False, scale=1):
     """One animation of a sheet.
 
-    region:         box (x0, y0, x1, y1) holding the frames, labels left out
+    region:         box (x0, y0, x1, y1) holding the frames, labels left out; or a list of them, one per
+                    row, for an animation laid on several rows
     ground:         feet on the floor (run) rather than flying
     mode:           "loop", "once" (holds the last frame) or "hide" (vanishes after the last frame)
     frames:         indices to keep, all by default
@@ -148,6 +149,17 @@ CHARACTERS = {
         "run":    animation((1310, 455, 1410, 556), 1, ground=True),
         "revive": animation((55, 575, 1480, 672), 8, ground=True, mode="once", effects_ahead=True),
     }, {"min_alpha": 200}),
+    # The mounts, in place of Eren's titan for their runner (render/players.cpp): from Alex, on several rows
+    "johny_mount": ("../Samuride Files/Animation files/Johnny/Johnny_Porsche_NoBG.png", None, {
+        "run": animation([(0, 85, 1408, 205), (0, 257, 1408, 377), (0, 444, 1408, 565), (0, 632, 1408, 754)], 14,
+                         ground=True),
+    }),
+    "david_mount": ("../Samuride Files/Animation files/David/David_Cyberpsycho_NoBG.png", None, {
+        "run": animation([(0, 55, 1408, 368), (0, 415, 1408, 725)], 12, ground=True),
+    }),
+    "jinx_mount": ("../Samuride Files/Animation files/Jinx/Warwick_Jinx_Mount_Alt_NoBG.png", None, {
+        "run": animation([(0, 0, 1408, 250), (0, 260, 1408, 505), (0, 515, 1408, 758)], 14, ground=True),
+    }),
     # Titans charge at the player; Eren's titan is also the transformation power-up
     "titan_female": ("sources/titans.png", None, {
         "run": animation((140, 350, 1536, 520), 14, ground=True, cuts=TITAN_CUTS),
@@ -195,8 +207,11 @@ def label_blobs(mask):
                         labels[ny, nx] = count
                         queue.append((ny, nx))
     return labels, count
-DISPLAY_NAMES = {"johny": "JOHNNY"}
+DISPLAY_NAMES = {"johny": "JOHNNY", "johny_mount": "PORSCHE", "david_mount": "CYBERPSYCHO", "jinx_mount": "WARWICK"}
 # Colour of the exhaust particles the game adds under the jetpack (default neon yellow)
+# Tiles tall in the game, for the mounts (Eren's titan is TITAN_FORM_HEIGHT): a car is not a giant
+HEIGHTS = {"johny_mount": 2.2, "david_mount": 3.6, "jinx_mount": 3.6}
+
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
@@ -316,6 +331,8 @@ def seam_cuts(pixels, region, centres):
 
 
 def find_frames(pixels, spec, effects):
+    if isinstance(spec["region"], list):
+        return [frame for region in spec["region"] for frame in find_frames(pixels, {**spec, "region": region}, effects)]
     cuts = spec["cuts"]
     if cuts and cuts[0] == "seams":
         cuts = seam_cuts(pixels, spec["region"], cuts[1])
@@ -432,6 +449,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
              f"frame {cell_w} {cell_h}", f"feet {feet_y}", f"body {body}"]
     if name in EXHAUST:
         lines.append(f"exhaust {EXHAUST[name]}")
+    if name in HEIGHTS:
+        lines.append(f"height {HEIGHTS[name]}")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)
@@ -446,7 +465,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         overlay = sheet.copy()
         draw = ImageDraw.Draw(overlay)
         for anim, spec in animations.items():
-            draw.rectangle(spec["region"], outline=(255, 255, 0, 255))
+            for region in spec["region"] if isinstance(spec["region"], list) else [spec["region"]]:
+                draw.rectangle(region, outline=(255, 255, 0, 255))
             for box, _ in find_frames(pixels, spec, effects):
                 draw.rectangle(box, outline=(255, 0, 60, 255))
         overlay.save(Path(debug_dir) / f"{name}_regions.png")

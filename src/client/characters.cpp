@@ -58,6 +58,8 @@ bool Character::load(const std::string &dir)
             meta >> feet;
         } else if (key == "body") {
             meta >> body;
+        } else if (key == "height") {
+            meta >> height;
         } else if (key == "exhaust") {
             int r, g, b;
             meta >> r >> g >> b;
