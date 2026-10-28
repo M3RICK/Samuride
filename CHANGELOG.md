@@ -9,6 +9,12 @@ taken from this file. Players on different versions can't play together: update 
 - **Mounts**: the Attack Titan's orb now gives each runner their own ride, the same power-up for all.
   Johnny drives his Porsche 911, Jinx rides Warwick, David goes cyberpsycho, and Mikasa sits on Eren's
   titan's shoulder. Lucy and Dante still become the titan. Sprites by Alex.
+- **Adam Smasher's Sandevistan**: under 40% of his health, or halfway through his arena, he kicks in
+  his own Sandevistan and attacks 1.5 times faster, warnings, rockets and pauses included. Magenta
+  ghosts flicker around him while it lasts.
+
+### Other
+- Players on 3.0 and 3.1 can't play together.
 
 ## v3.0
 

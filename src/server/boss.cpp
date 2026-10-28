@@ -73,7 +73,7 @@ void Boss::update(float leader_x, float dt, std::mt19937 &rng, const std::map<in
         return;
     }
 
-    time += dt;
+    time += dt * (sandevistan() ? BOSS_SANDEVISTAN_RATE : 1);
     if (attack == BossAttack::None && time >= 0)
         start(rng, players, floor);
     if (attack == BossAttack::Cannon && phaseOf(attack, time) == BossPhase::Warning) {
@@ -130,8 +130,13 @@ bool Boss::damage(int amount)
     return true;
 }
 
+bool Boss::sandevistan() const
+{
+    return fighting() && (health <= BOSS_HEALTH * BOSS_SANDEVISTAN_HEALTH || leader >= BOSS_DISTANCE + BOSS_ARENA / 2);
+}
+
 BossState Boss::state() const
 {
     return {fighting(), std::clamp(health * 100 / std::max(1, BOSS_HEALTH), 0, 100), attack, phaseOf(attack, time),
-            x(), rocketsX(), y, time};
+            x(), rocketsX(), y, time, sandevistan()};
 }

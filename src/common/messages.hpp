@@ -84,6 +84,7 @@ struct BossState {
     float rockets_x = 0;
     float y = 0;            // the rockets' gap top, or the cannon's line
     float time = 0;         // seconds into the phase
+    bool sandevistan = false;   // attacking faster, low on health or late in his arena
 };
 
 // MSG_COLLISION

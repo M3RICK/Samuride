@@ -247,6 +247,7 @@ std::vector<uint8_t> Message::encode(const BossState &boss)
     w.pos32(boss.rockets_x);
     w.pos16(boss.y);
     w.pos16(boss.time);
+    w.u8(boss.sandevistan);
     return w.data;
 }
 
@@ -261,6 +262,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, BossState &boss)
     boss.rockets_x = r.pos32();
     boss.y = r.pos16();
     boss.time = r.pos16();
+    boss.sandevistan = r.u8() != 0;
     return r.ok();
 }
 

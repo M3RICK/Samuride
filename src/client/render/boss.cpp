@@ -24,7 +24,7 @@ static void rect(Canvas &canvas, sf::Vector2f pos, sf::Vector2f size, sf::Color 
     canvas.draw(shape);
 }
 
-// What changed since last frame: his entrance, an attack striking, a hit, his death
+// What changed since last frame: his entrance, his Sandevistan, an attack striking, a hit, his death
 void Smasher::react(const BossState &boss)
 {
     if (boss.fighting && !last.fighting) {
@@ -34,6 +34,13 @@ void Smasher::react(const BossState &boss)
         run.callout_color = NEON_RED;
         run.callout_clock.restart();
         since_entrance.restart();
+    }
+    if (boss.fighting && boss.sandevistan && !last.sandevistan) {
+        audio.play(Audio::Sfx::Sandevistan);
+        run.shakeAtLeast(0.3f);
+        run.callout = "SANDEVISTAN";
+        run.callout_color = SANDEVISTAN_COLOR;
+        run.callout_clock.restart();
     }
     if (!boss.fighting && last.fighting && boss.health == 0) {
         death_x = run.view.camera_x + shown_x;
@@ -82,6 +89,14 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
     auto [anim, frame] = pose(boss);
     float leap = std::min(std::abs(ahead - shown_x), 4.0f) * 0.6f;
     bool hurt = since_hit.getElapsedTime().asSeconds() < 0.08f;
+    // His Sandevistan: a magenta glow and ghosts flickering on the runners' side (behind him is off screen),
+    // magenta and white like the runners'
+    if (boss.sandevistan)
+        canvas.halo(run.toScreen({run.view.camera_x + shown_x + 1, run.floor() - HEIGHT / 2}),
+                    run.view.tile_size * (3.2f + 0.2f * std::sin(canvas.time() * 14)), withAlpha(SANDEVISTAN_COLOR, 28));
+    for (int i = 3; boss.sandevistan && i >= 1; i--)
+        drawBody(*anim, frame, run.view.camera_x + shown_x - (0.4f + 0.1f * std::sin(canvas.time() * 20)) * i, leap,
+                 withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, static_cast<uint8_t>(200 - 50 * i)));
     drawBody(*anim, frame, run.view.camera_x + shown_x, leap, hurt ? sf::Color(255, 120, 120) : sf::Color::White);
     if (cyberpsycho)
         drawHealth(boss);

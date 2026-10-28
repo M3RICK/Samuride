@@ -21,6 +21,8 @@ public:
     bool fighting() const { return stage == Stage::Fighting; }
     // In his arena while he can still be there: once he is down, the run goes back to normal
     bool holds(float x) const { return stage != Stage::Gone && inBossArena(x); }
+    // His Sandevistan: low on health, or late in his arena
+    bool sandevistan() const;
     // Where he stands, in tiles: shots reaching it hit him. Close by after a slam.
     float x() const;
     bool hit(const Player &player, float floor) const;

@@ -135,6 +135,10 @@ BOSS_AHEAD 12
 BOSS_INTRO_TIME 3
 # Seconds between two attacks
 BOSS_ATTACK_GAP 1.2
+# Share of his health under which his Sandevistan kicks in, as it does halfway through his arena (0 to 1)
+BOSS_SANDEVISTAN_HEALTH 0.4
+# How many times faster he attacks under his Sandevistan
+BOSS_SANDEVISTAN_RATE 1.5
 # His health in CYBERPSYCHO
 BOSS_HEALTH 80
 # A bullet's damage

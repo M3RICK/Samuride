@@ -25,6 +25,10 @@ inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a cha
 inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
+// His Sandevistan: under this share of his health, or past half his arena (in CLASSIC nothing hurts him),
+// his attacks run this many times faster, their warnings and the gaps between them too
+inline float BOSS_SANDEVISTAN_HEALTH = 0.4f;
+inline float BOSS_SANDEVISTAN_RATE = 1.5f;
 
 // Rockets: a wall of them along every row but a gap BOSS_ROCKET_GAP tall, warned on the right edge,
 // then flying at the runners

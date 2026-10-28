@@ -99,9 +99,10 @@ static void testMessages()
     assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
         return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
     });
-    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f}, [](auto &a, auto &b) {
+    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true}, [](auto &a, auto &b) {
         return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
-               a.x == b.x && a.rockets_x == b.rockets_x && a.y == b.y && a.time == b.time;
+               a.x == b.x && a.rockets_x == b.rockets_x && a.y == b.y && a.time == b.time &&
+               a.sandevistan == b.sandevistan;
     });
     assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
         return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
@@ -509,11 +510,15 @@ static void testBoss()
     boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
     assert(boss.fighting() && boss.x() == BOSS_DISTANCE + BOSS_AHEAD);
     assert(!boss.hit(players.at(3), 10));       // his entrance: nothing yet
-    assert(!boss.damage(BOSS_HEALTH - 1) && boss.damage(1) && !boss.fighting());
+    assert(!boss.sandevistan() && !boss.damage(static_cast<int>(BOSS_HEALTH * (1 - BOSS_SANDEVISTAN_HEALTH))) && boss.sandevistan());
+    assert(boss.state().sandevistan && !boss.damage(1) && boss.damage(BOSS_HEALTH) && !boss.fighting());
     assert(!boss.holds(BOSS_DISTANCE + 1));     // downed: the rest of his arena is a normal run
 
     boss.reset();
     boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
+    assert(!boss.sandevistan());
+    boss.update(BOSS_DISTANCE + BOSS_ARENA / 2, 0.1f, rng, players, 10);
+    assert(boss.sandevistan());                 // halfway: his Sandevistan, even unhurt
     boss.update(BOSS_DISTANCE + BOSS_ARENA, 0.1f, rng, players, 10);
     assert(!boss.fighting());
     assert(!inBossArena(BOSS_DISTANCE - 1) && inBossArena(BOSS_DISTANCE) && !inBossArena(BOSS_DISTANCE + BOSS_ARENA));
