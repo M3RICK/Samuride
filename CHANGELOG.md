@@ -14,7 +14,8 @@ taken from this file. Players on different versions can't play together: update 
   - **Bend Time** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
     rockets stop where they are (still deadly to touch); Smasher no longer keeps pace, so catch up and
     blink into him.
-  - His sprites are a stand-in for now.
+  - His own animations: running, levitating on violet smoke, gathering back from smoke after each Blink,
+    and collapsing into smoke when he dies.
 
 ### Other
 - 3.02 and 3.1 can't play together: update both sides.
