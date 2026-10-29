@@ -64,3 +64,34 @@ See `docs/NEXT.md`.
 - Bosses at distance milestones (Adam Smasher before 1000 m).
 - The ultimates take snipers down too (Johnny's fire wave, Fishbones).
 - Real sprites and sounds for the sniper: plain shapes for now.
+
+## Runners that play differently (proposed 2026-10-29)
+
+Everyone flies a jetpack and attacks ahead today: these change how you move, or what dying means.
+
+- **Miles Morales** (Spider-Man): no jetpack. He webs the ceiling and swings like a pendulum; letting
+  go at the right moment flings him. The most different of all.
+- **Kat** (Gravity Rush): flips gravity, runs on the ceiling, falls back down on the next flip. The
+  top rows become her floor.
+- **Corvo** (Dishonored): Blink, a teleport 4 tiles ahead, up or down, through a wall of zappers.
+  Timing, with a cooldown.
+- **Ekko** (Arcane): rewinds 3 s when he dies, once every 400 m. The risk taker.
+- **Geralt** (The Witcher): his key alternates two Signs, Aard (a blast that kills drones and pushes
+  a titan back) then Quen (a shield for one hit). A rhythm to manage.
+- **Scorpion** (Mortal Kombat): his spear pulls a drone, eddies or a power-up to him ("GET OVER HERE").
+
+## Gameplay we don't have yet (proposed 2026-10-29)
+
+1. **Boons, Hades style**: at 250 m and 750 m the run freezes and you pick 1 perk out of 3 for the
+   rest of the run (exploding drones, a longer Sandevistan, eddies x1.5 but one hit kills...). A
+   small roguelite layer, no art needed.
+2. **Close calls**: passing within 0.6 tile of a zapper without dying fills the ultimate gauge and
+   shows "CLOSE CALL". Rewards risk; the server already measures that distance.
+3. **Daily run**: the same map for everyone that day, with its own best. A reason to come back, and
+   friends compare on the same run.
+4. **Missions**: 3 goals at a time ("kill 30 drones", "pass Smasher untouched", "800 m with Lucy"),
+   paid in eddies.
+5. **Events during a run**: a blackout (only the zappers light up), a drone swarm, a stretch where
+   gravity flips.
+6. **Parry**: the attack key right as one of Smasher's rockets arrives sends it back at him. A skill
+   moment during the boss.
