@@ -73,8 +73,18 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
   go at the right moment flings him. The most different of all.
 - **Kat** (Gravity Rush): flips gravity, runs on the ceiling, falls back down on the next flip. The
   top rows become her floor.
-- **Corvo** (Dishonored): Blink, a teleport 4 tiles ahead, up or down, through a wall of zappers.
-  Timing, with a cooldown.
+- **Corvo** (Dishonored), agreed 2026-10-29, next runner (sheet to ask Alex: run, fly, fall, a Blink
+  pose with the Mark glowing, portrait). No weapon:
+  - **Blink** on the attack key, CYBERPSYCHO only like every attack: a teleport 4 tiles the way he
+    moves (up while jetting, down while falling, ahead otherwise; no aiming, phones work the same).
+    The drones he crosses die. 2 charges, one back every 3 s, shown like Lucy's RAM. A ghost of him
+    always shows where he would land: landing in a zapper kills, but you saw it coming.
+  - **Bend Time** ultimate: the world freezes 4 s, only he moves (titans, sniper sights, Smasher and
+    his rockets stop).
+  - **Smasher**: he blinks through the rocket wall (it costs a charge). He stays 12 tiles ahead of
+    the leader, so blinking never gets closer; a Blink into him is a stab (8, more than a slash: it
+    costs a charge) while he gets up after a slam, like the blades. Bend Time freezes him where he
+    stands: Corvo catches up in about a second and stabs him with the charges he has left.
 - **Ekko** (Arcane): rewinds 3 s when he dies, once every 400 m. The risk taker.
 - **Geralt** (The Witcher): his key alternates two Signs, Aard (a blast that kills drones and pushes
   a titan back) then Quen (a shield for one hit). A rhythm to manage.
