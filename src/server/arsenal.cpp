@@ -199,7 +199,7 @@ void Rebellion::tick(const Player &, float dt)
 // Ultimates
 //=============================================================================
 
-bool Sweep::advance(Server &server, const Player &owner)
+bool Sweep::advance(Server &server, Player &owner)
 {
     if (delay > 0) {
         delay -= Server::TICK_DT;
@@ -207,6 +207,8 @@ bool Sweep::advance(Server &server, const Player &owner)
     }
     float to = std::min(start + range, front + speed * Server::TICK_DT);
     server.scorch(owner.getClientFd(), front, to, start - 1, top, bottom);
+    if (!hit_boss && server.bossBetween(start - 1, to))
+        hit_boss = server.hitBoss(owner, BOSS_ULTIMATE_DAMAGE);
     front = to;
     return front < start + range;
 }
@@ -231,9 +233,12 @@ void Nuke::fire(Server &, Player &, float start, float)
 void Nuke::act(Server &server, Player &player)
 {
     for (Shell &shell : shells) {
-        if ((shell.timer -= Server::TICK_DT) <= 0)
-            server.scorch(player.getClientFd(), shell.impact - NUKE_RADIUS, shell.impact + NUKE_RADIUS,
-                          shell.impact - NUKE_RADIUS);
+        if ((shell.timer -= Server::TICK_DT) > 0)
+            continue;
+        server.scorch(player.getClientFd(), shell.impact - NUKE_RADIUS, shell.impact + NUKE_RADIUS,
+                      shell.impact - NUKE_RADIUS);
+        // Smasher keeps pace while it falls: he's hit wherever he stands
+        server.hitBoss(player, BOSS_ULTIMATE_DAMAGE);
     }
     std::erase_if(shells, [](const Shell &shell) { return shell.timer <= 0; });
 }

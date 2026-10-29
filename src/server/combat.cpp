@@ -38,7 +38,8 @@ void Server::handleUltimate(int client_fd)
     UltimateEvent fired{player.getPlayerNumber(), ultimateOf(player.getCharacter()), start, line};
     broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, Message::encode(fired)));
     player.ultimate().fire(*this, player, start, line);
-    hitBoss(player, BOSS_ULTIMATE_DAMAGE);
+    if (!player.ultimate().travels())
+        hitBoss(player, BOSS_ULTIMATE_DAMAGE);
 }
 
 // What the ultimates do on their own every tick: the sweeps go on, the nukes land
