@@ -6,6 +6,8 @@ taken from this file. Players on different versions can't play together: update 
 ## v3.02
 
 ### Fixes
+- **Hitboxes**: runners were drawn up to almost a tile behind where they really are (more the faster you
+  go), so you died short of a zapper or a rocket. They're now drawn where the server has them.
 - **No more shooting as a titan** or on a mount: the attack key (and Berserk) waits until you're back on foot.
 - **Adam Smasher**: the red zone of his ground slam is gone while he gets back up, and his rockets and their
   warning chevrons are drawn over him instead of hidden behind him.

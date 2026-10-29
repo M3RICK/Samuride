@@ -7,6 +7,7 @@
 void Run::reset()
 {
     display_positions.clear();
+    tracks.clear();
     player_anims.clear();
     death_clocks.clear();
     rescues.clear();
@@ -34,18 +35,34 @@ void Run::follow(const std::map<int, PlayerState> &players, int me, float dt)
     updateSpeed(me, dt);
 }
 
-// The server ticks at 60Hz, easing toward its positions hides the jitter
+// The server ticks at 60Hz: moving at each player's velocity hides the jitter, easing toward its positions
+// fixes the drift. Easing alone trailed a runner by speed / 20 tiles (0.8 at full speed), so they died
+// short of what hit them.
 void Run::smoothPositions(const std::map<int, PlayerState> &players, float dt)
 {
     for (const auto &[player_num, player] : players) {
         sf::Vector2f target(player.x, player.y);
         auto [it, inserted] = display_positions.try_emplace(player_num, target);
         sf::Vector2f &pos = it->second;
+        Track &track = tracks.try_emplace(player_num, Track{target, {}, 0}).first->second;
 
-        if ((target - pos).length() > 3)
+        track.since += dt;
+        if (target != track.target) {
+            track.velocity = (target - track.target) / std::max(track.since, 1.0f / 60);
+            track.target = target;
+            track.since = 0;
+        } else if (track.since > 0.1f) {
+            // No news: stopped, dead or the run paused
+            track.velocity = {};
+        }
+        if ((target - pos).length() > 3) {
             pos = target;
-        else
+            track.velocity = {};
+        } else {
+            pos += track.velocity * dt;
             pos += (target - pos) * std::min(1.0f, dt * 20);
+            pos.y = std::max(0.0f, std::min(pos.y, floor() - PLAYER_HEIGHT));
+        }
     }
 }
 

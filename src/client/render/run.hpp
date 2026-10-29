@@ -39,6 +39,9 @@ struct Run {
     bool cyberpsycho = false;       // the run's mode
 
     std::map<int, sf::Vector2f> display_positions;
+    // Each player's last position from the server, its velocity, and the seconds since it last changed
+    struct Track { sf::Vector2f target; sf::Vector2f velocity; float since = 0; };
+    std::map<int, Track> tracks;
     std::map<int, PlayerAnim> player_anims;
     std::map<int, sf::Clock> death_clocks;
     std::map<int, sf::Clock> rescues;      // since the Trauma Team came for each player
