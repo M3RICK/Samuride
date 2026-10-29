@@ -282,6 +282,8 @@ UltimateLook ultimateLook(Ultimate ultimate)
             return {"FISHBONES", Palette::NEON_PINK};
         case Ultimate::Doppelganger:
             return {"DOPPELGANGER", Palette::NEON_RED};
+        case Ultimate::BendTime:
+            return {"BEND TIME", Palette::NEON_CYAN};
         default:
             return {"", sf::Color::White};
     }

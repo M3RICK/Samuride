@@ -19,6 +19,7 @@ enum class Ultimate : uint8_t {
     ThunderSpears,  // Mikasa
     Fishbones,      // Jinx
     Doppelganger,   // Dante
+    BendTime,       // Corvo
 };
 
 // Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
@@ -57,6 +58,11 @@ inline float FISHBONES_RECOIL_PUSH = 0.8f;
 // (mirrored around the corridor's middle) and repeats every attack of his from there. It does nothing
 // on its own. Its kills are his: they pay his style rank and raise it.
 inline float DOPPELGANGER_TIME = 8;
+
+// Corvo's Bend Time: for BEND_TIME the world stands still, only the runners move. Titans, sniper sights,
+// Adam Smasher and his rockets stop where they are (still deadly to run into); Smasher no longer keeps
+// pace, Corvo can catch up and blink into him.
+inline float BEND_TIME = 4;
 
 // Where the double's body is, its top at y, for a body `height` tall in a corridor `floor` tiles high
 inline float mirrored(float y, float height, float floor) { return floor - height - y; }

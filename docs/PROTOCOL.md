@@ -129,7 +129,7 @@ A 13-byte record per player, 60 times per second:
 | 4 | X, also the distance run |
 | 2 | Y: top of the 2-tile-tall body, 0 is the top row |
 | 2 | Score |
-| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
+| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Corvo's Blinks), bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
 | 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS) |
@@ -186,14 +186,17 @@ server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the we
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
-feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
+feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Corvo blinks, for one of his 2
+charges: 4 tiles up if he rises faster than 5 tiles per second, down if he falls that fast, ahead
+otherwise; the drones his body crosses go down (`d`), and Adam Smasher takes a stab if it reaches him.
+Berserk never blinks on its own.
 
 ### `MSG_SHOT`
 
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear (Dante's attacks go out as 0 in the air, 2 on the ground) |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 6 blink, sent before he moves (Dante's attacks go out as 0 in the air, 2 on the ground) |
 
 ### `MSG_ULTIMATE`
 
@@ -203,7 +206,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Bend Time (Corvo) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -226,6 +229,9 @@ Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but o
 The Doppelganger sends nothing more: for 8 seconds each of Dante's attacks is also made from the
 opposite height (the corridor's height minus his body's, minus his y), and the clients draw his double
 there and its shots themselves. Its kills come as his.
+
+Bend Time sends nothing more: for 4 seconds the server stops the titans, the snipers and Adam Smasher
+(his x and his rockets stay where they are). Their states keep coming, standing still.
 
 ### `MSG_TITANS`
 

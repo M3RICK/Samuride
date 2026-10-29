@@ -3,6 +3,22 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.1
+
+### New
+- **Corvo** (Dishonored), seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
+  4 tiles the way he's moving (up if you're rising fast, down if you're falling fast, ahead otherwise),
+  and the drones he passes through go down. A cyan ghost always shows where he'd land: land in a zapper
+  and you die. 2 charges, one back every 3 seconds. Blink into Adam Smasher while he gets up after a
+  slam for a stab (8).
+  - **Bend Time** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
+    rockets stop where they are (still deadly to touch); Smasher no longer keeps pace, so catch up and
+    blink into him.
+  - His sprites are a stand-in for now.
+
+### Other
+- 3.02 and 3.1 can't play together: update both sides.
+
 ## v3.02
 
 ### Fixes

@@ -20,6 +20,7 @@ enum class Weapon : uint8_t {
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
     Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
                 // like Gun); its shots go out as those two, it has no stats of its own
+    Blink,      // Corvo: no weapon, a teleport that kills the drones it crosses (BLINK_*); no stats either
 };
 
 struct WeaponStats {
@@ -60,6 +61,27 @@ inline int STYLE_KILLS = 2;
 inline float STYLE_HASTE[STYLE_RANKS] = {1, 0.95f, 0.9f, 0.85f, 0.8f, 0.7f, 0.6f};
 inline float STYLE_DROP_TIME = 10;
 inline int STYLE_HIT_DROP = 2;
+
+// Corvo's Blink: BLINK_DISTANCE tiles the way he moves. Rising or falling faster than BLINK_TURN_SPEED
+// (tiles per second) it goes up or down, ahead otherwise: no aiming, phones work the same. The drones his
+// body crosses go down; he lands where the ghost shows, a zapper there kills him. BLINK_CHARGES at most,
+// one back every BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).
+inline float BLINK_DISTANCE = 4;
+inline float BLINK_TURN_SPEED = 5;
+inline float BLINK_COOLDOWN = 0.3f;
+constexpr int BLINK_CHARGES = 2;    // sent in 2 bits: 3 at most
+inline float BLINK_RECHARGE = 3;
+
+// Where a Blink takes a body whose top-left corner is at (x, y), moving down at vy tiles per second
+// (up when negative), its top kept between 0 and max_y
+inline std::pair<float, float> blinkTarget(float x, float y, float vy, float max_y)
+{
+    if (vy <= -BLINK_TURN_SPEED)
+        return {x, std::max(0.0f, y - BLINK_DISTANCE)};
+    if (vy >= BLINK_TURN_SPEED)
+        return {x, std::min(max_y, y + BLINK_DISTANCE)};
+    return {x + BLINK_DISTANCE, y};
+}
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

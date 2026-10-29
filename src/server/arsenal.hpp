@@ -36,6 +36,8 @@ public:
     virtual void hurt() {}
     // Dante's style rank, sent in 3 bits
     virtual int style() const { return 0; }
+    // Berserk attacks with it on its own: not Corvo's Blink, he would teleport at random
+    virtual bool autoFires() const { return true; }
 };
 
 class RunnerUltimate {
@@ -58,6 +60,8 @@ public:
     // True when it hurts Smasher itself once it reaches him (Fishbones' rocket, the fire wave) or lands
     // (the nuke), instead of as it's fired
     virtual bool travels() const { return false; }
+    // True while the world stands still: Corvo's Bend Time
+    virtual bool freezes() const { return false; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -116,6 +120,18 @@ public:
     int droneDown() override;
     void hurt() override { rank = std::max(0, rank - STYLE_HIT_DROP); kills = 0; }
     int style() const override { return rank; }
+};
+
+// Corvo: BLINK_CHARGES teleports, killing the drones he crosses, stabbing Smasher if he reaches him
+class Blink : public RunnerWeapon {
+    int charges_left = BLINK_CHARGES;
+    float recharge_timer = BLINK_RECHARGE;  // seconds before the next charge comes back
+
+public:
+    float attack(Server &server, Player &player) override;
+    void tick(const Player &player, float dt) override;
+    int charges() const override { return charges_left; }
+    bool autoFires() const override { return false; }
 };
 
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
@@ -187,6 +203,16 @@ public:
 };
 
 // She stops dead and hangs in the air while it charges, then its recoil throws her back
+// For BEND_TIME the world stands still (Server::updatePlayers)
+class BendTime : public RunnerUltimate {
+    float timer = 0;        // seconds it still lasts
+
+public:
+    void fire(Server &, Player &, float, float) override { timer = BEND_TIME; }
+    void tick(float dt) override { timer = std::max(0.0f, timer - dt); }
+    bool freezes() const override { return timer > 0; }
+};
+
 class Fishbones : public RunnerUltimate {
     std::vector<Sweep> rockets;
     float charge_timer = 0;     // seconds left charging

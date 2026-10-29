@@ -374,6 +374,35 @@ static void testDante()
     assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
 }
 
+// Corvo: the Blink goes the way he moves, its charges come back one at a time; Bend Time stops the world
+// for BEND_TIME, and Berserk doesn't blink for him
+static void testCorvo()
+{
+    assert(weaponOf(6) == Weapon::Blink && ultimateOf(6) == Ultimate::BendTime);
+    assert(blinkTarget(10, 4, 0, 8) == std::make_pair(10 + BLINK_DISTANCE, 4.0f));
+    assert(blinkTarget(10, 4, -MAX_VELOCITY, 8) == std::make_pair(10.0f, 0.0f));     // up, held by the ceiling
+    assert(blinkTarget(10, 2, MAX_VELOCITY, 8) == std::make_pair(10.0f, 2 + BLINK_DISTANCE));
+    assert(blinkTarget(10, 6, MAX_VELOCITY, 8) == std::make_pair(10.0f, 8.0f));       // and the floor
+
+    Player corvo(-1);
+    corvo.setCharacter(6);
+    corvo.reset(0, 0);
+    RunnerWeapon &blink = corvo.weapon();
+    assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
+    corvo.blinkTo(14, 3);
+    assert(corvo.getX() == 14 && corvo.getY() == 3 && corvo.getYVelocity() == 0);
+
+    ServerConfig config;
+    Server server(config);      // never started: Bend Time doesn't use it
+    assert(!corvo.ultimate().freezes());
+    corvo.ultimate().fire(server, corvo, 0, 0);
+    assert(corvo.ultimate().freezes());
+    corvo.update(BEND_TIME - 0.1f, 10, 8);
+    assert(corvo.ultimate().freezes());
+    corvo.update(0.2f, 10, 8);
+    assert(!corvo.ultimate().freezes());
+}
+
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
 // sets its value, a bad one changes nothing
 static void testTuning()
@@ -707,6 +736,50 @@ static void testTraumaOffer()
     std::filesystem::remove(map_path);
 }
 
+// Corvo over real sockets: a wall of drones 3 tiles ahead, he blinks through it at the start
+static void testBlink()
+{
+    std::string map_path = (std::filesystem::temp_directory_path() / "samuride_blink_test.txt").string();
+    {
+        std::ofstream map(map_path);
+        for (int row = 0; row < 10; row++)
+            map << std::string(3, EMPTY_TILE) << DRONE_TILE << std::string(30, EMPTY_TILE) << '\n';
+    }
+    ServerConfig config;
+    config.port = 47127;
+    config.quiet = true;
+    config.solo = true;
+    config.map_path = map_path;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient corvo(config.port);
+    corvo.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 6, .district = 0, .mode = 1}));
+    for (;;) {
+        auto count = corvo.await(MSG_COUNTDOWN);
+        assert(count && !count->empty());
+        if ((*count)[0] == 0)
+            break;
+    }
+    float before = corvo.latest(0).x;
+    corvo.send(MSG_ATTACK, {1});
+
+    // He took the drones in his way down, and is past the wall alive
+    CollisionEffect effect{};
+    do {
+        auto payload = corvo.await(MSG_COLLISION);
+        assert(payload && Message::decode(*payload, effect));
+    } while (effect.type == COIN_TILE);
+    assert(effect.type == DRONE_TILE && effect.x == 3);
+    PlayerState after = corvo.latest(0);
+    assert(after.x >= before + BLINK_DISTANCE && after.ram == BLINK_CHARGES - 1);
+
+    Socket::close(corvo.fd);
+    server.stop();
+    loop.join();
+    std::filesystem::remove(map_path);
+}
+
 int main()
 {
     testPacketFraming();
@@ -714,6 +787,7 @@ int main()
     testMessages();
     testServerRun();
     testTraumaOffer();
+    testBlink();
     testMapChunks();
     testGenerator();
     testSniperHit();
@@ -723,6 +797,7 @@ int main()
     testAgility();
     testUltimate();
     testDante();
+    testCorvo();
     testTuning();
     testWallet();
     testUpgrades();

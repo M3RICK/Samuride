@@ -180,7 +180,7 @@ void Server::updatePlayers()
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
         // Berserk attacks on its own, as soon as the cooldown allows
-        if (player.isBerserk())
+        if (player.isBerserk() && player.weapon().autoFires())
             handleAttack(client_fd);
         // What the weapon does on its own: the rest of a Pow-Pow burst
         if (mode == GameMode::Cyberpsycho)
@@ -189,9 +189,13 @@ void Server::updatePlayers()
         rear_x = std::min(rear_x, player.getX());
     }
 
-    titans.update(rear_x, TICK_DT);
-    snipers.update(TICK_DT, players);
-    boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
+    // Corvo's Bend Time: the titans, the snipers and Smasher stand still, even the sights stop following
+    bool frozen = std::ranges::any_of(players, [](const auto &entry) { return entry.second.ultimate().freezes(); });
+    titans.update(rear_x, frozen ? 0 : TICK_DT);
+    if (!frozen) {
+        snipers.update(TICK_DT, players);
+        boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
+    }
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -202,7 +206,7 @@ void Server::updatePlayers()
     }
 
     // No titan nor sniper in Smasher's arena, nor charging into it
-    if (!boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
+    if (!frozen && !boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
         titans.spawn(leader_x, TICK_DT, rng);
         snipers.spawn(leader_x, TICK_DT, rng, players);
     }

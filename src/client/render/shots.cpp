@@ -40,6 +40,12 @@ void Shots::handle(GameState &state)
                 audio.play(Audio::Sfx::Hack);
                 particles.emit(muzzle, 8, NEON_PURPLE, 3, 0.3f, 0);
                 break;
+            case Weapon::Blink:
+                // Smoke where he was: the server moves him on its next state
+                audio.play(Audio::Sfx::Blink);
+                particles.emit(muzzle - sf::Vector2f(0.4f, 0), 18, sf::Color(30, 20, 50), 4, 0.4f, 0);
+                particles.emit(muzzle - sf::Vector2f(0.4f, 0), 8, NEON_CYAN, 3, 0.3f, 0);
+                break;
             case Weapon::Spear:
                 audio.play(Audio::Sfx::Rocket);
                 particles.emit(muzzle, 8, sf::Color::White, 4, 0.3f, 0);

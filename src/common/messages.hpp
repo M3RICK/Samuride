@@ -40,7 +40,7 @@ struct PlayerState {
     Form form = Form::Normal;
     bool shielded = false;
     bool sprinting = false;     // Sandevistan
-    int ram = 0;                // Lucy's hack charges
+    int ram = 0;                // the weapon's charges: Lucy's RAM, Corvo's Blinks
     bool berserk = false;
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left

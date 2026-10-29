@@ -16,6 +16,8 @@ std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id)
             return std::make_unique<Hack>();
         case Weapon::Rebellion:
             return std::make_unique<Rebellion>();
+        case Weapon::Blink:
+            return std::make_unique<Blink>();
         default:
             return std::make_unique<Gun>();
     }
@@ -34,6 +36,8 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
             return std::make_unique<Fishbones>();
         case Ultimate::Doppelganger:
             return std::make_unique<Doppelganger>();
+        case Ultimate::BendTime:
+            return std::make_unique<BendTime>();
         default:
             return std::make_unique<FireWave>();
     }
@@ -193,6 +197,41 @@ void Rebellion::tick(const Player &, float dt)
     rank--;
     kills = 0;
     drop_timer = STYLE_DROP_TIME;
+}
+
+// Where blinkTarget says: the drones in the box his body sweeps go down, Smasher takes a stab if it
+// reaches him
+float Blink::attack(Server &server, Player &player)
+{
+    if (charges_left == 0)
+        return 0;
+    float max_y = server.map().getHeight() - Player::HEIGHT;
+    auto [to_x, to_y] = blinkTarget(player.getX(), player.getY(), player.getYVelocity(), max_y);
+    float left = player.getX();
+    float right = to_x + 1;
+    float top = std::min(player.getY(), to_y);
+    float bottom = std::max(player.getY(), to_y) + Player::HEIGHT;
+
+    for (int x = static_cast<int>(left); x < right; x++)
+        for (int y = static_cast<int>(top); y < bottom; y++)
+            if (server.isLiveDrone(x, y))
+                server.destroyDrone(player.getClientFd(), x, y);
+    if (server.bossBetween(left, right))
+        server.hitBoss(player, BOSS_STAB_DAMAGE);
+    // Before he moves: the clients draw his smoke where he was
+    server.announceShot(player, Weapon::Blink);
+    player.blinkTo(to_x, to_y);
+    if (charges_left-- == BLINK_CHARGES)
+        recharge_timer = BLINK_RECHARGE;
+    return BLINK_COOLDOWN;
+}
+
+void Blink::tick(const Player &player, float dt)
+{
+    if (charges_left < BLINK_CHARGES && (recharge_timer -= dt * (player.isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
+        charges_left++;
+        recharge_timer = BLINK_RECHARGE;
+    }
 }
 
 //=============================================================================

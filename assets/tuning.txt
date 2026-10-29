@@ -151,6 +151,8 @@ BOSS_SPEAR_DAMAGE 8
 BOSS_HACK_DAMAGE 8
 # A blade's damage (Mikasa, Dante's sword), while he is close after a slam
 BOSS_SLASH_DAMAGE 5
+# Corvo blinking into him
+BOSS_STAB_DAMAGE 8
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
 # Eddies for downing him
@@ -213,6 +215,14 @@ HACK_TIME 2
 HACK_BOUNCE_RANGE 4
 # Seconds to get one charge of RAM back (3 at most)
 RAM_RECHARGE 3.5
+# Corvo: tiles a Blink takes him
+BLINK_DISTANCE 4
+# Rising or falling faster than this (tiles per second), he blinks up or down
+BLINK_TURN_SPEED 5
+# Seconds between two Blinks
+BLINK_COOLDOWN 0.3
+# Seconds to get one Blink back (2 at most)
+BLINK_RECHARGE 3
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second
@@ -251,6 +261,8 @@ FISHBONES_RECOIL_TIME 0.5
 FISHBONES_RECOIL_PUSH 0.8
 # Dante: seconds his Doppelganger repeats his attacks
 DOPPELGANGER_TIME 8
+# Corvo: seconds the world stands still
+BEND_TIME 4
 
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
@@ -295,3 +307,6 @@ LUCY_AGILITY 1
 DANTE_PRICE 1000
 DANTE_ULTIMATE_CHARGE 150
 DANTE_AGILITY 1
+CORVO_PRICE 1250
+CORVO_ULTIMATE_CHARGE 150
+CORVO_AGILITY 1

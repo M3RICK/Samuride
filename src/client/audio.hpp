@@ -18,6 +18,7 @@ public:
         Siren, Jackpot, Pinata,                                     // upgrades
         FireWave, Nuke, Breach, Charge, UltimateReady,              // ultimates
         StyleUp,                                                    // Dante's style rank going up
+        Blink,                                                      // Corvo's teleport
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
     };
 

@@ -190,8 +190,10 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops());
-    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
+    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho) {
         drawHackTarget(players, me, destroyed);
+        drawBlinkTarget(players, me);
+    }
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
     titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
@@ -244,6 +246,28 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
     if (x >= 0)
         tiles.drawSprite(sprites.hack_target, {static_cast<float>(x), static_cast<float>(y)},
                          1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
+}
+
+// Playing Corvo with a Blink left: his ghost where it would take him, worked out like the server does
+// (from his measured vertical speed: it may disagree for a frame when he turns)
+void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me)
+{
+    auto mine = players.find(me);
+    auto pos = run.display_positions.find(me);
+
+    if (mine == players.end() || pos == run.display_positions.end() || mine->second.ram == 0 ||
+        mine->second.form != Form::Normal || run.death_clocks.count(me) ||
+        weaponOf(run.characterOf(me)) != Weapon::Blink)
+        return;
+
+    auto [x, y] = blinkTarget(pos->second.x, pos->second.y, run.tracks[me].velocity.y, run.floor() - Run::PLAYER_HEIGHT);
+    sf::Vector2f top_left = run.toScreen({x, y});
+    sf::RectangleShape ghost(run.toScreen({x + 1, y + Run::PLAYER_HEIGHT}) - top_left);
+    ghost.setPosition(top_left);
+    ghost.setFillColor(withAlpha(NEON_CYAN, 40));
+    ghost.setOutlineColor(withAlpha(NEON_CYAN, static_cast<uint8_t>(150 + 80 * std::sin(canvas.time() * 10))));
+    ghost.setOutlineThickness(2);
+    canvas.draw(ghost);
 }
 
 // "ENTERING <district>" each time the scenery changes

@@ -117,6 +117,7 @@ std::vector<Entry> &entries()
             VALUE(BOSS_SPEAR_DAMAGE, "A thunder spear's damage"),
             VALUE(BOSS_HACK_DAMAGE, "Lucy's hack's damage"),
             VALUE(BOSS_SLASH_DAMAGE, "A blade's damage (Mikasa, Dante's sword), while he is close after a slam"),
+            VALUE(BOSS_STAB_DAMAGE, "Corvo blinking into him"),
             VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
             VALUE(BOSS_BOUNTY, "Eddies for downing him"),
             VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),
@@ -151,6 +152,10 @@ std::vector<Entry> &entries()
             VALUE(HACK_TIME, "Seconds a hacked zapper stays off"),
             VALUE(HACK_BOUNCE_RANGE, "A hacked drone passes the hack to the nearest drone this close"),
             VALUE(RAM_RECHARGE, "Seconds to get one charge of RAM back (3 at most)"),
+            VALUE(BLINK_DISTANCE, "Corvo: tiles a Blink takes him"),
+            VALUE(BLINK_TURN_SPEED, "Rising or falling faster than this (tiles per second), he blinks up or down"),
+            VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
+            VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (2 at most)"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),
@@ -172,6 +177,7 @@ std::vector<Entry> &entries()
             VALUE(FISHBONES_RECOIL_TIME, "Seconds its recoil lasts"),
             VALUE(FISHBONES_RECOIL_PUSH, "How hard the recoil throws her back, times the run speed"),
             VALUE(DOPPELGANGER_TIME, "Dante: seconds his Doppelganger repeats his attacks"),
+            VALUE(BEND_TIME, "Corvo: seconds the world stands still"),
 
             Entry("Dante's style meter: ranks D, C, B, A, S, SS, SSS"),
             VALUE(STYLE_KILLS, "Kills in a row to go up a rank"),

@@ -25,6 +25,7 @@ void Ultimates::clear()
     nukes.clear();
     rockets.clear();
     breaches.clear();
+    bend_times.clear();
 }
 
 void Ultimates::handle(GameState &state)
@@ -67,6 +68,11 @@ void Ultimates::start(const UltimateEvent &ultimate)
         run.doubles[ultimate.player].restart();
         sf::Vector2f double_body(body.x, run.doubleY(ultimate.player) + 1);
         particles.emit(double_body, 40, NEON_RED, 6, 0.6f, 0);
+    } else if (ultimate.ultimate == Ultimate::BendTime) {
+        audio.play(Audio::Sfx::Sandevistan);
+        run.flashScreen(sf::Color::White, 0.2f);
+        particles.emit(body, 30, NEON_CYAN, 6, 0.5f, 0);
+        bend_times.emplace_back();
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -336,8 +342,22 @@ void Ultimates::drawBreaches()
     std::erase_if(breaches, [](const sf::Clock &breach) { return breach.getElapsedTime().asSeconds() > GLITCH_TIME; });
 }
 
+// The world standing still: a cold grey veil, fading in and out at the ends
+void Ultimates::drawBendTimes()
+{
+    for (const sf::Clock &bend : bend_times) {
+        float t = bend.getElapsedTime().asSeconds();
+        float fade = std::clamp(std::min(t, BEND_TIME - t) / 0.3f, 0.0f, 1.0f);
+        sf::RectangleShape veil({Screen::WIDTH, Screen::HEIGHT});
+        veil.setFillColor(sf::Color(20, 40, 70, static_cast<uint8_t>(90 * fade)));
+        canvas.draw(veil);
+    }
+    std::erase_if(bend_times, [](const sf::Clock &bend) { return bend.getElapsedTime().asSeconds() > BEND_TIME; });
+}
+
 void Ultimates::draw()
 {
+    drawBendTimes();
     drawFireWaves();
     drawNukes();
     drawBreaches();

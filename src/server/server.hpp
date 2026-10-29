@@ -258,8 +258,11 @@ public:
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);
-    // Smasher fighting with his x between these two
-    bool bossBetween(float from, float to) const { return boss.fighting() && boss.x() >= from && boss.x() <= to; }
+    // Smasher fighting with his body (half a tile before his x to 2.5 after) between these two
+    bool bossBetween(float from, float to) const
+    {
+        return boss.fighting() && boss.x() - 0.5f < to && boss.x() + 2.5f > from;
+    }
     // ... with a blade, if he is within its reach (close by after a slam)
     bool slashBoss(Player &player, float reach);
 
