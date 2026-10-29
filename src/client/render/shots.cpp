@@ -46,10 +46,8 @@ void Shots::handle(GameState &state)
                 particles.emit(muzzle - sf::Vector2f(0.4f, 0), 18, sf::Color(30, 20, 50), 4, 0.4f, 0);
                 particles.emit(muzzle - sf::Vector2f(0.4f, 0), 8, NEON_CYAN, 3, 0.3f, 0);
                 streaks.push_back({shot.player, muzzle - sf::Vector2f(0.4f, 0), false, sf::Clock()});
-                if (shot.player == state.getMyPlayerNumber()) {
+                if (shot.player == state.getMyPlayerNumber())
                     run.shakeAtLeast(0.12f, 12);
-                    run.flashScreen(sf::Color(120, 60, 220), 0.12f);
-                }
                 break;
             case Weapon::Spear:
                 audio.play(Audio::Sfx::Rocket);
@@ -107,8 +105,8 @@ void Shots::land(int player, float x)
         trails.erase(closest);
 }
 
-// A violet band with a white core from where he was to where he is, fading in STREAK_TIME; sparks along
-// it and a burst where he lands, the moment he gets there
+// A violet band with a pale core from where he was to just behind him, fading in STREAK_TIME; sparks
+// along it and a small burst where he lands. Nothing white over him: he must stay readable
 void Shots::drawStreaks()
 {
     static constexpr float STREAK_TIME = 0.2f;
@@ -125,14 +123,13 @@ void Shots::drawStreaks()
             streak.age.restart();
             for (int i = 1; i <= 8; i++)
                 particles.emit(streak.from + (to - streak.from) * (i / 8.f), 2, i % 2 ? NEON_PURPLE : NEON_CYAN, 3, 0.3f, 0);
-            particles.emit(to, 16, sf::Color::White, 6, 0.25f, 0);
-            particles.emit(to, 12, NEON_PURPLE, 5, 0.35f, 0);
+            particles.emit(to, 10, NEON_PURPLE, 5, 0.3f, 0);
         }
         float fade = 1 - streak.age.getElapsedTime().asSeconds() / STREAK_TIME;
         sf::Vector2f a = run.toScreen(streak.from);
-        sf::Vector2f b = run.toScreen(to);
+        sf::Vector2f b = run.toScreen(to - (to - streak.from).normalized() * 0.6f);
         for (auto [thickness, color] : {std::pair{run.view.tile_size * 1.2f, withAlpha(NEON_PURPLE, static_cast<uint8_t>(110 * fade))},
-                                        std::pair{run.view.tile_size * 0.25f, withAlpha(sf::Color::White, static_cast<uint8_t>(230 * fade))}}) {
+                                        std::pair{run.view.tile_size * 0.25f, withAlpha(sf::Color(200, 170, 255), static_cast<uint8_t>(140 * fade))}}) {
             sf::RectangleShape band({(b - a).length(), thickness * fade});
             band.setOrigin({0, thickness * fade / 2});
             band.setPosition(a);
