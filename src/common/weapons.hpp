@@ -67,6 +67,13 @@ inline int STYLE_HIT_DROP = 2;
 // he lands where the marker shows, a zapper there kills him. BLINK_CHARGES at most, one back every
 // BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).
 inline float BLINK_DISTANCE = 4;
+// Held, the attack key takes him further: BLINK_FAR_DISTANCE after BLINK_HOLD_TIME, the Blink on release
+inline float BLINK_FAR_DISTANCE = 8;
+inline float BLINK_HOLD_TIME = 0.6f;
+inline float blinkDistance(float held)
+{
+    return BLINK_DISTANCE + (BLINK_FAR_DISTANCE - BLINK_DISTANCE) * std::clamp(held / BLINK_HOLD_TIME, 0.0f, 1.0f);
+}
 inline float BLINK_COOLDOWN = 0.3f;
 constexpr int BLINK_CHARGES = 2;    // sent in 2 bits: 3 at most
 inline float BLINK_RECHARGE = 3;

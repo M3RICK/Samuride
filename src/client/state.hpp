@@ -3,7 +3,9 @@
 #ifndef STATE_HPP
     #define STATE_HPP
 
+#include <chrono>
 #include <map>
+#include <optional>
 #include <mutex>
 #include <set>
 #include <utility>
@@ -40,6 +42,7 @@ private:
     std::vector<std::vector<uint8_t>> pending_map_data;
     bool rematch_requested = false;
     bool trauma_offer = false;      // the Trauma Team asks me whether to come, until I answer
+    std::optional<std::chrono::steady_clock::time_point> attack_down;   // since when my attack key is down
 
 public:
     void startCountdown(int my_number, const std::map<int, int> &roster, int district, GameMode mode);
@@ -55,6 +58,9 @@ public:
     void pushMapData(std::vector<uint8_t> data);
     bool requestRematch();
 
+    void holdAttack(bool down);
+    // Seconds my attack key has been down, 0 when it's up
+    float attackHeld() const;
     Phase getPhase() const;
     int getCountdown() const;
     int getMyPlayerNumber() const;

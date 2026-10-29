@@ -199,13 +199,22 @@ void Rebellion::tick(const Player &, float dt)
     drop_timer = STYLE_DROP_TIME;
 }
 
-// BLINK_DISTANCE ahead: the drones in the box his body sweeps go down, Smasher's rockets in it turn back,
-// Smasher takes a stab if it reaches him
-float Blink::attack(Server &server, Player &player)
+// The key down starts the aim; the Blink comes on release
+float Blink::attack(Server &, Player &)
 {
-    if (charges_left == 0)
+    if (charges_left > 0)
+        held = 0;
+    return 0;
+}
+
+// blinkDistance ahead: the drones in the box his body sweeps go down and he picks up what's in it,
+// Smasher's rockets in it turn back, Smasher takes a stab if it reaches him
+float Blink::release(Server &server, Player &player)
+{
+    if (held < 0 || charges_left == 0)
         return 0;
-    float to_x = player.getX() + BLINK_DISTANCE;
+    float to_x = player.getX() + blinkDistance(held);
+    held = -1;
     float left = player.getX();
     float right = to_x + 1;
     float top = player.getY();
@@ -215,6 +224,9 @@ float Blink::attack(Server &server, Player &player)
         for (int y = static_cast<int>(top); y < bottom; y++)
             if (server.isLiveDrone(x, y))
                 server.destroyDrone(player.getClientFd(), x, y);
+    for (int x = static_cast<int>(left); x < right; x++)
+        for (int y = static_cast<int>(top); y < bottom; y++)
+            server.pickUp(player, x, y);
     if (server.bossBetween(left, right))
         server.hitBoss(player, BOSS_STAB_DAMAGE);
     // Smasher's rockets he passes through fly back at him
@@ -241,6 +253,8 @@ float Blink::attack(Server &server, Player &player)
 
 void Blink::tick(const Player &player, float dt)
 {
+    if (held >= 0)
+        held += dt;
     if (charges_left < BLINK_CHARGES && (recharge_timer -= dt * (player.isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
         charges_left++;
         recharge_timer = BLINK_RECHARGE;

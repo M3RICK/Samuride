@@ -17,6 +17,17 @@ void Server::handleAttack(int client_fd)
         it->second.startCooldown(cooldown);
 }
 
+void Server::releaseAttack(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() ||
+        it->second.getForm() != Form::Normal)
+        return;
+    if (float cooldown = it->second.weapon().release(*this, it->second); cooldown > 0)
+        it->second.startCooldown(cooldown);
+}
+
 // Only with a full gauge, out of the Attack Titan's forms; an ultimate still going may use the key itself
 // (Mikasa throws a spear)
 void Server::handleUltimate(int client_fd)

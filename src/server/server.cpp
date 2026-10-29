@@ -209,9 +209,11 @@ bool Server::processClientMessage(int client_fd, const MessageHeader &header, co
             break;
 
         case MSG_ATTACK:
-            // The key going down (1, or empty); coming back up (0) changes nothing
+            // The key going down (1, or empty), or coming back up (0)
             if (payload.empty() || payload[0] != 0)
                 handleAttack(client_fd);
+            else
+                releaseAttack(client_fd);
             break;
 
         case MSG_ULTIMATE:

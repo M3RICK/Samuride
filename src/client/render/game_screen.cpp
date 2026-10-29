@@ -193,7 +193,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops());
     if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho) {
         drawHackTarget(players, me, destroyed);
-        drawBlinkTarget(players, me);
+        drawBlinkTarget(players, me, state.attackHeld());
     }
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
@@ -250,8 +250,8 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
 }
 
 // Playing Corvo with a Blink left: a small diamond where it would take him, red when a live zapper waits
-// there (sampled like the server does)
-void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me)
+// there (sampled like the server does); it slides further while the key is held
+void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held)
 {
     auto mine = players.find(me);
     auto pos = run.display_positions.find(me);
@@ -261,7 +261,7 @@ void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int 
         weaponOf(run.characterOf(me)) != Weapon::Blink)
         return;
 
-    float x = pos->second.x + BLINK_DISTANCE;
+    float x = pos->second.x + blinkDistance(held);
     int column = static_cast<int>(x + 0.5f);
     bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) {
         int row = static_cast<int>(pos->second.y + dy);

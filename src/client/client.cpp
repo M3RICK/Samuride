@@ -286,6 +286,7 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
 
 void Client::sendAttack(bool pressed)
 {
+    game_state.holdAttack(pressed);
     sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
 }
 

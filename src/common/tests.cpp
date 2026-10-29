@@ -385,6 +385,7 @@ static void testCorvo()
     corvo.reset(0, 0);
     RunnerWeapon &blink = corvo.weapon();
     assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
+    assert(blinkDistance(0) == BLINK_DISTANCE && blinkDistance(BLINK_HOLD_TIME * 2) == BLINK_FAR_DISTANCE);
     corvo.blinkTo(14);
     assert(corvo.getX() == 14 && !corvo.isGracing());
     corvo.dodge(0.5f);
@@ -773,14 +774,14 @@ static void testTraumaOffer()
     std::filesystem::remove(map_path);
 }
 
-// Corvo over real sockets: a wall of drones 3 tiles ahead, he blinks through it at the start
+// Corvo over real sockets: eddies 2 tiles ahead and a wall of drones behind them, he blinks through both at the start
 static void testBlink()
 {
     std::string map_path = (std::filesystem::temp_directory_path() / "samuride_blink_test.txt").string();
     {
         std::ofstream map(map_path);
         for (int row = 0; row < 10; row++)
-            map << std::string(3, EMPTY_TILE) << DRONE_TILE << std::string(30, EMPTY_TILE) << '\n';
+            map << std::string(2, EMPTY_TILE) << COIN_TILE << DRONE_TILE << std::string(30, EMPTY_TILE) << '\n';
     }
     ServerConfig config;
     config.port = 47127;
@@ -800,14 +801,17 @@ static void testBlink()
     }
     float before = corvo.latest(0).x;
     corvo.send(MSG_ATTACK, {1});
+    corvo.send(MSG_ATTACK, {0});
 
-    // He took the drones in his way down, and is past the wall alive
-    CollisionEffect effect{};
-    do {
+    // He took the drones in his way down, picked up the eddies he blinked over, and is past the wall alive
+    bool drone = false, coin = false;
+    while (!drone || !coin) {
+        CollisionEffect effect{};
         auto payload = corvo.await(MSG_COLLISION);
         assert(payload && Message::decode(*payload, effect));
-    } while (effect.type == COIN_TILE);
-    assert(effect.type == DRONE_TILE && effect.x == 3);
+        drone |= effect.type == DRONE_TILE && effect.x == 3;
+        coin |= effect.type == COIN_TILE && effect.x == 2;
+    }
     PlayerState after = corvo.latest(0);
     assert(after.x >= before + BLINK_DISTANCE && after.ram == BLINK_CHARGES - 1);
 

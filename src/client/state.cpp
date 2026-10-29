@@ -60,6 +60,20 @@ void GameState::handleCollision(char type, int player, int x, int y)
     pending_effects.push_back({type, player, x, y});
 }
 
+void GameState::holdAttack(bool down)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    attack_down = down ? std::optional(std::chrono::steady_clock::now()) : std::nullopt;
+}
+
+float GameState::attackHeld() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return attack_down ? std::chrono::duration<float>(std::chrono::steady_clock::now() - *attack_down).count() : 0;
+}
+
 void GameState::setWinner(int player_number)
 {
     std::lock_guard<std::mutex> lock(state_mutex);

@@ -219,6 +219,10 @@ HACK_BOUNCE_RANGE 4
 RAM_RECHARGE 3.5
 # Corvo: tiles ahead a Blink takes him
 BLINK_DISTANCE 4
+# Corvo: tiles ahead a Blink takes him, the key held long enough
+BLINK_FAR_DISTANCE 8
+# Seconds to hold the key for the farthest Blink
+BLINK_HOLD_TIME 0.6
 # Seconds between two Blinks
 BLINK_COOLDOWN 0.3
 # Seconds to get one Blink back (2 at most)

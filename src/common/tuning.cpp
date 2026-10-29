@@ -154,6 +154,8 @@ std::vector<Entry> &entries()
             VALUE(HACK_BOUNCE_RANGE, "A hacked drone passes the hack to the nearest drone this close"),
             VALUE(RAM_RECHARGE, "Seconds to get one charge of RAM back (3 at most)"),
             VALUE(BLINK_DISTANCE, "Corvo: tiles ahead a Blink takes him"),
+            VALUE(BLINK_FAR_DISTANCE, "Corvo: tiles ahead a Blink takes him, the key held long enough"),
+            VALUE(BLINK_HOLD_TIME, "Seconds to hold the key for the farthest Blink"),
             VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (2 at most)"),
             VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),

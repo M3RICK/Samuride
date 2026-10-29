@@ -183,6 +183,7 @@ private:
     //===========================================================================
 
     void handleAttack(int client_fd);
+    void releaseAttack(int client_fd);
 
     void handleUltimate(int client_fd);
 
@@ -285,6 +286,8 @@ public:
     bool isLiveDrone(int x, int y) const;
 
     void destroyDrone(int owner_fd, int x, int y);
+    // The eddie or the power-up on this tile, if any is left: true when he took one
+    bool pickUp(Player &player, int x, int y);
 
     // A drone shot down, or a zapper switched off
     bool isOff(int x, int y) const { return destroyed_drones.count({x, y}) || hacked_zappers.count({x, y}); }

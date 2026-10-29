@@ -133,7 +133,7 @@ private:
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
-    void drawBlinkTarget(const std::map<int, PlayerState> &players, int me);
+    void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held);
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();

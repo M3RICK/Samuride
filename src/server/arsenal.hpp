@@ -24,6 +24,8 @@ public:
     // The attack key, or Berserk attacking on its own, once the cooldown is over. Returns the cooldown
     // it starts, 0 when nothing happened.
     virtual float attack(Server &server, Player &player) = 0;
+    // The attack key back up, same return: Corvo blinks then, as far as he held it
+    virtual float release(Server &, Player &) { return 0; }
     // Every tick, timers only (no server: the tests run it alone)
     virtual void tick(const Player &, float) {}
     // Every tick of a CYBERPSYCHO run, after the players moved
@@ -126,9 +128,11 @@ public:
 class Blink : public RunnerWeapon {
     int charges_left = BLINK_CHARGES;
     float recharge_timer = BLINK_RECHARGE;  // seconds before the next charge comes back
+    float held = -1;                        // seconds the key has been down, -1 when it's up
 
 public:
     float attack(Server &server, Player &player) override;
+    float release(Server &server, Player &player) override;
     void tick(const Player &player, float dt) override;
     int charges() const override { return charges_left; }
     bool autoFires() const override { return false; }

@@ -241,13 +241,7 @@ bool Server::checkPlayerCollisions(Player &player)
         int tile_y = static_cast<int>(py);
         char tile = game_map.getTile(tile_x, tile_y);
 
-        char power = powerUpAt(tile_x, tile_y);
-
-        if (tile == COIN_TILE) {
-            collectEddy(player, tile_x, tile_y);
-        } else if (power != EMPTY_TILE && player.takePickup(tile_x, tile_y)) {
-            player.powerUp(power);
-            notifyCollision(power, player, tile_x, tile_y);
+        if (pickUp(player, tile_x, tile_y)) {
         } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
             player.startShift();
             notifyCollision(SHIFT_TILE, player, tile_x, tile_y);
@@ -268,6 +262,21 @@ bool Server::checkPlayerCollisions(Player &player)
     if (!player.isInvincible() && boss.hit(player, game_map.getHeight()))
         return hurt(player, BOSS_HIT, player.getX(), player.getY() + 1);
     return false;
+}
+
+bool Server::pickUp(Player &player, int x, int y)
+{
+    char power = powerUpAt(x, y);
+
+    if (game_map.getTile(x, y) == COIN_TILE) {
+        collectEddy(player, x, y);
+        return true;
+    }
+    if (power == EMPTY_TILE || !player.takePickup(x, y))
+        return false;
+    player.powerUp(power);
+    notifyCollision(power, player, x, y);
+    return true;
 }
 
 // The eddie magnet upgrade: eddies whose center is within its reach of the body are picked up too.
