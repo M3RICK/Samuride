@@ -187,8 +187,9 @@ and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
 feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Corvo blinks, for one of his 2
-charges: 4 tiles up if he rises faster than 5 tiles per second, down if he falls that fast, ahead
-otherwise; the drones his body crosses go down (`d`), and Adam Smasher takes a stab if it reaches him.
+charges: 4 tiles ahead; the drones his body crosses go down (`d`), Adam Smasher's rockets it crosses
+turn back at him, and he takes a stab if it reaches him. In the last 0.3 s before Smasher's slam or
+cannon hits Corvo, the Blink is perfect (`f`): no charge spent, untouchable until that strike is over.
 Berserk never blinks on its own.
 
 ### `MSG_SHOT`
@@ -267,7 +268,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
 | 1 | 1 under his Sandevistan: low on health or past half his arena, his strikes and gaps sped up |
-| 2 | The rows of the rocket wall Corvo blinked through, bit 0 the top row: they fly back at him (3 damage each) and hit nobody |
+| 2 | The rows of the rocket wall Corvo blinked through, bit 0 the top row: they fly back at him (4 damage each) and hit nobody |
 
 Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.

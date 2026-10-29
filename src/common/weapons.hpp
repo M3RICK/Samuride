@@ -62,29 +62,18 @@ inline float STYLE_HASTE[STYLE_RANKS] = {1, 0.95f, 0.9f, 0.85f, 0.8f, 0.7f, 0.6f
 inline float STYLE_DROP_TIME = 10;
 inline int STYLE_HIT_DROP = 2;
 
-// Corvo's Blink: BLINK_DISTANCE tiles the way he moves. Rising or falling faster than BLINK_TURN_SPEED
-// (tiles per second) it goes up or down, ahead otherwise: no aiming, phones work the same. The drones his
-// body crosses go down; he lands where the ghost shows, a zapper there kills him. BLINK_CHARGES at most,
-// one back every BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).
+// Corvo's Blink: BLINK_DISTANCE tiles straight ahead, at his height and keeping his vertical speed (it
+// went up or down by that speed once: in the air it felt random). The drones his body crosses go down;
+// he lands where the marker shows, a zapper there kills him. BLINK_CHARGES at most, one back every
+// BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).
 inline float BLINK_DISTANCE = 4;
-inline float BLINK_TURN_SPEED = 5;
 inline float BLINK_COOLDOWN = 0.3f;
 constexpr int BLINK_CHARGES = 2;    // sent in 2 bits: 3 at most
 inline float BLINK_RECHARGE = 3;
-// Blinking out of Smasher's slam or cannon this close to its strike is PERFECT: the charge comes back
+// Blinking this close to Smasher's slam or cannon landing on him is PERFECT: he goes through it,
+// untouchable until it's over, and the charge comes back
 inline float BLINK_PERFECT_WINDOW = 0.3f;
 constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, where he landed
-
-// Where a Blink takes a body whose top-left corner is at (x, y), moving down at vy tiles per second
-// (up when negative), its top kept between 0 and max_y
-inline std::pair<float, float> blinkTarget(float x, float y, float vy, float max_y)
-{
-    if (vy <= -BLINK_TURN_SPEED)
-        return {x, std::max(0.0f, y - BLINK_DISTANCE)};
-    if (vy >= BLINK_TURN_SPEED)
-        return {x, std::min(max_y, y + BLINK_DISTANCE)};
-    return {x + BLINK_DISTANCE, y};
-}
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

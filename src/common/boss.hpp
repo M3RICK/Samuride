@@ -24,7 +24,7 @@ inline int BOSS_SPEAR_DAMAGE = 8;       // one of Mikasa's thunder spears
 inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a charge of RAM
 inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
 inline int BOSS_STAB_DAMAGE = 8;        // Corvo blinking into him: more than a slash, it costs a charge
-inline int BOSS_REFLECT_DAMAGE = 3;     // each of his rockets Corvo blinks through, sent back at him
+inline int BOSS_REFLECT_DAMAGE = 4;     // each of his rockets Corvo blinks through, sent back at him
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
 // His Sandevistan: under this share of his health, or past half his arena (in CLASSIC nothing hurts him),

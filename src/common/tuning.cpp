@@ -153,11 +153,10 @@ std::vector<Entry> &entries()
             VALUE(HACK_TIME, "Seconds a hacked zapper stays off"),
             VALUE(HACK_BOUNCE_RANGE, "A hacked drone passes the hack to the nearest drone this close"),
             VALUE(RAM_RECHARGE, "Seconds to get one charge of RAM back (3 at most)"),
-            VALUE(BLINK_DISTANCE, "Corvo: tiles a Blink takes him"),
-            VALUE(BLINK_TURN_SPEED, "Rising or falling faster than this (tiles per second), he blinks up or down"),
+            VALUE(BLINK_DISTANCE, "Corvo: tiles ahead a Blink takes him"),
             VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (2 at most)"),
-            VALUE(BLINK_PERFECT_WINDOW, "Blinking out of Smasher's slam or cannon this many seconds before it strikes gives the charge back"),
+            VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),

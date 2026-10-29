@@ -374,23 +374,21 @@ static void testDante()
     assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
 }
 
-// Corvo: the Blink goes the way he moves, its charges come back one at a time; Bend Time stops the world
+// Corvo: the Blink takes him ahead, a perfect one leaves him untouchable a while; Bend Time stops the world
 // for BEND_TIME, and Berserk doesn't blink for him
 static void testCorvo()
 {
     assert(weaponOf(6) == Weapon::Blink && ultimateOf(6) == Ultimate::BendTime);
-    assert(blinkTarget(10, 4, 0, 8) == std::make_pair(10 + BLINK_DISTANCE, 4.0f));
-    assert(blinkTarget(10, 4, -MAX_VELOCITY, 8) == std::make_pair(10.0f, 0.0f));     // up, held by the ceiling
-    assert(blinkTarget(10, 2, MAX_VELOCITY, 8) == std::make_pair(10.0f, 2 + BLINK_DISTANCE));
-    assert(blinkTarget(10, 6, MAX_VELOCITY, 8) == std::make_pair(10.0f, 8.0f));       // and the floor
 
     Player corvo(-1);
     corvo.setCharacter(6);
     corvo.reset(0, 0);
     RunnerWeapon &blink = corvo.weapon();
     assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
-    corvo.blinkTo(14, 3);
-    assert(corvo.getX() == 14 && corvo.getY() == 3 && corvo.getYVelocity() == 0);
+    corvo.blinkTo(14);
+    assert(corvo.getX() == 14 && !corvo.isGracing());
+    corvo.dodge(0.5f);
+    assert(corvo.isInvincible());
 
     ServerConfig config;
     Server server(config);      // never started: Bend Time doesn't use it
@@ -404,7 +402,7 @@ static void testCorvo()
 }
 
 // Against Smasher: the rockets Corvo blinks through turn back (and stop hitting), and his cannon about to
-// fire threatens whoever is on its line
+// fire threatens whoever is on its line, until it's over
 static void testCorvoSmasher()
 {
     std::map<int, Player> players;
@@ -436,8 +434,10 @@ static void testCorvoSmasher()
         return s.attack == BossAttack::Cannon && s.phase != BossPhase::Strike &&
                Boss::phaseOf(BossAttack::Cannon, s.time + BLINK_PERFECT_WINDOW) == BossPhase::Strike;
     });
-    assert(boss.threatens(players.at(3), 10, BLINK_PERFECT_WINDOW) && !boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW));
-    assert(!boss.threatens(players.at(3), 10, 0.001f));     // not that close yet
+    float strike = boss.threatens(players.at(3), 10, BLINK_PERFECT_WINDOW);
+    assert(strike > BOSS_CANNON_TIME && strike <= BLINK_PERFECT_WINDOW + BOSS_CANNON_TIME + 0.01f);
+    assert(boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW) == 0);
+    assert(boss.threatens(players.at(3), 10, 0.001f) == 0);     // not that close yet
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line

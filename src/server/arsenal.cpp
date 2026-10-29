@@ -199,18 +199,17 @@ void Rebellion::tick(const Player &, float dt)
     drop_timer = STYLE_DROP_TIME;
 }
 
-// Where blinkTarget says: the drones in the box his body sweeps go down, Smasher takes a stab if it
-// reaches him
+// BLINK_DISTANCE ahead: the drones in the box his body sweeps go down, Smasher's rockets in it turn back,
+// Smasher takes a stab if it reaches him
 float Blink::attack(Server &server, Player &player)
 {
     if (charges_left == 0)
         return 0;
-    float max_y = server.map().getHeight() - Player::HEIGHT;
-    auto [to_x, to_y] = blinkTarget(player.getX(), player.getY(), player.getYVelocity(), max_y);
+    float to_x = player.getX() + BLINK_DISTANCE;
     float left = player.getX();
     float right = to_x + 1;
-    float top = std::min(player.getY(), to_y);
-    float bottom = std::max(player.getY(), to_y) + Player::HEIGHT;
+    float top = player.getY();
+    float bottom = top + Player::HEIGHT;
 
     for (int x = static_cast<int>(left); x < right; x++)
         for (int y = static_cast<int>(top); y < bottom; y++)
@@ -221,13 +220,14 @@ float Blink::attack(Server &server, Player &player)
     // Smasher's rockets he passes through fly back at him
     if (int reflected = server.reflectRockets(left, right, top, bottom))
         server.hitBoss(player, reflected * BOSS_REFLECT_DAMAGE);
-    bool threatened = server.bossThreatens(player);
+    float strike = server.bossThreatens(player);
     // Before he moves: the clients draw his smoke where he was
     server.announceShot(player, Weapon::Blink);
-    player.blinkTo(to_x, to_y);
-    // Out of the strike that was about to land on him
-    if (threatened && !server.bossThreatens(player)) {
-        server.notifyCollision(PERFECT_DODGE, player, static_cast<int>(to_x), static_cast<int>(to_y));
+    player.blinkTo(to_x);
+    // Through the strike that was about to land on him
+    if (strike > 0) {
+        player.dodge(strike);
+        server.notifyCollision(PERFECT_DODGE, player, static_cast<int>(to_x), static_cast<int>(top));
         return BLINK_COOLDOWN;
     }
     if (charges_left-- == BLINK_CHARGES)

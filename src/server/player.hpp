@@ -69,9 +69,10 @@ public:
 
     float getX() const { return x; }
     float getY() const { return y; }
-    float getYVelocity() const { return y_velocity; }
-    // Corvo's Blink: there at once, his vertical speed gone
-    void blinkTo(float to_x, float to_y) { x = to_x; y = to_y; y_velocity = 0; }
+    // Corvo's Blink: there at once
+    void blinkTo(float to_x) { x = to_x; }
+    // Untouchable for that long (a perfect Blink through Smasher's strike), blinking like after a shield
+    void dodge(float seconds) { grace_timer = std::max(grace_timer, seconds); }
 
     int getScore() const { return score; }
     bool collectCoin(int tile_x, int tile_y);

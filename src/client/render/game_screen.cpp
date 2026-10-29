@@ -8,6 +8,7 @@
 #include "../wallet.hpp"
 #include "../../common/tuning.hpp"
 #include <algorithm>
+#include <array>
 #include <format>
 
 using namespace Palette;
@@ -248,8 +249,8 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
                          1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
 }
 
-// Playing Corvo with a Blink left: his ghost where it would take him, worked out like the server does
-// (from his measured vertical speed: it may disagree for a frame when he turns)
+// Playing Corvo with a Blink left: a small diamond where it would take him, red when a live zapper waits
+// there (sampled like the server does)
 void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me)
 {
     auto mine = players.find(me);
@@ -260,14 +261,24 @@ void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int 
         weaponOf(run.characterOf(me)) != Weapon::Blink)
         return;
 
-    auto [x, y] = blinkTarget(pos->second.x, pos->second.y, run.tracks[me].velocity.y, run.floor() - Run::PLAYER_HEIGHT);
-    sf::Vector2f top_left = run.toScreen({x, y});
-    sf::RectangleShape ghost(run.toScreen({x + 1, y + Run::PLAYER_HEIGHT}) - top_left);
-    ghost.setPosition(top_left);
-    ghost.setFillColor(withAlpha(NEON_CYAN, 40));
-    ghost.setOutlineColor(withAlpha(NEON_CYAN, static_cast<uint8_t>(150 + 80 * std::sin(canvas.time() * 10))));
-    ghost.setOutlineThickness(2);
-    canvas.draw(ghost);
+    float x = pos->second.x + BLINK_DISTANCE;
+    int column = static_cast<int>(x + 0.5f);
+    bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) {
+        int row = static_cast<int>(pos->second.y + dy);
+        return run.map.getTile(column, row) == ZAPPER_TILE && run.hackLeft(column, row) <= 0 &&
+               !run.burnt_zappers.count({column, row});
+    });
+    float size = run.view.tile_size * (0.22f + 0.03f * std::sin(canvas.time() * 10));
+    sf::Vector2f centre = run.toScreen({x + 0.5f, pos->second.y + Run::PLAYER_HEIGHT / 2});
+    sf::ConvexShape diamond(4);
+    diamond.setPoint(0, centre + sf::Vector2f(0, -size));
+    diamond.setPoint(1, centre + sf::Vector2f(size * 0.6f, 0));
+    diamond.setPoint(2, centre + sf::Vector2f(0, size));
+    diamond.setPoint(3, centre + sf::Vector2f(-size * 0.6f, 0));
+    diamond.setFillColor(withAlpha(deadly ? NEON_RED : NEON_CYAN, 70));
+    diamond.setOutlineColor(withAlpha(deadly ? NEON_RED : NEON_CYAN, 220));
+    diamond.setOutlineThickness(2);
+    canvas.draw(diamond);
 }
 
 // "ENTERING <district>" each time the scenery changes
