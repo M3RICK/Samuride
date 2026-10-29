@@ -79,6 +79,19 @@ inline bool rocketRow(int row, float gap_top)
     return row + 0.5f < gap_top || row + 0.5f > gap_top + BOSS_ROCKET_GAP;
 }
 
+// His slam, or his cannon along `line`, striking within `window` a body whose top is at py: the seconds
+// until that strike is over, 0 when none is coming for it that soon. A Blink then is PERFECT.
+inline float strikeComing(BossAttack attack, float time, float line, float py, float floor, float window)
+{
+    bool slam = attack == BossAttack::Slam;
+    float start = slam ? BOSS_SLAM_WARN : BOSS_CANNON_TRACK + BOSS_CANNON_AIM;
+
+    if ((!slam && attack != BossAttack::Cannon) || time >= start || time + window < start)
+        return 0;
+    bool hit = slam ? bandHits(floor - BOSS_SLAM_HEIGHT, floor, py) : bandHits(line - BOSS_CANNON_HALF, line + BOSS_CANNON_HALF, py);
+    return hit ? start + (slam ? BOSS_SLAM_TIME : BOSS_CANNON_TIME) - time : 0;
+}
+
 // A rocket wall `ahead` tiles in front of a runner whose top is at py, on a floor `floor` tall; the rows
 // set in `reflected` were sent back by Wraith
 inline bool rocketsHit(float ahead, float gap_top, float py, int floor, uint16_t reflected = 0)

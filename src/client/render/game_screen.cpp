@@ -193,7 +193,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops());
     if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho) {
         drawHackTarget(players, me, destroyed);
-        drawBlinkTarget(players, me, state.attackHeld());
+        drawBlinkTarget(players, me, state.attackHeld(), state.getBoss());
     }
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
@@ -250,33 +250,42 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
 }
 
 // Playing Wraith with a Blink left: a small diamond where it would take him, red when a live zapper waits
-// there (sampled like the server does); it slides further while the key is held
-void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held)
+// there (sampled like the server does); it slides further while the key is held. Gold, bigger, with a
+// ping, while a Blink would be PERFECT (Smasher's slam or cannon about to land on him)
+void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss)
 {
     auto mine = players.find(me);
     auto pos = run.display_positions.find(me);
 
     if (mine == players.end() || pos == run.display_positions.end() || mine->second.ram == 0 ||
         mine->second.form != Form::Normal || run.death_clocks.count(me) ||
-        weaponOf(run.characterOf(me)) != Weapon::Blink)
+        weaponOf(run.characterOf(me)) != Weapon::Blink) {
+        perfect_cue = false;
         return;
+    }
 
-    float x = pos->second.x + blinkDistance(held);
+    bool perfect = boss.fighting && strikeComing(boss.attack, boss.time, boss.y, pos->second.y,
+                                                 static_cast<float>(run.map.getHeight()), BLINK_PERFECT_WINDOW) > 0;
+    if (perfect && !perfect_cue)
+        audio.play(Audio::Sfx::Beep);
+    perfect_cue = perfect;
+    float x = pos->second.x + (ultimates.stills(me) ? BLINK_FAR_DISTANCE : blinkDistance(held));
     int column = static_cast<int>(x + 0.5f);
     bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) {
         int row = static_cast<int>(pos->second.y + dy);
         return run.map.getTile(column, row) == ZAPPER_TILE && run.hackLeft(column, row) <= 0 &&
                !run.burnt_zappers.count({column, row});
     });
-    float size = run.view.tile_size * (0.22f + 0.03f * std::sin(canvas.time() * 10));
+    float size = run.view.tile_size * ((perfect ? 0.4f : 0.22f) + 0.03f * std::sin(canvas.time() * 10));
     sf::Vector2f centre = run.toScreen({x + 0.5f, pos->second.y + Run::PLAYER_HEIGHT / 2});
     sf::ConvexShape diamond(4);
     diamond.setPoint(0, centre + sf::Vector2f(0, -size));
     diamond.setPoint(1, centre + sf::Vector2f(size * 0.6f, 0));
     diamond.setPoint(2, centre + sf::Vector2f(0, size));
     diamond.setPoint(3, centre + sf::Vector2f(-size * 0.6f, 0));
-    diamond.setFillColor(withAlpha(deadly ? NEON_RED : NEON_CYAN, 70));
-    diamond.setOutlineColor(withAlpha(deadly ? NEON_RED : NEON_CYAN, 220));
+    sf::Color color = deadly ? NEON_RED : perfect ? NEON_YELLOW : NEON_CYAN;
+    diamond.setFillColor(withAlpha(color, perfect ? 140 : 70));
+    diamond.setOutlineColor(withAlpha(color, 220));
     diamond.setOutlineThickness(2);
     canvas.draw(diamond);
 }

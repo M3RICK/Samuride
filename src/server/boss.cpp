@@ -155,13 +155,7 @@ int Boss::reflect(float left, float right, float top, float bottom, float floor)
 
 float Boss::threatens(const Player &player, float floor, float window) const
 {
-    if (!fighting() || (attack != BossAttack::Slam && attack != BossAttack::Cannon) ||
-        phaseOf(attack, time) == BossPhase::Strike || phaseOf(attack, time + window) != BossPhase::Strike)
-        return 0;
-    if (attack == BossAttack::Slam)
-        return bandHits(floor - BOSS_SLAM_HEIGHT, floor, player.getY()) ? BOSS_SLAM_WARN + BOSS_SLAM_TIME - time : 0;
-    bool on_line = bandHits(y - BOSS_CANNON_HALF, y + BOSS_CANNON_HALF, player.getY());
-    return on_line ? BOSS_CANNON_TRACK + BOSS_CANNON_AIM + BOSS_CANNON_TIME - time : 0;
+    return fighting() ? strikeComing(attack, time, y, player.getY(), floor, window) : 0;
 }
 
 bool Boss::sandevistan() const

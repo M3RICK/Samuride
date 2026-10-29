@@ -112,6 +112,7 @@ private:
     int head_target = 0;
     float head_moved = 0;       // canvas time of its last step
     float head_until = 0;       // when it picks a new target
+    bool perfect_cue = false;   // a Blink now would be PERFECT: the marker says so
     bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
     float titan_time = TITAN_TIME;              // the same with the Titan Serum
@@ -133,7 +134,7 @@ private:
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
-    void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held);
+    void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss);
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();

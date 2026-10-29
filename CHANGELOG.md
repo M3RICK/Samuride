@@ -12,10 +12,10 @@ taken from this file. Players on different versions can't play together: update 
   land, red when a zapper waits there. The eddies and power-ups he blinks over are his. 2 charges, one back every 3 seconds.
   - **Against Adam Smasher**, the Blink fights back: blink through his rocket wall (or just short of it) and the
     rockets around you fly back into him (4 each), and the wall can't hurt you while it passes. Blink in the last 0.3 s before his slam or his cannon
-    hits you: PERFECT, you go through it untouched, stab him (8) wherever he stands and the charge comes back. Blink into him while he gets up after a slam for a
+    hits you: PERFECT, you go through it untouched, stab him (8) wherever he stands and the charge comes back. The diamond turns gold, bigger, with a ping, while a Blink would be perfect. Blink into him while he gets up after a slam for a
     stab (8).
   - **Stillness** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
-    rockets stop where they are (still deadly to touch), and your Blinks are free: blink through the
+    rockets stop where they are (still deadly to touch), and your Blinks are free and go all the way (8 tiles) without holding, Smasher or not: blink through the
     frozen wall to send it back, run up to him and stab. A countdown on screen shows how long it lasts.
   - His own animations: running, levitating on violet smoke, gathering back from smoke after each Blink,
     and collapsing into smoke when he dies.

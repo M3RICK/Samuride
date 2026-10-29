@@ -213,7 +213,7 @@ float Blink::release(Server &server, Player &player)
 {
     if (held < 0 || charges_left == 0)
         return 0;
-    float to_x = player.getX() + blinkDistance(held);
+    float to_x = player.getX() + (player.ultimate().freezes() ? BLINK_FAR_DISTANCE : blinkDistance(held));
     held = -1;
     float left = player.getX();
     float right = to_x + 1;
@@ -245,7 +245,7 @@ float Blink::release(Server &server, Player &player)
         server.hitBoss(player, BOSS_STAB_DAMAGE);
         return BLINK_COOLDOWN;
     }
-    // Stillness: the Blinks are free while the world stands still
+    // Stillness: the Blinks are free (and go all the way) while the world stands still
     if (player.ultimate().freezes())
         return BLINK_COOLDOWN;
     if (charges_left-- == BLINK_CHARGES)

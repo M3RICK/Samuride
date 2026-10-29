@@ -73,7 +73,7 @@ void Ultimates::start(const UltimateEvent &ultimate)
         audio.play(Audio::Sfx::Sandevistan);
         run.flashScreen(sf::Color::White, 0.2f);
         particles.emit(body, 30, NEON_CYAN, 6, 0.5f, 0);
-        stillnesses.emplace_back();
+        stillnesses.emplace_back(ultimate.player, sf::Clock());
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -346,7 +346,7 @@ void Ultimates::drawBreaches()
 // The world standing still: a cold grey veil, fading in and out at the ends
 void Ultimates::drawStillnesses()
 {
-    for (const sf::Clock &still : stillnesses) {
+    for (const auto &[player, still] : stillnesses) {
         float t = still.getElapsedTime().asSeconds();
         float fade = std::clamp(std::min(t, STILLNESS_TIME - t) / 0.3f, 0.0f, 1.0f);
         // A cold veil, darker on the edges, and the seconds the world still stands still
@@ -361,10 +361,10 @@ void Ultimates::drawStillnesses()
         char left[32];
         std::snprintf(left, sizeof(left), "TIME STOPPED  %.1f", std::max(0.0f, STILLNESS_TIME - t));
         canvas.text(left, 36, withAlpha(NEON_CYAN, static_cast<uint8_t>(230 * fade)), {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.06f});
-        canvas.text("FREE BLINKS", 20, withAlpha(sf::Color(200, 170, 255), static_cast<uint8_t>(200 * fade)),
+        canvas.text("FREE BLINKS, FULL REACH", 20, withAlpha(sf::Color(200, 170, 255), static_cast<uint8_t>(200 * fade)),
                     {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.94f});
     }
-    std::erase_if(stillnesses, [](const sf::Clock &still) { return still.getElapsedTime().asSeconds() > STILLNESS_TIME; });
+    std::erase_if(stillnesses, [](const auto &still) { return still.second.getElapsedTime().asSeconds() > STILLNESS_TIME; });
 }
 
 void Ultimates::draw()
