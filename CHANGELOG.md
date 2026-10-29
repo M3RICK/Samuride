@@ -14,6 +14,10 @@ taken from this file. Players on different versions can't play together: update 
 - **Adam Smasher**: the red zone of his ground slam is gone while he gets back up, and his rockets and their
   warning chevrons are drawn over him instead of hidden behind him.
 
+### New
+- **Adam Smasher leaves in style**: still standing at 900 m, he crouches and leaps off the top of the
+  screen, and you get a SURVIVED.
+
 ### Other
 - **David's cyberpsycho suit** keeps its arm cannon the whole run: it no longer turns into a fist every
   other step.

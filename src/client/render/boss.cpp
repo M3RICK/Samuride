@@ -46,6 +46,15 @@ void Smasher::react(const BossState &boss)
         death_x = run.view.camera_x + shown_x;
         since_death.restart();
     }
+    if (!boss.fighting && last.fighting && boss.health > 0) {
+        leave_x = shown_x;
+        since_leave.restart();
+        audio.play(Audio::Sfx::Stomp);
+        run.shakeAtLeast(0.3f, 12);
+        run.callout = "SURVIVED";
+        run.callout_color = NEON_CYAN;
+        run.callout_clock.restart();
+    }
     if (boss.fighting && boss.health < last.health)
         since_hit.restart();
     bool striking = boss.phase == BossPhase::Strike;
@@ -81,6 +90,14 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         float fade = std::clamp(2 - t / look.death.duration(), 0.0f, 1.0f);
         if (fade > 0)
             drawBody(look.death, look.death.frameAt(t), death_x, 0, withAlpha(sf::Color::White, static_cast<uint8_t>(255 * fade)));
+    }
+    if (leave_x >= 0) {
+        // Crouched like for a slam, then up and away, keeping pace
+        float t = since_leave.getElapsedTime().asSeconds();
+        float air = std::max(0.0f, t - LEAVE_CROUCH);
+        int frame = static_cast<int>(std::min(t / LEAVE_CROUCH, 1.0f) * 2);     // crouch, rise, in the air
+        if (air < 1.5f)
+            drawBody(look.slam, frame, run.view.camera_x + leave_x + air * 6, air * air * 30, sf::Color::White);
     }
     if (!boss.fighting)
         return;
