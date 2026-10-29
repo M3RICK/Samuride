@@ -36,8 +36,8 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
             return std::make_unique<Fishbones>();
         case Ultimate::Doppelganger:
             return std::make_unique<Doppelganger>();
-        case Ultimate::BendTime:
-            return std::make_unique<BendTime>();
+        case Ultimate::Stillness:
+            return std::make_unique<Stillness>();
         default:
             return std::make_unique<FireWave>();
     }
@@ -245,7 +245,7 @@ float Blink::release(Server &server, Player &player)
         server.hitBoss(player, BOSS_STAB_DAMAGE);
         return BLINK_COOLDOWN;
     }
-    // Bend Time: the Blinks are free while the world stands still
+    // Stillness: the Blinks are free while the world stands still
     if (player.ultimate().freezes())
         return BLINK_COOLDOWN;
     if (charges_left-- == BLINK_CHARGES)

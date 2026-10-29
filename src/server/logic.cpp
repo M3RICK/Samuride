@@ -189,7 +189,7 @@ void Server::updatePlayers()
         rear_x = std::min(rear_x, player.getX());
     }
 
-    // Corvo's Bend Time: the titans, the snipers and Smasher stand still, even the sights stop following
+    // Wraith's Stillness: the titans, the snipers and Smasher stand still, even the sights stop following
     bool frozen = std::ranges::any_of(players, [](const auto &entry) { return entry.second.ultimate().freezes(); });
     titans.update(rear_x, frozen ? 0 : TICK_DT);
     if (!frozen) {

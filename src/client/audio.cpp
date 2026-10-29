@@ -229,7 +229,7 @@ void Audio::synthesize()
     buffers[Sfx::Shield] = toBuffer(concat(tone(Wave::Sine, 520, 1040, 0.15f, 0.3f),
                                            tone(Wave::Sine, 1040, 1560, 0.15f, 0.25f)));
     buffers[Sfx::ShieldBreak] = toBuffer(mix(burst(0.35f, 0.35f, 0.9f), tone(Wave::Square, 1800, 400, 0.25f, 0.15f)));
-    // Corvo's Blink: an airy whoosh sucked in, over a deep thump
+    // Wraith's Blink: an airy whoosh sucked in, over a deep thump
     buffers[Sfx::Blink] = toBuffer(mix(mix(burst(0.18f, 0.35f, 0.4f), tone(Wave::Sine, 1600, 200, 0.18f, 0.2f)),
                                        tone(Wave::Sine, 140, 35, 0.22f, 0.5f)));
     buffers[Sfx::Sandevistan] = toBuffer(mix(tone(Wave::Saw, 200, 1400, 0.4f, 0.2f), burst(0.4f, 0.2f, 0.6f)));

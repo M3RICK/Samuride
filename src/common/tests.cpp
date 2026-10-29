@@ -374,37 +374,37 @@ static void testDante()
     assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
 }
 
-// Corvo: the Blink takes him ahead, a perfect one leaves him untouchable a while; Bend Time stops the world
-// for BEND_TIME, and Berserk doesn't blink for him
-static void testCorvo()
+// Wraith: the Blink takes him ahead, a perfect one leaves him untouchable a while; Stillness stops the world
+// for STILLNESS_TIME, and Berserk doesn't blink for him
+static void testWraith()
 {
-    assert(weaponOf(6) == Weapon::Blink && ultimateOf(6) == Ultimate::BendTime);
+    assert(weaponOf(6) == Weapon::Blink && ultimateOf(6) == Ultimate::Stillness);
 
-    Player corvo(-1);
-    corvo.setCharacter(6);
-    corvo.reset(0, 0);
-    RunnerWeapon &blink = corvo.weapon();
+    Player wraith(-1);
+    wraith.setCharacter(6);
+    wraith.reset(0, 0);
+    RunnerWeapon &blink = wraith.weapon();
     assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
     assert(blinkDistance(0) == BLINK_DISTANCE && blinkDistance(BLINK_HOLD_TIME * 2) == BLINK_FAR_DISTANCE);
-    corvo.blinkTo(14);
-    assert(corvo.getX() == 14 && !corvo.isGracing());
-    corvo.dodge(0.5f);
-    assert(corvo.isInvincible());
+    wraith.blinkTo(14);
+    assert(wraith.getX() == 14 && !wraith.isGracing());
+    wraith.dodge(0.5f);
+    assert(wraith.isInvincible());
 
     ServerConfig config;
-    Server server(config);      // never started: Bend Time doesn't use it
-    assert(!corvo.ultimate().freezes());
-    corvo.ultimate().fire(server, corvo, 0, 0);
-    assert(corvo.ultimate().freezes());
-    corvo.update(BEND_TIME - 0.1f, 10, 8);
-    assert(corvo.ultimate().freezes());
-    corvo.update(0.2f, 10, 8);
-    assert(!corvo.ultimate().freezes());
+    Server server(config);      // never started: Stillness doesn't use it
+    assert(!wraith.ultimate().freezes());
+    wraith.ultimate().fire(server, wraith, 0, 0);
+    assert(wraith.ultimate().freezes());
+    wraith.update(STILLNESS_TIME - 0.1f, 10, 8);
+    assert(wraith.ultimate().freezes());
+    wraith.update(0.2f, 10, 8);
+    assert(!wraith.ultimate().freezes());
 }
 
-// Against Smasher: the rockets Corvo blinks through turn back (and stop hitting), and his cannon about to
+// Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
 // fire threatens whoever is on its line, until it's over
-static void testCorvoSmasher()
+static void testWraithSmasher()
 {
     std::map<int, Player> players;
     std::mt19937 rng(2);
@@ -776,7 +776,7 @@ static void testTraumaOffer()
     std::filesystem::remove(map_path);
 }
 
-// Corvo over real sockets: eddies 2 tiles ahead and a wall of drones behind them, he blinks through both at the start
+// Wraith over real sockets: eddies 2 tiles ahead and a wall of drones behind them, he blinks through both at the start
 static void testBlink()
 {
     std::string map_path = (std::filesystem::temp_directory_path() / "samuride_blink_test.txt").string();
@@ -793,31 +793,31 @@ static void testBlink()
     Server server(config);
     assert(server.initialize());
     std::thread loop(&Server::run, &server);
-    TestClient corvo(config.port);
-    corvo.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 6, .district = 0, .mode = 1}));
+    TestClient wraith(config.port);
+    wraith.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 6, .district = 0, .mode = 1}));
     for (;;) {
-        auto count = corvo.await(MSG_COUNTDOWN);
+        auto count = wraith.await(MSG_COUNTDOWN);
         assert(count && !count->empty());
         if ((*count)[0] == 0)
             break;
     }
-    float before = corvo.latest(0).x;
-    corvo.send(MSG_ATTACK, {1});
-    corvo.send(MSG_ATTACK, {0});
+    float before = wraith.latest(0).x;
+    wraith.send(MSG_ATTACK, {1});
+    wraith.send(MSG_ATTACK, {0});
 
     // He took the drones in his way down, picked up the eddies he blinked over, and is past the wall alive
     bool drone = false, coin = false;
     while (!drone || !coin) {
         CollisionEffect effect{};
-        auto payload = corvo.await(MSG_COLLISION);
+        auto payload = wraith.await(MSG_COLLISION);
         assert(payload && Message::decode(*payload, effect));
         drone |= effect.type == DRONE_TILE && effect.x == 3;
         coin |= effect.type == COIN_TILE && effect.x == 2;
     }
-    PlayerState after = corvo.latest(0);
+    PlayerState after = wraith.latest(0);
     assert(after.x >= before + BLINK_DISTANCE && after.ram == BLINK_CHARGES - 1);
 
-    Socket::close(corvo.fd);
+    Socket::close(wraith.fd);
     server.stop();
     loop.join();
     std::filesystem::remove(map_path);
@@ -840,8 +840,8 @@ int main()
     testAgility();
     testUltimate();
     testDante();
-    testCorvo();
-    testCorvoSmasher();
+    testWraith();
+    testWraithSmasher();
     testTuning();
     testWallet();
     testUpgrades();

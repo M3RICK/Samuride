@@ -23,8 +23,8 @@ inline int BOSS_SHOT_DAMAGE = 1;        // a bullet: Johnny, David, Jinx, Dante
 inline int BOSS_SPEAR_DAMAGE = 8;       // one of Mikasa's thunder spears
 inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a charge of RAM
 inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
-inline int BOSS_STAB_DAMAGE = 8;        // Corvo blinking into him: more than a slash, it costs a charge
-inline int BOSS_REFLECT_DAMAGE = 4;     // each of his rockets Corvo blinks through, sent back at him
+inline int BOSS_STAB_DAMAGE = 8;        // Wraith blinking into him: more than a slash, it costs a charge
+inline int BOSS_REFLECT_DAMAGE = 4;     // each of his rockets Wraith blinks through, sent back at him
 inline float BOSS_REFLECT_SLACK = 3;    // tiles past where a Blink lands that its box still reaches the wall
 inline float BOSS_REFLECT_GRACE = 0.4f; // seconds untouchable after sending rockets back, while the wall passes
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
@@ -80,7 +80,7 @@ inline bool rocketRow(int row, float gap_top)
 }
 
 // A rocket wall `ahead` tiles in front of a runner whose top is at py, on a floor `floor` tall; the rows
-// set in `reflected` were sent back by Corvo
+// set in `reflected` were sent back by Wraith
 inline bool rocketsHit(float ahead, float gap_top, float py, int floor, uint16_t reflected = 0)
 {
     if (ahead > 1 || ahead < -0.5f)

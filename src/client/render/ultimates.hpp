@@ -54,13 +54,13 @@ private:
     std::vector<Nuke> nukes;
     std::vector<Rocket> rockets;
     std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
-    std::vector<sf::Clock> bend_times;  // since each of Corvo's Bend Times
+    std::vector<sf::Clock> stillnesses;  // since each of Wraith's Stillnesses
 
     void start(const UltimateEvent &ultimate);
     void drawFireWaves();
     void drawNukes();
     void drawBreaches();
-    void drawBendTimes();
+    void drawStillnesses();
     void drawDoubles();
     void drawRockets();
 

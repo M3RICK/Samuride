@@ -164,7 +164,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (down ? 1.2f : Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
 
-    // Lucy's RAM (or Corvo's Blinks, in cyan), over her head where it can be read without looking away
+    // Lucy's RAM (or Wraith's Blinks, in cyan), over her head where it can be read without looking away
     // from the run: thin bars, like the RAM units of Cyberpunk 2077, lit while loaded, hollow once spent
     Weapon weapon = weaponOf(run.characterOf(player_num));
     if (run.cyberpsycho && (weapon == Weapon::Hack || weapon == Weapon::Blink)) {

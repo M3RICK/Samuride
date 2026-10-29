@@ -1,4 +1,4 @@
-name CORVO
+name WRAITH
 sheet sheet.png
 portrait portrait.png
 frame 147 171

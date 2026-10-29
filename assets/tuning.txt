@@ -151,13 +151,13 @@ BOSS_SPEAR_DAMAGE 8
 BOSS_HACK_DAMAGE 8
 # A blade's damage (Mikasa, Dante's sword), while he is close after a slam
 BOSS_SLASH_DAMAGE 5
-# Corvo blinking into him
+# Wraith blinking into him
 BOSS_STAB_DAMAGE 8
-# Each rocket Corvo blinks through, sent back at him
+# Each rocket Wraith blinks through, sent back at him
 BOSS_REFLECT_DAMAGE 4
-# Tiles past where Corvo's Blink lands that it still sends the rockets back
+# Tiles past where Wraith's Blink lands that it still sends the rockets back
 BOSS_REFLECT_SLACK 3
-# Seconds Corvo can't be hurt after sending rockets back
+# Seconds Wraith can't be hurt after sending rockets back
 BOSS_REFLECT_GRACE 0.4
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
@@ -221,9 +221,9 @@ HACK_TIME 2
 HACK_BOUNCE_RANGE 4
 # Seconds to get one charge of RAM back (3 at most)
 RAM_RECHARGE 3.5
-# Corvo: tiles ahead a Blink takes him
+# Wraith: tiles ahead a Blink takes him
 BLINK_DISTANCE 4
-# Corvo: tiles ahead a Blink takes him, the key held long enough
+# Wraith: tiles ahead a Blink takes him, the key held long enough
 BLINK_FAR_DISTANCE 8
 # Seconds to hold the key for the farthest Blink
 BLINK_HOLD_TIME 0.6
@@ -271,8 +271,8 @@ FISHBONES_RECOIL_TIME 0.5
 FISHBONES_RECOIL_PUSH 0.8
 # Dante: seconds his Doppelganger repeats his attacks
 DOPPELGANGER_TIME 8
-# Corvo: seconds the world stands still
-BEND_TIME 4
+# Wraith: seconds the world stands still
+STILLNESS_TIME 4
 
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
@@ -317,6 +317,6 @@ LUCY_AGILITY 1
 DANTE_PRICE 1000
 DANTE_ULTIMATE_CHARGE 150
 DANTE_AGILITY 1
-CORVO_PRICE 1250
-CORVO_ULTIMATE_CHARGE 150
-CORVO_AGILITY 1
+WRAITH_PRICE 1250
+WRAITH_ULTIMATE_CHARGE 150
+WRAITH_AGILITY 1

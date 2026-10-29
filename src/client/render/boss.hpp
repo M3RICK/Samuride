@@ -35,7 +35,7 @@ private:
     // Still standing at the arena's end, he leaps away off the top: tiles ahead of the camera, and since when
     float leave_x = -1;
     sf::Clock since_leave;
-    // Rockets Corvo sent back, flying from the wall to him: their row, where they turned (world x)
+    // Rockets Wraith sent back, flying from the wall to him: their row, where they turned (world x)
     struct Returning { int row; float from_x; sf::Clock age; };
     std::vector<Returning> returning;
 

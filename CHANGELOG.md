@@ -6,7 +6,7 @@ taken from this file. Players on different versions can't play together: update 
 ## v3.1
 
 ### New
-- **Corvo** (Dishonored), seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
+- **Wraith**, seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
   4 tiles straight ahead in a violet streak, and the drones he cuts through go down with a hit-stop.
   **Hold the key** to aim further (up to 8 tiles), he blinks when you let go. A small diamond shows where he'd
   land, red when a zapper waits there. The eddies and power-ups he blinks over are his. 2 charges, one back every 3 seconds.
@@ -14,7 +14,7 @@ taken from this file. Players on different versions can't play together: update 
     rockets around you fly back into him (4 each), and the wall can't hurt you while it passes. Blink in the last 0.3 s before his slam or his cannon
     hits you: PERFECT, you go through it untouched, stab him (8) wherever he stands and the charge comes back. Blink into him while he gets up after a slam for a
     stab (8).
-  - **Bend Time** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
+  - **Stillness** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
     rockets stop where they are (still deadly to touch), and your Blinks are free: blink through the
     frozen wall to send it back, run up to him and stab. A countdown on screen shows how long it lasts.
   - His own animations: running, levitating on violet smoke, gathering back from smoke after each Blink,

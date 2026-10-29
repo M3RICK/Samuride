@@ -24,7 +24,7 @@ private:
         sf::Clock age;
     };
 
-    // Corvo's Blink: from where he was to where the server puts him next, drawn once he's there
+    // Wraith's Blink: from where he was to where the server puts him next, drawn once he's there
     struct Streak {
         int player;
         sf::Vector2f from;  // his body's middle, in tiles

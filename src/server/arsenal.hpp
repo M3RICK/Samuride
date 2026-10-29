@@ -24,7 +24,7 @@ public:
     // The attack key, or Berserk attacking on its own, once the cooldown is over. Returns the cooldown
     // it starts, 0 when nothing happened.
     virtual float attack(Server &server, Player &player) = 0;
-    // The attack key back up, same return: Corvo blinks then, as far as he held it
+    // The attack key back up, same return: Wraith blinks then, as far as he held it
     virtual float release(Server &, Player &) { return 0; }
     // Every tick, timers only (no server: the tests run it alone)
     virtual void tick(const Player &, float) {}
@@ -38,7 +38,7 @@ public:
     virtual void hurt() {}
     // Dante's style rank, sent in 3 bits
     virtual int style() const { return 0; }
-    // Berserk attacks with it on its own: not Corvo's Blink, he would teleport at random
+    // Berserk attacks with it on its own: not Wraith's Blink, he would teleport at random
     virtual bool autoFires() const { return true; }
 };
 
@@ -62,7 +62,7 @@ public:
     // True when it hurts Smasher itself once it reaches him (Fishbones' rocket, the fire wave) or lands
     // (the nuke), instead of as it's fired
     virtual bool travels() const { return false; }
-    // True while the world stands still: Corvo's Bend Time
+    // True while the world stands still: Wraith's Stillness
     virtual bool freezes() const { return false; }
 };
 
@@ -124,7 +124,7 @@ public:
     int style() const override { return rank; }
 };
 
-// Corvo: BLINK_CHARGES teleports, killing the drones he crosses, stabbing Smasher if he reaches him
+// Wraith: BLINK_CHARGES teleports, killing the drones he crosses, stabbing Smasher if he reaches him
 class Blink : public RunnerWeapon {
     int charges_left = BLINK_CHARGES;
     float recharge_timer = BLINK_RECHARGE;  // seconds before the next charge comes back
@@ -207,12 +207,12 @@ public:
 };
 
 // She stops dead and hangs in the air while it charges, then its recoil throws her back
-// For BEND_TIME the world stands still (Server::updatePlayers)
-class BendTime : public RunnerUltimate {
+// For STILLNESS_TIME the world stands still (Server::updatePlayers)
+class Stillness : public RunnerUltimate {
     float timer = 0;        // seconds it still lasts
 
 public:
-    void fire(Server &, Player &, float, float) override { timer = BEND_TIME; }
+    void fire(Server &, Player &, float, float) override { timer = STILLNESS_TIME; }
     void tick(float dt) override { timer = std::max(0.0f, timer - dt); }
     bool freezes() const override { return timer > 0; }
 };

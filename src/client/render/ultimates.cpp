@@ -26,7 +26,7 @@ void Ultimates::clear()
     nukes.clear();
     rockets.clear();
     breaches.clear();
-    bend_times.clear();
+    stillnesses.clear();
 }
 
 void Ultimates::handle(GameState &state)
@@ -69,11 +69,11 @@ void Ultimates::start(const UltimateEvent &ultimate)
         run.doubles[ultimate.player].restart();
         sf::Vector2f double_body(body.x, run.doubleY(ultimate.player) + 1);
         particles.emit(double_body, 40, NEON_RED, 6, 0.6f, 0);
-    } else if (ultimate.ultimate == Ultimate::BendTime) {
+    } else if (ultimate.ultimate == Ultimate::Stillness) {
         audio.play(Audio::Sfx::Sandevistan);
         run.flashScreen(sf::Color::White, 0.2f);
         particles.emit(body, 30, NEON_CYAN, 6, 0.5f, 0);
-        bend_times.emplace_back();
+        stillnesses.emplace_back();
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -344,11 +344,11 @@ void Ultimates::drawBreaches()
 }
 
 // The world standing still: a cold grey veil, fading in and out at the ends
-void Ultimates::drawBendTimes()
+void Ultimates::drawStillnesses()
 {
-    for (const sf::Clock &bend : bend_times) {
-        float t = bend.getElapsedTime().asSeconds();
-        float fade = std::clamp(std::min(t, BEND_TIME - t) / 0.3f, 0.0f, 1.0f);
+    for (const sf::Clock &still : stillnesses) {
+        float t = still.getElapsedTime().asSeconds();
+        float fade = std::clamp(std::min(t, STILLNESS_TIME - t) / 0.3f, 0.0f, 1.0f);
         // A cold veil, darker on the edges, and the seconds the world still stands still
         sf::RectangleShape veil({Screen::WIDTH, Screen::HEIGHT});
         veil.setFillColor(sf::Color(20, 40, 90, static_cast<uint8_t>(110 * fade)));
@@ -359,17 +359,17 @@ void Ultimates::drawBendTimes()
         edge.setPosition({0, Screen::HEIGHT * 0.88f});
         canvas.draw(edge);
         char left[32];
-        std::snprintf(left, sizeof(left), "TIME STOPPED  %.1f", std::max(0.0f, BEND_TIME - t));
+        std::snprintf(left, sizeof(left), "TIME STOPPED  %.1f", std::max(0.0f, STILLNESS_TIME - t));
         canvas.text(left, 36, withAlpha(NEON_CYAN, static_cast<uint8_t>(230 * fade)), {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.06f});
         canvas.text("FREE BLINKS", 20, withAlpha(sf::Color(200, 170, 255), static_cast<uint8_t>(200 * fade)),
                     {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.94f});
     }
-    std::erase_if(bend_times, [](const sf::Clock &bend) { return bend.getElapsedTime().asSeconds() > BEND_TIME; });
+    std::erase_if(stillnesses, [](const sf::Clock &still) { return still.getElapsedTime().asSeconds() > STILLNESS_TIME; });
 }
 
 void Ultimates::draw()
 {
-    drawBendTimes();
+    drawStillnesses();
     drawFireWaves();
     drawNukes();
     drawBreaches();

@@ -129,7 +129,7 @@ A 13-byte record per player, 60 times per second:
 | 4 | X, also the distance run |
 | 2 | Y: top of the 2-tile-tall body, 0 is the top row |
 | 2 | Score |
-| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Corvo's Blinks), bit 7 Berserk |
+| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Wraith's Blinks), bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
 | 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS) |
@@ -186,10 +186,10 @@ server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the we
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
-feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Corvo blinks, for one of his 2
+feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Wraith blinks, for one of his 2
 charges: 4 tiles ahead; the drones his body crosses go down (`d`), Adam Smasher's rockets it crosses
 turn back at him, and he takes a stab if it reaches him. In the last 0.3 s before Smasher's slam or
-cannon hits Corvo, the Blink is perfect (`f`): no charge spent, untouchable until that strike is over.
+cannon hits Wraith, the Blink is perfect (`f`): no charge spent, untouchable until that strike is over.
 Berserk never blinks on its own.
 
 ### `MSG_SHOT`
@@ -207,7 +207,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Bend Time (Corvo) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Stillness (Wraith) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -231,7 +231,7 @@ The Doppelganger sends nothing more: for 8 seconds each of Dante's attacks is al
 opposite height (the corridor's height minus his body's, minus his y), and the clients draw his double
 there and its shots themselves. Its kills come as his.
 
-Bend Time sends nothing more: for 4 seconds the server stops the titans, the snipers and Adam Smasher
+Stillness sends nothing more: for 4 seconds the server stops the titans, the snipers and Adam Smasher
 (his x and his rockets stay where they are). Their states keep coming, standing still.
 
 ### `MSG_TITANS`
@@ -268,7 +268,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
 | 1 | 1 under his Sandevistan: low on health or past half his arena, his strikes and gaps sped up |
-| 2 | The rows of the rocket wall Corvo blinked through, bit 0 the top row: they fly back at him (4 damage each) and hit nobody |
+| 2 | The rows of the rocket wall Wraith blinked through, bit 0 the top row: they fly back at him (4 damage each) and hit nobody |
 
 Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.

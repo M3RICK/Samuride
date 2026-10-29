@@ -259,7 +259,7 @@ public:
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);
-    // Corvo's Blink: the rockets it sweeps through turn back (how many), and the seconds a strike of
+    // Wraith's Blink: the rockets it sweeps through turn back (how many), and the seconds a strike of
     // Smasher's about to land on him lasts (0 if none: Boss::threatens)
     int reflectRockets(float left, float right, float top, float bottom)
     {

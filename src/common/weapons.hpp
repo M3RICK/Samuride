@@ -20,7 +20,7 @@ enum class Weapon : uint8_t {
     Spear,      // Mikasa's thunder spears, while her ultimate lasts (ultimates.hpp)
     Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
                 // like Gun); its shots go out as those two, it has no stats of its own
-    Blink,      // Corvo: no weapon, a teleport that kills the drones it crosses (BLINK_*); no stats either
+    Blink,      // Wraith: no weapon, a teleport that kills the drones it crosses (BLINK_*); no stats either
 };
 
 struct WeaponStats {
@@ -62,7 +62,7 @@ inline float STYLE_HASTE[STYLE_RANKS] = {1, 0.95f, 0.9f, 0.85f, 0.8f, 0.7f, 0.6f
 inline float STYLE_DROP_TIME = 10;
 inline int STYLE_HIT_DROP = 2;
 
-// Corvo's Blink: BLINK_DISTANCE tiles straight ahead, at his height and keeping his vertical speed (it
+// Wraith's Blink: BLINK_DISTANCE tiles straight ahead, at his height and keeping his vertical speed (it
 // went up or down by that speed once: in the air it felt random). The drones his body crosses go down;
 // he lands where the marker shows, a zapper there kills him. BLINK_CHARGES at most, one back every
 // BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).

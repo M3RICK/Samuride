@@ -249,7 +249,7 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
                          1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
 }
 
-// Playing Corvo with a Blink left: a small diamond where it would take him, red when a live zapper waits
+// Playing Wraith with a Blink left: a small diamond where it would take him, red when a live zapper waits
 // there (sampled like the server does); it slides further while the key is held
 void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held)
 {

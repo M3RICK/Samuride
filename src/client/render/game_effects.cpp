@@ -70,7 +70,7 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             pinataBurst(effect);
             return;
         case PERFECT_DODGE:
-            // Corvo blinked out of Smasher's strike at the last moment: the charge came back
+            // Wraith blinked out of Smasher's strike at the last moment: the charge came back
             audio.play(Audio::Sfx::UltimateReady);
             particles.emit({effect.x + 0.5f, effect.y + 1.0f}, 20, sf::Color::White, 6, 0.4f, 0);
             run.callout = "PERFECT";
@@ -150,7 +150,7 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
     last_drone[effect.player] = center;
     // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
     if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blink) {
-        // Corvo cuts through on his way: the same catch, in his violet
+        // Wraith cuts through on his way: the same catch, in his violet
         hit_stop = HIT_STOP * 1.5f;
         run.shakeAtLeast(0.15f, 16);
         particles.emit(center, 16, NEON_PURPLE, 10, 0.3f, 0);

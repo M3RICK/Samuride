@@ -123,10 +123,10 @@ CHARACTERS = {
         "shoot":  animation((90, 668, 1445, 778), 18, mode="once",
                             cuts=[90, 213, 342, 471, 591, 713, 833, 960, 1094, 1210, 1328, 1445], frames=[3, 4, 5]),
     }, {"key_black": True}),
-    # Corvo, from ChatGPT: sources/corvo/ holds the four pictures, stacked in sources/corvo.png at a third of
+    # Wraith, from ChatGPT: sources/wraith/ holds the four pictures, stacked in sources/wraith.png at a third of
     # their size (run, flight, Blink and death; the Blink sheet's faint haze taken out), the portrait
     # shrunk to 300 px under them
-    "corvo": ("sources/corvo.png", (0, 1024, 300, 1324), {
+    "wraith": ("sources/wraith.png", (0, 1024, 300, 1324), {
         "run":     animation([(0, 33, 512, 167), (0, 185, 512, 320)], 12, ground=True),
         # Each picture drawn at its own size: the flight one at about half the run's, the Blink one 4/5
         "takeoff": animation((0, 347, 512, 437), 14, mode="once", scale=1.9),
@@ -228,7 +228,7 @@ DISPLAY_NAMES = {"johny": "JOHNNY", "johny_mount": "PORSCHE", "david_mount": "CY
 # Tiles tall in the game, for the mounts (Eren's titan is TITAN_FORM_HEIGHT): a car is not a giant
 HEIGHTS = {"johny_mount": 2.2, "david_mount": 3.6, "jinx_mount": 3.6}
 
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "corvo": "140 60 230"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "wraith": "140 60 230"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 

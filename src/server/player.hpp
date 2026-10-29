@@ -69,7 +69,7 @@ public:
 
     float getX() const { return x; }
     float getY() const { return y; }
-    // Corvo's Blink: there at once
+    // Wraith's Blink: there at once
     void blinkTo(float to_x) { x = to_x; }
     // Untouchable for that long (a perfect Blink through Smasher's strike), blinking like after a shield
     void dodge(float seconds) { grace_timer = std::max(grace_timer, seconds); }

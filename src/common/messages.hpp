@@ -40,7 +40,7 @@ struct PlayerState {
     Form form = Form::Normal;
     bool shielded = false;
     bool sprinting = false;     // Sandevistan
-    int ram = 0;                // the weapon's charges: Lucy's RAM, Corvo's Blinks
+    int ram = 0;                // the weapon's charges: Lucy's RAM, Wraith's Blinks
     bool berserk = false;
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left
@@ -85,7 +85,7 @@ struct BossState {
     float y = 0;            // the rockets' gap top, or the cannon's line
     float time = 0;         // seconds into the phase
     bool sandevistan = false;   // attacking faster, low on health or late in his arena
-    uint16_t reflected = 0;     // the rows of the rocket wall Corvo sent back at him, one bit each
+    uint16_t reflected = 0;     // the rows of the rocket wall Wraith sent back at him, one bit each
 };
 
 // MSG_COLLISION
