@@ -79,6 +79,9 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
 - **Geralt** (The Witcher): his key alternates two Signs, Aard (a blast that kills drones and pushes
   a titan back) then Quen (a shield for one hit). A rhythm to manage.
 - **Scorpion** (Mortal Kombat): his spear pulls a drone, eddies or a power-up to him ("GET OVER HERE").
+- **Arthur Morgan** (Red Dead Redemption 2), liked: a revolver, 6 shots then a reload. His ultimate is
+  Dead Eye: time slows, his sight sweeps the screen and marks up to 5 targets on its own (no mouse:
+  it must work on phones), then he fires them all at once.
 
 ## Gameplay we don't have yet (proposed 2026-10-29)
 
@@ -95,3 +98,7 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
    gravity flips.
 6. **Parry**: the attack key right as one of Smasher's rockets arrives sends it back at him. A skill
    moment during the boss.
+7. **NCPD wanted level**, liked: like GTA's stars, the more drones you kill the higher it climbs; each
+   level adds snipers and drones but multiplies the eddies. You pick your own difficulty.
+8. **Ripperdoc after Smasher**, liked: a 10 s stop where you spend the run's eddies on implants for
+   the rest of the run. Beating the boss earns more than eddies.
