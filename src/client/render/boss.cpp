@@ -85,7 +85,6 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
     if (!boss.fighting)
         return;
 
-    drawAttack(boss);
     auto [anim, frame] = pose(boss);
     float leap = std::min(std::abs(ahead - shown_x), 4.0f) * 0.6f;
     bool hurt = since_hit.getElapsedTime().asSeconds() < 0.08f;
@@ -98,6 +97,8 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         drawBody(*anim, frame, run.view.camera_x + shown_x - (0.4f + 0.1f * std::sin(canvas.time() * 20)) * i, leap,
                  withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, static_cast<uint8_t>(200 - 50 * i)));
     drawBody(*anim, frame, run.view.camera_x + shown_x, leap, hurt ? sf::Color(255, 120, 120) : sf::Color::White);
+    // Over him: his rockets and their warnings start on the right edge, where he stands
+    drawAttack(boss);
     if (cyberpsycho)
         drawHealth(boss);
 }
@@ -161,6 +162,9 @@ void Smasher::drawBody(const Animation &anim, int frame, float x, float lift, sf
 
 void Smasher::drawAttack(const BossState &boss)
 {
+    // Getting back up after a slam: the attack is over
+    if (boss.phase == BossPhase::Recover)
+        return;
     float tile = run.view.tile_size;
     bool warning = boss.phase != BossPhase::Strike;
     int rows = static_cast<int>(run.floor());

@@ -5,6 +5,11 @@ taken from this file. Players on different versions can't play together: update 
 
 ## v3.02
 
+### Fixes
+- **No more shooting as a titan** or on a mount: the attack key (and Berserk) waits until you're back on foot.
+- **Adam Smasher**: the red zone of his ground slam is gone while he gets back up, and his rockets and their
+  warning chevrons are drawn over him instead of hidden behind him.
+
 ### Other
 - **Adam Smasher's rockets** are now real Arasaka missiles, drawn by Alex.
 

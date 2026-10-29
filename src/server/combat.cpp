@@ -4,12 +4,14 @@
 #include "../common/debug.hpp"
 #include <algorithm>
 
-// The attack key, or Berserk attacking on its own: what happens is up to the runner's weapon (arsenal.cpp)
+// The attack key, or Berserk attacking on its own: what happens is up to the runner's weapon (arsenal.cpp).
+// Not in the Attack Titan's forms: the titan, or the mount, only tramples
 void Server::handleAttack(int client_fd)
 {
     auto it = players.find(client_fd);
 
-    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() || !it->second.canAttack())
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() || !it->second.canAttack() ||
+        it->second.getForm() != Form::Normal)
         return;
     if (float cooldown = it->second.weapon().attack(*this, it->second); cooldown > 0)
         it->second.startCooldown(cooldown);
