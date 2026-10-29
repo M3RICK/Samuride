@@ -5,4 +5,4 @@ frame 390 311
 feet 307
 body 303
 height 3.6
-run 0 8 12 loop
+run 0 5 8 loop

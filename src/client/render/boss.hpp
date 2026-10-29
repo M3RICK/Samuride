@@ -16,6 +16,7 @@ struct Animation;
 class Smasher {
 private:
     static constexpr float HEIGHT = 6;      // tiles, feet to head
+    static constexpr float LEAVE_CROUCH = 0.4f;     // seconds crouching before he leaps away
 
     Canvas &canvas;
     const Sprites &sprites;
@@ -30,6 +31,9 @@ private:
     // Once downed, he dies where he stood, left behind: world x, and since when
     float death_x = -1;
     sf::Clock since_death;
+    // Still standing at the arena's end, he leaps away off the top: tiles ahead of the camera, and since when
+    float leave_x = -1;
+    sf::Clock since_leave;
 
     void react(const BossState &boss);
     // The animation and frame his state shows
@@ -41,7 +45,7 @@ private:
 public:
     Smasher(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio);
 
-    void reset() { last = {}; shown_x = 0; death_x = -1; }
+    void reset() { last = {}; shown_x = 0; death_x = -1; leave_x = -1; }
     void draw(const BossState &boss, bool cyberpsycho);
 };
 

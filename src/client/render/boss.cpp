@@ -46,6 +46,15 @@ void Smasher::react(const BossState &boss)
         death_x = run.view.camera_x + shown_x;
         since_death.restart();
     }
+    if (!boss.fighting && last.fighting && boss.health > 0) {
+        leave_x = shown_x;
+        since_leave.restart();
+        audio.play(Audio::Sfx::Stomp);
+        run.shakeAtLeast(0.3f, 12);
+        run.callout = "SURVIVED";
+        run.callout_color = NEON_CYAN;
+        run.callout_clock.restart();
+    }
     if (boss.fighting && boss.health < last.health)
         since_hit.restart();
     bool striking = boss.phase == BossPhase::Strike;
@@ -82,10 +91,17 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         if (fade > 0)
             drawBody(look.death, look.death.frameAt(t), death_x, 0, withAlpha(sf::Color::White, static_cast<uint8_t>(255 * fade)));
     }
+    if (leave_x >= 0) {
+        // Crouched like for a slam, then up and away, keeping pace
+        float t = since_leave.getElapsedTime().asSeconds();
+        float air = std::max(0.0f, t - LEAVE_CROUCH);
+        int frame = static_cast<int>(std::min(t / LEAVE_CROUCH, 1.0f) * 2);     // crouch, rise, in the air
+        if (air < 1.5f)
+            drawBody(look.slam, frame, run.view.camera_x + leave_x + air * 6, air * air * 30, sf::Color::White);
+    }
     if (!boss.fighting)
         return;
 
-    drawAttack(boss);
     auto [anim, frame] = pose(boss);
     float leap = std::min(std::abs(ahead - shown_x), 4.0f) * 0.6f;
     bool hurt = since_hit.getElapsedTime().asSeconds() < 0.08f;
@@ -98,6 +114,8 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
         drawBody(*anim, frame, run.view.camera_x + shown_x - (0.4f + 0.1f * std::sin(canvas.time() * 20)) * i, leap,
                  withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, static_cast<uint8_t>(200 - 50 * i)));
     drawBody(*anim, frame, run.view.camera_x + shown_x, leap, hurt ? sf::Color(255, 120, 120) : sf::Color::White);
+    // Over him: his rockets and their warnings start on the right edge, where he stands
+    drawAttack(boss);
     if (cyberpsycho)
         drawHealth(boss);
 }
@@ -161,6 +179,9 @@ void Smasher::drawBody(const Animation &anim, int frame, float x, float lift, sf
 
 void Smasher::drawAttack(const BossState &boss)
 {
+    // Getting back up after a slam: the attack is over
+    if (boss.phase == BossPhase::Recover)
+        return;
     float tile = run.view.tile_size;
     bool warning = boss.phase != BossPhase::Strike;
     int rows = static_cast<int>(run.floor());
@@ -172,14 +193,20 @@ void Smasher::drawAttack(const BossState &boss)
                 continue;
             float y = run.toScreen({0, row + 0.5f}).y;
             if (warning) {
-                // Chevrons blinking on the right edge, one per rocket to come
-                if (canvas.blink())
-                    canvas.text("<<", 44, NEON_RED, {screen_x, y});
+                // Each row to be hit glows red across the screen, the gap stays clear; chevrons on the right
+                // edge, one per rocket to come, flashing red and white so they stand out on him
+                rect(canvas, {0, y - tile * 0.35f}, {Screen::WIDTH, tile * 0.7f}, withAlpha(NEON_RED, canvas.blink() ? 70 : 35));
+                canvas.text("<<", 44, canvas.blink() ? sf::Color::White : NEON_RED, {screen_x, y});
                 continue;
             }
-            rect(canvas, {screen_x, y - tile * 0.15f}, {tile * 0.9f, tile * 0.3f}, sf::Color(200, 200, 210));
-            rect(canvas, {screen_x - tile * 0.1f, y - tile * 0.2f}, {tile * 0.2f, tile * 0.4f}, NEON_RED);
-            rect(canvas, {screen_x + tile * 0.9f, y - tile * 0.12f}, {tile * (0.6f + 0.3f * canvas.blink()), tile * 0.24f}, NEON_ORANGE);
+            // Nose on the rocket's x, its flame flickering behind
+            sf::Vector2i frame(sprites.smasher_missile.getSize().x / 2, sprites.smasher_missile.getSize().y);
+            float scale = tile * 1.8f / frame.x;
+            sf::Sprite missile(sprites.smasher_missile, {{frame.x * canvas.blink(), 0}, frame});
+            missile.setOrigin({0, frame.y / 2.f});
+            missile.setScale({scale, scale});
+            missile.setPosition({screen_x, y});
+            canvas.draw(missile);
         }
     } else if (boss.attack == BossAttack::Slam) {
         float top = run.toScreen({0, run.floor() - BOSS_SLAM_HEIGHT}).y;

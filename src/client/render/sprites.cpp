@@ -18,6 +18,7 @@ void Sprites::load()
     loadTexture(drone, "assets/drone/drone.png", false);
     loadTexture(hack_target, "assets/lucy/target.png");
     loadTexture(fishbones, "assets/jinx/fishbones.png", false);
+    loadTexture(smasher_missile, "assets/smasher/missile.png", false);
 
     characters.resize(RUNNER_COUNT);
     mounts.resize(RUNNER_COUNT);

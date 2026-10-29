@@ -3,6 +3,27 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.02
+
+### Fixes
+- **Hitboxes**: runners were drawn up to almost a tile behind where they really are (more the faster you
+  go), so you died short of a zapper or a rocket. They're now drawn where the server has them.
+- **No more shooting as a titan** or on a mount: the attack key (and Berserk) waits until you're back on foot.
+- **Ultimates on Adam Smasher**: Jinx's Fishbones and Johnny's fire wave hurt him when they reach him, and
+  David's nuke when it lands, instead of the moment you pressed the key.
+- **Adam Smasher**: the red zone of his ground slam is gone while he gets back up, and his rockets and their
+  warning chevrons are drawn over him instead of hidden behind him. Before the rockets fly, every row they
+  will hit glows red across the screen: the gap is the part that doesn't.
+
+### New
+- **Adam Smasher leaves in style**: still standing at 900 m, he crouches and leaps off the top of the
+  screen, and you get a SURVIVED.
+
+### Other
+- **David's cyberpsycho suit** keeps its arm cannon the whole run: it no longer turns into a fist every
+  other step.
+- **Adam Smasher's rockets** are now real Arasaka missiles, drawn by Alex.
+
 ## v3.01
 
 ### New

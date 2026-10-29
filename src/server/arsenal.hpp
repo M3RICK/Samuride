@@ -55,6 +55,9 @@ public:
     virtual bool holdsStill() const { return false; }
     // True while a double repeats the runner's attacks: Dante's Doppelganger
     virtual bool doubles() const { return false; }
+    // True when it hurts Smasher itself once it reaches him (Fishbones' rocket, the fire wave) or lands
+    // (the nuke), instead of as it's fired
+    virtual bool travels() const { return false; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -124,9 +127,10 @@ struct Sweep {
     int top;
     int bottom;
     float delay = 0;    // seconds before it sets off: Fishbones charges first
+    bool hit_boss = false;
 
     // Moves on by a tick; false once it reached its range
-    bool advance(Server &server, const Player &owner);
+    bool advance(Server &server, Player &owner);
 };
 
 class FireWave : public RunnerUltimate {
@@ -135,6 +139,7 @@ class FireWave : public RunnerUltimate {
 public:
     void fire(Server &server, Player &player, float start, float line) override;
     void act(Server &server, Player &player) override;
+    bool travels() const override { return true; }
 };
 
 // David's nuke: it lands ahead after NUKE_DELAY
@@ -148,6 +153,7 @@ class Nuke : public RunnerUltimate {
 public:
     void fire(Server &server, Player &player, float start, float line) override;
     void act(Server &server, Player &player) override;
+    bool travels() const override { return true; }
 };
 
 class Breach : public RunnerUltimate {
@@ -189,6 +195,7 @@ class Fishbones : public RunnerUltimate {
 public:
     void fire(Server &server, Player &player, float start, float line) override;
     void act(Server &server, Player &player) override;
+    bool travels() const override { return true; }
     void tick(float dt) override;
     float pace() const override;
     bool holdsStill() const override { return charge_timer > 0; }

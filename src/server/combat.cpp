@@ -4,12 +4,14 @@
 #include "../common/debug.hpp"
 #include <algorithm>
 
-// The attack key, or Berserk attacking on its own: what happens is up to the runner's weapon (arsenal.cpp)
+// The attack key, or Berserk attacking on its own: what happens is up to the runner's weapon (arsenal.cpp).
+// Not in the Attack Titan's forms: the titan, or the mount, only tramples
 void Server::handleAttack(int client_fd)
 {
     auto it = players.find(client_fd);
 
-    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() || !it->second.canAttack())
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() || !it->second.canAttack() ||
+        it->second.getForm() != Form::Normal)
         return;
     if (float cooldown = it->second.weapon().attack(*this, it->second); cooldown > 0)
         it->second.startCooldown(cooldown);
@@ -36,7 +38,8 @@ void Server::handleUltimate(int client_fd)
     UltimateEvent fired{player.getPlayerNumber(), ultimateOf(player.getCharacter()), start, line};
     broadcastToAllClients(Protocol::createPacket(MSG_ULTIMATE, Message::encode(fired)));
     player.ultimate().fire(*this, player, start, line);
-    hitBoss(player, BOSS_ULTIMATE_DAMAGE);
+    if (!player.ultimate().travels())
+        hitBoss(player, BOSS_ULTIMATE_DAMAGE);
 }
 
 // What the ultimates do on their own every tick: the sweeps go on, the nukes land
