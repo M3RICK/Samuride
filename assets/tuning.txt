@@ -227,10 +227,12 @@ BLINK_DISTANCE 4
 BLINK_FAR_DISTANCE 8
 # Seconds to hold the key for the farthest Blink
 BLINK_HOLD_TIME 0.6
+# Eddies for a Blink through a zapper or a drone
+BLINK_CLOSE_CALL_BOUNTY 5
 # Seconds between two Blinks
 BLINK_COOLDOWN 0.3
-# Seconds to get one Blink back (2 at most)
-BLINK_RECHARGE 3
+# Seconds to get one Blink back (3 at most)
+BLINK_RECHARGE 2
 # Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back
 BLINK_PERFECT_WINDOW 0.3
 

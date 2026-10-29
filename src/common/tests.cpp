@@ -385,6 +385,9 @@ static void testWraith()
     wraith.reset(0, 0);
     RunnerWeapon &blink = wraith.weapon();
     assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
+    // Aimed into a zapper column, he lands just past it; nowhere safe, where he aimed
+    assert(blinkLanding(4.6f, 0, [](int x, int) { return x == 5; }) == 5.6f);
+    assert(blinkLanding(4.6f, 0, [](int, int) { return true; }) == 4.6f);
     assert(blinkDistance(0) == BLINK_DISTANCE && blinkDistance(BLINK_HOLD_TIME * 2) == BLINK_FAR_DISTANCE);
     wraith.blinkTo(14);
     assert(wraith.getX() == 14 && !wraith.isGracing());

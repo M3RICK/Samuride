@@ -284,6 +284,7 @@ public:
     void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
 
     bool isLiveDrone(int x, int y) const;
+    bool isLiveZapper(int x, int y) const { return game_map.getTile(x, y) == ZAPPER_TILE && !hacked_zappers.count({x, y}); }
 
     void destroyDrone(int owner_fd, int x, int y);
     // The eddie or the power-up on this tile, if any is left: true when he took one

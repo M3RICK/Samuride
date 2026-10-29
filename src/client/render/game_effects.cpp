@@ -77,6 +77,15 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             run.callout_color = NEON_CYAN;
             run.callout_clock.restart();
             return;
+        case CLOSE_CALL:
+            // Wraith blinked through a zapper or a drone: the bounty, said where he landed
+            if (mine) {
+                audio.play(Audio::Sfx::Coin);
+                run.callout = "CLOSE CALL +" + std::to_string(BLINK_CLOSE_CALL_BOUNTY);
+                run.callout_color = NEON_PURPLE;
+                run.callout_clock.restart();
+            }
+            return;
         case SHIFT_TILE:
             // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
             if (mine)

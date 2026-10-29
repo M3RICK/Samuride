@@ -269,13 +269,14 @@ void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int 
     if (perfect && !perfect_cue)
         audio.play(Audio::Sfx::Beep);
     perfect_cue = perfect;
-    float x = pos->second.x + (ultimates.stills(me) ? BLINK_FAR_DISTANCE : blinkDistance(held));
+    // Red only when no column past it is safe either, like the server's landing
+    auto live = [&](int column, int row) {
+        return run.map.getTile(column, row) == ZAPPER_TILE && run.hackLeft(column, row) <= 0 && !run.burnt_zappers.count({column, row});
+    };
+    float aimed = pos->second.x + (ultimates.stills(me) ? BLINK_FAR_DISTANCE : blinkDistance(held));
+    float x = blinkLanding(aimed, pos->second.y, live);
     int column = static_cast<int>(x + 0.5f);
-    bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) {
-        int row = static_cast<int>(pos->second.y + dy);
-        return run.map.getTile(column, row) == ZAPPER_TILE && run.hackLeft(column, row) <= 0 &&
-               !run.burnt_zappers.count({column, row});
-    });
+    bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) { return live(column, static_cast<int>(pos->second.y + dy)); });
     float size = run.view.tile_size * ((perfect ? 0.4f : 0.22f) + 0.03f * std::sin(canvas.time() * 10));
     sf::Vector2f centre = run.toScreen({x + 0.5f, pos->second.y + Run::PLAYER_HEIGHT / 2});
     sf::ConvexShape diamond(4);

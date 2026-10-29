@@ -6,6 +6,7 @@
     #define WEAPONS_HPP
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <iterator>
@@ -64,7 +65,7 @@ inline int STYLE_HIT_DROP = 2;
 
 // Wraith's Blink: BLINK_DISTANCE tiles straight ahead, at his height and keeping his vertical speed (it
 // went up or down by that speed once: in the air it felt random). The drones his body crosses go down;
-// he lands where the marker shows, a zapper there kills him. BLINK_CHARGES at most, one back every
+// he lands where the marker shows (past a zapper there, see blinkLanding). BLINK_CHARGES at most, one back every
 // BLINK_RECHARGE, faster in Berserk (which doesn't blink on its own).
 inline float BLINK_DISTANCE = 4;
 // Held, the attack key takes him further: BLINK_FAR_DISTANCE after BLINK_HOLD_TIME, the Blink on release
@@ -75,8 +76,26 @@ inline float blinkDistance(float held)
     return BLINK_DISTANCE + (BLINK_FAR_DISTANCE - BLINK_DISTANCE) * std::clamp(held / BLINK_HOLD_TIME, 0.0f, 1.0f);
 }
 inline float BLINK_COOLDOWN = 0.3f;
-constexpr int BLINK_CHARGES = 2;    // sent in 2 bits: 3 at most
-inline float BLINK_RECHARGE = 3;
+constexpr int BLINK_CHARGES = 3;    // sent in 2 bits: 3 at most
+inline float BLINK_RECHARGE = 2;
+// The runner who goes furthest: a Blink aimed into a zapper lands on the first safe column up to
+// BLINK_SAFE_SEARCH tiles past it, and one through a zapper or a drone pays BLINK_CLOSE_CALL_BOUNTY
+constexpr int BLINK_SAFE_SEARCH = 3;
+inline int BLINK_CLOSE_CALL_BOUNTY = 5;
+constexpr char CLOSE_CALL = 'w';    // collision type: a Blink through danger, where he landed
+
+// Where a Blink aimed at x lands, his top at y: the first column from there with no live zapper on his body
+// (rows sampled like the collisions), x itself when none is safe. deadly(column, row) says which are live.
+template <typename Deadly>
+float blinkLanding(float x, float y, Deadly deadly)
+{
+    for (int step = 0; step <= BLINK_SAFE_SEARCH; step++) {
+        int column = static_cast<int>(x + step + 0.5f);
+        if (std::ranges::none_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) { return deadly(column, static_cast<int>(y + dy)); }))
+            return x + step;
+    }
+    return x;
+}
 // Blinking this close to Smasher's slam or cannon landing on him is PERFECT: he goes through it,
 // untouchable until it's over, and the charge comes back
 inline float BLINK_PERFECT_WINDOW = 0.3f;
