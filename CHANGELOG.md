@@ -7,7 +7,7 @@ taken from this file. Players on different versions can't play together: update 
 
 ### New
 - **Corvo** (Dishonored), seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
-  4 tiles straight ahead, and the drones he passes through go down. A small diamond shows where he'd
+  4 tiles straight ahead in a violet streak, and the drones he cuts through go down with a hit-stop. A small diamond shows where he'd
   land, red when a zapper waits there. 2 charges, one back every 3 seconds.
   - **Against Adam Smasher**, the Blink fights back: blink through his rocket wall and every rocket you
     pass through flies back into him (4 each). Blink in the last 0.3 s before his slam or his cannon

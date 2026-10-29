@@ -149,7 +149,13 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
         react(Mood::Kill);
     last_drone[effect.player] = center;
     // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
-    if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+    if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blink) {
+        // Corvo cuts through on his way: the same catch, in his violet
+        hit_stop = HIT_STOP * 1.5f;
+        run.shakeAtLeast(0.15f, 16);
+        particles.emit(center, 16, NEON_PURPLE, 10, 0.3f, 0);
+        particles.emit(center, 8, sf::Color::White, 7, 0.2f, 0);
+    } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
         // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
         hit_stop = HIT_STOP;
         cuts.push_back({center, sf::Clock()});

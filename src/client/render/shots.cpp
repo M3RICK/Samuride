@@ -41,10 +41,15 @@ void Shots::handle(GameState &state)
                 particles.emit(muzzle, 8, NEON_PURPLE, 3, 0.3f, 0);
                 break;
             case Weapon::Blink:
-                // Smoke where he was: the server moves him on its next state
+                // Smoke where he was: the server moves him on its next state, the streak follows him there
                 audio.play(Audio::Sfx::Blink);
                 particles.emit(muzzle - sf::Vector2f(0.4f, 0), 18, sf::Color(30, 20, 50), 4, 0.4f, 0);
                 particles.emit(muzzle - sf::Vector2f(0.4f, 0), 8, NEON_CYAN, 3, 0.3f, 0);
+                streaks.push_back({shot.player, muzzle - sf::Vector2f(0.4f, 0), false, sf::Clock()});
+                if (shot.player == state.getMyPlayerNumber()) {
+                    run.shakeAtLeast(0.12f, 12);
+                    run.flashScreen(sf::Color(120, 60, 220), 0.12f);
+                }
                 break;
             case Weapon::Spear:
                 audio.play(Audio::Sfx::Rocket);
@@ -102,9 +107,49 @@ void Shots::land(int player, float x)
         trails.erase(closest);
 }
 
+// A violet band with a white core from where he was to where he is, fading in STREAK_TIME; sparks along
+// it and a burst where he lands, the moment he gets there
+void Shots::drawStreaks()
+{
+    static constexpr float STREAK_TIME = 0.2f;
+
+    for (Streak &streak : streaks) {
+        auto at = run.display_positions.find(streak.player);
+        if (at == run.display_positions.end())
+            continue;
+        sf::Vector2f to = at->second + sf::Vector2f(0.5f, 1);
+        if (!streak.landed) {
+            if ((to - streak.from).length() < 2)
+                continue;
+            streak.landed = true;
+            streak.age.restart();
+            for (int i = 1; i <= 8; i++)
+                particles.emit(streak.from + (to - streak.from) * (i / 8.f), 2, i % 2 ? NEON_PURPLE : NEON_CYAN, 3, 0.3f, 0);
+            particles.emit(to, 16, sf::Color::White, 6, 0.25f, 0);
+            particles.emit(to, 12, NEON_PURPLE, 5, 0.35f, 0);
+        }
+        float fade = 1 - streak.age.getElapsedTime().asSeconds() / STREAK_TIME;
+        sf::Vector2f a = run.toScreen(streak.from);
+        sf::Vector2f b = run.toScreen(to);
+        for (auto [thickness, color] : {std::pair{run.view.tile_size * 1.2f, withAlpha(NEON_PURPLE, static_cast<uint8_t>(110 * fade))},
+                                        std::pair{run.view.tile_size * 0.25f, withAlpha(sf::Color::White, static_cast<uint8_t>(230 * fade))}}) {
+            sf::RectangleShape band({(b - a).length(), thickness * fade});
+            band.setOrigin({0, thickness * fade / 2});
+            band.setPosition(a);
+            band.setRotation((b - a).angle());
+            band.setFillColor(color);
+            canvas.draw(band, sf::BlendAdd);
+        }
+    }
+    std::erase_if(streaks, [](const Streak &streak) {
+        return streak.landed ? streak.age.getElapsedTime().asSeconds() > STREAK_TIME : streak.age.getElapsedTime().asSeconds() > 1;
+    });
+}
+
 // A shot ends out of range, or when the server says it hit (land)
 void Shots::draw()
 {
+    drawStreaks();
     float tile_size = run.view.tile_size;
 
     std::erase_if(trails, [](const Trail &trail) {
