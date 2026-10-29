@@ -155,6 +155,10 @@ BOSS_SLASH_DAMAGE 5
 BOSS_STAB_DAMAGE 8
 # Each rocket Corvo blinks through, sent back at him
 BOSS_REFLECT_DAMAGE 4
+# Tiles past where Corvo's Blink lands that it still sends the rockets back
+BOSS_REFLECT_SLACK 3
+# Seconds Corvo can't be hurt after sending rockets back
+BOSS_REFLECT_GRACE 0.4
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
 # Eddies for downing him

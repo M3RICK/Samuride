@@ -230,8 +230,10 @@ float Blink::release(Server &server, Player &player)
     if (server.bossBetween(left, right))
         server.hitBoss(player, BOSS_STAB_DAMAGE);
     // Smasher's rockets he passes through fly back at him
-    if (int reflected = server.reflectRockets(left, right, top, bottom))
+    if (int reflected = server.reflectRockets(left, right, top, bottom)) {
         server.hitBoss(player, reflected * BOSS_REFLECT_DAMAGE);
+        player.dodge(BOSS_REFLECT_GRACE);
+    }
     float strike = server.bossThreatens(player);
     // Before he moves: the clients draw his smoke where he was
     server.announceShot(player, Weapon::Blink);

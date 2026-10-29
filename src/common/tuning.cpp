@@ -119,6 +119,8 @@ std::vector<Entry> &entries()
             VALUE(BOSS_SLASH_DAMAGE, "A blade's damage (Mikasa, Dante's sword), while he is close after a slam"),
             VALUE(BOSS_STAB_DAMAGE, "Corvo blinking into him"),
             VALUE(BOSS_REFLECT_DAMAGE, "Each rocket Corvo blinks through, sent back at him"),
+            VALUE(BOSS_REFLECT_SLACK, "Tiles past where Corvo's Blink lands that it still sends the rockets back"),
+            VALUE(BOSS_REFLECT_GRACE, "Seconds Corvo can't be hurt after sending rockets back"),
             VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
             VALUE(BOSS_BOUNTY, "Eddies for downing him"),
             VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),

@@ -134,16 +134,17 @@ bool Boss::damage(int amount)
     return true;
 }
 
-// The wall within reach of the box (a rocket flies about a third of a tile a tick: a little slack each
-// side), every row of it the box covers
+// The wall within reach of the box, with slack: a rocket flies a third of a tile a tick, and the player
+// aims at where it was drawn, a little late. Every row the box touches, and the one beside it at each end,
+// so drifting with the jetpack right after doesn't run into one he just missed.
 int Boss::reflect(float left, float right, float top, float bottom, float floor)
 {
     if (!fighting() || attack != BossAttack::Rockets || phaseOf(attack, time) != BossPhase::Strike ||
-        rocketsX() < left - 0.5f || rocketsX() > right + 1.5f)
+        rocketsX() < left - 1 || rocketsX() > right + BOSS_REFLECT_SLACK)
         return 0;
     int count = 0;
     for (int row = 0; row < static_cast<int>(floor) && row < 16; row++) {
-        bool covered = row + 0.15f < bottom - 0.2f && row + 0.85f > top + 0.2f;
+        bool covered = row + 1 > top - 0.5f && row < bottom + 0.5f;
         if (covered && rocketRow(row, y) && !(reflected >> row & 1)) {
             reflected |= 1 << row;
             count++;

@@ -425,9 +425,11 @@ static void testCorvoSmasher()
         row++;
     assert(boss.reflect(wall.rockets_x + 10, wall.rockets_x + 15, row, row + 2, 10) == 0);    // not there yet
     assert(rocketsHit(0, wall.y, row, 10));
-    assert(boss.reflect(wall.rockets_x - 1, wall.rockets_x + 1, row, row + 2, 10) == 2);
+    // A Blink landing short of the wall still reaches it, and takes the rows beside him too
+    assert(boss.reflect(wall.rockets_x - 6, wall.rockets_x - BOSS_REFLECT_SLACK + 0.5f, row, row + 2, 10) >= 2);
     assert(boss.reflect(wall.rockets_x - 1, wall.rockets_x + 1, row, row + 2, 10) == 0);     // once each
     assert(!rocketsHit(0, wall.y, row, 10, boss.state().reflected));
+    assert(!rocketsHit(0, wall.y, row - 0.4f, 10, boss.state().reflected) && !rocketsHit(0, wall.y, row + 0.4f, 10, boss.state().reflected));
 
     Player elsewhere(4);
     elsewhere.reset(1, 0);

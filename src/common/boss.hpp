@@ -25,6 +25,8 @@ inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a cha
 inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
 inline int BOSS_STAB_DAMAGE = 8;        // Corvo blinking into him: more than a slash, it costs a charge
 inline int BOSS_REFLECT_DAMAGE = 4;     // each of his rockets Corvo blinks through, sent back at him
+inline float BOSS_REFLECT_SLACK = 3;    // tiles past where a Blink lands that its box still reaches the wall
+inline float BOSS_REFLECT_GRACE = 0.4f; // seconds untouchable after sending rockets back, while the wall passes
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
 // His Sandevistan: under this share of his health, or past half his arena (in CLASSIC nothing hurts him),
