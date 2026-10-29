@@ -15,6 +15,8 @@ taken from this file. Players on different versions can't play together: update 
   warning chevrons are drawn over him instead of hidden behind him.
 
 ### Other
+- **David's cyberpsycho suit** keeps its arm cannon the whole run: it no longer turns into a fist every
+  other step.
 - **Adam Smasher's rockets** are now real Arasaka missiles, drawn by Alex.
 
 ## v3.01

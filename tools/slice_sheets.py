@@ -155,7 +155,8 @@ CHARACTERS = {
                          ground=True),
     }),
     "david_mount": ("../Samuride Files/Animation files/David/David_Cyberpsycho_NoBG.png", None, {
-        "run": animation([(0, 55, 1408, 368), (0, 415, 1408, 725)], 12, ground=True),
+        # The source swaps his cannon arm for a fist every other frame: the cannon ones only
+        "run": animation([(0, 55, 1408, 368), (0, 415, 1408, 725)], 8, ground=True, frames=[0, 2, 4, 5, 7]),
     }),
     "jinx_mount": ("../Samuride Files/Animation files/Jinx/Warwick_Jinx_Mount_Alt_NoBG.png", None, {
         "run": animation([(0, 0, 1408, 250), (0, 260, 1408, 505), (0, 515, 1408, 758)], 14, ground=True),
