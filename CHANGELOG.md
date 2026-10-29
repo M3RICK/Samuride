@@ -3,6 +3,11 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.02
+
+### Other
+- **Adam Smasher's rockets** are now real Arasaka missiles, drawn by Alex.
+
 ## v3.01
 
 ### New

@@ -177,9 +177,14 @@ void Smasher::drawAttack(const BossState &boss)
                     canvas.text("<<", 44, NEON_RED, {screen_x, y});
                 continue;
             }
-            rect(canvas, {screen_x, y - tile * 0.15f}, {tile * 0.9f, tile * 0.3f}, sf::Color(200, 200, 210));
-            rect(canvas, {screen_x - tile * 0.1f, y - tile * 0.2f}, {tile * 0.2f, tile * 0.4f}, NEON_RED);
-            rect(canvas, {screen_x + tile * 0.9f, y - tile * 0.12f}, {tile * (0.6f + 0.3f * canvas.blink()), tile * 0.24f}, NEON_ORANGE);
+            // Nose on the rocket's x, its flame flickering behind
+            sf::Vector2i frame(sprites.smasher_missile.getSize().x / 2, sprites.smasher_missile.getSize().y);
+            float scale = tile * 1.8f / frame.x;
+            sf::Sprite missile(sprites.smasher_missile, {{frame.x * canvas.blink(), 0}, frame});
+            missile.setOrigin({0, frame.y / 2.f});
+            missile.setScale({scale, scale});
+            missile.setPosition({screen_x, y});
+            canvas.draw(missile);
         }
     } else if (boss.attack == BossAttack::Slam) {
         float top = run.toScreen({0, run.floor() - BOSS_SLAM_HEIGHT}).y;
