@@ -9,11 +9,13 @@ taken from this file. Players on different versions can't play together: update 
 - **Corvo** (Dishonored), seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
   4 tiles the way he's moving (up if you're rising fast, down if you're falling fast, ahead otherwise),
   and the drones he passes through go down. A cyan ghost always shows where he'd land: land in a zapper
-  and you die. 2 charges, one back every 3 seconds. Blink into Adam Smasher while he gets up after a
-  slam for a stab (8).
+  and you die. 2 charges, one back every 3 seconds.
+  - **Against Adam Smasher**, the Blink fights back: blink through his rocket wall and every rocket you
+    pass through flies back into him (3 each). Blink out of his slam or his cannon in the last 0.3 s
+    before it strikes: PERFECT, the charge comes back. Blink into him while he gets up after a slam for a
+    stab (8).
   - **Bend Time** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
-    rockets stop where they are (still deadly to touch); Smasher no longer keeps pace, so catch up and
-    blink into him.
+    rockets stop where they are (still deadly to touch): blink through the frozen wall to send it back.
   - His own animations: running, levitating on violet smoke, gathering back from smoke after each Blink,
     and collapsing into smoke when he dies.
 

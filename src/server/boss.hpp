@@ -28,6 +28,11 @@ public:
     bool hit(const Player &player, float floor) const;
     // Takes `amount` off his health; true when it downed him
     bool damage(int amount);
+    // Corvo's Blink sweeping the box from (left, top) to (right, bottom): the rockets in it turn back.
+    // Returns how many.
+    int reflect(float left, float right, float top, float bottom, float floor);
+    // His slam or his cannon strikes within `window` seconds, and would hit this player now
+    bool threatens(const Player &player, float floor, float window) const;
 
     // What the clients see of him, for MSG_BOSS
     BossState state() const;
@@ -46,6 +51,7 @@ private:
     float time = 0;             // seconds into the attack, or before the next one (negative)
     float y = 0;                // the rockets' gap top, or the cannon's line
     int target_fd = -1;         // whom the cannon follows
+    uint16_t reflected = 0;     // the rows of the rocket wall Corvo sent back
 
     void start(std::mt19937 &rng, const std::map<int, Player> &players, float floor);
     // The rockets' x, in tiles

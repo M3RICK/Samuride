@@ -236,6 +236,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::vector<SniperStat
 }
 
 // [fighting][health %][attack][phase][x, 4 bytes][rockets' x, 4 bytes][y, 2 bytes][seconds into the phase, 2 bytes]
+// [sandevistan][reflected rows, 2 bytes]
 std::vector<uint8_t> Message::encode(const BossState &boss)
 {
     Writer w;
@@ -248,6 +249,7 @@ std::vector<uint8_t> Message::encode(const BossState &boss)
     w.pos16(boss.y);
     w.pos16(boss.time);
     w.u8(boss.sandevistan);
+    w.u16(boss.reflected);
     return w.data;
 }
 
@@ -263,6 +265,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, BossState &boss)
     boss.y = r.pos16();
     boss.time = r.pos16();
     boss.sandevistan = r.u8() != 0;
+    boss.reflected = r.u16();
     return r.ok();
 }
 

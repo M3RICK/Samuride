@@ -85,6 +85,7 @@ struct BossState {
     float y = 0;            // the rockets' gap top, or the cannon's line
     float time = 0;         // seconds into the phase
     bool sandevistan = false;   // attacking faster, low on health or late in his arena
+    uint16_t reflected = 0;     // the rows of the rocket wall Corvo sent back at him, one bit each
 };
 
 // MSG_COLLISION

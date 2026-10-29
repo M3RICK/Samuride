@@ -81,7 +81,9 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
     always shows where he would land: landing in a zapper kills, but you saw it coming.
   - **Bend Time** ultimate: the world freezes 4 s, only he moves (titans, sniper sights, Smasher and
     his rockets stop).
-  - **Smasher**: he blinks through the rocket wall (it costs a charge). He stays 12 tiles ahead of
+  - **Smasher** (reworked after a playtest, the fight was dull: he only waited): the rockets he blinks
+    through fly back into Smasher (3 each), a Blink out of the slam or the cannon in its last 0.3 s is
+    PERFECT and gives the charge back, and Bend Time's frozen wall is there to be sent back. He stays 12 tiles ahead of
     the leader, so blinking never gets closer; a Blink into him is a stab (8, more than a slash: it
     costs a charge) while he gets up after a slam, like the blades. Bend Time freezes him where he
     stands: Corvo catches up in about a second and stabs him with the charges he has left.

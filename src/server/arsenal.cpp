@@ -218,9 +218,18 @@ float Blink::attack(Server &server, Player &player)
                 server.destroyDrone(player.getClientFd(), x, y);
     if (server.bossBetween(left, right))
         server.hitBoss(player, BOSS_STAB_DAMAGE);
+    // Smasher's rockets he passes through fly back at him
+    if (int reflected = server.reflectRockets(left, right, top, bottom))
+        server.hitBoss(player, reflected * BOSS_REFLECT_DAMAGE);
+    bool threatened = server.bossThreatens(player);
     // Before he moves: the clients draw his smoke where he was
     server.announceShot(player, Weapon::Blink);
     player.blinkTo(to_x, to_y);
+    // Out of the strike that was about to land on him
+    if (threatened && !server.bossThreatens(player)) {
+        server.notifyCollision(PERFECT_DODGE, player, static_cast<int>(to_x), static_cast<int>(to_y));
+        return BLINK_COOLDOWN;
+    }
     if (charges_left-- == BLINK_CHARGES)
         recharge_timer = BLINK_RECHARGE;
     return BLINK_COOLDOWN;

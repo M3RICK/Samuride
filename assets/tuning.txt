@@ -153,6 +153,8 @@ BOSS_HACK_DAMAGE 8
 BOSS_SLASH_DAMAGE 5
 # Corvo blinking into him
 BOSS_STAB_DAMAGE 8
+# Each rocket Corvo blinks through, sent back at him
+BOSS_REFLECT_DAMAGE 3
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
 # Eddies for downing him
@@ -223,6 +225,8 @@ BLINK_TURN_SPEED 5
 BLINK_COOLDOWN 0.3
 # Seconds to get one Blink back (2 at most)
 BLINK_RECHARGE 3
+# Blinking out of Smasher's slam or cannon this many seconds before it strikes gives the charge back
+BLINK_PERFECT_WINDOW 0.3
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second

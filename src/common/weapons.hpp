@@ -71,6 +71,9 @@ inline float BLINK_TURN_SPEED = 5;
 inline float BLINK_COOLDOWN = 0.3f;
 constexpr int BLINK_CHARGES = 2;    // sent in 2 bits: 3 at most
 inline float BLINK_RECHARGE = 3;
+// Blinking out of Smasher's slam or cannon this close to its strike is PERFECT: the charge comes back
+inline float BLINK_PERFECT_WINDOW = 0.3f;
+constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, where he landed
 
 // Where a Blink takes a body whose top-left corner is at (x, y), moving down at vy tiles per second
 // (up when negative), its top kept between 0 and max_y

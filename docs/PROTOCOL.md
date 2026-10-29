@@ -267,6 +267,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
 | 1 | 1 under his Sandevistan: low on health or past half his arena, his strikes and gaps sped up |
+| 2 | The rows of the rocket wall Corvo blinked through, bit 0 the top row: they fly back at him (3 damage each) and hit nobody |
 
 Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.

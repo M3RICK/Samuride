@@ -69,6 +69,14 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case PINATA_DROP:
             pinataBurst(effect);
             return;
+        case PERFECT_DODGE:
+            // Corvo blinked out of Smasher's strike at the last moment: the charge came back
+            audio.play(Audio::Sfx::UltimateReady);
+            particles.emit({effect.x + 0.5f, effect.y + 1.0f}, 20, sf::Color::White, 6, 0.4f, 0);
+            run.callout = "PERFECT";
+            run.callout_color = NEON_CYAN;
+            run.callout_clock.restart();
+            return;
         case SHIFT_TILE:
             // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
             if (mine)

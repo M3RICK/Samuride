@@ -100,10 +100,10 @@ static void testMessages()
     assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
         return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
     });
-    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true}, [](auto &a, auto &b) {
+    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true, 0b1000000101}, [](auto &a, auto &b) {
         return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
                a.x == b.x && a.rockets_x == b.rockets_x && a.y == b.y && a.time == b.time &&
-               a.sandevistan == b.sandevistan;
+               a.sandevistan == b.sandevistan && a.reflected == b.reflected;
     });
     assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
         return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
@@ -401,6 +401,43 @@ static void testCorvo()
     assert(corvo.ultimate().freezes());
     corvo.update(0.2f, 10, 8);
     assert(!corvo.ultimate().freezes());
+}
+
+// Against Smasher: the rockets Corvo blinks through turn back (and stop hitting), and his cannon about to
+// fire threatens whoever is on its line
+static void testCorvoSmasher()
+{
+    std::map<int, Player> players;
+    std::mt19937 rng(2);
+    players.emplace(3, Player(3));
+    players.at(3).reset(0, 8);
+    Boss boss;
+    boss.reset();
+    auto until = [&](auto done) {
+        for (int i = 0; i < 20000 && !done(boss.state()); i++)
+            boss.update(BOSS_DISTANCE, 0.01f, rng, players, 10);
+        assert(done(boss.state()));
+    };
+
+    until([](const BossState &s) { return s.attack == BossAttack::Rockets && s.phase == BossPhase::Strike; });
+    BossState wall = boss.state();
+    int row = 0;
+    while (!rocketRow(row, wall.y) || !rocketRow(row + 1, wall.y))
+        row++;
+    assert(boss.reflect(wall.rockets_x + 10, wall.rockets_x + 15, row, row + 2, 10) == 0);    // not there yet
+    assert(rocketsHit(0, wall.y, row, 10));
+    assert(boss.reflect(wall.rockets_x - 1, wall.rockets_x + 1, row, row + 2, 10) == 2);
+    assert(boss.reflect(wall.rockets_x - 1, wall.rockets_x + 1, row, row + 2, 10) == 0);     // once each
+    assert(!rocketsHit(0, wall.y, row, 10, boss.state().reflected));
+
+    Player elsewhere(4);
+    elsewhere.reset(1, 0);
+    until([](const BossState &s) {
+        return s.attack == BossAttack::Cannon && s.phase != BossPhase::Strike &&
+               Boss::phaseOf(BossAttack::Cannon, s.time + BLINK_PERFECT_WINDOW) == BossPhase::Strike;
+    });
+    assert(boss.threatens(players.at(3), 10, BLINK_PERFECT_WINDOW) && !boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW));
+    assert(!boss.threatens(players.at(3), 10, 0.001f));     // not that close yet
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
@@ -798,6 +835,7 @@ int main()
     testUltimate();
     testDante();
     testCorvo();
+    testCorvoSmasher();
     testTuning();
     testWallet();
     testUpgrades();

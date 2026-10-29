@@ -258,6 +258,16 @@ public:
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);
+    // Corvo's Blink: the rockets it sweeps through turn back (how many), and whether it dodges a strike
+    // of Smasher's at the last moment
+    int reflectRockets(float left, float right, float top, float bottom)
+    {
+        return boss.reflect(left, right, top, bottom, game_map.getHeight());
+    }
+    bool bossThreatens(const Player &player) const
+    {
+        return boss.threatens(player, game_map.getHeight(), BLINK_PERFECT_WINDOW);
+    }
     // Smasher fighting with his body (half a tile before his x to 2.5 after) between these two
     bool bossBetween(float from, float to) const
     {

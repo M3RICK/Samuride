@@ -118,6 +118,7 @@ std::vector<Entry> &entries()
             VALUE(BOSS_HACK_DAMAGE, "Lucy's hack's damage"),
             VALUE(BOSS_SLASH_DAMAGE, "A blade's damage (Mikasa, Dante's sword), while he is close after a slam"),
             VALUE(BOSS_STAB_DAMAGE, "Corvo blinking into him"),
+            VALUE(BOSS_REFLECT_DAMAGE, "Each rocket Corvo blinks through, sent back at him"),
             VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
             VALUE(BOSS_BOUNTY, "Eddies for downing him"),
             VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),
@@ -156,6 +157,7 @@ std::vector<Entry> &entries()
             VALUE(BLINK_TURN_SPEED, "Rising or falling faster than this (tiles per second), he blinks up or down"),
             VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (2 at most)"),
+            VALUE(BLINK_PERFECT_WINDOW, "Blinking out of Smasher's slam or cannon this many seconds before it strikes gives the charge back"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),
