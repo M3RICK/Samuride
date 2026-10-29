@@ -193,9 +193,10 @@ void Smasher::drawAttack(const BossState &boss)
                 continue;
             float y = run.toScreen({0, row + 0.5f}).y;
             if (warning) {
-                // Chevrons blinking on the right edge, one per rocket to come
-                if (canvas.blink())
-                    canvas.text("<<", 44, NEON_RED, {screen_x, y});
+                // Each row to be hit glows red across the screen, the gap stays clear; chevrons on the right
+                // edge, one per rocket to come, flashing red and white so they stand out on him
+                rect(canvas, {0, y - tile * 0.35f}, {Screen::WIDTH, tile * 0.7f}, withAlpha(NEON_RED, canvas.blink() ? 70 : 35));
+                canvas.text("<<", 44, canvas.blink() ? sf::Color::White : NEON_RED, {screen_x, y});
                 continue;
             }
             // Nose on the rocket's x, its flame flickering behind

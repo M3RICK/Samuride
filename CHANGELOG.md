@@ -12,7 +12,8 @@ taken from this file. Players on different versions can't play together: update 
 - **Ultimates on Adam Smasher**: Jinx's Fishbones and Johnny's fire wave hurt him when they reach him, and
   David's nuke when it lands, instead of the moment you pressed the key.
 - **Adam Smasher**: the red zone of his ground slam is gone while he gets back up, and his rockets and their
-  warning chevrons are drawn over him instead of hidden behind him.
+  warning chevrons are drawn over him instead of hidden behind him. Before the rockets fly, every row they
+  will hit glows red across the screen: the gap is the part that doesn't.
 
 ### New
 - **Adam Smasher leaves in style**: still standing at 900 m, he crouches and leaps off the top of the
