@@ -224,12 +224,16 @@ float Blink::attack(Server &server, Player &player)
     // Before he moves: the clients draw his smoke where he was
     server.announceShot(player, Weapon::Blink);
     player.blinkTo(to_x);
-    // Through the strike that was about to land on him
+    // Through the strike that was about to land on him, and a counter-stab wherever Smasher stands
     if (strike > 0) {
         player.dodge(strike);
         server.notifyCollision(PERFECT_DODGE, player, static_cast<int>(to_x), static_cast<int>(top));
+        server.hitBoss(player, BOSS_STAB_DAMAGE);
         return BLINK_COOLDOWN;
     }
+    // Bend Time: the Blinks are free while the world stands still
+    if (player.ultimate().freezes())
+        return BLINK_COOLDOWN;
     if (charges_left-- == BLINK_CHARGES)
         recharge_timer = BLINK_RECHARGE;
     return BLINK_COOLDOWN;

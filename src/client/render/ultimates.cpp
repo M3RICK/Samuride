@@ -9,6 +9,7 @@
 #include "../audio.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 using namespace Palette;
 
@@ -348,9 +349,20 @@ void Ultimates::drawBendTimes()
     for (const sf::Clock &bend : bend_times) {
         float t = bend.getElapsedTime().asSeconds();
         float fade = std::clamp(std::min(t, BEND_TIME - t) / 0.3f, 0.0f, 1.0f);
+        // A cold veil, darker on the edges, and the seconds the world still stands still
         sf::RectangleShape veil({Screen::WIDTH, Screen::HEIGHT});
-        veil.setFillColor(sf::Color(20, 40, 70, static_cast<uint8_t>(90 * fade)));
+        veil.setFillColor(sf::Color(20, 40, 90, static_cast<uint8_t>(110 * fade)));
         canvas.draw(veil);
+        sf::RectangleShape edge({Screen::WIDTH, Screen::HEIGHT * 0.12f});
+        edge.setFillColor(sf::Color(0, 10, 30, static_cast<uint8_t>(160 * fade)));
+        canvas.draw(edge);
+        edge.setPosition({0, Screen::HEIGHT * 0.88f});
+        canvas.draw(edge);
+        char left[32];
+        std::snprintf(left, sizeof(left), "TIME STOPPED  %.1f", std::max(0.0f, BEND_TIME - t));
+        canvas.text(left, 36, withAlpha(NEON_CYAN, static_cast<uint8_t>(230 * fade)), {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.06f});
+        canvas.text("FREE BLINKS", 20, withAlpha(sf::Color(200, 170, 255), static_cast<uint8_t>(200 * fade)),
+                    {Screen::WIDTH / 2.f, Screen::HEIGHT * 0.94f});
     }
     std::erase_if(bend_times, [](const sf::Clock &bend) { return bend.getElapsedTime().asSeconds() > BEND_TIME; });
 }
