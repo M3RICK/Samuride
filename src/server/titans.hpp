@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <random>
 #include <vector>
 #include "../common/messages.hpp"
@@ -21,7 +22,8 @@ public:
     };
 
     void reset();
-    void spawn(float leader_x, float dt, std::mt19937 &rng);
+    // Due, it waits for `fits` to leave the runners a way past it
+    void spawn(float leader_x, float dt, std::mt19937 &rng, const std::function<bool(const Titan &)> &fits);
     // Gone once far behind everyone
     void update(float rear_x, float dt);
 

@@ -18,7 +18,8 @@ void SniperSquad::reset()
     timer = 2;
 }
 
-void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players)
+void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players,
+                        const std::function<bool(const Player &)> &fits)
 {
     // Never two sights at once, however short the interval: one waits for the other's shot to be over
     if (leader_x < SNIPER_FIRST_DISTANCE || players.empty() || (timer -= dt) > 0 || !snipers.empty())
@@ -27,6 +28,8 @@ void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::
     std::uniform_real_distribution<float> interval(SNIPER_MIN_INTERVAL, std::max(SNIPER_MIN_INTERVAL, SNIPER_MAX_INTERVAL));
     auto target = std::next(players.begin(), std::uniform_int_distribution<size_t>(0, players.size() - 1)(rng));
 
+    if (!fits(target->second))
+        return;
     timer = interval(rng);
     snipers.push_back({target->first, target->second.getY() + Player::HEIGHT / 2, 0});
 }

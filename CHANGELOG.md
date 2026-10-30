@@ -33,6 +33,9 @@ taken from this file. Players on different versions can't play together: update 
 
 ### Balance
 - Arasaka snipers never aim at you two at a time anymore.
+- **Always a way through**: a titan or a sniper only comes once the road ahead leaves you a way past it
+  (a gap above the titan where you'll cross, room to step out of the sniper's row, around the zappers and
+  drones), and never both at once. No more titan + sniper + zapper corridor with nowhere to go.
 - After Adam Smasher the run no longer gets deadly at once: the speed stops climbing during his fight and
   drops by 2 once his arena is behind, and his empty arena no longer counts toward how hard the road gets.
 

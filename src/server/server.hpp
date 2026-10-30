@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 #include <set>
 #include <random>
 #include "../common/socket.hpp"
@@ -29,6 +30,39 @@ struct ServerConfig {
     bool debug_mode = false;
     bool quiet = false;         // no status lines: when running inside the game
 };
+
+// What a runner needs in a column to get past a threat: free rows (3: room to sidestep a sniper's
+// row) and the lowest row their top may reach (above a titan)
+struct WayNeed {
+    int rows = 2;
+    int lowest = 1 << 20;
+};
+
+// From (x, y), a row up or down a column at most, through the columns up to `to`: is there a way
+// between the blocked tiles, with what need(x) asks in each column?
+// ponytail: a row a column is the jetpack at top speed, roughly; momentum and gravity ignored
+template <typename Blocked, typename Need>
+bool wayThrough(float x, float y, float to, int height, Blocked blocked, Need need)
+{
+    std::vector<bool> reach(height, false);
+    reach[std::clamp(static_cast<int>(y + 0.5f), 0, height - 2)] = true;
+
+    for (int column = static_cast<int>(x) + 1; column < to; column++) {
+        WayNeed n = need(column);
+        std::vector<bool> next(height, false);
+        for (int top = 0; top + n.rows <= height && top <= n.lowest; top++) {
+            bool came = reach[top] || (top > 0 && reach[top - 1]) || (top + 1 < height && reach[top + 1]);
+            bool free = true;
+            for (int row = top; row < top + n.rows && free; row++)
+                free = !blocked(column, row);
+            next[top] = came && free;
+        }
+        if (std::ranges::none_of(next, [](bool r) { return r; }))
+            return false;
+        reach = std::move(next);
+    }
+    return true;
+}
 
 class Server {
 private:
@@ -289,6 +323,12 @@ public:
     void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
 
     bool isLiveDrone(int x, int y) const;
+    // Can this runner get through the columns up to `to` between the live zappers and drones? See wayThrough
+    bool wayThrough(const Player &player, float to, const std::function<WayNeed(int)> &need) const
+    {
+        return ::wayThrough(player.getX(), player.getY(), to, static_cast<int>(game_map.getHeight()),
+                            [&](int x, int y) { return isLiveZapper(x, y) || isLiveDrone(x, y); }, need);
+    }
     // The highest NCPD wanted level among the runners: the map and the snipers follow it
     int wantedStars() const
     {

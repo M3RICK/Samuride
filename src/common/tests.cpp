@@ -870,6 +870,23 @@ static void testRipperdoc()
     assert(synaptic.getUltimateCharge() == std::min(ultimateCharge(0), IMPLANT_PRICES[3] + 10 * SYNAPTIC_RATE));
 }
 
+// The check before a titan or a sniper: is there still a way past it?
+static void testWayThrough()
+{
+    // A zapper corridor, beams on rows 4 and 9, the runner inside it (top at 5)
+    auto corridor = [](int, int y) { return y == 4 || y == 9; };
+    assert(wayThrough(0, 5, 20, 10, corridor, [](int) { return WayNeed{}; }));
+    // A titan there wants him above row 4: shut in, no way
+    assert(!wayThrough(0, 5, 20, 10, corridor, [](int x) { return x > 10 ? WayNeed{2, 3} : WayNeed{}; }));
+    // Above the corridor (top at 1), fine
+    assert(wayThrough(0, 1, 20, 10, corridor, [](int x) { return x > 10 ? WayNeed{2, 3} : WayNeed{}; }));
+    // Room to sidestep a sniper: 4 free rows inside, so yes; a 2-row gap, no
+    assert(wayThrough(0, 5, 20, 10, corridor, [](int) { return WayNeed{3}; }));
+    assert(!wayThrough(0, 5, 20, 10, [](int, int y) { return y < 5 || y > 6; }, [](int) { return WayNeed{3}; }));
+    // A row a column: a gap 6 rows away 2 columns ahead can't be reached
+    assert(!wayThrough(0, 0, 5, 10, [](int x, int y) { return x == 2 && y < 6; }, [](int) { return WayNeed{}; }));
+}
+
 int main()
 {
     testPacketFraming();
@@ -891,6 +908,7 @@ int main()
     testWraithSmasher();
     testWanted();
     testRipperdoc();
+    testWayThrough();
     testTuning();
     testWallet();
     testUpgrades();

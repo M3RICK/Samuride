@@ -234,11 +234,29 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
-    // No titan nor sniper in Smasher's arena, nor charging into it
+    // No titan nor sniper in Smasher's arena, nor charging into it. Never both at once, and each waits
+    // until every runner has a way past it (wayThrough).
     if (!frozen && !boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
-        titans.spawn(leader_x, TICK_DT, rng);
+        titans.spawn(leader_x, TICK_DT, rng, [&](const Horde::Titan &titan) {
+            TitanStats stats = titanStats(titan.type);
+            int lowest = static_cast<int>(game_map.getHeight() - stats.height - Player::HEIGHT);
+            return !snipers.active() && std::ranges::all_of(players, [&](const auto &entry) {
+                const Player &player = entry.second;
+                // Where they cross: the titan runs at its speed, them at the run's
+                float meet = player.getX() + (titan.x - player.getX()) * run_speed / (run_speed + stats.speed);
+                return wayThrough(player, titan.x + stats.width + 2, [&](int x) {
+                    return x >= meet - 3 && x <= meet + stats.width + 2 ? WayNeed{2, lowest} : WayNeed{};
+                });
+            });
+        });
+        bool titan_ahead = titans.any([&](const Horde::Titan &titan) { return titan.x + 3 > rear_x; });
         // The NCPD sends them faster as the wanted level climbs
-        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players);
+        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players, [&](const Player &player) {
+            // Where the sight freezes and fires: room to step out of its row
+            float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;
+            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + SNIPER_FIRE_TIME) + 1;
+            return !titan_ahead && wayThrough(player, shot, [&](int x) { return x >= freeze ? WayNeed{3} : WayNeed{}; });
+        });
     }
     updateProjectiles();
     updateUltimates();
