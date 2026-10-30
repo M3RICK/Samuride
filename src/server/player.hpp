@@ -14,6 +14,7 @@
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
 #include "../common/boons.hpp"
+#include "../common/events.hpp"
 #include "../common/difficulty.hpp"
 #include "arsenal.hpp"
 
@@ -104,7 +105,13 @@ public:
     void startShift();
     void addScore(int points);
     // In a gravity flip: they fall up and the jetpack pushes down
-    void setFlipped(bool on) { flipped = on; }
+    // In and out of it, a moment of grace: the fall turns around at once
+    void setFlipped(bool on)
+    {
+        if (on != flipped)
+            grace_timer = std::max(grace_timer, FLIP_GRACE);
+        flipped = on;
+    }
     // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
     bool buyImplant(int id);
     bool hasBoon(Boon b) const { return boon == b; }

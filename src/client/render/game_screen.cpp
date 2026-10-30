@@ -175,7 +175,8 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
 }
 
 // The lights go out over a blackout's stretch, fading in and out over its first and last tiles: the world
-// goes dark but for the zappers and drones, drawn again over it, and the runners drawn after
+// goes dark but for the zappers and drones, drawn again over it, and the runners drawn after. The speed
+// lines and the light around you keep the road moving (fully dark, it looked frozen).
 void GameScreen::drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me)
 {
     static constexpr float FADE = 10;
@@ -196,8 +197,12 @@ void GameScreen::drawBlackout(GameState &state, const std::set<std::pair<int, in
         return;
     sf::RectangleShape cover({Screen::WIDTH + 100, Screen::HEIGHT + 100});
     cover.setPosition({-50, -50});
-    cover.setFillColor(sf::Color(4, 2, 12, static_cast<uint8_t>(235 * dark)));
+    cover.setFillColor(sf::Color(4, 2, 12, static_cast<uint8_t>(BLACKOUT_DARKNESS * dark)));
     canvas.draw(cover);
+    sf::Vector2f light = run.toScreen(mine->second + sf::Vector2f(0.5f, Run::PLAYER_HEIGHT / 2));
+    for (float radius : {4.0f, 2.8f, 1.8f})
+        canvas.halo(light, run.view.tile_size * radius, sf::Color(90, 70, 120, static_cast<uint8_t>(22 * dark)));
+    drawSpeedLines();
     tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops(), true);
 }
 

@@ -24,6 +24,7 @@ void Player::reset(int number, float spawn_y)
     armor_timer = 0;
     boon = Boon::None;
     glass_carry = 0;
+    flipped = false;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;

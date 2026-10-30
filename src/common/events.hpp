@@ -22,6 +22,9 @@ inline float EVENT_EVERY = 400;
 inline float EVENT_LENGTH = 150;
 inline float EVENT_WARNING = 60;
 inline float SWARM_DRONES = 0.35f;      // added to DRONE_CHANCE in a swarm
+inline float BLACKOUT_DARKNESS = 200;   // the dark's opacity, 0 to 255
+// A gravity flip: grace this long as it starts and ends, and its road generated at the easiest
+inline float FLIP_GRACE = 1.2f;
 
 inline float eventStart(int index)
 {

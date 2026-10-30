@@ -950,6 +950,7 @@ static void testEvents()
     Player runner(1);
     runner.reset(0, 8);
     runner.setFlipped(true);
+    assert(runner.isGracing());     // the fall turns around: a moment of grace
     for (int i = 0; i < 100; i++)
         runner.update(0.05f, 0, 8);
     assert(runner.getY() == 0);

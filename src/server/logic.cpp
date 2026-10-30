@@ -51,6 +51,9 @@ void Server::extendMap(float leader_x)
 
         bool drones = mode == GameMode::Cyberpsycho;
         bool swarm = eventAt(from) == RunEvent::Swarm || eventAt(from + CHUNK_WIDTH - 1) == RunEvent::Swarm;
+        // Upside down is hard enough: a gravity flip's road is the easiest
+        if (eventAt(from) == RunEvent::Flip || eventAt(from + CHUNK_WIDTH - 1) == RunEvent::Flip)
+            difficulty = 0;
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
                                               : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones,
                                                               WANTED_DRONES_PER_STAR * wantedStars() +

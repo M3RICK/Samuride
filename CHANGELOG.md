@@ -43,9 +43,11 @@ taken from this file. Players on different versions can't play together: update 
     style drops twice as slow), Void Walker (Wraith: Blinks back twice as fast).
 - **Events during a run**: at 300 m, then every 400 m once Adam Smasher is behind, 150 m of road change,
   announced a little before with a siren, the meters left shown at the top:
-  - **Blackout**: the lights go out, only the zappers and drones still glow. The eddies are in the dark.
+  - **Blackout**: the lights dim, only the zappers and drones still glow, with a little light around you
+    and the speed lines to show the road moving. The eddies are in the dark.
   - **Drone swarm** (CYBERPSYCHO): drones everywhere. Good for your wanted level.
   - **Gravity flip**: you fall up to the ceiling and the jetpack pushes you down. Titans can't reach you there.
+    A moment of grace as it starts and ends, and its road is the easiest of the run.
 - **After a run**, straight back to the runners (`C`) or the districts (`M`), your mode and last picks kept,
   instead of going through the whole menu. On phones: RUNNER and DISTRICT buttons beside MENU.
 

@@ -91,6 +91,10 @@ EVENT_LENGTH 150
 EVENT_WARNING 60
 # Drone swarm: added to the chance an obstacle is drones
 SWARM_DRONES 0.35
+# Blackout: how dark, 0 to 255
+BLACKOUT_DARKNESS 200
+# Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)
+FLIP_GRACE 1.2
 # Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three
 BOON_DISTANCE 250
 # Seconds the run waits for the pick
