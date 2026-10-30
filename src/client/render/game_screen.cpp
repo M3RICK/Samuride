@@ -86,6 +86,7 @@ void GameScreen::resetRun()
     ultimate_was_ready = false;
     spears_shown = 0;
     style_shown = 0;
+    wanted_shown = 0;
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;

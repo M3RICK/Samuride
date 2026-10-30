@@ -91,6 +91,11 @@ std::vector<Entry> &entries()
 
             Entry("Enemies"),
             VALUE(DRONE_BOUNTY, "Eddies for a drone down"),
+            VALUE(WANTED_KILLS_PER_STAR, "NCPD wanted level: drones down for a star (5 at most)", 1),
+            VALUE(WANTED_COOLING, "Drones' worth of heat the NCPD forgets every second"),
+            VALUE(WANTED_BOUNTY_PER_STAR, "Drone bounty added per star (0.2: x1.2 a star)"),
+            VALUE(WANTED_DRONES_PER_STAR, "Added per star to the chance an obstacle is drones"),
+            VALUE(WANTED_SNIPERS_PER_STAR, "Snipers come that much more often per star"),
             VALUE(TITAN_FIRST_DISTANCE, "No titan before this many tiles"),
             VALUE(TITAN_MIN_INTERVAL, "Fewest seconds between two titans"),
             VALUE(TITAN_MAX_INTERVAL, "Most seconds between two titans"),

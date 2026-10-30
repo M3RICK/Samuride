@@ -45,6 +45,7 @@ private:
     float berserk_timer = 0;    // seconds of Berserk left
     float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
     int ultimate_charge = 0;    // eddies earned since the last ultimate, up to its runner's charge
+    float wanted_heat = 0;      // drones down, cooling over time (cyberpsycho.hpp)
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
     std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
     std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
@@ -100,6 +101,8 @@ public:
     // The gauge, in percent of what this player needs
     int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
     void spendUltimate() { ultimate_charge = 0; }
+    int wantedStars() const { return ::wantedStars(wanted_heat); }
+    void raiseWanted() { wanted_heat = std::min(wantedHeatCap(), wanted_heat + 1); }
     RunnerWeapon &weapon() { return *runner_weapon; }
     const RunnerWeapon &weapon() const { return *runner_weapon; }
     RunnerUltimate &ultimate() { return *runner_ultimate; }

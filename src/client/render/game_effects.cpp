@@ -100,9 +100,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
                 return;
             }
     }
-    // Dante's drones pay at his style rank
+    // Dante's drones pay at his style rank, everyone's at their wanted level
     int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : effect.type == BOSS_KILL ? BOSS_BOUNTY
-                 : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
+                 : wantedBounty(static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown])), wanted_shown);
     effects.push_back({effect, sf::Clock(), mine, bounty});
 }
 

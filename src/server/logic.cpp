@@ -45,7 +45,8 @@ void Server::extendMap(float leader_x)
         // Adam Smasher's arena: nothing in the way but him
         bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
-                                              : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
+                                              : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones,
+                                                              WANTED_DRONES_PER_STAR * wantedStars());
         if (!arena) {
             placeShiftOrb(rows);
             placePowerUp(rows);
@@ -208,7 +209,8 @@ void Server::updatePlayers()
     // No titan nor sniper in Smasher's arena, nor charging into it
     if (!frozen && !boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
         titans.spawn(leader_x, TICK_DT, rng);
-        snipers.spawn(leader_x, TICK_DT, rng, players);
+        // The NCPD sends them faster as the wanted level climbs
+        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players);
     }
     updateProjectiles();
     updateUltimates();
@@ -332,6 +334,7 @@ void Server::sendGameState()
             .spears = player.ultimate().charges(),  // Mikasa's thunder spears left
             .grace = player.isGracing(),            // shield broken, Sandevistan or titan over
             .style = player.weapon().style(),
+            .wanted = player.wantedStars(),
         };
     }
 

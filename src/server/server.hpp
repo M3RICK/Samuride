@@ -284,6 +284,14 @@ public:
     void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
 
     bool isLiveDrone(int x, int y) const;
+    // The highest NCPD wanted level among the runners: the map and the snipers follow it
+    int wantedStars() const
+    {
+        int stars = 0;
+        for (const auto &[fd, player] : players)
+            stars = std::max(stars, player.wantedStars());
+        return stars;
+    }
     bool isLiveZapper(int x, int y) const { return game_map.getTile(x, y) == ZAPPER_TILE && !hacked_zappers.count({x, y}); }
 
     void destroyDrone(int owner_fd, int x, int y);

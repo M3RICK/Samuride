@@ -271,7 +271,8 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
-    owner->second.addScore(owner->second.weapon().droneDown());
+    owner->second.addScore(wantedBounty(owner->second.weapon().droneDown(), owner->second.wantedStars()));
+    owner->second.raiseWanted();
     notifyCollision(DRONE_TILE, owner->second, x, y);
 
     float pinata = pinataChance(owner->second.getUpgrades());

@@ -46,6 +46,7 @@ struct PlayerState {
     int spears = 0;             // Mikasa's thunder spears left
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
     int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
+    int wanted = 0;             // NCPD wanted level, 0 to WANTED_MAX_STARS
 };
 
 // MSG_SHOT: someone attacked in CYBERPSYCHO

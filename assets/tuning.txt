@@ -101,6 +101,16 @@ PINATA_PER_LEVEL 0.15
 ## Enemies
 # Eddies for a drone down
 DRONE_BOUNTY 5
+# NCPD wanted level: drones down for a star (5 at most)
+WANTED_KILLS_PER_STAR 6
+# Drones' worth of heat the NCPD forgets every second
+WANTED_COOLING 0.25
+# Drone bounty added per star (0.2: x1.2 a star)
+WANTED_BOUNTY_PER_STAR 0.2
+# Added per star to the chance an obstacle is drones
+WANTED_DRONES_PER_STAR 0.03
+# Snipers come that much more often per star
+WANTED_SNIPERS_PER_STAR 0.4
 # No titan before this many tiles
 TITAN_FIRST_DISTANCE 300
 # Fewest seconds between two titans

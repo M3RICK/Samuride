@@ -7,6 +7,7 @@
 #include "../../common/tuning.hpp"
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <format>
 #include <map>
 #include <vector>
@@ -58,6 +59,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(players.size() == 1 && bests.drones > 0 ? std::format("DRONES DOWN  {}   BEST {}", drones_down, bests.drones)
                                                             : std::format("DRONES DOWN  {}", drones_down),
                     26, NEON_RED, {24, y}, {0, 0});
+    if (cyberpsycho && players.count(me))
+        drawWanted(players.at(me), y + 40);
     if (players.count(me))
         drawRunnerPanel(players.at(me), me, cyberpsycho && ultimateOf(run.characterOf(me)) != Ultimate::None);
     if (players.count(me) && cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Rebellion)
@@ -164,6 +167,40 @@ void GameScreen::drawStyle(const PlayerState &player)
         canvas.text(STYLE_NAMES[rank], size, COLORS[rank], center);
     if (rank > 0)
         canvas.text(WORDS[rank], 26 + 2 * rank, COLORS[rank], center + sf::Vector2f(60 + 260 * slide * slide, 12), {0, 0.5f});
+}
+
+// The NCPD wanted level under the drone count, GTA style: five stars, the lit ones flashing red and
+// blue like a patrol car's lights, the bounty they pay beside them. A siren when one comes on.
+void GameScreen::drawWanted(const PlayerState &player, float y)
+{
+    static constexpr float RADIUS = 13;
+    int stars = std::clamp(player.wanted, 0, WANTED_MAX_STARS);
+
+    if (stars > wanted_shown) {
+        audio.play(Audio::Sfx::Siren);
+        run.callout = std::format("WANTED {}", std::string(stars, '*'));
+        run.callout_color = NEON_RED;
+        run.callout_clock.restart();
+    }
+    wanted_shown = stars;
+    if (stars == 0)
+        return;
+
+    bool red = std::fmod(canvas.time(), 0.5f) < 0.25f;
+    for (int i = 0; i < WANTED_MAX_STARS; i++) {
+        sf::ConvexShape star(10);
+        for (int point = 0; point < 10; point++) {
+            float angle = point * 3.14159265f / 5 - 3.14159265f / 2;
+            float r = point % 2 ? RADIUS * 0.45f : RADIUS;
+            star.setPoint(point, {r * std::cos(angle), r * std::sin(angle)});
+        }
+        star.setPosition({24 + RADIUS + i * RADIUS * 2.3f, y + RADIUS});
+        bool lit = i < stars;
+        star.setFillColor(lit ? ((i % 2 == 0) == red ? NEON_RED : NEON_CYAN) : sf::Color(255, 255, 255, 40));
+        canvas.draw(star);
+    }
+    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+                {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 
 // The gauge around the face, clockwise from the top, the `lit` share of it in colour.

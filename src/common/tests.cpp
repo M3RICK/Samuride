@@ -67,7 +67,8 @@ static void assertRoundTrip(const T &sent, Same same)
 static void testMessages()
 {
     PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
-                       .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5};
+                       .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
+                       .wanted = 3};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
     assertRoundTrip(players, [](auto &a, auto &b) {
         return a.size() == b.size() && std::ranges::all_of(a, [&](auto &entry) {
@@ -75,12 +76,13 @@ static void testMessages()
             auto &q = b.at(n);
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
                    p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
-                   p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style;
+                   p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
+                   p.wanted == q.wanted;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 11}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -826,6 +828,26 @@ static void testBlink()
     std::filesystem::remove(map_path);
 }
 
+// The NCPD wanted level: a star every WANTED_KILLS_PER_STAR drones, cooling off, paying more
+static void testWanted()
+{
+    Player runner(1);
+    runner.reset(0, 0);
+    for (int i = 0; i < WANTED_KILLS_PER_STAR; i++)
+        runner.raiseWanted();
+    assert(runner.wantedStars() == 1);
+    for (int i = 0; i < 100; i++)
+        runner.raiseWanted();
+    assert(runner.wantedStars() == WANTED_MAX_STARS);
+    // Topped out, a short breath doesn't cost the fifth star; a long one cools it all
+    runner.update(1, 0, 10);
+    assert(runner.wantedStars() == WANTED_MAX_STARS);
+    for (int i = 0; i < 200; i++)
+        runner.update(1, 0, 10);
+    assert(runner.wantedStars() == 0);
+    assert(wantedBounty(DRONE_BOUNTY, 0) == DRONE_BOUNTY && wantedBounty(DRONE_BOUNTY, 5) == 10);
+}
+
 int main()
 {
     testPacketFraming();
@@ -845,6 +867,7 @@ int main()
     testDante();
     testWraith();
     testWraithSmasher();
+    testWanted();
     testTuning();
     testWallet();
     testUpgrades();

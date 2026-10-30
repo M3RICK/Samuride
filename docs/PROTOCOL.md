@@ -132,7 +132,7 @@ A 13-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Wraith's Blinks), bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
-| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS) |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS); bits 4-6 the NCPD wanted level, 0 to 5 stars |
 
 ### `MSG_COLLISION`
 
