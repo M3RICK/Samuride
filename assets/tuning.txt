@@ -227,7 +227,7 @@ BLINK_DISTANCE 4
 BLINK_FAR_DISTANCE 8
 # Seconds to hold the key for the farthest Blink
 BLINK_HOLD_TIME 0.6
-# Eddies for a Blink through a zapper or a drone
+# Eddies for a Blink through a zapper he would have run into
 BLINK_CLOSE_CALL_BOUNTY 5
 # Seconds between two Blinks
 BLINK_COOLDOWN 0.3

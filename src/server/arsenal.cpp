@@ -208,7 +208,7 @@ float Blink::attack(Server &, Player &)
 }
 
 // blinkDistance ahead, past a zapper there: the drones in the box his body sweeps go down and he picks up
-// what's in it, a zapper or a drone crossed pays a close call, Smasher's rockets in it turn back, Smasher
+// what's in it, a zapper on his way pays a close call, Smasher's rockets in it turn back, Smasher
 // takes a stab if it reaches him
 float Blink::release(Server &server, Player &player)
 {
@@ -221,16 +221,17 @@ float Blink::release(Server &server, Player &player)
     float left = player.getX();
     float right = to_x + 1;
     float bottom = top + Player::HEIGHT;
+    // Only a zapper that running would have hit: his body's rows (sampled like the collisions), the
+    // columns between where he was and where he lands. Drones he cuts are just his attack, paid as kills.
     bool close_call = false;
+    for (int x = static_cast<int>(left) + 1; x <= static_cast<int>(to_x); x++)
+        for (float dy : {0.3f, 1.0f, 1.7f})
+            close_call |= server.isLiveZapper(x, static_cast<int>(top + dy));
 
     for (int x = static_cast<int>(left); x < right; x++)
-        for (int y = static_cast<int>(top); y < bottom; y++) {
-            close_call |= server.isLiveZapper(x, y);
-            if (server.isLiveDrone(x, y)) {
+        for (int y = static_cast<int>(top); y < bottom; y++)
+            if (server.isLiveDrone(x, y))
                 server.destroyDrone(player.getClientFd(), x, y);
-                close_call = true;
-            }
-        }
     if (close_call) {
         player.addScore(BLINK_CLOSE_CALL_BOUNTY);
         server.notifyCollision(CLOSE_CALL, player, static_cast<int>(to_x), static_cast<int>(top));

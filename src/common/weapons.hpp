@@ -79,7 +79,7 @@ inline float BLINK_COOLDOWN = 0.3f;
 constexpr int BLINK_CHARGES = 3;    // sent in 2 bits: 3 at most
 inline float BLINK_RECHARGE = 2;
 // The runner who goes furthest: a Blink aimed into a zapper lands on the first safe column up to
-// BLINK_SAFE_SEARCH tiles past it, and one through a zapper or a drone pays BLINK_CLOSE_CALL_BOUNTY
+// BLINK_SAFE_SEARCH tiles past it, and one through a zapper on his way pays BLINK_CLOSE_CALL_BOUNTY
 constexpr int BLINK_SAFE_SEARCH = 3;
 inline int BLINK_CLOSE_CALL_BOUNTY = 5;
 constexpr char CLOSE_CALL = 'w';    // collision type: a Blink through danger, where he landed

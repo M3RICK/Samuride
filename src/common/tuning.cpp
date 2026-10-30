@@ -158,7 +158,7 @@ std::vector<Entry> &entries()
             VALUE(BLINK_DISTANCE, "Wraith: tiles ahead a Blink takes him"),
             VALUE(BLINK_FAR_DISTANCE, "Wraith: tiles ahead a Blink takes him, the key held long enough"),
             VALUE(BLINK_HOLD_TIME, "Seconds to hold the key for the farthest Blink"),
-            VALUE(BLINK_CLOSE_CALL_BOUNTY, "Eddies for a Blink through a zapper or a drone"),
+            VALUE(BLINK_CLOSE_CALL_BOUNTY, "Eddies for a Blink through a zapper he would have run into"),
             VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (3 at most)"),
             VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),

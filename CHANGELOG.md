@@ -10,7 +10,7 @@ taken from this file. Players on different versions can't play together: update 
   4 tiles straight ahead in a violet streak, and the drones he cuts through go down with a hit-stop.
   **Hold the key** to aim further (up to 8 tiles), he blinks when you let go. A small diamond shows where he'd
   land. **The runner who goes furthest**: a Blink aimed into a zapper lands just past it (the diamond goes red
-  only when nothing within 3 tiles is safe), and every Blink through a zapper or a drone is a **close call: +5 eddies**.
+  only when nothing within 3 tiles is safe), and every Blink through a zapper you would have run into is a **close call: +5 eddies**.
   The eddies and power-ups he blinks over are his. 3 charges, one back every 2 seconds.
   - **Against Adam Smasher**, the Blink fights back: blink through his rocket wall (or just short of it) and the
     rockets around you fly back into him (4 each), and the wall can't hurt you while it passes. Blink in the last 0.3 s before his slam or his cannon
