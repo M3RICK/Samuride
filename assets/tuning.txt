@@ -126,7 +126,7 @@ WANTED_BOUNTY_PER_STAR 0.2
 # Added per star to the chance an obstacle is drones
 WANTED_DRONES_PER_STAR 0.03
 # Snipers come that much more often per star
-WANTED_SNIPERS_PER_STAR 0.4
+WANTED_SNIPERS_PER_STAR 0.1
 # No titan before this many tiles
 TITAN_FIRST_DISTANCE 300
 # Fewest seconds between two titans

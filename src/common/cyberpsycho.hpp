@@ -23,7 +23,7 @@ inline float WANTED_CALM_TIME = 5;
 inline float WANTED_COOLING = 0.4f;
 inline float WANTED_BOUNTY_PER_STAR = 0.2f;   // drone bounty x1.2 a star
 inline float WANTED_DRONES_PER_STAR = 0.03f;  // added to DRONE_CHANCE
-inline float WANTED_SNIPERS_PER_STAR = 0.4f;  // snipers that much more often a star
+inline float WANTED_SNIPERS_PER_STAR = 0.1f;  // snipers that much more often a star (x1.5 at 5)
 
 inline int wantedStars(float heat)
 {

@@ -23,7 +23,7 @@ taken from this file. Players on different versions can't play together: update 
     and collapsing into smoke when he dies.
 - **NCPD wanted level** (CYBERPSYCHO), GTA style: every 5 drones you take down lights a star, up to 5, under
   the drone count. Each star makes drones pay 20% more (x2 at 5 stars), puts more drones on the road ahead and
-  sends the snipers more often. Go 5 seconds without a kill and the NCPD starts to forget you, a star every
+  sends the snipers a bit more often (x1.5 at 5 stars). Go 5 seconds without a kill and the NCPD starts to forget you, a star every
   12 seconds or so: you pick your own difficulty.
 - **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, the run stops for 10 seconds and you
   can spend the run's eddies on one implant for the rest of the run, with 1, 2, 3 (0 or N to walk out):
@@ -32,6 +32,7 @@ taken from this file. Players on different versions can't play together: update 
   the wanted stars.
 
 ### Balance
+- Arasaka snipers never aim at you two at a time anymore.
 - After Adam Smasher the run no longer gets deadly at once: the speed stops climbing during his fight and
   drops by 2 once his arena is behind, and his empty arena no longer counts toward how hard the road gets.
 

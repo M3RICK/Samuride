@@ -20,7 +20,8 @@ void SniperSquad::reset()
 
 void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::map<int, Player> &players)
 {
-    if (leader_x < SNIPER_FIRST_DISTANCE || players.empty() || (timer -= dt) > 0)
+    // Never two sights at once, however short the interval: one waits for the other's shot to be over
+    if (leader_x < SNIPER_FIRST_DISTANCE || players.empty() || (timer -= dt) > 0 || !snipers.empty())
         return;
 
     std::uniform_real_distribution<float> interval(SNIPER_MIN_INTERVAL, std::max(SNIPER_MIN_INTERVAL, SNIPER_MAX_INTERVAL));
