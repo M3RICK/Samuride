@@ -35,7 +35,11 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Seven runners**: Johnny, David, Jinx on her shark rocket, Mikasa, Lucy on her drone, Dante and Wraith, each with their own run, take-off, flight and death animations.
 - **Eddies are money**: every run's eddies go to your wallet. Johnny is free, then buy David (100), Jinx (250), Mikasa (500), Lucy (750), Dante (1000) and Wraith (1250), in that order. The Corridor and Night City are free; buy The Walls (150), Zaun (300), Worlds Collide (500) and Both Worlds (750) in any order. Only the host needs the district. Big savers can buy upgrades in the shop: a longer Sandevistan, a faster ultimate, an eddie magnet, a shield at the start of every run.
-- After a game, hit `Space` for an instant rematch.
+- **NCPD wanted level** (CYBERPSYCHO): every 5 drones down lights a star, up to 5. Each star pays drones 20% more but brings more drones and snipers; stop shooting and the NCPD forgets you.
+- **Boons** (CYBERPSYCHO): at 250 m, pick one of three for the rest of the run, free: a general boon, your runner's own, or a risky pact.
+- **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, spend the run's eddies on one implant (a shield that grows back, faster attacks, a faster ultimate).
+- **Events**: at 300 m, then every 400 m past Smasher, 150 m of blackout, drone swarm or gravity flip, announced just before.
+- After a game, hit `Space` for an instant rematch, `C` to pick another runner, `M` another district.
 
 | Key | Action |
 | --- | --- |
