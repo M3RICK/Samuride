@@ -97,7 +97,7 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
 
 ## Gameplay we don't have yet (proposed 2026-10-29)
 
-1. **Boons, Hades style**: at 250 m and 750 m the run freezes and you pick 1 perk out of 3 for the
+1. **Boons, Hades style**, built on 3.1 (2026-10-30) at 250 m only: at 250 m and 750 m the run freezes and you pick 1 perk out of 3 for the
    rest of the run (exploding drones, a longer Sandevistan, eddies x1.5 but one hit kills...). A
    small roguelite layer, no art needed.
 2. **Close calls**: passing within 0.6 tile of a zapper without dying fills the ultimate gauge and

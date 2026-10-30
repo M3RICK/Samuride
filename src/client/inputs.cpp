@@ -40,9 +40,9 @@ void InputManager::processInputs()
             for (int implant = 0; implant <= IMPLANTS; implant++)
                 if (key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Num0) + implant) ||
                     key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Numpad0) + implant))
-                    client->answerRipperdoc(implant);
+                    client->answerRipperdoc(implant), client->answerBoon(implant);
             if (key->code == sf::Keyboard::Key::N)
-                client->answerRipperdoc(0);
+                client->answerRipperdoc(0), client->answerBoon(0);
         } else if (const auto *released = event->getIf<sf::Event::KeyReleased>()) {
             if (released->code == attack_key)
                 attack_key_down = false;
@@ -57,10 +57,10 @@ void InputManager::processInputs()
                 back_requested = true;
             else
                 confirm_pressed = true;
-            if (Touch::ENABLED && client->ripperdocOpen()) {
-                for (int implant = 0; implant <= IMPLANTS; implant++)
-                    if (Touch::onBox(Touch::implantCard(implant), Touch::IMPLANT_CARD_SIZE, pos))
-                        client->answerRipperdoc(implant);
+            if (Touch::ENABLED && (client->ripperdocOpen() || client->boonOpen())) {
+                for (int card = 0; card <= 3; card++)
+                    if (Touch::onBox(Touch::implantCard(card), Touch::IMPLANT_CARD_SIZE, pos))
+                        client->answerRipperdoc(card), client->answerBoon(card);
             }
             if (Touch::ENABLED && client->traumaOffered()) {
                 if (Touch::onBox(Touch::TRAUMA_CALL, Touch::TRAUMA_BUTTON_SIZE, pos))

@@ -2,6 +2,7 @@
 // `inline` instead of `constexpr`, add its line here, then regenerate the file (./Samuride_server -t).
 
 #include "tuning.hpp"
+#include "boons.hpp"
 #include "difficulty.hpp"
 #include "cyberpsycho.hpp"
 #include "powerups.hpp"
@@ -80,6 +81,13 @@ std::vector<Entry> &entries()
             VALUE(EMERGE_TIME, "Seconds bursting out of the titan, still invincible"),
             VALUE(SANDEVISTAN_PER_LEVEL, "Seconds of Sandevistan each shop level adds"),
             VALUE(MAGNET_PER_LEVEL, "Tiles each eddie magnet level reaches"),
+            VALUE(BOON_DISTANCE, "Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three"),
+            VALUE(BOON_TIME, "Seconds the run waits for the pick"),
+            VALUE(COLD_BLOOD_AIM, "Cold Blood: seconds more a sniper's sight holds still before the shot"),
+            VALUE(JACKPOT_FEVER, "Jackpot Fever: added to the chance an eddy is a jackpot", 0, 1),
+            VALUE(GLASS_CANNON_EDDIES, "Glass Cannon pact: eddies times this, no shield, no Trauma Team", 1),
+            VALUE(PRICE_ON_HEAD_START, "Price On Your Head pact: wanted stars right away"),
+            VALUE(PRICE_ON_HEAD_FLOOR, "Price On Your Head pact: the stars never drop under this"),
             VALUE(RIPPERDOC_TIME, "Seconds the run waits at the Ripperdoc, past Smasher (CYBERPSYCHO)"),
             Entry("ARMOR_PRICE", &IMPLANT_PRICES[1], "Subdermal Armor implant, in the run's eddies"),
             VALUE(ARMOR_REGEN, "Subdermal Armor: seconds before a broken shield grows back"),

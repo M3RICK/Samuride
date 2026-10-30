@@ -50,6 +50,9 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
 float Gun::attack(Server &server, Player &player)
 {
     server.fireProjectile(player, Weapon::Gun);
+    // Double Tap: the second one flies through what the first took down
+    if (player.hasBoon(Boon::Signature))
+        server.fireProjectile(player, Weapon::Gun);
     return statsOf(Weapon::Gun).cooldown;
 }
 
@@ -60,6 +63,8 @@ float Minigun::attack(Server &server, Player &player)
     if (player.isBerserk())
         return MINIGUN_SPRAY_COOLDOWN;
     startBurst();
+    if (player.hasBoon(Boon::Signature))
+        burst_left += 2;    // Bigger Bursts
     return statsOf(Weapon::Minigun).cooldown;
 }
 
@@ -81,6 +86,8 @@ bool Minigun::burstShotDue(float dt)
 float Blade::attack(Server &server, Player &player)
 {
     WeaponStats stats = statsOf(Weapon::Blade);
+    if (player.hasBoon(Boon::Signature))
+        stats.reach *= 1.5f;    // Long Edge
 
     server.announceShot(player, Weapon::Blade);
     server.strike(player, stats.reach);
@@ -146,7 +153,9 @@ void Hack::bounce(Server &server, const Player &player, int from_x, int from_y)
 // A charge comes back every RAM_RECHARGE, faster in Berserk
 void Hack::tick(const Player &player, float dt)
 {
-    if (ram < RAM_MAX && (ram_timer -= dt * (player.isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
+    // Overclocked Deck: twice as fast
+    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1);
+    if (ram < RAM_MAX && (ram_timer -= dt * rate) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
     }
@@ -190,9 +199,10 @@ int Rebellion::droneDown()
 }
 
 // A rank down every STYLE_DROP_TIME without a kill
-void Rebellion::tick(const Player &, float dt)
+void Rebellion::tick(const Player &player, float dt)
 {
-    if (rank == 0 || (drop_timer -= dt) > 0)
+    // Showoff: twice as slow
+    if (rank == 0 || (drop_timer -= dt * (player.hasBoon(Boon::Signature) ? 0.5f : 1)) > 0)
         return;
     rank--;
     kills = 0;
@@ -269,7 +279,9 @@ void Blink::tick(const Player &player, float dt)
 {
     if (held >= 0)
         held += dt;
-    if (charges_left < BLINK_CHARGES && (recharge_timer -= dt * (player.isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
+    // Void Walker: twice as fast
+    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1);
+    if (charges_left < BLINK_CHARGES && (recharge_timer -= dt * rate) <= 0) {
         charges_left++;
         recharge_timer = BLINK_RECHARGE;
     }

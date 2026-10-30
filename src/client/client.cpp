@@ -312,6 +312,17 @@ void Client::answerRipperdoc(int implant)
         sendToServer(Protocol::createPacket(MSG_RIPPERDOC, {static_cast<uint8_t>(implant)}));
 }
 
+void Client::answerBoon(int card)
+{
+    if (game_state.isBoonOpen())
+        sendToServer(Protocol::createPacket(MSG_BOON, {static_cast<uint8_t>(card)}));
+}
+
+bool Client::boonOpen() const
+{
+    return game_state.isBoonOpen();
+}
+
 bool Client::ripperdocOpen() const
 {
     return game_state.isRipperdocOpen();

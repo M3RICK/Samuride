@@ -870,6 +870,75 @@ static void testRipperdoc()
     assert(synaptic.getUltimateCharge() == std::min(ultimateCharge(0), IMPLANT_PRICES[3] + 10 * SYNAPTIC_RATE));
 }
 
+// Boons: what each changes on the runner
+static void testBoons()
+{
+    Player glass(1);
+    glass.reset(0, 0);
+    glass.powerUp(SHIELD_TILE);
+    glass.takeBoon(Boon::GlassCannon);
+    glass.update(0.01f, 0, 10);
+    assert(!glass.hasShield() && !glass.absorbHit());
+    for (int i = 0; i < 10; i++)
+        glass.addScore(1);
+    assert(glass.getScore() == 15);
+    glass.powerUp(SHIELD_TILE);
+    glass.update(0.01f, 0, 10);
+    assert(!glass.hasShield());
+
+    Player wanted(2);
+    wanted.reset(0, 0);
+    wanted.takeBoon(Boon::PriceOnHead);
+    assert(wanted.wantedStars() == PRICE_ON_HEAD_START);
+    for (int i = 0; i < 1000; i++)
+        wanted.update(1, 0, 10);
+    assert(wanted.wantedStars() == PRICE_ON_HEAD_FLOOR);
+    // Every runner's own boon has its card
+    assert(boonLook(Boon::Signature, Weapon::Blink).name == std::string("VOID WALKER"));
+}
+
+// Over sockets: the run stops at BOON_DISTANCE with three cards, a pact last, and goes on with the one picked
+static void testBoonPick()
+{
+    float distance = BOON_DISTANCE;
+    BOON_DISTANCE = 3;
+    const int port = 47127;
+    ServerConfig config;
+    config.port = port;
+    config.quiet = true;
+    config.solo = true;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient runner(port);
+    runner.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 0, .district = 0, .mode = 1}));
+    auto next = [&](char wanted) {
+        CollisionEffect effect{};
+        do {
+            auto payload = runner.await(MSG_COLLISION);
+            assert(payload && Message::decode(*payload, effect));
+        } while (effect.type != wanted);
+        return effect;
+    };
+
+    CollisionEffect offer = next(BOON_OFFER);
+    int pact = (offer.x >> 16) & 0xFF;
+    assert(pact >= FIRST_PACT && pact < PACTS_END && (offer.x & 0xFF) >= 1 && (offer.x & 0xFF) < FIRST_PACT);
+    // The run waits on the pick
+    float x = runner.latest(0).x;
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    assert(runner.latest(0).x == x);
+    runner.send(MSG_BOON, {3});
+    assert(next(BOON_TAKEN).x == pact);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    assert(runner.latest(0).x > x);
+
+    Socket::close(runner.fd);
+    server.stop();
+    loop.join();
+    BOON_DISTANCE = distance;
+}
+
 // The check before a titan or a sniper: is there still a way past it?
 static void testWayThrough()
 {
@@ -909,6 +978,8 @@ int main()
     testWanted();
     testRipperdoc();
     testWayThrough();
+    testBoons();
+    testBoonPick();
     testTuning();
     testWallet();
     testUpgrades();

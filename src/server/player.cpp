@@ -22,6 +22,8 @@ void Player::reset(int number, float spawn_y)
     wanted_calm = 0;
     implant = 0;
     armor_timer = 0;
+    boon = Boon::None;
+    glass_carry = 0;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
@@ -54,8 +56,23 @@ bool Player::collectCoin(int tile_x, int tile_y)
 // Every eddy earned charges the ultimate
 void Player::addScore(int points)
 {
+    if (boon == Boon::GlassCannon && points > 0) {
+        glass_carry += points * (GLASS_CANNON_EDDIES - 1);
+        int extra = static_cast<int>(glass_carry);
+        glass_carry -= extra;
+        points += extra;
+    }
     score += points;
     ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points * (implant == 3 ? SYNAPTIC_RATE : 1));
+}
+
+void Player::takeBoon(Boon b)
+{
+    boon = b;
+    if (b == Boon::GlassCannon)
+        shield = false;
+    if (b == Boon::PriceOnHead)
+        wanted_heat = std::max(wanted_heat, static_cast<float>(PRICE_ON_HEAD_START * WANTED_KILLS_PER_STAR));
 }
 
 bool Player::buyImplant(int id)
@@ -79,9 +96,9 @@ void Player::powerUp(char tile)
     if (tile == SHIELD_TILE)
         shield = true;
     else if (tile == SANDEVISTAN_TILE)
-        sprint_timer = sandevistanTime(upgrades);
+        sprint_timer = sandevistanTime(upgrades) * (boon == Boon::Overclock ? 2 : 1);
     else if (tile == BERSERK_TILE)
-        berserk_timer = BERSERK_TIME;
+        berserk_timer = BERSERK_TIME * (boon == Boon::Rage ? 2 : 1);
 }
 
 bool Player::absorbHit()
@@ -144,6 +161,9 @@ void Player::update(float dt, float forward_speed, float max_y)
 {
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1) * (implant == 2 ? KERENZIKOV_RATE : 1));
+    // Glass Cannon: no shield, from the floor or the Ripperdoc
+    if (boon == Boon::GlassCannon)
+        shield = false;
     // Subdermal Armor grows the shield back
     if (implant == 1 && !shield && (armor_timer += dt) >= ARMOR_REGEN) {
         shield = true;
@@ -151,7 +171,9 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
     grace_timer = std::max(0.0f, grace_timer - dt);
     if ((wanted_calm += dt) > WANTED_CALM_TIME)
-        wanted_heat = std::max(0.0f, wanted_heat - WANTED_COOLING * dt);
+        wanted_heat -= WANTED_COOLING * dt * (boon == Boon::Notorious ? 0.5f : 1);
+    float floor = boon == Boon::PriceOnHead ? PRICE_ON_HEAD_FLOOR * WANTED_KILLS_PER_STAR : 0;
+    wanted_heat = std::max(floor, wanted_heat);
 
     // Standing still while the smoke rises; the titan runs on the floor. Fishbones holds Jinx still in
     // the air while it charges, then its recoil throws her backward and she picks her pace back up.

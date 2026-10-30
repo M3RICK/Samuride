@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <array>
 #include <functional>
 #include <set>
 #include <random>
@@ -129,6 +130,11 @@ private:
     // The Ripperdoc past Smasher: who hasn't picked yet, and how long the run still waits for them
     std::set<int> ripperdoc_waiting;
     float ripperdoc_left = 0;
+    // The boons at BOON_DISTANCE: the three cards each runner still has to pick from, and the time left
+    std::map<int, std::array<Boon, 3>> boon_offers;
+    float boon_left = 0;
+    bool boons_given = false;
+    void offerBoons();
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -257,6 +263,7 @@ private:
     // Yes: the rescue; no: the death the hit was
     void answerTraumaTeam(int client_fd, bool call);
     void answerRipperdoc(int client_fd, int implant);
+    void answerBoon(int client_fd, int card);
 
 public:
     static constexpr int TICK_RATE = 60;

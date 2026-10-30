@@ -32,6 +32,7 @@ private:
         int target_fd;
         float y;        // its line, in tiles
         float time;     // seconds since it started aiming
+        float aim;      // seconds its sight holds still before the shot (longer on Cold Blood)
 
         SniperPhase phase() const;
     };

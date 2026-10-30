@@ -39,6 +39,7 @@ Positions travel in hundredths of a tile.
 | 16 | `MSG_VERSION` | both | Client: my protocol version, before `MSG_CONNECT`. Server: not mine, which is this |
 | 17 | `MSG_TRAUMA` | client → server | My answer to the Trauma Team's offer (`O`): 1 call it, 0 let me die |
 | 18 | `MSG_RIPPERDOC` | client → server | The implant I buy at the Ripperdoc (`R`): 1 to 3, 0 none. One I can't afford is ignored, I'm still choosing |
+| 19 | `MSG_BOON` | client → server | The boon card I pick (`B`): 1 to 3, 0 none |
 
 ### `MSG_VERSION`
 
@@ -162,6 +163,8 @@ A 13-byte record per player, 60 times per second:
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
+| `B` | CYBERPSYCHO, the leader at 250 m: the boons offered to a player, x their three ids a byte each (first card lowest; 1-6 general, 7-8 pacts, 9 the runner's own). The run waits up to 10 s for their `MSG_BOON` |
+| `G` | A player picked a boon: x its id, 0 for none |
 | `I` | A player left the Ripperdoc: x is the implant bought, 1 to 3, or 0 for none |
 | `T` | The Trauma Team (upgrade) picked the player up instead of a death: the run waits 3.5 s while it works, then 2 s of invincibility, half the run's eddies billed |
 | `J` | The eddy just taken on that tile hit the Lucky Chip's jackpot (upgrade): +10 in all |

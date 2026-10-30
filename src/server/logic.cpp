@@ -18,6 +18,8 @@ bool Server::resetMap()
     pinata_drops.clear();
     trauma_offers.clear();
     ripperdoc_waiting.clear();
+    boon_offers.clear();
+    boons_given = false;
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -170,10 +172,16 @@ void Server::updatePlayers()
         sendGameState();
         return;
     }
-    // At the Ripperdoc's: the run waits for everyone's pick, or for the time to run out
+    // At the Ripperdoc's or picking a boon: the run waits for everyone's pick, or for the time to run out
     if (!ripperdoc_waiting.empty()) {
         if ((ripperdoc_left -= TICK_DT) <= 0)
             ripperdoc_waiting.clear();
+        sendGameState();
+        return;
+    }
+    if (!boon_offers.empty()) {
+        if ((boon_left -= TICK_DT) <= 0)
+            boon_offers.clear();
         sendGameState();
         return;
     }
@@ -193,6 +201,11 @@ void Server::updatePlayers()
         front = std::max(front, player.getX());
     if (!boss.holds(front))
         run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    if (!boons_given && front >= BOON_DISTANCE) {
+        boons_given = true;
+        if (mode == GameMode::Cyberpsycho)
+            offerBoons();
+    }
     if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
         run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
         slowed_after_boss = true;
@@ -354,7 +367,7 @@ void Server::collectEddy(Player &player, int x, int y)
     if (player.getForm() == Form::Titan && player.getUpgrades()[UPGRADE_SERUM] > 0)
         player.addScore(1);
 
-    float jackpot = jackpotChance(player.getUpgrades());
+    float jackpot = jackpotChance(player.getUpgrades()) + (player.hasBoon(Boon::Jackpot) ? JACKPOT_FEVER : 0);
     if (jackpot > 0 && std::uniform_real_distribution<float>(0, 1)(rng) < jackpot) {
         player.addScore(JACKPOT_EDDIES - 1);
         notifyCollision(JACKPOT, player, x, y);

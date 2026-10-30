@@ -61,6 +61,23 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
                 ripperdoc_clock.restart();
             }
             return;
+        case BOON_OFFER:
+            if (mine) {
+                audio.play(Audio::Sfx::MenuConfirm);
+                boon_clock.restart();
+                for (int i = 0; i < 3; i++)
+                    boon_cards[i] = static_cast<Boon>((effect.x >> (8 * i)) & 0xFF);
+            }
+            return;
+        case BOON_TAKEN:
+            if (mine && effect.x > 0 && effect.x <= static_cast<int>(Boon::Signature)) {
+                boon = static_cast<Boon>(effect.x);
+                audio.play(Audio::Sfx::Jackpot);
+                run.callout = boonLook(boon, weaponOf(run.characterOf(me))).name;
+                run.callout_color = static_cast<int>(boon) >= FIRST_PACT && boon != Boon::Signature ? NEON_RED : NEON_YELLOW;
+                run.callout_clock.restart();
+            }
+            return;
         case IMPLANT_INSTALLED:
             if (mine && effect.x > 0 && effect.x <= IMPLANTS) {
                 implant = effect.x;

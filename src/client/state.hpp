@@ -43,6 +43,7 @@ private:
     bool rematch_requested = false;
     bool trauma_offer = false;      // the Trauma Team asks me whether to come, until I answer
     bool ripperdoc_open = false;    // the Ripperdoc waits for my pick, until something else happens to me
+    bool boon_open = false;         // so do the boons
     std::optional<std::chrono::steady_clock::time_point> attack_down;   // since when my attack key is down
 
 public:
@@ -85,6 +86,7 @@ public:
     // Answered: true if there was a question to answer
     bool answerTraumaOffer();
     bool isRipperdocOpen() const;
+    bool isBoonOpen() const;
 };
 
 #endif

@@ -28,7 +28,8 @@ enum MessageType : uint8_t {
     MSG_VERSION = 16,     // client: its PROTOCOL_VERSION, before MSG_CONNECT;
                           // server: not the same as mine, which is this (then it hangs up)
     MSG_TRAUMA = 17,      // client: its answer to the Trauma Team's offer, 1 call it, 0 let me die
-    MSG_RIPPERDOC = 18    // client: the implant it buys from the Ripperdoc, 1 to IMPLANTS, 0 none
+    MSG_RIPPERDOC = 18,   // client: the implant it buys from the Ripperdoc, 1 to IMPLANTS, 0 none
+    MSG_BOON = 19         // client: the boon card it picks, 1 to 3, 0 none
 };
 
 // Bumped whenever a packet changes: builds that don't speak the same one can't play together.

@@ -13,6 +13,7 @@
 #include "../common/powerups.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
+#include "../common/boons.hpp"
 #include "../common/difficulty.hpp"
 #include "arsenal.hpp"
 
@@ -49,6 +50,8 @@ private:
     float wanted_calm = 0;      // seconds since the last drone down
     int implant = 0;            // bought from the Ripperdoc this run (upgrades.hpp), 0 none
     float armor_timer = 0;      // Subdermal Armor: seconds since the shield broke
+    Boon boon = Boon::None;     // picked this run (boons.hpp)
+    float glass_carry = 0;      // Glass Cannon: the share of an eddy not paid yet
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
     std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
     std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
@@ -92,7 +95,7 @@ public:
     // Returns true when the shield took the hit
     bool absorbHit();
     // Bought, and not come yet this run
-    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued; }
+    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued && boon != Boon::GlassCannon; }
     // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
     bool callTraumaTeam();
     // While it works: on the floor, still, and true, the run waits
@@ -101,6 +104,8 @@ public:
     void addScore(int points);
     // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
     bool buyImplant(int id);
+    bool hasBoon(Boon b) const { return boon == b; }
+    void takeBoon(Boon b);
     int getUltimateCharge() const { return ultimate_charge; }
     bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs

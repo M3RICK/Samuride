@@ -65,6 +65,38 @@ bool Server::hurt(Player &player, char cause, int x, int y)
     return true;
 }
 
+// Each runner's three cards: a general boon, another one or their own, a pact
+void Server::offerBoons()
+{
+    auto roll = [&](int from, int to) { return static_cast<Boon>(std::uniform_int_distribution<int>(from, to - 1)(rng)); };
+    boon_left = BOON_TIME;
+    for (auto &[client_fd, player] : players) {
+        Boon first = roll(1, FIRST_PACT);
+        Boon second = first;
+        while (second == first)
+            second = roll(1, FIRST_PACT);
+        if (std::uniform_int_distribution<int>(0, 1)(rng))
+            second = Boon::Signature;
+        std::array<Boon, 3> cards{first, second, roll(FIRST_PACT, PACTS_END)};
+        boon_offers[client_fd] = cards;
+        int ids = static_cast<int>(cards[0]) | static_cast<int>(cards[1]) << 8 | static_cast<int>(cards[2]) << 16;
+        notifyCollision(BOON_OFFER, player, ids, 0);
+    }
+}
+
+// Card 1 to 3, or 0 for none; the run goes on once everyone has picked
+void Server::answerBoon(int client_fd, int card)
+{
+    auto offer = boon_offers.find(client_fd);
+    if (offer == boon_offers.end())
+        return;
+    Boon boon = card >= 1 && card <= 3 ? offer->second[card - 1] : Boon::None;
+    boon_offers.erase(offer);
+    Player &player = players.at(client_fd);
+    player.takeBoon(boon);
+    notifyCollision(BOON_TAKEN, player, static_cast<int>(boon), 0);
+}
+
 // One implant, or none, and the run goes on once everyone has picked
 void Server::answerRipperdoc(int client_fd, int implant)
 {

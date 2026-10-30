@@ -60,7 +60,7 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
                                                             : std::format("DRONES DOWN  {}", drones_down),
                     26, NEON_RED, {24, y}, {0, 0});
     if (cyberpsycho && players.count(me))
-        drawWanted(players.at(me), y + 40);
+        drawWanted(players.at(me), me, y + 40);
     if (players.count(me))
         drawRunnerPanel(players.at(me), me, cyberpsycho && ultimateOf(run.characterOf(me)) != Ultimate::None);
     if (players.count(me) && cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Rebellion)
@@ -171,7 +171,7 @@ void GameScreen::drawStyle(const PlayerState &player)
 
 // The NCPD wanted level under the drone count, GTA style: five stars, the lit ones flashing red and
 // blue like a patrol car's lights, the bounty they pay beside them. A siren when one comes on.
-void GameScreen::drawWanted(const PlayerState &player, float y)
+void GameScreen::drawWanted(const PlayerState &player, int me, float y)
 {
     static constexpr float RADIUS = 13;
     int stars = std::clamp(player.wanted, 0, WANTED_MAX_STARS);
@@ -200,6 +200,9 @@ void GameScreen::drawWanted(const PlayerState &player, float y)
     if (stars > 0)
         if (implant > 0)
         canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
+    if (boon != Boon::None)
+        canvas.text(boonLook(boon, weaponOf(run.characterOf(me))).name, 22, NEON_YELLOW,
+                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22)}, {0, 0.5f});
     canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
                     {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
@@ -431,11 +434,13 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
-        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / sandevistan_time, y);
+        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() /
+                                                       (sandevistan_time * (boon == Boon::Overclock ? 2 : 1)), y);
         y += 80;
     }
     if (player.berserk)
-        drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() / BERSERK_TIME, y);
+        drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() /
+                                                 (BERSERK_TIME * (boon == Boon::Rage ? 2 : 1)), y);
 }
 
 void GameScreen::drawGauge(const std::string &label, sf::Color color, float left, float y)
@@ -638,34 +643,59 @@ void GameScreen::drawTraumaOffer(const PlayerState &me)
     }
 }
 
-// Past Smasher: three implants for the run's eddies, the ones you can't afford dimmed, the time left draining
-void GameScreen::drawRipperdoc(const PlayerState &me)
+// Three cards to pick from, 1 to 3, and walking out (0): the Ripperdoc's implants, the boons. The time
+// left drains under the title.
+void GameScreen::drawCards(const std::string &title, sf::Color color, const std::string &subtitle, float left,
+                           const std::vector<Card> &cards)
 {
     canvas.overlay(170);
     sf::Vector2f center = Screen::CENTER;
-    canvas.glitchText("RIPPERDOC", 110, NEON_CYAN, center + sf::Vector2f(0, -330));
-    canvas.text(std::format("ONE IMPLANT FOR THE REST OF THE RUN     YOU HAVE {} EDDIES", me.score), 32, sf::Color::White,
-                center + sf::Vector2f(0, -230));
+    canvas.glitchText(title, 110, color, center + sf::Vector2f(0, -330));
+    canvas.text(subtitle, 32, sf::Color::White, center + sf::Vector2f(0, -230));
 
-    float left = std::clamp(1 - ripperdoc_clock.getElapsedTime().asSeconds() / RIPPERDOC_TIME, 0.0f, 1.0f);
-    sf::RectangleShape bar({600 * left, 10});
+    sf::RectangleShape bar({600 * std::clamp(left, 0.0f, 1.0f), 10});
     bar.setPosition(center + sf::Vector2f(-300, -180));
-    bar.setFillColor(NEON_CYAN);
+    bar.setFillColor(color);
     canvas.draw(bar);
 
-    for (int i = 1; i <= IMPLANTS; i++) {
-        sf::Vector2f pos = Touch::implantCard(i);
-        bool affordable = me.score >= IMPLANT_PRICES[i];
-        sf::Color color = affordable ? NEON_CYAN : withAlpha(sf::Color::White, 90);
-        canvas.card(sf::FloatRect(pos - Touch::IMPLANT_CARD_SIZE / 2.f, Touch::IMPLANT_CARD_SIZE), affordable);
-        canvas.text(Touch::ENABLED ? std::string(IMPLANT_LOOKS[i].name) : std::format("[{}] {}", i, IMPLANT_LOOKS[i].name), 30, color,
+    for (size_t i = 0; i < cards.size(); i++) {
+        const Card &card = cards[i];
+        sf::Vector2f pos = Touch::implantCard(static_cast<int>(i) + 1);
+        sf::Color dim = withAlpha(sf::Color::White, 90);
+        canvas.card(sf::FloatRect(pos - Touch::IMPLANT_CARD_SIZE / 2.f, Touch::IMPLANT_CARD_SIZE), card.enabled);
+        canvas.text(Touch::ENABLED ? card.name : std::format("[{}] {}", i + 1, card.name), 30, card.enabled ? color : dim,
                     pos + sf::Vector2f(0, -60));
-        canvas.text(IMPLANT_LOOKS[i].what, 24, affordable ? sf::Color::White : color, pos);
-        canvas.text(std::format("{} EDDIES", IMPLANT_PRICES[i]), 32, affordable ? NEON_YELLOW : color, pos + sf::Vector2f(0, 60));
+        canvas.text(card.what, 22, card.enabled ? sf::Color::White : dim, pos);
+        if (!card.price.empty())
+            canvas.text(card.price, 32, card.enabled ? NEON_YELLOW : dim, pos + sf::Vector2f(0, 60));
     }
     sf::Vector2f out = Touch::implantCard(0);
     canvas.card(sf::FloatRect(out - sf::Vector2f(210, 55), {420, 110}), false);
     canvas.text(Touch::hint("[0] NO THANKS", "NO THANKS"), 36, NEON_RED, out);
+}
+
+// Past Smasher: three implants for the run's eddies, the ones you can't afford dimmed
+void GameScreen::drawRipperdoc(const PlayerState &me)
+{
+    std::vector<Card> cards;
+    for (int i = 1; i <= IMPLANTS; i++)
+        cards.push_back({IMPLANT_LOOKS[i].name, IMPLANT_LOOKS[i].what, std::format("{} EDDIES", IMPLANT_PRICES[i]),
+                         me.score >= IMPLANT_PRICES[i]});
+    drawCards("RIPPERDOC", NEON_CYAN, std::format("ONE IMPLANT FOR THE REST OF THE RUN     YOU HAVE {} EDDIES", me.score),
+              1 - ripperdoc_clock.getElapsedTime().asSeconds() / RIPPERDOC_TIME, cards);
+}
+
+// At BOON_DISTANCE: three boons, free, the pact in red
+void GameScreen::drawBoons(int me)
+{
+    std::vector<Card> cards;
+    for (Boon card : boon_cards) {
+        BoonLook look = boonLook(card, weaponOf(run.characterOf(me)));
+        bool pact = static_cast<int>(card) >= FIRST_PACT && card != Boon::Signature;
+        cards.push_back({look.name, look.what, pact ? "RISKY" : card == Boon::Signature ? "YOURS ONLY" : "", true});
+    }
+    drawCards("PICK A BOON", NEON_YELLOW, "ONE FOR THE REST OF THE RUN, ON THE HOUSE",
+              1 - boon_clock.getElapsedTime().asSeconds() / BOON_TIME, cards);
 }
 
 void GameScreen::drawConnectionLost()

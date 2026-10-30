@@ -85,6 +85,9 @@ public:
     // The Ripperdoc's implant, 1 to IMPLANTS, or 0 for none
     void answerRipperdoc(int implant);
     bool ripperdocOpen() const;
+    // The boon card picked, 1 to 3, or 0 for none
+    void answerBoon(int card);
+    bool boonOpen() const;
     // CYBERPSYCHO: the attack and ultimate buttons are on screen
     bool combatRun() const;
     // The run is over or the server is gone: the menu button is on screen

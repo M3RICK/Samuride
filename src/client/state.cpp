@@ -1,6 +1,7 @@
 // Game state shared between the network thread and the render thread
 
 #include "state.hpp"
+#include "../common/boons.hpp"
 
 void GameState::startCountdown(int my_number, const std::map<int, int> &roster, int run_district, GameMode run_mode)
 {
@@ -24,6 +25,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     rematch_requested = false;
     trauma_offer = false;
     ripperdoc_open = false;
+    boon_open = false;
     players.clear();
     my_coins.clear();
     pending_effects.clear();
@@ -59,6 +61,7 @@ void GameState::handleCollision(char type, int player, int x, int y)
     if (player == my_player_number) {
         trauma_offer = type == TRAUMA_OFFER;
         ripperdoc_open = type == RIPPERDOC_OFFER;
+        boon_open = type == BOON_OFFER;
     }
     pending_effects.push_back({type, player, x, y});
 }
@@ -85,6 +88,7 @@ void GameState::setWinner(int player_number)
     phase = Phase::Over;
     trauma_offer = false;
     ripperdoc_open = false;
+    boon_open = false;
 }
 
 void GameState::pushMapData(std::vector<uint8_t> data)
@@ -285,6 +289,13 @@ bool GameState::isRipperdocOpen() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return ripperdoc_open;
+}
+
+bool GameState::isBoonOpen() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return boon_open;
 }
 
 bool GameState::answerTraumaOffer()

@@ -74,7 +74,7 @@ inline constexpr ImplantLook IMPLANT_LOOKS[IMPLANTS + 1] = {
     {"KERENZIKOV", "Attacks 30% faster"},
     {"SYNAPTIC ACCELERATOR", "Ultimate charges twice as fast"},
 };
-inline int IMPLANT_PRICES[IMPLANTS + 1] = {0, 250, 200, 200};
+inline int IMPLANT_PRICES[IMPLANTS + 1] = {0, 300, 150, 200};
 inline float RIPPERDOC_TIME = 10;
 inline float ARMOR_REGEN = 30;          // Subdermal Armor: seconds before a broken shield grows back
 inline float KERENZIKOV_RATE = 1.3f;    // attack cooldowns run that much faster

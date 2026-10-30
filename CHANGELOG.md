@@ -27,9 +27,20 @@ taken from this file. Players on different versions can't play together: update 
   12 seconds or so: you pick your own difficulty.
 - **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, the run stops for 10 seconds and you
   can spend the run's eddies on one implant for the rest of the run, with 1, 2, 3 (0 or N to walk out):
-  **Subdermal Armor** (250, a shield that grows back 30 s after it breaks), **Kerenzikov** (200, attacks
+  **Subdermal Armor** (300, a shield that grows back 30 s after it breaks), **Kerenzikov** (150, attacks
   30% faster) or **Synaptic Accelerator** (200, your ultimate charges twice as fast). Your implant shows under
   the wanted stars.
+- **Boons** (CYBERPSYCHO), Hades style: at 250 m the run stops and you pick one of three cards, free, for the
+  rest of the run (1, 2, 3, or 0 to skip). The first is a general boon, the second another one or your
+  runner's own, the third always a risky **pact**:
+  - Booby-Trapped Drones (a drone you down shorts the zappers next to it), Cold Blood (sniper sights hold
+    still longer before the shot), Notorious (wanted stars cool twice as slow), Jackpot Fever (8% of the
+    eddies are jackpots), Overclock (Sandevistan twice as long), Bloodlust (Berserk twice as long).
+  - Pacts: Glass Cannon (eddies x1.5, but no shield and no Trauma Team), Price On Your Head (3 stars at once,
+    never fewer than 2).
+  - Your runner's own: Double Tap (Johnny, David: two bullets a shot), Bigger Bursts (Jinx: 5 a burst),
+    Long Edge (Mikasa: 50% more reach), Overclocked Deck (Lucy: RAM back twice as fast), Showoff (Dante:
+    style drops twice as slow), Void Walker (Wraith: Blinks back twice as fast).
 
 ### Balance
 - Arasaka snipers never aim at you two at a time anymore.

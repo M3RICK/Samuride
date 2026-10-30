@@ -3,11 +3,13 @@
 #ifndef GAME_SCREEN_HPP
     #define GAME_SCREEN_HPP
 
+#include <array>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
 #include "run.hpp"
+#include "../../common/boons.hpp"
 #include "../wallet.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
@@ -103,6 +105,9 @@ private:
     sf::Clock style_clock;      // since it last went up
     sf::Clock ripperdoc_clock;  // since the Ripperdoc opened
     int implant = 0;            // the one bought this run, 0 none
+    sf::Clock boon_clock;       // since the boons were offered
+    std::array<Boon, 3> boon_cards{};
+    Boon boon = Boon::None;     // the one picked this run
     int wanted_shown = 0;       // your NCPD stars last frame, to hear the siren when one comes
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
@@ -169,7 +174,7 @@ private:
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
     void drawStyle(const PlayerState &player);
-    void drawWanted(const PlayerState &player, float y);
+    void drawWanted(const PlayerState &player, int me, float y);
     void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
     void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
     sf::Vector2i faceCell(const PlayerState &player, int me);
@@ -178,6 +183,15 @@ private:
     void drawMenuButton();
     void drawTraumaOffer(const PlayerState &me);
     void drawRipperdoc(const PlayerState &me);
+    void drawBoons(int me);
+    struct Card {
+        std::string name;
+        std::string what;
+        std::string price;  // under it, empty for none
+        bool enabled;
+    };
+    void drawCards(const std::string &title, sf::Color color, const std::string &subtitle, float left,
+                   const std::vector<Card> &cards);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);
