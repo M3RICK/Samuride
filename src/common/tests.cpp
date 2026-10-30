@@ -839,7 +839,7 @@ static void testWanted()
     for (int i = 0; i < 100; i++)
         runner.raiseWanted();
     assert(runner.wantedStars() == WANTED_MAX_STARS);
-    // Topped out, a short breath doesn't cost the fifth star; a long one cools it all
+    // Nothing cools while you keep killing, nor in the first seconds of calm; a long calm cools it all
     runner.update(1, 0, 10);
     assert(runner.wantedStars() == WANTED_MAX_STARS);
     for (int i = 0; i < 200; i++)

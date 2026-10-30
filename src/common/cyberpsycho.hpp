@@ -15,11 +15,12 @@ enum class GameMode : uint8_t { Classic, Cyberpsycho };
 inline int DRONE_BOUNTY = 5;
 
 // NCPD wanted level, GTA style: each drone down heats the NCPD up, WANTED_KILLS_PER_STAR kills a star,
-// and the heat cools by WANTED_COOLING kills' worth a second. Each star adds drones to the map ahead,
+// and after WANTED_CALM_TIME seconds without one the heat cools by WANTED_COOLING kills' worth a second. Each star adds drones to the map ahead,
 // sends the snipers more often and makes every drone pay more: you pick your own difficulty.
 constexpr int WANTED_MAX_STARS = 5;         // sent in 3 bits
-inline int WANTED_KILLS_PER_STAR = 6;
-inline float WANTED_COOLING = 0.25f;
+inline int WANTED_KILLS_PER_STAR = 5;
+inline float WANTED_CALM_TIME = 5;
+inline float WANTED_COOLING = 0.4f;
 inline float WANTED_BOUNTY_PER_STAR = 0.2f;   // drone bounty x1.2 a star
 inline float WANTED_DRONES_PER_STAR = 0.03f;  // added to DRONE_CHANCE
 inline float WANTED_SNIPERS_PER_STAR = 0.4f;  // snipers that much more often a star

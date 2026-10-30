@@ -19,6 +19,7 @@ void Player::reset(int number, float spawn_y)
     y_velocity = 0;
     score = 0;
     wanted_heat = 0;
+    wanted_calm = 0;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
@@ -132,7 +133,8 @@ void Player::update(float dt, float forward_speed, float max_y)
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
     grace_timer = std::max(0.0f, grace_timer - dt);
-    wanted_heat = std::max(0.0f, wanted_heat - WANTED_COOLING * dt);
+    if ((wanted_calm += dt) > WANTED_CALM_TIME)
+        wanted_heat = std::max(0.0f, wanted_heat - WANTED_COOLING * dt);
 
     // Standing still while the smoke rises; the titan runs on the floor. Fishbones holds Jinx still in
     // the air while it charges, then its recoil throws her backward and she picks her pace back up.

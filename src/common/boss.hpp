@@ -11,6 +11,8 @@
 // The arena: from BOSS_DISTANCE, BOSS_ARENA tiles with nothing but him (about 30 s at that speed)
 inline float BOSS_DISTANCE = 500;
 inline float BOSS_ARENA = 400;
+// The pace holds while he fights, and drops by BOSS_SPEED_DROP tiles a second once his arena is behind
+inline float BOSS_SPEED_DROP = 2;
 // He stands this many tiles ahead of the leader: the right edge of the screen
 inline float BOSS_AHEAD = 12;
 // Seconds of his entrance before the first attack, then between two attacks

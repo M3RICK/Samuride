@@ -39,11 +39,12 @@ void Server::extendMap(float leader_x)
 {
     while (game_map.getWidth() < leader_x + LOOKAHEAD) {
         size_t from = game_map.getWidth();
-        float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
+        // Adam Smasher's arena: nothing in the way but him, and its empty chunks don't make what follows harder
+        bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
+        float difficulty = std::min(1.0f, chunks_generated / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
+        chunks_generated += !arena;
 
         bool drones = mode == GameMode::Cyberpsycho;
-        // Adam Smasher's arena: nothing in the way but him
-        bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
                                               : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones,
                                                               WANTED_DRONES_PER_STAR * wantedStars());
@@ -109,6 +110,7 @@ void Server::startGame()
     countdown = COUNTDOWN_SECONDS;
     countdown_ticks = 0;
     run_speed = START_SPEED;
+    slowed_after_boss = false;
     ready_clients.clear();
 
     announce("Game starting with " + std::to_string(players.size()) + " players");
@@ -176,7 +178,16 @@ void Server::updatePlayers()
         return;
     }
 
-    run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    // Smasher's arena: the pace holds while he fights, then drops once he's behind
+    float front = 0;
+    for (const auto &[client_fd, player] : players)
+        front = std::max(front, player.getX());
+    if (!boss.holds(front))
+        run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
+        run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
+        slowed_after_boss = true;
+    }
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);

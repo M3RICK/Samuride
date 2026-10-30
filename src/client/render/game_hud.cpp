@@ -183,8 +183,6 @@ void GameScreen::drawWanted(const PlayerState &player, float y)
         run.callout_clock.restart();
     }
     wanted_shown = stars;
-    if (stars == 0)
-        return;
 
     bool red = std::fmod(canvas.time(), 0.5f) < 0.25f;
     for (int i = 0; i < WANTED_MAX_STARS; i++) {
@@ -199,8 +197,9 @@ void GameScreen::drawWanted(const PlayerState &player, float y)
         star.setFillColor(lit ? ((i % 2 == 0) == red ? NEON_RED : NEON_CYAN) : sf::Color(255, 255, 255, 40));
         canvas.draw(star);
     }
-    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
-                {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
+    if (stars > 0)
+        canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+                    {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 
 // The gauge around the face, clockwise from the top, the `lit` share of it in colour.

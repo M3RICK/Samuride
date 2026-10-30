@@ -102,9 +102,11 @@ PINATA_PER_LEVEL 0.15
 # Eddies for a drone down
 DRONE_BOUNTY 5
 # NCPD wanted level: drones down for a star (5 at most)
-WANTED_KILLS_PER_STAR 6
-# Drones' worth of heat the NCPD forgets every second
-WANTED_COOLING 0.25
+WANTED_KILLS_PER_STAR 5
+# Seconds without a drone down before the NCPD starts to forget you
+WANTED_CALM_TIME 5
+# Then, drones' worth of heat it forgets every second
+WANTED_COOLING 0.4
 # Drone bounty added per star (0.2: x1.2 a star)
 WANTED_BOUNTY_PER_STAR 0.2
 # Added per star to the chance an obstacle is drones
@@ -141,6 +143,8 @@ SNIPER_BEAM_HALF 0.35
 BOSS_DISTANCE 500
 # How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)
 BOSS_ARENA 400
+# Once his arena is behind, the run slows down by this many tiles a second (the pace holds in it)
+BOSS_SPEED_DROP 2
 # Tiles ahead of the leader he stands
 BOSS_AHEAD 12
 # Seconds of his entrance before his first attack

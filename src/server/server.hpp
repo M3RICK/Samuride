@@ -64,6 +64,7 @@ private:
     int chunks_generated = 0;
     int last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;     // chunk of the last Attack Titan orb
     float run_speed = START_SPEED;
+    bool slowed_after_boss = false;     // the pace dropped once past Smasher's arena
     Phase phase = Phase::Waiting;
     int countdown = 0;
     int countdown_ticks = 0;
