@@ -39,6 +39,13 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
     float y = 90;
 
     canvas.text(std::format("{:04} M", distance), 56, NEON_YELLOW, {24, 16}, {0, 0});
+    // The event under way, and how far it still goes
+    if (RunEvent event = run.eventAt(static_cast<float>(distance)); event != RunEvent::None) {
+        static const char *NAMES[RUN_EVENTS] = {"", "BLACKOUT", "DRONE SWARM", "GRAVITY FLIPPED"};
+        int left = static_cast<int>(eventStart(eventIndex(static_cast<float>(distance))) + EVENT_LENGTH) - distance;
+        canvas.text(std::format("{}  {} M", NAMES[static_cast<int>(event)], left), 34, NEON_ORANGE,
+                    {Screen::WIDTH / 2, 40});
+    }
     // assets/tuning.txt changed something: screenshots and records then say so
     if (Tuning::custom()) {
         canvas.text("CUSTOM TUNING", 22, NEON_CYAN, {24, y}, {0, 0});

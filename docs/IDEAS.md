@@ -106,7 +106,7 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
    friends compare on the same run.
 4. **Missions**: 3 goals at a time ("kill 30 drones", "pass Smasher untouched", "800 m with Lucy"),
    paid in eddies.
-5. **Events during a run**: a blackout (only the zappers light up), a drone swarm, a stretch where
+5. **Events during a run**, built on 3.1 (2026-10-30): a blackout (only the zappers light up), a drone swarm, a stretch where
    gravity flips.
 6. **Parry**: the attack key right as one of Smasher's rockets arrives sends it back at him. A skill
    moment during the boss.

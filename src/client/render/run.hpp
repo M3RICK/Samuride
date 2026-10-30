@@ -12,6 +12,7 @@
 #include "../characters.hpp"
 #include "../../common/map.hpp"
 #include "../../common/weapons.hpp"
+#include "../../common/events.hpp"
 
 struct PlayerAnim {
     bool on_ground = true;
@@ -59,6 +60,12 @@ struct Run {
     };
     std::map<std::pair<int, int>, Hack> hacked_zappers;         // node -> Lucy's hack on it
     std::set<std::pair<int, int>> burnt_zappers;                // out for the rest of the run
+    std::map<int, RunEvent> events;                             // announced by the server, by index
+    RunEvent eventAt(float x) const
+    {
+        auto known = events.find(eventIndex(x));
+        return known == events.end() ? RunEvent::None : known->second;
+    }
 
     // Over the whole screen, for the ultimates: a flash that fades, and the ultimate's name in big letters
     struct Flash {

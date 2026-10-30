@@ -61,6 +61,17 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
                 ripperdoc_clock.restart();
             }
             return;
+        case EVENT_AHEAD:
+            // Everyone gets it: the same road for all
+            run.events[effect.y] = static_cast<RunEvent>(effect.x);
+            if (mine) {
+                static const char *NAMES[RUN_EVENTS] = {"", "BLACKOUT AHEAD", "DRONE SWARM AHEAD", "GRAVITY FLIP AHEAD"};
+                audio.play(Audio::Sfx::Siren);
+                run.callout = NAMES[std::clamp(effect.x, 0, RUN_EVENTS - 1)];
+                run.callout_color = NEON_ORANGE;
+                run.callout_clock.restart();
+            }
+            return;
         case BOON_OFFER:
             if (mine) {
                 audio.play(Audio::Sfx::MenuConfirm);

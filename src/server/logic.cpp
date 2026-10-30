@@ -20,6 +20,8 @@ bool Server::resetMap()
     ripperdoc_waiting.clear();
     boon_offers.clear();
     boons_given = false;
+    run_events.clear();
+    events_announced = -1;
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -48,9 +50,11 @@ void Server::extendMap(float leader_x)
         chunks_generated += !arena;
 
         bool drones = mode == GameMode::Cyberpsycho;
+        bool swarm = eventAt(from) == RunEvent::Swarm || eventAt(from + CHUNK_WIDTH - 1) == RunEvent::Swarm;
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
                                               : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones,
-                                                              WANTED_DRONES_PER_STAR * wantedStars());
+                                                              WANTED_DRONES_PER_STAR * wantedStars() +
+                                                                  (swarm ? SWARM_DRONES : 0));
         if (!arena) {
             placeShiftOrb(rows);
             placePowerUp(rows);
@@ -201,6 +205,16 @@ void Server::updatePlayers()
         front = std::max(front, player.getX());
     if (!boss.holds(front))
         run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    // The next event, told to everyone EVENT_WARNING tiles before it starts
+    if (front >= eventStart(events_announced + 1) - EVENT_WARNING) {
+        events_announced++;
+        RunEvent event = eventOf(events_announced);
+        if (event != RunEvent::None)
+            for (auto &[client_fd, player] : players)
+                notifyCollision(EVENT_AHEAD, player, static_cast<int>(event), events_announced);
+    }
+    for (auto &[client_fd, player] : players)
+        player.setFlipped(eventAt(player.getX()) == RunEvent::Flip);
     if (!boons_given && front >= BOON_DISTANCE) {
         boons_given = true;
         if (mode == GameMode::Cyberpsycho)

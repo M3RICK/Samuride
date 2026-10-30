@@ -81,6 +81,16 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Events (a blackout, a drone swarm, a gravity flip): where the first starts, in tiles
+EVENT_FIRST 300
+# Tiles between two events once Smasher's arena is behind (the next starts 100 after it)
+EVENT_EVERY 400
+# Tiles an event lasts
+EVENT_LENGTH 150
+# Tiles before an event that everyone is warned
+EVENT_WARNING 60
+# Drone swarm: added to the chance an obstacle is drones
+SWARM_DRONES 0.35
 # Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three
 BOON_DISTANCE 250
 # Seconds the run waits for the pick

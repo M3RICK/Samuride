@@ -51,7 +51,9 @@ void Players::emitExhaust(const std::map<int, PlayerState> &players)
 bool Players::updateAirState(int player_num)
 {
     PlayerAnim &state = run.player_anims[player_num];
-    bool on_ground = run.display_positions[player_num].y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
+    sf::Vector2f pos = run.display_positions[player_num];
+    // In a gravity flip the ceiling is the ground
+    bool on_ground = run.eventAt(pos.x) == RunEvent::Flip ? pos.y <= 0.01f : pos.y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
 
     if (on_ground) {
         state.on_ground = true;
@@ -135,6 +137,11 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition(feet);
+    // Upside down in a gravity flip, feet to the ceiling
+    if (run.eventAt(run.display_positions[player_num].x) == RunEvent::Flip) {
+        sprite.setScale({scale, -scale});
+        sprite.setPosition(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT));
+    }
     // Down without a death that falls: their fall, laid on its back, head toward the medic on the left
     float rescue = run.rescueShare(player_num);
     bool down = rescue >= 0 && rescue < Run::RESCUE_UP;

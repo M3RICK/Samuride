@@ -19,6 +19,7 @@
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/events.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
 #include "boss.hpp"
@@ -134,6 +135,11 @@ private:
     std::map<int, std::array<Boon, 3>> boon_offers;
     float boon_left = 0;
     bool boons_given = false;
+    // Each event's kind, rolled when the map or the warning first needs it; the last one announced
+    std::map<int, RunEvent> run_events;
+    int events_announced = -1;
+    RunEvent eventOf(int index);
+    RunEvent eventAt(float x) { int index = eventIndex(x); return index < 0 ? RunEvent::None : eventOf(index); }
     void offerBoons();
 
     std::vector<Socket::PollEntry> poll_fds;

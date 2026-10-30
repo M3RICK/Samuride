@@ -65,6 +65,19 @@ bool Server::hurt(Player &player, char cause, int x, int y)
     return true;
 }
 
+// Rolled once: a swarm only where there are drones
+RunEvent Server::eventOf(int index)
+{
+    auto known = run_events.find(index);
+    if (known != run_events.end())
+        return known->second;
+    int kinds = mode == GameMode::Cyberpsycho ? RUN_EVENTS - 1 : RUN_EVENTS - 2;
+    RunEvent event = static_cast<RunEvent>(std::uniform_int_distribution<int>(1, kinds)(rng));
+    if (mode != GameMode::Cyberpsycho && event == RunEvent::Swarm)
+        event = RunEvent::Flip;
+    return run_events[index] = event;
+}
+
 // Each runner's three cards: a general boon, another one or their own, a pact
 void Server::offerBoons()
 {

@@ -183,6 +183,7 @@ private:
     void drawMenuButton();
     void drawTraumaOffer(const PlayerState &me);
     void drawRipperdoc(const PlayerState &me);
+    void drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me);
     void drawBoons(int me);
     struct Card {
         std::string name;

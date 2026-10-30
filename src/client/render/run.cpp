@@ -18,6 +18,7 @@ void Run::reset()
     flash = {};
     callout.clear();
     burnt_zappers.clear();
+    events.clear();
     shake = 0;
     shake_strength = 0;
     run_speed = 0;

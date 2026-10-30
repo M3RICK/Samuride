@@ -52,6 +52,7 @@ private:
     float armor_timer = 0;      // Subdermal Armor: seconds since the shield broke
     Boon boon = Boon::None;     // picked this run (boons.hpp)
     float glass_carry = 0;      // Glass Cannon: the share of an eddy not paid yet
+    bool flipped = false;       // in a gravity flip (events.hpp)
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
     std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
     std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
@@ -102,6 +103,8 @@ public:
     bool awaitRescue(float dt, float max_y);
     void startShift();
     void addScore(int points);
+    // In a gravity flip: they fall up and the jetpack pushes down
+    void setFlipped(bool on) { flipped = on; }
     // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
     bool buyImplant(int id);
     bool hasBoon(Boon b) const { return boon == b; }

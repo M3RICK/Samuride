@@ -13,6 +13,7 @@
 #include "snipers.hpp"
 #include "tuning.hpp"
 #include "difficulty.hpp"
+#include "events.hpp"
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -939,6 +940,25 @@ static void testBoonPick()
     BOON_DISTANCE = distance;
 }
 
+// Events: their stretches of road, and gravity flipped in one
+static void testEvents()
+{
+    assert(eventIndex(EVENT_FIRST - 1) == -1 && eventIndex(EVENT_FIRST) == 0 && eventIndex(EVENT_FIRST + EVENT_LENGTH) == -1);
+    assert(eventIndex(BOSS_DISTANCE + 50) == -1);
+    assert(eventIndex(eventStart(1) + 1) == 1 && eventIndex(eventStart(2) - 1) == -1 && eventIndex(eventStart(3)) == 3);
+
+    Player runner(1);
+    runner.reset(0, 8);
+    runner.setFlipped(true);
+    for (int i = 0; i < 100; i++)
+        runner.update(0.05f, 0, 8);
+    assert(runner.getY() == 0);
+    runner.setJetActive(true);
+    for (int i = 0; i < 100; i++)
+        runner.update(0.05f, 0, 8);
+    assert(runner.getY() == 8);
+}
+
 // The check before a titan or a sniper: is there still a way past it?
 static void testWayThrough()
 {
@@ -980,6 +1000,7 @@ int main()
     testWayThrough();
     testBoons();
     testBoonPick();
+    testEvents();
     testTuning();
     testWallet();
     testUpgrades();

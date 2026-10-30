@@ -174,6 +174,33 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
     audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
 }
 
+// The lights go out over a blackout's stretch, fading in and out over its first and last tiles: the world
+// goes dark but for the zappers and drones, drawn again over it, and the runners drawn after
+void GameScreen::drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me)
+{
+    static constexpr float FADE = 10;
+    auto mine = run.display_positions.find(me);
+    if (mine == run.display_positions.end())
+        return;
+    float x = mine->second.x;
+    float dark = 0;
+    for (float probe : {x - FADE, x, x + FADE}) {
+        int index = eventIndex(probe);
+        if (index < 0 || run.eventAt(probe) != RunEvent::Blackout)
+            continue;
+        float start = eventStart(index);
+        float into = std::min(x - start + FADE, start + EVENT_LENGTH - x + FADE) / (2 * FADE);
+        dark = std::max(dark, std::clamp(into, 0.0f, 1.0f));
+    }
+    if (dark <= 0)
+        return;
+    sf::RectangleShape cover({Screen::WIDTH + 100, Screen::HEIGHT + 100});
+    cover.setPosition({-50, -50});
+    cover.setFillColor(sf::Color(4, 2, 12, static_cast<uint8_t>(235 * dark)));
+    canvas.draw(cover);
+    tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops(), true);
+}
+
 void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
 {
     Phase phase = last_phase;
@@ -200,6 +227,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     }
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    drawBlackout(state, destroyed, me);
     titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
         return run.toScreen({titan.x, 0}).x > Screen::WIDTH;
     });
