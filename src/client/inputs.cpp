@@ -15,6 +15,7 @@ InputManager::InputManager(Client *client, sf::RenderWindow *window, const Setti
 void InputManager::processInputs()
 {
     back_requested = false;
+    back_to = Back::Menu;
     confirm_pressed = false;
 
     while (const std::optional event = window->pollEvent()) {
@@ -23,6 +24,11 @@ void InputManager::processInputs()
         else if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
             if (key->code == sf::Keyboard::Key::Escape)
                 back_requested = true;
+            // The run over: C picks another runner, M another district
+            if (client->runEnded() && (key->code == sf::Keyboard::Key::C || key->code == sf::Keyboard::Key::M)) {
+                back_requested = true;
+                back_to = key->code == sf::Keyboard::Key::C ? Back::Runner : Back::District;
+            }
             if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
                 confirm_pressed = true;
             if (key->code == attack_key) {
@@ -53,8 +59,15 @@ void InputManager::processInputs()
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
             fingers[touch->finger] = pos;
             // Once a game is over, the menu button goes back, a tap anywhere else is a rematch
-            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos))
+            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos)) {
                 back_requested = true;
+            } else if (Touch::ENABLED && client->runEnded() && Touch::onBox(Touch::RUNNER_BUTTON, Touch::MENU_BUTTON_SIZE, pos)) {
+                back_requested = true;
+                back_to = Back::Runner;
+            } else if (Touch::ENABLED && client->runEnded() && Touch::onBox(Touch::DISTRICT_BUTTON, Touch::MENU_BUTTON_SIZE, pos)) {
+                back_requested = true;
+                back_to = Back::District;
+            }
             else
                 confirm_pressed = true;
             if (Touch::ENABLED && (client->ripperdocOpen() || client->boonOpen())) {

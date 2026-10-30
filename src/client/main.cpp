@@ -150,8 +150,10 @@ static std::string runError(Client::RunResult result, bool connected, const std:
 // Menu, run, back to the menu, until the player quits
 static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
 {
+    MenuState::Screen start = MenuState::Screen::Main;
     while (true) {
-        MenuChoice choice = menu.run(renderer);
+        MenuChoice choice = menu.run(renderer, start);
+        start = MenuState::Screen::Main;
         LocalServer local_server;
         bool connected = true;
 
@@ -169,6 +171,10 @@ static void menuLoop(Renderer &renderer, Menu &menu, bool debug_mode)
         auto result = play(renderer, choice.host, choice.port, loadout, menu.getSettings(), debug_mode, connected);
         if (result == Client::RunResult::Quit)
             return;
+        if (result == Client::RunResult::Runner)
+            start = MenuState::Screen::Character;
+        if (result == Client::RunResult::District)
+            start = MenuState::Screen::District;
         if (std::string error = runError(result, connected, connectionError(choice)); !error.empty())
             menu.setError(error);
     }

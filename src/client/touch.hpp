@@ -23,6 +23,9 @@ namespace Touch {
     // The phone's back gesture doesn't always reach the game.
     constexpr sf::Vector2f MENU_BUTTON{1920 / 2, 1080 - 110};
     constexpr sf::Vector2f MENU_BUTTON_SIZE{380, 100};
+    // ... and either side of it, straight to the runners or the districts
+    constexpr sf::Vector2f RUNNER_BUTTON{1920 / 2 - 420, 1080 - 110};
+    constexpr sf::Vector2f DISTRICT_BUTTON{1920 / 2 + 420, 1080 - 110};
 
     // The Trauma Team's question, in the middle: call it, or let me die
     constexpr sf::Vector2f TRAUMA_CALL{1920 / 2 - 240, 1080 / 2 + 170};

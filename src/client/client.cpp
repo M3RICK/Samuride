@@ -103,7 +103,9 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
         return RunResult::Quit;
     if (server_version >= 0)
         return server_version > PROTOCOL_VERSION ? RunResult::Outdated : RunResult::HostOutdated;
-    return RunResult::Menu;
+    if (input.backTo() == InputManager::Back::Runner)
+        return RunResult::Runner;
+    return input.backTo() == InputManager::Back::District ? RunResult::District : RunResult::Menu;
 }
 
 void Client::stop()

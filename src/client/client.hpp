@@ -67,7 +67,8 @@ private:
 
 public:
     // Outdated: the server speaks a newer protocol than this build; HostOutdated: an older one
-    enum class RunResult { Menu, Quit, Outdated, HostOutdated };
+    // Runner and District: back to the menu on that screen
+    enum class RunResult { Menu, Quit, Outdated, HostOutdated, Runner, District };
 
     Client(const std::string &server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state);
     ~Client();

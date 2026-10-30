@@ -41,6 +41,8 @@ taken from this file. Players on different versions can't play together: update 
   - Your runner's own: Double Tap (Johnny, David: two bullets a shot), Bigger Bursts (Jinx: 5 a burst),
     Long Edge (Mikasa: 50% more reach), Overclocked Deck (Lucy: RAM back twice as fast), Showoff (Dante:
     style drops twice as slow), Void Walker (Wraith: Blinks back twice as fast).
+- **After a run**, straight back to the runners (`C`) or the districts (`M`), your mode and last picks kept,
+  instead of going through the whole menu. On phones: RUNNER and DISTRICT buttons beside MENU.
 
 ### Balance
 - Arasaka snipers never aim at you two at a time anymore.

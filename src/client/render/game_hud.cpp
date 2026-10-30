@@ -601,8 +601,8 @@ void GameScreen::drawRematchPrompt(GameState &state, bool solo)
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
     else
-        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP TO RUN AGAIN")
-                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP TO REMATCH"),
+        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN    [C] RUNNER    [M] DISTRICT    [ESC] MENU", "TAP TO RUN AGAIN")
+                         : Touch::hint("[SPACE] REMATCH    [C] RUNNER    [M] DISTRICT    [ESC] MENU", "TAP TO REMATCH"),
                     32, NEON_YELLOW, pos);
     drawMenuButton();
 }
@@ -612,9 +612,10 @@ void GameScreen::drawMenuButton()
 {
     if (!Touch::ENABLED)
         return;
-    sf::FloatRect box(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE);
-    canvas.card(box, true);
-    canvas.text("MENU", 40, NEON_YELLOW, Touch::MENU_BUTTON);
+    for (auto [pos, label] : {std::pair{Touch::RUNNER_BUTTON, "RUNNER"}, {Touch::MENU_BUTTON, "MENU"}, {Touch::DISTRICT_BUTTON, "DISTRICT"}}) {
+        canvas.card(sf::FloatRect(pos - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE), true);
+        canvas.text(label, 40, NEON_YELLOW, pos);
+    }
 }
 
 // A deadly hit with the Trauma Team on call: come or not, the bill shown, the time left draining
