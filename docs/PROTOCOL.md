@@ -38,6 +38,8 @@ Positions travel in hundredths of a tile.
 | 15 | `MSG_BOSS` | server → client | Adam Smasher: where he is, his health, his attack, every tick |
 | 16 | `MSG_VERSION` | both | Client: my protocol version, before `MSG_CONNECT`. Server: not mine, which is this |
 | 17 | `MSG_TRAUMA` | client → server | My answer to the Trauma Team's offer (`O`): 1 call it, 0 let me die |
+| 18 | `MSG_RIPPERDOC` | client → server | The implant I buy at the Ripperdoc (`R`): 1 to 3, 0 none. One I can't afford is ignored, I'm still choosing |
+| 19 | `MSG_BOON` | client → server | The boon card I pick (`B`): 1 to 3, 0 none |
 
 ### `MSG_VERSION`
 
@@ -129,10 +131,10 @@ A 13-byte record per player, 60 times per second:
 | 4 | X, also the distance run |
 | 2 | Y: top of the 2-tile-tall body, 0 is the top row |
 | 2 | Score |
-| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 Lucy's RAM charges, bit 7 Berserk |
+| 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Wraith's Blinks), bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
-| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS) |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS); bits 4-6 the NCPD wanted level, 0 to 5 stars |
 
 ### `MSG_COLLISION`
 
@@ -160,6 +162,11 @@ A 13-byte record per player, 60 times per second:
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
+| `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
+| `B` | CYBERPSYCHO, the leader at 250 m: the boons offered to a player, x their three ids a byte each (first card lowest; 1-6 general, 7-8 pacts, 9 the runner's own). The run waits up to 10 s for their `MSG_BOON` |
+| `E` | An event is coming, sent to every player 60 tiles before it starts: x its kind (1 blackout, 2 drone swarm, 3 gravity flip), y its index (stretches in common/events.hpp) |
+| `G` | A player picked a boon: x its id, 0 for none |
+| `I` | A player left the Ripperdoc: x is the implant bought, 1 to 3, or 0 for none |
 | `T` | The Trauma Team (upgrade) picked the player up instead of a death: the run waits 3.5 s while it works, then 2 s of invincibility, half the run's eddies billed |
 | `J` | The eddy just taken on that tile hit the Lucky Chip's jackpot (upgrade): +10 in all |
 | `P` | The drone on that tile, just destroyed, drops a power-up thanks to the Drone Pinata (upgrade): `droneDrop(x, y, true)` |
@@ -186,14 +193,18 @@ server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the we
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
-feet), for one of her 2 RAM charges; nothing in her way, nothing spent.
+feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Wraith blinks, for one of his 2
+charges: 4 tiles ahead; the drones his body crosses go down (`d`), Adam Smasher's rockets it crosses
+turn back at him, and he takes a stab if it reaches him. In the last 0.3 s before Smasher's slam or
+cannon hits Wraith, the Blink is perfect (`f`): no charge spent, untouchable until that strike is over.
+Berserk never blinks on its own.
 
 ### `MSG_SHOT`
 
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear (Dante's attacks go out as 0 in the air, 2 on the ground) |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 6 blink, sent before he moves (Dante's attacks go out as 0 in the air, 2 on the ground) |
 
 ### `MSG_ULTIMATE`
 
@@ -203,7 +214,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Stillness (Wraith) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -226,6 +237,9 @@ Fishbones sweeps 30 tiles ahead at 40 tiles per second like the fire wave, but o
 The Doppelganger sends nothing more: for 8 seconds each of Dante's attacks is also made from the
 opposite height (the corridor's height minus his body's, minus his y), and the clients draw his double
 there and its shots themselves. Its kills come as his.
+
+Stillness sends nothing more: for 4 seconds the server stops the titans, the snipers and Adam Smasher
+(his x and his rockets stay where they are). Their states keep coming, standing still.
 
 ### `MSG_TITANS`
 
@@ -261,6 +275,7 @@ still for 0.6 s, then the railgun fires for 0.25 s along the whole row, everyone
 | 2 | Y: the top of the rockets' gap, or the cannon's line |
 | 2 | Seconds into the attack, in 1/100 |
 | 1 | 1 under his Sandevistan: low on health or past half his arena, his strikes and gaps sped up |
+| 2 | The rows of the rocket wall Wraith blinked through, bit 0 the top row: they fly back at him (4 damage each) and hit nobody |
 
 Adam Smasher steps in at 500 tiles, 12 tiles ahead of the leader, and fights for the next 400 (the
 map is empty there). Rockets: a wall along every row but a 4-tile gap. Slam: the 3 bottom rows.

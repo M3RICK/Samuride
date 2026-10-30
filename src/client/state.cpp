@@ -1,6 +1,7 @@
 // Game state shared between the network thread and the render thread
 
 #include "state.hpp"
+#include "../common/boons.hpp"
 
 void GameState::startCountdown(int my_number, const std::map<int, int> &roster, int run_district, GameMode run_mode)
 {
@@ -23,6 +24,8 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     winner = -1;
     rematch_requested = false;
     trauma_offer = false;
+    ripperdoc_open = false;
+    boon_open = false;
     players.clear();
     my_coins.clear();
     pending_effects.clear();
@@ -55,9 +58,26 @@ void GameState::handleCollision(char type, int player, int x, int y)
     if (type == PINATA_DROP)
         pinata_drops.insert({x, y});
     // Asked until something else happens to me: the rescue, or the death I chose
-    if (player == my_player_number)
+    if (player == my_player_number) {
         trauma_offer = type == TRAUMA_OFFER;
+        ripperdoc_open = type == RIPPERDOC_OFFER;
+        boon_open = type == BOON_OFFER;
+    }
     pending_effects.push_back({type, player, x, y});
+}
+
+void GameState::holdAttack(bool down)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    attack_down = down ? std::optional(std::chrono::steady_clock::now()) : std::nullopt;
+}
+
+float GameState::attackHeld() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return attack_down ? std::chrono::duration<float>(std::chrono::steady_clock::now() - *attack_down).count() : 0;
 }
 
 void GameState::setWinner(int player_number)
@@ -67,6 +87,8 @@ void GameState::setWinner(int player_number)
     winner = player_number;
     phase = Phase::Over;
     trauma_offer = false;
+    ripperdoc_open = false;
+    boon_open = false;
 }
 
 void GameState::pushMapData(std::vector<uint8_t> data)
@@ -260,6 +282,20 @@ bool GameState::isTraumaOffered() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return trauma_offer;
+}
+
+bool GameState::isRipperdocOpen() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return ripperdoc_open;
+}
+
+bool GameState::isBoonOpen() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return boon_open;
 }
 
 bool GameState::answerTraumaOffer()

@@ -16,6 +16,8 @@ std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id)
             return std::make_unique<Hack>();
         case Weapon::Rebellion:
             return std::make_unique<Rebellion>();
+        case Weapon::Blink:
+            return std::make_unique<Blink>();
         default:
             return std::make_unique<Gun>();
     }
@@ -34,6 +36,8 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
             return std::make_unique<Fishbones>();
         case Ultimate::Doppelganger:
             return std::make_unique<Doppelganger>();
+        case Ultimate::Stillness:
+            return std::make_unique<Stillness>();
         default:
             return std::make_unique<FireWave>();
     }
@@ -46,6 +50,9 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
 float Gun::attack(Server &server, Player &player)
 {
     server.fireProjectile(player, Weapon::Gun);
+    // Double Tap: the second one flies through what the first took down
+    if (player.hasBoon(Boon::Signature))
+        server.fireProjectile(player, Weapon::Gun);
     return statsOf(Weapon::Gun).cooldown;
 }
 
@@ -56,6 +63,8 @@ float Minigun::attack(Server &server, Player &player)
     if (player.isBerserk())
         return MINIGUN_SPRAY_COOLDOWN;
     startBurst();
+    if (player.hasBoon(Boon::Signature))
+        burst_left += 2;    // Bigger Bursts
     return statsOf(Weapon::Minigun).cooldown;
 }
 
@@ -77,6 +86,8 @@ bool Minigun::burstShotDue(float dt)
 float Blade::attack(Server &server, Player &player)
 {
     WeaponStats stats = statsOf(Weapon::Blade);
+    if (player.hasBoon(Boon::Signature))
+        stats.reach *= 1.5f;    // Long Edge
 
     server.announceShot(player, Weapon::Blade);
     server.strike(player, stats.reach);
@@ -142,7 +153,9 @@ void Hack::bounce(Server &server, const Player &player, int from_x, int from_y)
 // A charge comes back every RAM_RECHARGE, faster in Berserk
 void Hack::tick(const Player &player, float dt)
 {
-    if (ram < RAM_MAX && (ram_timer -= dt * (player.isBerserk() ? BERSERK_RAM_RATE : 1)) <= 0) {
+    // Overclocked Deck: twice as fast
+    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1);
+    if (ram < RAM_MAX && (ram_timer -= dt * rate) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
     }
@@ -186,13 +199,92 @@ int Rebellion::droneDown()
 }
 
 // A rank down every STYLE_DROP_TIME without a kill
-void Rebellion::tick(const Player &, float dt)
+void Rebellion::tick(const Player &player, float dt)
 {
-    if (rank == 0 || (drop_timer -= dt) > 0)
+    // Showoff: twice as slow
+    if (rank == 0 || (drop_timer -= dt * (player.hasBoon(Boon::Signature) ? 0.5f : 1)) > 0)
         return;
     rank--;
     kills = 0;
     drop_timer = STYLE_DROP_TIME;
+}
+
+// The key down starts the aim; the Blink comes on release
+float Blink::attack(Server &, Player &)
+{
+    if (charges_left > 0)
+        held = 0;
+    return 0;
+}
+
+// blinkDistance ahead, past a zapper there: the drones in the box his body sweeps go down and he picks up
+// what's in it, a zapper on his way pays a close call, Smasher's rockets in it turn back, Smasher
+// takes a stab if it reaches him
+float Blink::release(Server &server, Player &player)
+{
+    if (held < 0 || charges_left == 0)
+        return 0;
+    float top = player.getY();
+    float to_x = blinkLanding(player.getX() + (player.ultimate().freezes() ? BLINK_FAR_DISTANCE : blinkDistance(held)), top,
+                              [&](int x, int y) { return server.isLiveZapper(x, y); });
+    held = -1;
+    float left = player.getX();
+    float right = to_x + 1;
+    float bottom = top + Player::HEIGHT;
+    // Only a zapper that running would have hit: his body's rows (sampled like the collisions), the
+    // columns between where he was and where he lands. Drones he cuts are just his attack, paid as kills.
+    bool close_call = false;
+    for (int x = static_cast<int>(left) + 1; x <= static_cast<int>(to_x); x++)
+        for (float dy : {0.3f, 1.0f, 1.7f})
+            close_call |= server.isLiveZapper(x, static_cast<int>(top + dy));
+
+    for (int x = static_cast<int>(left); x < right; x++)
+        for (int y = static_cast<int>(top); y < bottom; y++)
+            if (server.isLiveDrone(x, y))
+                server.destroyDrone(player.getClientFd(), x, y);
+    if (close_call) {
+        player.addScore(BLINK_CLOSE_CALL_BOUNTY);
+        server.notifyCollision(CLOSE_CALL, player, static_cast<int>(to_x), static_cast<int>(top));
+    }
+    for (int x = static_cast<int>(left); x < right; x++)
+        for (int y = static_cast<int>(top); y < bottom; y++)
+            server.pickUp(player, x, y);
+    if (server.bossBetween(left, right))
+        server.hitBoss(player, BOSS_STAB_DAMAGE);
+    // Smasher's rockets he passes through fly back at him
+    if (int reflected = server.reflectRockets(left, right, top, bottom)) {
+        server.hitBoss(player, reflected * BOSS_REFLECT_DAMAGE);
+        player.dodge(BOSS_REFLECT_GRACE);
+    }
+    float strike = server.bossThreatens(player);
+    // Before he moves: the clients draw his smoke where he was
+    server.announceShot(player, Weapon::Blink);
+    player.blinkTo(to_x);
+    // Through the strike that was about to land on him, and a counter-stab wherever Smasher stands
+    if (strike > 0) {
+        player.dodge(strike);
+        server.notifyCollision(PERFECT_DODGE, player, static_cast<int>(to_x), static_cast<int>(top));
+        server.hitBoss(player, BOSS_STAB_DAMAGE);
+        return BLINK_COOLDOWN;
+    }
+    // Stillness: the Blinks are free (and go all the way) while the world stands still
+    if (player.ultimate().freezes())
+        return BLINK_COOLDOWN;
+    if (charges_left-- == BLINK_CHARGES)
+        recharge_timer = BLINK_RECHARGE;
+    return BLINK_COOLDOWN;
+}
+
+void Blink::tick(const Player &player, float dt)
+{
+    if (held >= 0)
+        held += dt;
+    // Void Walker: twice as fast
+    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1);
+    if (charges_left < BLINK_CHARGES && (recharge_timer -= dt * rate) <= 0) {
+        charges_left++;
+        recharge_timer = BLINK_RECHARGE;
+    }
 }
 
 //=============================================================================

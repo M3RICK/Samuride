@@ -7,6 +7,7 @@
 #include "../../common/tuning.hpp"
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <format>
 #include <map>
 #include <vector>
@@ -38,6 +39,13 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
     float y = 90;
 
     canvas.text(std::format("{:04} M", distance), 56, NEON_YELLOW, {24, 16}, {0, 0});
+    // The event under way, and how far it still goes
+    if (RunEvent event = run.eventAt(static_cast<float>(distance)); event != RunEvent::None) {
+        static const char *NAMES[RUN_EVENTS] = {"", "BLACKOUT", "DRONE SWARM", "GRAVITY FLIPPED"};
+        int left = static_cast<int>(eventStart(eventIndex(static_cast<float>(distance))) + EVENT_LENGTH) - distance;
+        canvas.text(std::format("{}  {} M", NAMES[static_cast<int>(event)], left), 34, NEON_ORANGE,
+                    {Screen::WIDTH / 2, 40});
+    }
     // assets/tuning.txt changed something: screenshots and records then say so
     if (Tuning::custom()) {
         canvas.text("CUSTOM TUNING", 22, NEON_CYAN, {24, y}, {0, 0});
@@ -58,6 +66,8 @@ void GameScreen::drawHUD(const std::map<int, PlayerState> &players, int me, bool
         canvas.text(players.size() == 1 && bests.drones > 0 ? std::format("DRONES DOWN  {}   BEST {}", drones_down, bests.drones)
                                                             : std::format("DRONES DOWN  {}", drones_down),
                     26, NEON_RED, {24, y}, {0, 0});
+    if (cyberpsycho && players.count(me))
+        drawWanted(players.at(me), me, y + 40);
     if (players.count(me))
         drawRunnerPanel(players.at(me), me, cyberpsycho && ultimateOf(run.characterOf(me)) != Ultimate::None);
     if (players.count(me) && cyberpsycho && weaponOf(run.characterOf(me)) == Weapon::Rebellion)
@@ -164,6 +174,44 @@ void GameScreen::drawStyle(const PlayerState &player)
         canvas.text(STYLE_NAMES[rank], size, COLORS[rank], center);
     if (rank > 0)
         canvas.text(WORDS[rank], 26 + 2 * rank, COLORS[rank], center + sf::Vector2f(60 + 260 * slide * slide, 12), {0, 0.5f});
+}
+
+// The NCPD wanted level under the drone count, GTA style: five stars, the lit ones flashing red and
+// blue like a patrol car's lights, the bounty they pay beside them. A siren when one comes on.
+void GameScreen::drawWanted(const PlayerState &player, int me, float y)
+{
+    static constexpr float RADIUS = 13;
+    int stars = std::clamp(player.wanted, 0, WANTED_MAX_STARS);
+
+    if (stars > wanted_shown) {
+        audio.play(Audio::Sfx::Siren);
+        run.callout = std::format("WANTED {}", std::string(stars, '*'));
+        run.callout_color = NEON_RED;
+        run.callout_clock.restart();
+    }
+    wanted_shown = stars;
+
+    bool red = std::fmod(canvas.time(), 0.5f) < 0.25f;
+    for (int i = 0; i < WANTED_MAX_STARS; i++) {
+        sf::ConvexShape star(10);
+        for (int point = 0; point < 10; point++) {
+            float angle = point * 3.14159265f / 5 - 3.14159265f / 2;
+            float r = point % 2 ? RADIUS * 0.45f : RADIUS;
+            star.setPoint(point, {r * std::cos(angle), r * std::sin(angle)});
+        }
+        star.setPosition({24 + RADIUS + i * RADIUS * 2.3f, y + RADIUS});
+        bool lit = i < stars;
+        star.setFillColor(lit ? ((i % 2 == 0) == red ? NEON_RED : NEON_CYAN) : sf::Color(255, 255, 255, 40));
+        canvas.draw(star);
+    }
+    if (stars > 0)
+        if (implant > 0)
+        canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
+    if (boon != Boon::None)
+        canvas.text(boonLook(boon, weaponOf(run.characterOf(me))).name, 22, NEON_YELLOW,
+                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22)}, {0, 0.5f});
+    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+                    {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 
 // The gauge around the face, clockwise from the top, the `lit` share of it in colour.
@@ -393,11 +441,13 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         sf::RectangleShape tint({Screen::WIDTH, Screen::HEIGHT});
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
-        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() / sandevistan_time, y);
+        drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() /
+                                                       (sandevistan_time * (boon == Boon::Overclock ? 2 : 1)), y);
         y += 80;
     }
     if (player.berserk)
-        drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() / BERSERK_TIME, y);
+        drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() /
+                                                 (BERSERK_TIME * (boon == Boon::Rage ? 2 : 1)), y);
 }
 
 void GameScreen::drawGauge(const std::string &label, sf::Color color, float left, float y)
@@ -558,8 +608,8 @@ void GameScreen::drawRematchPrompt(GameState &state, bool solo)
     if (state.isRematchRequested())
         canvas.text("WAITING FOR YOUR CHOOM...", 32, NEON_CYAN, pos);
     else
-        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN     [ESC] MENU", "TAP TO RUN AGAIN")
-                         : Touch::hint("[SPACE] REMATCH     [ESC] MENU", "TAP TO REMATCH"),
+        canvas.text(solo ? Touch::hint("[SPACE] RUN AGAIN    [C] RUNNER    [M] DISTRICT    [ESC] MENU", "TAP TO RUN AGAIN")
+                         : Touch::hint("[SPACE] REMATCH    [C] RUNNER    [M] DISTRICT    [ESC] MENU", "TAP TO REMATCH"),
                     32, NEON_YELLOW, pos);
     drawMenuButton();
 }
@@ -569,9 +619,10 @@ void GameScreen::drawMenuButton()
 {
     if (!Touch::ENABLED)
         return;
-    sf::FloatRect box(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE);
-    canvas.card(box, true);
-    canvas.text("MENU", 40, NEON_YELLOW, Touch::MENU_BUTTON);
+    for (auto [pos, label] : {std::pair{Touch::RUNNER_BUTTON, "RUNNER"}, {Touch::MENU_BUTTON, "MENU"}, {Touch::DISTRICT_BUTTON, "DISTRICT"}}) {
+        canvas.card(sf::FloatRect(pos - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE), true);
+        canvas.text(label, 40, NEON_YELLOW, pos);
+    }
 }
 
 // A deadly hit with the Trauma Team on call: come or not, the bill shown, the time left draining
@@ -598,6 +649,61 @@ void GameScreen::drawTraumaOffer(const PlayerState &me)
         canvas.text(call ? Touch::hint("[Y] CALL THEM", "CALL THEM") : Touch::hint("[N] LET ME DIE", "LET ME DIE"), 40,
                     call ? NEON_CYAN : NEON_RED, pos);
     }
+}
+
+// Three cards to pick from, 1 to 3, and walking out (0): the Ripperdoc's implants, the boons. The time
+// left drains under the title.
+void GameScreen::drawCards(const std::string &title, sf::Color color, const std::string &subtitle, float left,
+                           const std::vector<Card> &cards)
+{
+    canvas.overlay(170);
+    sf::Vector2f center = Screen::CENTER;
+    canvas.glitchText(title, 110, color, center + sf::Vector2f(0, -330));
+    canvas.text(subtitle, 32, sf::Color::White, center + sf::Vector2f(0, -230));
+
+    sf::RectangleShape bar({600 * std::clamp(left, 0.0f, 1.0f), 10});
+    bar.setPosition(center + sf::Vector2f(-300, -180));
+    bar.setFillColor(color);
+    canvas.draw(bar);
+
+    for (size_t i = 0; i < cards.size(); i++) {
+        const Card &card = cards[i];
+        sf::Vector2f pos = Touch::implantCard(static_cast<int>(i) + 1);
+        sf::Color dim = withAlpha(sf::Color::White, 90);
+        canvas.card(sf::FloatRect(pos - Touch::IMPLANT_CARD_SIZE / 2.f, Touch::IMPLANT_CARD_SIZE), card.enabled);
+        canvas.text(Touch::ENABLED ? card.name : std::format("[{}] {}", i + 1, card.name), 30, card.enabled ? color : dim,
+                    pos + sf::Vector2f(0, -60));
+        canvas.text(card.what, 22, card.enabled ? sf::Color::White : dim, pos);
+        if (!card.price.empty())
+            canvas.text(card.price, 32, card.enabled ? NEON_YELLOW : dim, pos + sf::Vector2f(0, 60));
+    }
+    sf::Vector2f out = Touch::implantCard(0);
+    canvas.card(sf::FloatRect(out - sf::Vector2f(210, 55), {420, 110}), false);
+    canvas.text(Touch::hint("[0] NO THANKS", "NO THANKS"), 36, NEON_RED, out);
+}
+
+// Past Smasher: three implants for the run's eddies, the ones you can't afford dimmed
+void GameScreen::drawRipperdoc(const PlayerState &me)
+{
+    std::vector<Card> cards;
+    for (int i = 1; i <= IMPLANTS; i++)
+        cards.push_back({IMPLANT_LOOKS[i].name, IMPLANT_LOOKS[i].what, std::format("{} EDDIES", IMPLANT_PRICES[i]),
+                         me.score >= IMPLANT_PRICES[i]});
+    drawCards("RIPPERDOC", NEON_CYAN, std::format("ONE IMPLANT FOR THE REST OF THE RUN     YOU HAVE {} EDDIES", me.score),
+              1 - ripperdoc_clock.getElapsedTime().asSeconds() / RIPPERDOC_TIME, cards);
+}
+
+// At BOON_DISTANCE: three boons, free, the pact in red
+void GameScreen::drawBoons(int me)
+{
+    std::vector<Card> cards;
+    for (Boon card : boon_cards) {
+        BoonLook look = boonLook(card, weaponOf(run.characterOf(me)));
+        bool pact = static_cast<int>(card) >= FIRST_PACT && card != Boon::Signature;
+        cards.push_back({look.name, look.what, pact ? "RISKY" : card == Boon::Signature ? "YOURS ONLY" : "", true});
+    }
+    drawCards("PICK A BOON", NEON_YELLOW, "ONE FOR THE REST OF THE RUN, ON THE HOUSE",
+              1 - boon_clock.getElapsedTime().asSeconds() / BOON_TIME, cards);
 }
 
 void GameScreen::drawConnectionLost()

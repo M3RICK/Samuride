@@ -17,6 +17,17 @@ void Server::handleAttack(int client_fd)
         it->second.startCooldown(cooldown);
 }
 
+void Server::releaseAttack(int client_fd)
+{
+    auto it = players.find(client_fd);
+
+    if (mode != GameMode::Cyberpsycho || phase != Phase::Running || it == players.end() ||
+        it->second.getForm() != Form::Normal)
+        return;
+    if (float cooldown = it->second.weapon().release(*this, it->second); cooldown > 0)
+        it->second.startCooldown(cooldown);
+}
+
 // Only with a full gauge, out of the Attack Titan's forms; an ultimate still going may use the key itself
 // (Mikasa throws a spear)
 void Server::handleUltimate(int client_fd)
@@ -260,8 +271,18 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
-    owner->second.addScore(owner->second.weapon().droneDown());
+    owner->second.addScore(wantedBounty(owner->second.weapon().droneDown(), owner->second.wantedStars()));
+    owner->second.raiseWanted();
     notifyCollision(DRONE_TILE, owner->second, x, y);
+    // Booby-Trapped Drones: the zappers next to it go off like Lucy's hack
+    if (owner->second.hasBoon(Boon::Trapped))
+        for (int zx = x - 1; zx <= x + 1; zx++)
+            for (int zy = y - 1; zy <= y + 1; zy++)
+                if (isLiveZapper(zx, zy)) {
+                    for (std::pair<int, int> node : zapperNodes(game_map, zx, zy))
+                        switchOffZapper(node.first, node.second, HACK_TIME);
+                    notifyCollision(ZAPPER_HACK, owner->second, zx, zy);
+                }
 
     float pinata = pinataChance(owner->second.getUpgrades());
     if (droneDrop(x, y) == EMPTY_TILE && pinata > 0 && std::uniform_real_distribution<float>(0, 1)(rng) < pinata) {

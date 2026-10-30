@@ -10,6 +10,10 @@
 class Client;
 
 class InputManager {
+public:
+    // Where back leads: the menu, or once a run is over straight to the runners or the districts
+    enum class Back { Menu, Runner, District };
+
 private:
     Client *client;
     sf::RenderWindow *window;
@@ -24,6 +28,7 @@ private:
     // Set for the frame they happened in
     bool close_requested;
     bool back_requested;
+    Back back_to = Back::Menu;
     bool confirm_pressed;
 
 public:
@@ -39,6 +44,7 @@ public:
 
     bool closeRequested() const { return close_requested; }
     bool backRequested() const { return back_requested; }
+    Back backTo() const { return back_to; }
     bool confirmPressed() const { return confirm_pressed; }
 };
 

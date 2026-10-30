@@ -124,6 +124,8 @@ void Server::removeClient(int client_fd)
 
     ready_clients.erase(client_fd);
     trauma_offers.erase(client_fd);
+    ripperdoc_waiting.erase(client_fd);
+    boon_offers.erase(client_fd);
     if (client_fd == host_fd)
         host_fd = players.empty() ? -1 : players.begin()->first;
     Socket::close(client_fd);
@@ -209,13 +211,25 @@ bool Server::processClientMessage(int client_fd, const MessageHeader &header, co
             break;
 
         case MSG_ATTACK:
-            // The key going down (1, or empty); coming back up (0) changes nothing
+            // The key going down (1, or empty), or coming back up (0)
             if (payload.empty() || payload[0] != 0)
                 handleAttack(client_fd);
+            else
+                releaseAttack(client_fd);
             break;
 
         case MSG_ULTIMATE:
             handleUltimate(client_fd);
+            break;
+
+        case MSG_BOON:
+            if (!payload.empty() && phase == Phase::Running)
+                answerBoon(client_fd, payload[0]);
+            break;
+
+        case MSG_RIPPERDOC:
+            if (!payload.empty() && phase == Phase::Running)
+                answerRipperdoc(client_fd, payload[0]);
             break;
 
         case MSG_TRAUMA:

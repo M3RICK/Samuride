@@ -54,17 +54,24 @@ private:
     std::vector<Nuke> nukes;
     std::vector<Rocket> rockets;
     std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
+    std::vector<std::pair<int, sf::Clock>> stillnesses;    // whose, and since when
 
     void start(const UltimateEvent &ultimate);
     void drawFireWaves();
     void drawNukes();
     void drawBreaches();
+    void drawStillnesses();
     void drawDoubles();
     void drawRockets();
 
 public:
     Ultimates(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio, Particles &particles);
 
+    // True while this player's Stillness lasts: his Blinks go all the way
+    bool stills(int player) const
+    {
+        return std::ranges::any_of(stillnesses, [&](const auto &still) { return still.first == player; });
+    }
     void clear();
     // Starts the ultimates the server reported
     void handle(GameState &state);

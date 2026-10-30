@@ -2,6 +2,8 @@
 // `inline` instead of `constexpr`, add its line here, then regenerate the file (./Samuride_server -t).
 
 #include "tuning.hpp"
+#include "boons.hpp"
+#include "events.hpp"
 #include "difficulty.hpp"
 #include "cyberpsycho.hpp"
 #include "powerups.hpp"
@@ -80,6 +82,27 @@ std::vector<Entry> &entries()
             VALUE(EMERGE_TIME, "Seconds bursting out of the titan, still invincible"),
             VALUE(SANDEVISTAN_PER_LEVEL, "Seconds of Sandevistan each shop level adds"),
             VALUE(MAGNET_PER_LEVEL, "Tiles each eddie magnet level reaches"),
+            VALUE(EVENT_FIRST, "Events (a blackout, a drone swarm, a gravity flip): where the first starts, in tiles"),
+            VALUE(EVENT_EVERY, "Tiles between two events once Smasher's arena is behind (the next starts 100 after it)", 1),
+            VALUE(EVENT_LENGTH, "Tiles an event lasts"),
+            VALUE(EVENT_WARNING, "Tiles before an event that everyone is warned"),
+            VALUE(SWARM_DRONES, "Drone swarm: added to the chance an obstacle is drones"),
+            VALUE(BLACKOUT_DARKNESS, "Blackout: how dark, 0 to 255", 0, 255),
+            VALUE(FLIP_GRACE, "Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)"),
+            VALUE(BOON_DISTANCE, "Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three"),
+            VALUE(BOON_TIME, "Seconds the run waits for the pick"),
+            VALUE(COLD_BLOOD_AIM, "Cold Blood: seconds more a sniper's sight holds still before the shot"),
+            VALUE(JACKPOT_FEVER, "Jackpot Fever: added to the chance an eddy is a jackpot", 0, 1),
+            VALUE(GLASS_CANNON_EDDIES, "Glass Cannon pact: eddies times this, no shield, no Trauma Team", 1),
+            VALUE(PRICE_ON_HEAD_START, "Price On Your Head pact: wanted stars right away"),
+            VALUE(PRICE_ON_HEAD_FLOOR, "Price On Your Head pact: the stars never drop under this"),
+            VALUE(RIPPERDOC_TIME, "Seconds the run waits at the Ripperdoc, past Smasher (CYBERPSYCHO)"),
+            Entry("ARMOR_PRICE", &IMPLANT_PRICES[1], "Subdermal Armor implant, in the run's eddies"),
+            VALUE(ARMOR_REGEN, "Subdermal Armor: seconds before a broken shield grows back"),
+            Entry("KERENZIKOV_PRICE", &IMPLANT_PRICES[2], "Kerenzikov implant, in the run's eddies"),
+            VALUE(KERENZIKOV_RATE, "Kerenzikov: attacks come that many times faster"),
+            Entry("SYNAPTIC_PRICE", &IMPLANT_PRICES[3], "Synaptic Accelerator implant, in the run's eddies"),
+            VALUE(SYNAPTIC_RATE, "Synaptic Accelerator: the ultimate gauge fills that many times faster", 1),
             VALUE(TRAUMA_OFFER_TIME, "Seconds you get to say whether to call the Trauma Team, after which it comes"),
             VALUE(TRAUMA_RESCUE_TIME, "Seconds the run waits while the Trauma Team picks you up"),
             VALUE(TRAUMA_GRACE, "Seconds of invincibility after the Trauma Team picks you up"),
@@ -91,6 +114,12 @@ std::vector<Entry> &entries()
 
             Entry("Enemies"),
             VALUE(DRONE_BOUNTY, "Eddies for a drone down"),
+            VALUE(WANTED_KILLS_PER_STAR, "NCPD wanted level: drones down for a star (5 at most)", 1),
+            VALUE(WANTED_CALM_TIME, "Seconds without a drone down before the NCPD starts to forget you"),
+            VALUE(WANTED_COOLING, "Then, drones' worth of heat it forgets every second"),
+            VALUE(WANTED_BOUNTY_PER_STAR, "Drone bounty added per star (0.2: x1.2 a star)"),
+            VALUE(WANTED_DRONES_PER_STAR, "Added per star to the chance an obstacle is drones"),
+            VALUE(WANTED_SNIPERS_PER_STAR, "Snipers come that much more often per star"),
             VALUE(TITAN_FIRST_DISTANCE, "No titan before this many tiles"),
             VALUE(TITAN_MIN_INTERVAL, "Fewest seconds between two titans"),
             VALUE(TITAN_MAX_INTERVAL, "Most seconds between two titans"),
@@ -107,6 +136,7 @@ std::vector<Entry> &entries()
             Entry("Adam Smasher, the boss"),
             VALUE(BOSS_DISTANCE, "Tiles before his arena"),
             VALUE(BOSS_ARENA, "How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)"),
+            VALUE(BOSS_SPEED_DROP, "Once his arena is behind, the run slows down by this many tiles a second (the pace holds in it)"),
             VALUE(BOSS_AHEAD, "Tiles ahead of the leader he stands"),
             VALUE(BOSS_INTRO_TIME, "Seconds of his entrance before his first attack"),
             VALUE(BOSS_ATTACK_GAP, "Seconds between two attacks"),
@@ -117,6 +147,10 @@ std::vector<Entry> &entries()
             VALUE(BOSS_SPEAR_DAMAGE, "A thunder spear's damage"),
             VALUE(BOSS_HACK_DAMAGE, "Lucy's hack's damage"),
             VALUE(BOSS_SLASH_DAMAGE, "A blade's damage (Mikasa, Dante's sword), while he is close after a slam"),
+            VALUE(BOSS_STAB_DAMAGE, "Wraith blinking into him"),
+            VALUE(BOSS_REFLECT_DAMAGE, "Each rocket Wraith blinks through, sent back at him"),
+            VALUE(BOSS_REFLECT_SLACK, "Tiles past where Wraith's Blink lands that it still sends the rockets back"),
+            VALUE(BOSS_REFLECT_GRACE, "Seconds Wraith can't be hurt after sending rockets back"),
             VALUE(BOSS_ULTIMATE_DAMAGE, "Any ultimate's damage"),
             VALUE(BOSS_BOUNTY, "Eddies for downing him"),
             VALUE(BOSS_ROCKET_WARN, "Seconds the rockets are warned"),
@@ -151,6 +185,13 @@ std::vector<Entry> &entries()
             VALUE(HACK_TIME, "Seconds a hacked zapper stays off"),
             VALUE(HACK_BOUNCE_RANGE, "A hacked drone passes the hack to the nearest drone this close"),
             VALUE(RAM_RECHARGE, "Seconds to get one charge of RAM back (3 at most)"),
+            VALUE(BLINK_DISTANCE, "Wraith: tiles ahead a Blink takes him"),
+            VALUE(BLINK_FAR_DISTANCE, "Wraith: tiles ahead a Blink takes him, the key held long enough"),
+            VALUE(BLINK_HOLD_TIME, "Seconds to hold the key for the farthest Blink"),
+            VALUE(BLINK_CLOSE_CALL_BOUNTY, "Eddies for a Blink through a zapper he would have run into"),
+            VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
+            VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (3 at most)"),
+            VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),
@@ -172,6 +213,7 @@ std::vector<Entry> &entries()
             VALUE(FISHBONES_RECOIL_TIME, "Seconds its recoil lasts"),
             VALUE(FISHBONES_RECOIL_PUSH, "How hard the recoil throws her back, times the run speed"),
             VALUE(DOPPELGANGER_TIME, "Dante: seconds his Doppelganger repeats his attacks"),
+            VALUE(STILLNESS_TIME, "Wraith: seconds the world stands still"),
 
             Entry("Dante's style meter: ranks D, C, B, A, S, SS, SSS"),
             VALUE(STYLE_KILLS, "Kills in a row to go up a rank"),

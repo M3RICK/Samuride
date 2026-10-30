@@ -14,14 +14,17 @@ Menu::Menu(sf::RenderWindow &window, const Settings &settings)
     state.settings = settings;
 }
 
-MenuChoice Menu::run(Renderer &renderer)
+MenuChoice Menu::run(Renderer &renderer, MenuState::Screen start)
 {
     MenuChoice choice = {MenuChoice::Mode::Quit, "", 0, 0, -1};
 
     this->renderer = &renderer;
     audio = &renderer.getAudio();
     audio->greet();
-    state.screen = MenuState::Screen::Main;
+    // Whoever joined has no district to pick: the host does
+    if (start == MenuState::Screen::District && pending.mode == MenuChoice::Mode::Join)
+        start = MenuState::Screen::Character;
+    state.screen = start;
     state.bests = Bests::load();
     state.wallet = Wallet::load();
 

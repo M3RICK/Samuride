@@ -40,12 +40,13 @@ struct PlayerState {
     Form form = Form::Normal;
     bool shielded = false;
     bool sprinting = false;     // Sandevistan
-    int ram = 0;                // Lucy's hack charges
+    int ram = 0;                // the weapon's charges: Lucy's RAM, Wraith's Blinks
     bool berserk = false;
     int ultimate = 0;           // gauge, in percent
     int spears = 0;             // Mikasa's thunder spears left
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
     int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
+    int wanted = 0;             // NCPD wanted level, 0 to WANTED_MAX_STARS
 };
 
 // MSG_SHOT: someone attacked in CYBERPSYCHO
@@ -85,6 +86,7 @@ struct BossState {
     float y = 0;            // the rockets' gap top, or the cannon's line
     float time = 0;         // seconds into the phase
     bool sandevistan = false;   // attacking faster, low on health or late in his arena
+    uint16_t reflected = 0;     // the rows of the rocket wall Wraith sent back at him, one bit each
 };
 
 // MSG_COLLISION

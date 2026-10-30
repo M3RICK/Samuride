@@ -18,6 +18,13 @@ void Player::reset(int number, float spawn_y)
     y = spawn_y;
     y_velocity = 0;
     score = 0;
+    wanted_heat = 0;
+    wanted_calm = 0;
+    implant = 0;
+    armor_timer = 0;
+    boon = Boon::None;
+    glass_carry = 0;
+    flipped = false;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
@@ -50,8 +57,33 @@ bool Player::collectCoin(int tile_x, int tile_y)
 // Every eddy earned charges the ultimate
 void Player::addScore(int points)
 {
+    if (boon == Boon::GlassCannon && points > 0) {
+        glass_carry += points * (GLASS_CANNON_EDDIES - 1);
+        int extra = static_cast<int>(glass_carry);
+        glass_carry -= extra;
+        points += extra;
+    }
     score += points;
-    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points);
+    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points * (implant == 3 ? SYNAPTIC_RATE : 1));
+}
+
+void Player::takeBoon(Boon b)
+{
+    boon = b;
+    if (b == Boon::GlassCannon)
+        shield = false;
+    if (b == Boon::PriceOnHead)
+        wanted_heat = std::max(wanted_heat, static_cast<float>(PRICE_ON_HEAD_START * WANTED_KILLS_PER_STAR));
+}
+
+bool Player::buyImplant(int id)
+{
+    if (id < 1 || id > IMPLANTS || score < IMPLANT_PRICES[id])
+        return false;
+    score -= IMPLANT_PRICES[id];
+    implant = id;
+    shield |= id == 1;
+    return true;
 }
 
 void Player::startShift()
@@ -65,9 +97,9 @@ void Player::powerUp(char tile)
     if (tile == SHIELD_TILE)
         shield = true;
     else if (tile == SANDEVISTAN_TILE)
-        sprint_timer = sandevistanTime(upgrades);
+        sprint_timer = sandevistanTime(upgrades) * (boon == Boon::Overclock ? 2 : 1);
     else if (tile == BERSERK_TILE)
-        berserk_timer = BERSERK_TIME;
+        berserk_timer = BERSERK_TIME * (boon == Boon::Rage ? 2 : 1);
 }
 
 bool Player::absorbHit()
@@ -129,8 +161,20 @@ void Player::updateForm(float dt)
 void Player::update(float dt, float forward_speed, float max_y)
 {
     updateForm(dt);
-    attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
+    attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1) * (implant == 2 ? KERENZIKOV_RATE : 1));
+    // Glass Cannon: no shield, from the floor or the Ripperdoc
+    if (boon == Boon::GlassCannon)
+        shield = false;
+    // Subdermal Armor grows the shield back
+    if (implant == 1 && !shield && (armor_timer += dt) >= ARMOR_REGEN) {
+        shield = true;
+        armor_timer = 0;
+    }
     grace_timer = std::max(0.0f, grace_timer - dt);
+    if ((wanted_calm += dt) > WANTED_CALM_TIME)
+        wanted_heat -= WANTED_COOLING * dt * (boon == Boon::Notorious ? 0.5f : 1);
+    float floor = boon == Boon::PriceOnHead ? PRICE_ON_HEAD_FLOOR * WANTED_KILLS_PER_STAR : 0;
+    wanted_heat = std::max(floor, wanted_heat);
 
     // Standing still while the smoke rises; the titan runs on the floor. Fishbones holds Jinx still in
     // the air while it charges, then its recoil throws her backward and she picks her pace back up.
@@ -157,7 +201,7 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
 
     bool thrust = jet_active && form != Form::Shifting;
-    y_velocity += (thrust ? -JET_POWER : GRAVITY) * agilityOf(character) * dt;
+    y_velocity += (thrust ? -JET_POWER : GRAVITY) * (flipped ? -1 : 1) * agilityOf(character) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
     y += y_velocity * dt;
 

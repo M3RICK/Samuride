@@ -3,6 +3,65 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.1
+
+### New
+- **Wraith**, seventh runner, 1250 eddies. He has no weapon: the attack key **blinks** him
+  4 tiles straight ahead in a violet streak, and the drones he cuts through go down with a hit-stop.
+  **Hold the key** to aim further (up to 8 tiles), he blinks when you let go. A small diamond shows where he'd
+  land. **The runner who goes furthest**: a Blink aimed into a zapper lands just past it (the diamond goes red
+  only when nothing within 3 tiles is safe), and every Blink through a zapper you would have run into is a **close call: +5 eddies**.
+  The eddies and power-ups he blinks over are his. 3 charges, one back every 2 seconds.
+  - **Against Adam Smasher**, the Blink fights back: blink through his rocket wall (or just short of it) and the
+    rockets around you fly back into him (4 each), and the wall can't hurt you while it passes. Blink in the last 0.3 s before his slam or his cannon
+    hits you: PERFECT, you go through it untouched, stab him (8) wherever he stands and the charge comes back. The diamond turns gold, bigger, with a ping, while a Blink would be perfect. Blink into him while he gets up after a slam for a
+    stab (8).
+  - **Stillness** ultimate: for 4 seconds the world stands still. Titans, sniper sights, Smasher and his
+    rockets stop where they are (still deadly to touch), and your Blinks are free and go all the way (8 tiles) without holding, Smasher or not: blink through the
+    frozen wall to send it back, run up to him and stab. A countdown on screen shows how long it lasts.
+  - His own animations: running, levitating on violet smoke, gathering back from smoke after each Blink,
+    and collapsing into smoke when he dies.
+- **NCPD wanted level** (CYBERPSYCHO), GTA style: every 5 drones you take down lights a star, up to 5, under
+  the drone count. Each star makes drones pay 20% more (x2 at 5 stars), puts more drones on the road ahead and
+  sends the snipers a bit more often (x1.5 at 5 stars). Go 5 seconds without a kill and the NCPD starts to forget you, a star every
+  12 seconds or so: you pick your own difficulty.
+- **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, the run stops for 10 seconds and you
+  can spend the run's eddies on one implant for the rest of the run, with 1, 2, 3 (0 or N to walk out):
+  **Subdermal Armor** (300, a shield that grows back 30 s after it breaks), **Kerenzikov** (150, attacks
+  30% faster) or **Synaptic Accelerator** (200, your ultimate charges twice as fast). Your implant shows under
+  the wanted stars.
+- **Boons** (CYBERPSYCHO), Hades style: at 250 m the run stops and you pick one of three cards, free, for the
+  rest of the run (1, 2, 3, or 0 to skip). The first is a general boon, the second another one or your
+  runner's own, the third always a risky **pact**:
+  - Booby-Trapped Drones (a drone you down shorts the zappers next to it), Cold Blood (sniper sights hold
+    still longer before the shot), Notorious (wanted stars cool twice as slow), Jackpot Fever (8% of the
+    eddies are jackpots), Overclock (Sandevistan twice as long), Bloodlust (Berserk twice as long).
+  - Pacts: Glass Cannon (eddies x1.5, but no shield and no Trauma Team), Price On Your Head (3 stars at once,
+    never fewer than 2).
+  - Your runner's own: Double Tap (Johnny, David: two bullets a shot), Bigger Bursts (Jinx: 5 a burst),
+    Long Edge (Mikasa: 50% more reach), Overclocked Deck (Lucy: RAM back twice as fast), Showoff (Dante:
+    style drops twice as slow), Void Walker (Wraith: Blinks back twice as fast).
+- **Events during a run**: at 300 m, then every 400 m once Adam Smasher is behind, 150 m of road change,
+  announced a little before with a siren, the meters left shown at the top:
+  - **Blackout**: the lights dim, only the zappers and drones still glow, with a little light around you
+    and the speed lines to show the road moving. The eddies are in the dark.
+  - **Drone swarm** (CYBERPSYCHO): drones everywhere. Good for your wanted level.
+  - **Gravity flip**: you fall up to the ceiling and the jetpack pushes you down. Titans can't reach you there.
+    A moment of grace as it starts and ends, and its road is the easiest of the run.
+- **After a run**, straight back to the runners (`C`) or the districts (`M`), your mode and last picks kept,
+  instead of going through the whole menu. On phones: RUNNER and DISTRICT buttons beside MENU.
+
+### Balance
+- Arasaka snipers never aim at you two at a time anymore.
+- **Always a way through**: a titan or a sniper only comes once the road ahead leaves you a way past it
+  (a gap above the titan where you'll cross, room to step out of the sniper's row, around the zappers and
+  drones), and never both at once. No more titan + sniper + zapper corridor with nowhere to go.
+- After Adam Smasher the run no longer gets deadly at once: the speed stops climbing during his fight and
+  drops by 2 once his arena is behind, and his empty arena no longer counts toward how hard the road gets.
+
+### Other
+- 3.02 and 3.1 can't play together: update both sides.
+
 ## v3.02
 
 ### Fixes

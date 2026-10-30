@@ -8,6 +8,7 @@
 #include "../wallet.hpp"
 #include "../../common/tuning.hpp"
 #include <algorithm>
+#include <array>
 #include <format>
 
 using namespace Palette;
@@ -85,6 +86,9 @@ void GameScreen::resetRun()
     ultimate_was_ready = false;
     spears_shown = 0;
     style_shown = 0;
+    wanted_shown = 0;
+    implant = 0;
+    boon = Boon::None;
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;
@@ -170,6 +174,38 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
     audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
 }
 
+// The lights go out over a blackout's stretch, fading in and out over its first and last tiles: the world
+// goes dark but for the zappers and drones, drawn again over it, and the runners drawn after. The speed
+// lines and the light around you keep the road moving (fully dark, it looked frozen).
+void GameScreen::drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me)
+{
+    static constexpr float FADE = 10;
+    auto mine = run.display_positions.find(me);
+    if (mine == run.display_positions.end())
+        return;
+    float x = mine->second.x;
+    float dark = 0;
+    for (float probe : {x - FADE, x, x + FADE}) {
+        int index = eventIndex(probe);
+        if (index < 0 || run.eventAt(probe) != RunEvent::Blackout)
+            continue;
+        float start = eventStart(index);
+        float into = std::min(x - start + FADE, start + EVENT_LENGTH - x + FADE) / (2 * FADE);
+        dark = std::max(dark, std::clamp(into, 0.0f, 1.0f));
+    }
+    if (dark <= 0)
+        return;
+    sf::RectangleShape cover({Screen::WIDTH + 100, Screen::HEIGHT + 100});
+    cover.setPosition({-50, -50});
+    cover.setFillColor(sf::Color(4, 2, 12, static_cast<uint8_t>(BLACKOUT_DARKNESS * dark)));
+    canvas.draw(cover);
+    sf::Vector2f light = run.toScreen(mine->second + sf::Vector2f(0.5f, Run::PLAYER_HEIGHT / 2));
+    for (float radius : {4.0f, 2.8f, 1.8f})
+        canvas.halo(light, run.view.tile_size * radius, sf::Color(90, 70, 120, static_cast<uint8_t>(22 * dark)));
+    drawSpeedLines();
+    tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops(), true);
+}
+
 void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt)
 {
     Phase phase = last_phase;
@@ -190,10 +226,13 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawSpeedLines();
     std::set<std::pair<int, int>> destroyed = state.getDestroyedDrones();
     tiles.draw(state.getCollectedCoins(), destroyed, state.getPinataDrops());
-    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho)
+    if (phase == Phase::Running && state.getMode() == GameMode::Cyberpsycho) {
         drawHackTarget(players, me, destroyed);
+        drawBlinkTarget(players, me, state.attackHeld(), state.getBoss());
+    }
     std::vector<TitanState> titan_states = state.getTitans();
     titans.draw(titan_states);
+    drawBlackout(state, destroyed, me);
     titan_coming = std::ranges::any_of(titan_states, [&](const TitanState &titan) {
         return run.toScreen({titan.x, 0}).x > Screen::WIDTH;
     });
@@ -218,6 +257,10 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (state.isBoonOpen() && boon_clock.getElapsedTime().asSeconds() < BOON_TIME)
+        drawBoons(me);
+    if (state.isRipperdocOpen() && players.count(me) && ripperdoc_clock.getElapsedTime().asSeconds() < RIPPERDOC_TIME)
+        drawRipperdoc(players.at(me));
     if (state.isTraumaOffered() && players.count(me))
         drawTraumaOffer(players.at(me));
 
@@ -244,6 +287,48 @@ void GameScreen::drawHackTarget(const std::map<int, PlayerState> &players, int m
     if (x >= 0)
         tiles.drawSprite(sprites.hack_target, {static_cast<float>(x), static_cast<float>(y)},
                          1.4f + 0.12f * std::sin(canvas.time() * 10), sf::Color::White);
+}
+
+// Playing Wraith with a Blink left: a small diamond where it would take him, red when a live zapper waits
+// there (sampled like the server does); it slides further while the key is held. Gold, bigger, with a
+// ping, while a Blink would be PERFECT (Smasher's slam or cannon about to land on him)
+void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss)
+{
+    auto mine = players.find(me);
+    auto pos = run.display_positions.find(me);
+
+    if (mine == players.end() || pos == run.display_positions.end() || mine->second.ram == 0 ||
+        mine->second.form != Form::Normal || run.death_clocks.count(me) ||
+        weaponOf(run.characterOf(me)) != Weapon::Blink) {
+        perfect_cue = false;
+        return;
+    }
+
+    bool perfect = boss.fighting && strikeComing(boss.attack, boss.time, boss.y, pos->second.y,
+                                                 static_cast<float>(run.map.getHeight()), BLINK_PERFECT_WINDOW) > 0;
+    if (perfect && !perfect_cue)
+        audio.play(Audio::Sfx::Beep);
+    perfect_cue = perfect;
+    // Red only when no column past it is safe either, like the server's landing
+    auto live = [&](int column, int row) {
+        return run.map.getTile(column, row) == ZAPPER_TILE && run.hackLeft(column, row) <= 0 && !run.burnt_zappers.count({column, row});
+    };
+    float aimed = pos->second.x + (ultimates.stills(me) ? BLINK_FAR_DISTANCE : blinkDistance(held));
+    float x = blinkLanding(aimed, pos->second.y, live);
+    int column = static_cast<int>(x + 0.5f);
+    bool deadly = std::ranges::any_of(std::array{0.3f, 1.0f, 1.7f}, [&](float dy) { return live(column, static_cast<int>(pos->second.y + dy)); });
+    float size = run.view.tile_size * ((perfect ? 0.4f : 0.22f) + 0.03f * std::sin(canvas.time() * 10));
+    sf::Vector2f centre = run.toScreen({x + 0.5f, pos->second.y + Run::PLAYER_HEIGHT / 2});
+    sf::ConvexShape diamond(4);
+    diamond.setPoint(0, centre + sf::Vector2f(0, -size));
+    diamond.setPoint(1, centre + sf::Vector2f(size * 0.6f, 0));
+    diamond.setPoint(2, centre + sf::Vector2f(0, size));
+    diamond.setPoint(3, centre + sf::Vector2f(-size * 0.6f, 0));
+    sf::Color color = deadly ? NEON_RED : perfect ? NEON_YELLOW : NEON_CYAN;
+    diamond.setFillColor(withAlpha(color, perfect ? 140 : 70));
+    diamond.setOutlineColor(withAlpha(color, 220));
+    diamond.setOutlineThickness(2);
+    canvas.draw(diamond);
 }
 
 // "ENTERING <district>" each time the scenery changes

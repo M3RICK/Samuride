@@ -13,6 +13,8 @@
 #include "../common/powerups.hpp"
 #include "../common/cyberpsycho.hpp"
 #include "../common/upgrades.hpp"
+#include "../common/boons.hpp"
+#include "../common/events.hpp"
 #include "../common/difficulty.hpp"
 #include "arsenal.hpp"
 
@@ -45,6 +47,13 @@ private:
     float berserk_timer = 0;    // seconds of Berserk left
     float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
     int ultimate_charge = 0;    // eddies earned since the last ultimate, up to its runner's charge
+    float wanted_heat = 0;      // drones down, cooling once calm (cyberpsycho.hpp)
+    float wanted_calm = 0;      // seconds since the last drone down
+    int implant = 0;            // bought from the Ripperdoc this run (upgrades.hpp), 0 none
+    float armor_timer = 0;      // Subdermal Armor: seconds since the shield broke
+    Boon boon = Boon::None;     // picked this run (boons.hpp)
+    float glass_carry = 0;      // Glass Cannon: the share of an eddy not paid yet
+    bool flipped = false;       // in a gravity flip (events.hpp)
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
     std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
     std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
@@ -69,6 +78,10 @@ public:
 
     float getX() const { return x; }
     float getY() const { return y; }
+    // Wraith's Blink: there at once
+    void blinkTo(float to_x) { x = to_x; }
+    // Untouchable for that long (a perfect Blink through Smasher's strike), blinking like after a shield
+    void dodge(float seconds) { grace_timer = std::max(grace_timer, seconds); }
 
     int getScore() const { return score; }
     bool collectCoin(int tile_x, int tile_y);
@@ -84,18 +97,32 @@ public:
     // Returns true when the shield took the hit
     bool absorbHit();
     // Bought, and not come yet this run
-    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued; }
+    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued && boon != Boon::GlassCannon; }
     // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
     bool callTraumaTeam();
     // While it works: on the floor, still, and true, the run waits
     bool awaitRescue(float dt, float max_y);
     void startShift();
     void addScore(int points);
+    // In a gravity flip: they fall up and the jetpack pushes down
+    // In and out of it, a moment of grace: the fall turns around at once
+    void setFlipped(bool on)
+    {
+        if (on != flipped)
+            grace_timer = std::max(grace_timer, FLIP_GRACE);
+        flipped = on;
+    }
+    // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
+    bool buyImplant(int id);
+    bool hasBoon(Boon b) const { return boon == b; }
+    void takeBoon(Boon b);
     int getUltimateCharge() const { return ultimate_charge; }
     bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs
     int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
     void spendUltimate() { ultimate_charge = 0; }
+    int wantedStars() const { return ::wantedStars(wanted_heat); }
+    void raiseWanted() { wanted_heat = std::min(wantedHeatCap(), wanted_heat + 1), wanted_calm = 0; }
     RunnerWeapon &weapon() { return *runner_weapon; }
     const RunnerWeapon &weapon() const { return *runner_weapon; }
     RunnerUltimate &ultimate() { return *runner_ultimate; }

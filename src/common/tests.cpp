@@ -13,6 +13,7 @@
 #include "snipers.hpp"
 #include "tuning.hpp"
 #include "difficulty.hpp"
+#include "events.hpp"
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -67,7 +68,8 @@ static void assertRoundTrip(const T &sent, Same same)
 static void testMessages()
 {
     PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
-                       .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5};
+                       .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
+                       .wanted = 3};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
     assertRoundTrip(players, [](auto &a, auto &b) {
         return a.size() == b.size() && std::ranges::all_of(a, [&](auto &entry) {
@@ -75,12 +77,13 @@ static void testMessages()
             auto &q = b.at(n);
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
                    p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
-                   p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style;
+                   p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
+                   p.wanted == q.wanted;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 11}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -100,10 +103,10 @@ static void testMessages()
     assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
         return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
     });
-    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true}, [](auto &a, auto &b) {
+    assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true, 0b1000000101}, [](auto &a, auto &b) {
         return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
                a.x == b.x && a.rockets_x == b.rockets_x && a.y == b.y && a.time == b.time &&
-               a.sandevistan == b.sandevistan;
+               a.sandevistan == b.sandevistan && a.reflected == b.reflected;
     });
     assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
         return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
@@ -372,6 +375,78 @@ static void testDante()
     dante.ultimate().tick(1);
     assert(!dante.ultimate().doubles());
     assert(mirrored(0, 2, 10) == 8 && mirrored(8, 2, 10) == 0);
+}
+
+// Wraith: the Blink takes him ahead, a perfect one leaves him untouchable a while; Stillness stops the world
+// for STILLNESS_TIME, and Berserk doesn't blink for him
+static void testWraith()
+{
+    assert(weaponOf(6) == Weapon::Blink && ultimateOf(6) == Ultimate::Stillness);
+
+    Player wraith(-1);
+    wraith.setCharacter(6);
+    wraith.reset(0, 0);
+    RunnerWeapon &blink = wraith.weapon();
+    assert(blink.charges() == BLINK_CHARGES && !blink.autoFires());
+    // Aimed into a zapper column, he lands just past it; nowhere safe, where he aimed
+    assert(blinkLanding(4.6f, 0, [](int x, int) { return x == 5; }) == 5.6f);
+    assert(blinkLanding(4.6f, 0, [](int, int) { return true; }) == 4.6f);
+    assert(blinkDistance(0) == BLINK_DISTANCE && blinkDistance(BLINK_HOLD_TIME * 2) == BLINK_FAR_DISTANCE);
+    wraith.blinkTo(14);
+    assert(wraith.getX() == 14 && !wraith.isGracing());
+    wraith.dodge(0.5f);
+    assert(wraith.isInvincible());
+
+    ServerConfig config;
+    Server server(config);      // never started: Stillness doesn't use it
+    assert(!wraith.ultimate().freezes());
+    wraith.ultimate().fire(server, wraith, 0, 0);
+    assert(wraith.ultimate().freezes());
+    wraith.update(STILLNESS_TIME - 0.1f, 10, 8);
+    assert(wraith.ultimate().freezes());
+    wraith.update(0.2f, 10, 8);
+    assert(!wraith.ultimate().freezes());
+}
+
+// Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
+// fire threatens whoever is on its line, until it's over
+static void testWraithSmasher()
+{
+    std::map<int, Player> players;
+    std::mt19937 rng(2);
+    players.emplace(3, Player(3));
+    players.at(3).reset(0, 8);
+    Boss boss;
+    boss.reset();
+    auto until = [&](auto done) {
+        for (int i = 0; i < 20000 && !done(boss.state()); i++)
+            boss.update(BOSS_DISTANCE, 0.01f, rng, players, 10);
+        assert(done(boss.state()));
+    };
+
+    until([](const BossState &s) { return s.attack == BossAttack::Rockets && s.phase == BossPhase::Strike; });
+    BossState wall = boss.state();
+    int row = 0;
+    while (!rocketRow(row, wall.y) || !rocketRow(row + 1, wall.y))
+        row++;
+    assert(boss.reflect(wall.rockets_x + 10, wall.rockets_x + 15, row, row + 2, 10) == 0);    // not there yet
+    assert(rocketsHit(0, wall.y, row, 10));
+    // A Blink landing short of the wall still reaches it, and takes the rows beside him too
+    assert(boss.reflect(wall.rockets_x - 6, wall.rockets_x - BOSS_REFLECT_SLACK + 0.5f, row, row + 2, 10) >= 2);
+    assert(boss.reflect(wall.rockets_x - 1, wall.rockets_x + 1, row, row + 2, 10) == 0);     // once each
+    assert(!rocketsHit(0, wall.y, row, 10, boss.state().reflected));
+    assert(!rocketsHit(0, wall.y, row - 0.4f, 10, boss.state().reflected) && !rocketsHit(0, wall.y, row + 0.4f, 10, boss.state().reflected));
+
+    Player elsewhere(4);
+    elsewhere.reset(1, 0);
+    until([](const BossState &s) {
+        return s.attack == BossAttack::Cannon && s.phase != BossPhase::Strike &&
+               Boss::phaseOf(BossAttack::Cannon, s.time + BLINK_PERFECT_WINDOW) == BossPhase::Strike;
+    });
+    float strike = boss.threatens(players.at(3), 10, BLINK_PERFECT_WINDOW);
+    assert(strike > BOSS_CANNON_TIME && strike <= BLINK_PERFECT_WINDOW + BOSS_CANNON_TIME + 0.01f);
+    assert(boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW) == 0);
+    assert(boss.threatens(players.at(3), 10, 0.001f) == 0);     // not that close yet
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
@@ -707,6 +782,201 @@ static void testTraumaOffer()
     std::filesystem::remove(map_path);
 }
 
+// Wraith over real sockets: eddies 2 tiles ahead and a wall of drones behind them, he blinks through both at the start
+static void testBlink()
+{
+    std::string map_path = (std::filesystem::temp_directory_path() / "samuride_blink_test.txt").string();
+    {
+        std::ofstream map(map_path);
+        for (int row = 0; row < 10; row++)
+            map << std::string(2, EMPTY_TILE) << COIN_TILE << DRONE_TILE << std::string(30, EMPTY_TILE) << '\n';
+    }
+    ServerConfig config;
+    config.port = 47127;
+    config.quiet = true;
+    config.solo = true;
+    config.map_path = map_path;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient wraith(config.port);
+    wraith.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 6, .district = 0, .mode = 1}));
+    for (;;) {
+        auto count = wraith.await(MSG_COUNTDOWN);
+        assert(count && !count->empty());
+        if ((*count)[0] == 0)
+            break;
+    }
+    float before = wraith.latest(0).x;
+    wraith.send(MSG_ATTACK, {1});
+    wraith.send(MSG_ATTACK, {0});
+
+    // He took the drones in his way down, picked up the eddies he blinked over, and is past the wall alive
+    bool drone = false, coin = false;
+    while (!drone || !coin) {
+        CollisionEffect effect{};
+        auto payload = wraith.await(MSG_COLLISION);
+        assert(payload && Message::decode(*payload, effect));
+        drone |= effect.type == DRONE_TILE && effect.x == 3;
+        coin |= effect.type == COIN_TILE && effect.x == 2;
+    }
+    PlayerState after = wraith.latest(0);
+    assert(after.x >= before + BLINK_DISTANCE && after.ram == BLINK_CHARGES - 1);
+
+    Socket::close(wraith.fd);
+    server.stop();
+    loop.join();
+    std::filesystem::remove(map_path);
+}
+
+// The NCPD wanted level: a star every WANTED_KILLS_PER_STAR drones, cooling off, paying more
+static void testWanted()
+{
+    Player runner(1);
+    runner.reset(0, 0);
+    for (int i = 0; i < WANTED_KILLS_PER_STAR; i++)
+        runner.raiseWanted();
+    assert(runner.wantedStars() == 1);
+    for (int i = 0; i < 100; i++)
+        runner.raiseWanted();
+    assert(runner.wantedStars() == WANTED_MAX_STARS);
+    // Nothing cools while you keep killing, nor in the first seconds of calm; a long calm cools it all
+    runner.update(1, 0, 10);
+    assert(runner.wantedStars() == WANTED_MAX_STARS);
+    for (int i = 0; i < 200; i++)
+        runner.update(1, 0, 10);
+    assert(runner.wantedStars() == 0);
+    assert(wantedBounty(DRONE_BOUNTY, 0) == DRONE_BOUNTY && wantedBounty(DRONE_BOUNTY, 5) == 10);
+}
+
+// The Ripperdoc's implants: paid from the run, refused when too dear, and what they do
+static void testRipperdoc()
+{
+    Player runner(1);
+    runner.reset(0, 0);
+    assert(!runner.buyImplant(1));
+    runner.addScore(IMPLANT_PRICES[1]);
+    assert(runner.buyImplant(1) && runner.getScore() == 0 && runner.hasShield());
+    // Subdermal Armor: the shield grows back
+    assert(runner.absorbHit() && !runner.hasShield());
+    for (float t = 0; t < ARMOR_REGEN + 0.1f; t += 0.05f)
+        runner.update(0.05f, 0, 10);
+    assert(runner.hasShield());
+
+    Player synaptic(2);
+    synaptic.reset(0, 0);
+    synaptic.addScore(IMPLANT_PRICES[3]);
+    assert(synaptic.buyImplant(3));
+    synaptic.addScore(10);
+    assert(synaptic.getUltimateCharge() == std::min(ultimateCharge(0), IMPLANT_PRICES[3] + 10 * SYNAPTIC_RATE));
+}
+
+// Boons: what each changes on the runner
+static void testBoons()
+{
+    Player glass(1);
+    glass.reset(0, 0);
+    glass.powerUp(SHIELD_TILE);
+    glass.takeBoon(Boon::GlassCannon);
+    glass.update(0.01f, 0, 10);
+    assert(!glass.hasShield() && !glass.absorbHit());
+    for (int i = 0; i < 10; i++)
+        glass.addScore(1);
+    assert(glass.getScore() == 15);
+    glass.powerUp(SHIELD_TILE);
+    glass.update(0.01f, 0, 10);
+    assert(!glass.hasShield());
+
+    Player wanted(2);
+    wanted.reset(0, 0);
+    wanted.takeBoon(Boon::PriceOnHead);
+    assert(wanted.wantedStars() == PRICE_ON_HEAD_START);
+    for (int i = 0; i < 1000; i++)
+        wanted.update(1, 0, 10);
+    assert(wanted.wantedStars() == PRICE_ON_HEAD_FLOOR);
+    // Every runner's own boon has its card
+    assert(boonLook(Boon::Signature, Weapon::Blink).name == std::string("VOID WALKER"));
+}
+
+// Over sockets: the run stops at BOON_DISTANCE with three cards, a pact last, and goes on with the one picked
+static void testBoonPick()
+{
+    float distance = BOON_DISTANCE;
+    BOON_DISTANCE = 3;
+    const int port = 47127;
+    ServerConfig config;
+    config.port = port;
+    config.quiet = true;
+    config.solo = true;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient runner(port);
+    runner.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 0, .district = 0, .mode = 1}));
+    auto next = [&](char wanted) {
+        CollisionEffect effect{};
+        do {
+            auto payload = runner.await(MSG_COLLISION);
+            assert(payload && Message::decode(*payload, effect));
+        } while (effect.type != wanted);
+        return effect;
+    };
+
+    CollisionEffect offer = next(BOON_OFFER);
+    int pact = (offer.x >> 16) & 0xFF;
+    assert(pact >= FIRST_PACT && pact < PACTS_END && (offer.x & 0xFF) >= 1 && (offer.x & 0xFF) < FIRST_PACT);
+    // The run waits on the pick
+    float x = runner.latest(0).x;
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    assert(runner.latest(0).x == x);
+    runner.send(MSG_BOON, {3});
+    assert(next(BOON_TAKEN).x == pact);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    assert(runner.latest(0).x > x);
+
+    Socket::close(runner.fd);
+    server.stop();
+    loop.join();
+    BOON_DISTANCE = distance;
+}
+
+// Events: their stretches of road, and gravity flipped in one
+static void testEvents()
+{
+    assert(eventIndex(EVENT_FIRST - 1) == -1 && eventIndex(EVENT_FIRST) == 0 && eventIndex(EVENT_FIRST + EVENT_LENGTH) == -1);
+    assert(eventIndex(BOSS_DISTANCE + 50) == -1);
+    assert(eventIndex(eventStart(1) + 1) == 1 && eventIndex(eventStart(2) - 1) == -1 && eventIndex(eventStart(3)) == 3);
+
+    Player runner(1);
+    runner.reset(0, 8);
+    runner.setFlipped(true);
+    assert(runner.isGracing());     // the fall turns around: a moment of grace
+    for (int i = 0; i < 100; i++)
+        runner.update(0.05f, 0, 8);
+    assert(runner.getY() == 0);
+    runner.setJetActive(true);
+    for (int i = 0; i < 100; i++)
+        runner.update(0.05f, 0, 8);
+    assert(runner.getY() == 8);
+}
+
+// The check before a titan or a sniper: is there still a way past it?
+static void testWayThrough()
+{
+    // A zapper corridor, beams on rows 4 and 9, the runner inside it (top at 5)
+    auto corridor = [](int, int y) { return y == 4 || y == 9; };
+    assert(wayThrough(0, 5, 20, 10, corridor, [](int) { return WayNeed{}; }));
+    // A titan there wants him above row 4: shut in, no way
+    assert(!wayThrough(0, 5, 20, 10, corridor, [](int x) { return x > 10 ? WayNeed{2, 3} : WayNeed{}; }));
+    // Above the corridor (top at 1), fine
+    assert(wayThrough(0, 1, 20, 10, corridor, [](int x) { return x > 10 ? WayNeed{2, 3} : WayNeed{}; }));
+    // Room to sidestep a sniper: 4 free rows inside, so yes; a 2-row gap, no
+    assert(wayThrough(0, 5, 20, 10, corridor, [](int) { return WayNeed{3}; }));
+    assert(!wayThrough(0, 5, 20, 10, [](int, int y) { return y < 5 || y > 6; }, [](int) { return WayNeed{3}; }));
+    // A row a column: a gap 6 rows away 2 columns ahead can't be reached
+    assert(!wayThrough(0, 0, 5, 10, [](int x, int y) { return x == 2 && y < 6; }, [](int) { return WayNeed{}; }));
+}
+
 int main()
 {
     testPacketFraming();
@@ -714,6 +984,7 @@ int main()
     testMessages();
     testServerRun();
     testTraumaOffer();
+    testBlink();
     testMapChunks();
     testGenerator();
     testSniperHit();
@@ -723,6 +994,14 @@ int main()
     testAgility();
     testUltimate();
     testDante();
+    testWraith();
+    testWraithSmasher();
+    testWanted();
+    testRipperdoc();
+    testWayThrough();
+    testBoons();
+    testBoonPick();
+    testEvents();
     testTuning();
     testWallet();
     testUpgrades();

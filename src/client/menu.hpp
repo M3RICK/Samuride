@@ -159,7 +159,8 @@ public:
     Menu(sf::RenderWindow &window, const Settings &settings);
 
     // Shows the menu until the player picks something
-    MenuChoice run(Renderer &renderer);
+    // From `start`: the main menu, or straight to the runners or the districts of the last run's choice
+    MenuChoice run(Renderer &renderer, MenuState::Screen start = MenuState::Screen::Main);
     void setError(const std::string &error) { state.error = error; }
     const Settings &getSettings() const { return state.settings; }
 };

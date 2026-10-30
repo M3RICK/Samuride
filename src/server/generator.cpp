@@ -100,7 +100,7 @@ static int placeCoins(Rows &rows, std::mt19937 &rng, int x)
 // obstacles longer and more frequent instead.
 // ponytail: fairness is statistical, add a reachability check if runs feel unfair
 std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t height, float difficulty,
-                                       bool drones)
+                                       bool drones, float extra_drones)
 {
     Rows rows(height, std::string(width, EMPTY_TILE));
     std::uniform_real_distribution<float> chance(0, 1);
@@ -109,9 +109,9 @@ std::vector<std::string> generateChunk(std::mt19937 &rng, size_t width, size_t h
     while (x < static_cast<int>(width)) {
         float roll = chance(rng);
 
-        if (drones && roll < DRONE_CHANCE)
+        if (drones && roll < DRONE_CHANCE + extra_drones)
             x += placeDrones(rows, rng, x, difficulty) + randInt(rng, 5, 9);
-        else if (roll < DRONE_CHANCE + ZAPPER_CHANCE + ZAPPER_CHANCE_GROWTH * difficulty)
+        else if (roll < DRONE_CHANCE + extra_drones + ZAPPER_CHANCE + ZAPPER_CHANCE_GROWTH * difficulty)
             x += placeZapper(rows, rng, x, difficulty) + randInt(rng, ZAPPER_GAP_MIN, std::max(ZAPPER_GAP_MIN, ZAPPER_GAP_MAX));
         else
             x += placeCoins(rows, rng, x) + randInt(rng, 3, 6);

@@ -3,11 +3,13 @@
 #ifndef GAME_SCREEN_HPP
     #define GAME_SCREEN_HPP
 
+#include <array>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
 #include "run.hpp"
+#include "../../common/boons.hpp"
 #include "../wallet.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
@@ -101,6 +103,12 @@ private:
     int spears_shown = 0;       // to see one thrown
     int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
     sf::Clock style_clock;      // since it last went up
+    sf::Clock ripperdoc_clock;  // since the Ripperdoc opened
+    int implant = 0;            // the one bought this run, 0 none
+    sf::Clock boon_clock;       // since the boons were offered
+    std::array<Boon, 3> boon_cards{};
+    Boon boon = Boon::None;     // the one picked this run
+    int wanted_shown = 0;       // your NCPD stars last frame, to hear the siren when one comes
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
     enum class Mood { Idle, Pickup, Kill, Frenzy, Surprised, Shout };
@@ -112,6 +120,7 @@ private:
     int head_target = 0;
     float head_moved = 0;       // canvas time of its last step
     float head_until = 0;       // when it picks a new target
+    bool perfect_cue = false;   // a Blink now would be PERFECT: the marker says so
     bool titan_coming = false;  // one is announced on the right
     float sandevistan_time = SANDEVISTAN_TIME;  // longer with the upgrade, read at the start of each run
     float titan_time = TITAN_TIME;              // the same with the Titan Serum
@@ -133,6 +142,7 @@ private:
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
+    void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss);
     void drawDistrict(int district);
     void updateSpeedLines(float dt);
     void drawSpeedLines();
@@ -164,6 +174,7 @@ private:
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
     void drawStyle(const PlayerState &player);
+    void drawWanted(const PlayerState &player, int me, float y);
     void drawRing(sf::Vector2f center, float radius, int segments, float lit, sf::Color color, bool pulsing);
     void drawFace(const PlayerState &player, int me, sf::Vector2f center, float radius);
     sf::Vector2i faceCell(const PlayerState &player, int me);
@@ -171,6 +182,17 @@ private:
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
     void drawTraumaOffer(const PlayerState &me);
+    void drawRipperdoc(const PlayerState &me);
+    void drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me);
+    void drawBoons(int me);
+    struct Card {
+        std::string name;
+        std::string what;
+        std::string price;  // under it, empty for none
+        bool enabled;
+    };
+    void drawCards(const std::string &title, sf::Color color, const std::string &subtitle, float left,
+                   const std::vector<Card> &cards);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);

@@ -81,6 +81,48 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Events (a blackout, a drone swarm, a gravity flip): where the first starts, in tiles
+EVENT_FIRST 300
+# Tiles between two events once Smasher's arena is behind (the next starts 100 after it)
+EVENT_EVERY 400
+# Tiles an event lasts
+EVENT_LENGTH 150
+# Tiles before an event that everyone is warned
+EVENT_WARNING 60
+# Drone swarm: added to the chance an obstacle is drones
+SWARM_DRONES 0.35
+# Blackout: how dark, 0 to 255
+BLACKOUT_DARKNESS 200
+# Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)
+FLIP_GRACE 1.2
+# Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three
+BOON_DISTANCE 250
+# Seconds the run waits for the pick
+BOON_TIME 10
+# Cold Blood: seconds more a sniper's sight holds still before the shot
+COLD_BLOOD_AIM 0.4
+# Jackpot Fever: added to the chance an eddy is a jackpot
+JACKPOT_FEVER 0.08
+# Glass Cannon pact: eddies times this, no shield, no Trauma Team
+GLASS_CANNON_EDDIES 1.5
+# Price On Your Head pact: wanted stars right away
+PRICE_ON_HEAD_START 3
+# Price On Your Head pact: the stars never drop under this
+PRICE_ON_HEAD_FLOOR 2
+# Seconds the run waits at the Ripperdoc, past Smasher (CYBERPSYCHO)
+RIPPERDOC_TIME 10
+# Subdermal Armor implant, in the run's eddies
+ARMOR_PRICE 300
+# Subdermal Armor: seconds before a broken shield grows back
+ARMOR_REGEN 30
+# Kerenzikov implant, in the run's eddies
+KERENZIKOV_PRICE 150
+# Kerenzikov: attacks come that many times faster
+KERENZIKOV_RATE 1.3
+# Synaptic Accelerator implant, in the run's eddies
+SYNAPTIC_PRICE 200
+# Synaptic Accelerator: the ultimate gauge fills that many times faster
+SYNAPTIC_RATE 2
 # Seconds you get to say whether to call the Trauma Team, after which it comes
 TRAUMA_OFFER_TIME 5
 # Seconds the run waits while the Trauma Team picks you up
@@ -101,6 +143,18 @@ PINATA_PER_LEVEL 0.15
 ## Enemies
 # Eddies for a drone down
 DRONE_BOUNTY 5
+# NCPD wanted level: drones down for a star (5 at most)
+WANTED_KILLS_PER_STAR 5
+# Seconds without a drone down before the NCPD starts to forget you
+WANTED_CALM_TIME 5
+# Then, drones' worth of heat it forgets every second
+WANTED_COOLING 0.4
+# Drone bounty added per star (0.2: x1.2 a star)
+WANTED_BOUNTY_PER_STAR 0.2
+# Added per star to the chance an obstacle is drones
+WANTED_DRONES_PER_STAR 0.03
+# Snipers come that much more often per star
+WANTED_SNIPERS_PER_STAR 0.1
 # No titan before this many tiles
 TITAN_FIRST_DISTANCE 300
 # Fewest seconds between two titans
@@ -131,6 +185,8 @@ SNIPER_BEAM_HALF 0.35
 BOSS_DISTANCE 500
 # How long his arena lasts, in tiles: survive it (CLASSIC) or shoot him down (CYBERPSYCHO)
 BOSS_ARENA 400
+# Once his arena is behind, the run slows down by this many tiles a second (the pace holds in it)
+BOSS_SPEED_DROP 2
 # Tiles ahead of the leader he stands
 BOSS_AHEAD 12
 # Seconds of his entrance before his first attack
@@ -151,6 +207,14 @@ BOSS_SPEAR_DAMAGE 8
 BOSS_HACK_DAMAGE 8
 # A blade's damage (Mikasa, Dante's sword), while he is close after a slam
 BOSS_SLASH_DAMAGE 5
+# Wraith blinking into him
+BOSS_STAB_DAMAGE 8
+# Each rocket Wraith blinks through, sent back at him
+BOSS_REFLECT_DAMAGE 4
+# Tiles past where Wraith's Blink lands that it still sends the rockets back
+BOSS_REFLECT_SLACK 3
+# Seconds Wraith can't be hurt after sending rockets back
+BOSS_REFLECT_GRACE 0.4
 # Any ultimate's damage
 BOSS_ULTIMATE_DAMAGE 15
 # Eddies for downing him
@@ -213,6 +277,20 @@ HACK_TIME 2
 HACK_BOUNCE_RANGE 4
 # Seconds to get one charge of RAM back (3 at most)
 RAM_RECHARGE 3.5
+# Wraith: tiles ahead a Blink takes him
+BLINK_DISTANCE 4
+# Wraith: tiles ahead a Blink takes him, the key held long enough
+BLINK_FAR_DISTANCE 8
+# Seconds to hold the key for the farthest Blink
+BLINK_HOLD_TIME 0.6
+# Eddies for a Blink through a zapper he would have run into
+BLINK_CLOSE_CALL_BOUNTY 5
+# Seconds between two Blinks
+BLINK_COOLDOWN 0.3
+# Seconds to get one Blink back (3 at most)
+BLINK_RECHARGE 2
+# Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back
+BLINK_PERFECT_WINDOW 0.3
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second
@@ -251,6 +329,8 @@ FISHBONES_RECOIL_TIME 0.5
 FISHBONES_RECOIL_PUSH 0.8
 # Dante: seconds his Doppelganger repeats his attacks
 DOPPELGANGER_TIME 8
+# Wraith: seconds the world stands still
+STILLNESS_TIME 4
 
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
@@ -295,3 +375,6 @@ LUCY_AGILITY 1
 DANTE_PRICE 1000
 DANTE_ULTIMATE_CHARGE 150
 DANTE_AGILITY 1
+WRAITH_PRICE 1250
+WRAITH_ULTIMATE_CHARGE 150
+WRAITH_AGILITY 1

@@ -103,7 +103,9 @@ Client::RunResult Client::run(InputManager &input, Renderer &renderer)
         return RunResult::Quit;
     if (server_version >= 0)
         return server_version > PROTOCOL_VERSION ? RunResult::Outdated : RunResult::HostOutdated;
-    return RunResult::Menu;
+    if (input.backTo() == InputManager::Back::Runner)
+        return RunResult::Runner;
+    return input.backTo() == InputManager::Back::District ? RunResult::District : RunResult::Menu;
 }
 
 void Client::stop()
@@ -286,6 +288,7 @@ void Client::sendToServer(const std::vector<uint8_t>& data)
 
 void Client::sendAttack(bool pressed)
 {
+    game_state.holdAttack(pressed);
     sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
 }
 
@@ -303,6 +306,28 @@ void Client::answerTraumaTeam(bool call)
 {
     if (game_state.answerTraumaOffer())
         sendToServer(Protocol::createPacket(MSG_TRAUMA, {static_cast<uint8_t>(call)}));
+}
+
+void Client::answerRipperdoc(int implant)
+{
+    if (game_state.isRipperdocOpen())
+        sendToServer(Protocol::createPacket(MSG_RIPPERDOC, {static_cast<uint8_t>(implant)}));
+}
+
+void Client::answerBoon(int card)
+{
+    if (game_state.isBoonOpen())
+        sendToServer(Protocol::createPacket(MSG_BOON, {static_cast<uint8_t>(card)}));
+}
+
+bool Client::boonOpen() const
+{
+    return game_state.isBoonOpen();
+}
+
+bool Client::ripperdocOpen() const
+{
+    return game_state.isRipperdocOpen();
 }
 
 bool Client::traumaOffered() const

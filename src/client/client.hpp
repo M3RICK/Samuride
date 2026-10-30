@@ -67,7 +67,8 @@ private:
 
 public:
     // Outdated: the server speaks a newer protocol than this build; HostOutdated: an older one
-    enum class RunResult { Menu, Quit, Outdated, HostOutdated };
+    // Runner and District: back to the menu on that screen
+    enum class RunResult { Menu, Quit, Outdated, HostOutdated, Runner, District };
 
     Client(const std::string &server_ip, int server_port, Loadout loadout, bool debug_mode, GameState &game_state);
     ~Client();
@@ -82,6 +83,12 @@ public:
     // The Trauma Team's question: call it (true) or let me die
     void answerTraumaTeam(bool call);
     bool traumaOffered() const;
+    // The Ripperdoc's implant, 1 to IMPLANTS, or 0 for none
+    void answerRipperdoc(int implant);
+    bool ripperdocOpen() const;
+    // The boon card picked, 1 to 3, or 0 for none
+    void answerBoon(int card);
+    bool boonOpen() const;
     // CYBERPSYCHO: the attack and ultimate buttons are on screen
     bool combatRun() const;
     // The run is over or the server is gone: the menu button is on screen

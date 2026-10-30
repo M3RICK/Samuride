@@ -24,18 +24,28 @@ private:
         sf::Clock age;
     };
 
+    // Wraith's Blink: from where he was to where the server puts him next, drawn once he's there
+    struct Streak {
+        int player;
+        sf::Vector2f from;  // his body's middle, in tiles
+        bool landed = false;
+        sf::Clock age;
+    };
+
     Canvas &canvas;
     Run &run;
     Audio &audio;
     Particles &particles;
     std::vector<Trail> trails;
+    std::vector<Streak> streaks;
 
     sf::Vector2f positionOf(const Trail &trail) const;
+    void drawStreaks();
 
 public:
     Shots(Canvas &canvas, Run &run, Audio &audio, Particles &particles);
 
-    void clear() { trails.clear(); }
+    void clear() { trails.clear(); streaks.clear(); }
     // Starts the attacks the server reported
     void handle(GameState &state);
     // The server says one of `player`'s shots hit at x: their one in flight there ends

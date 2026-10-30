@@ -116,8 +116,8 @@ std::vector<uint8_t> Message::encode(const std::map<int, PlayerState> &players)
              p.ram << 5 | p.berserk << 7);
         w.u8(p.ultimate);
         w.u8(p.spears);
-        // bit 0: a second of grace, bits 1-3: Dante's style rank
-        w.u8(p.grace | p.style << 1);
+        // bit 0: a second of grace, bits 1-3: Dante's style rank, bits 4-6: wanted level
+        w.u8(p.grace | p.style << 1 | p.wanted << 4);
     }
     return w.data;
 }
@@ -144,6 +144,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::map<int, PlayerSt
         uint8_t flags2 = r.u8();
         p.grace = flags2 & 1;
         p.style = (flags2 >> 1) & 7;
+        p.wanted = (flags2 >> 4) & 7;
         if (!r.ok())
             return false;
         players[number] = p;
@@ -236,6 +237,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::vector<SniperStat
 }
 
 // [fighting][health %][attack][phase][x, 4 bytes][rockets' x, 4 bytes][y, 2 bytes][seconds into the phase, 2 bytes]
+// [sandevistan][reflected rows, 2 bytes]
 std::vector<uint8_t> Message::encode(const BossState &boss)
 {
     Writer w;
@@ -248,6 +250,7 @@ std::vector<uint8_t> Message::encode(const BossState &boss)
     w.pos16(boss.y);
     w.pos16(boss.time);
     w.u8(boss.sandevistan);
+    w.u16(boss.reflected);
     return w.data;
 }
 
@@ -263,6 +266,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, BossState &boss)
     boss.y = r.pos16();
     boss.time = r.pos16();
     boss.sandevistan = r.u8() != 0;
+    boss.reflected = r.u16();
     return r.ok();
 }
 

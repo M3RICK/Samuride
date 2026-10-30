@@ -55,6 +55,14 @@ void Smasher::react(const BossState &boss)
         run.callout_color = NEON_CYAN;
         run.callout_clock.restart();
     }
+    for (uint16_t turned = boss.reflected & ~last.reflected, row = 0; turned; turned >>= 1, row++) {
+        if (turned & 1)
+            returning.push_back({row, boss.rockets_x, sf::Clock()});
+    }
+    if (boss.reflected & ~last.reflected) {
+        audio.play(Audio::Sfx::Rocket);
+        run.shakeAtLeast(0.2f, 10);
+    }
     if (boss.fighting && boss.health < last.health)
         since_hit.restart();
     bool striking = boss.phase == BossPhase::Strike;
@@ -116,6 +124,7 @@ void Smasher::draw(const BossState &boss, bool cyberpsycho)
     drawBody(*anim, frame, run.view.camera_x + shown_x, leap, hurt ? sf::Color(255, 120, 120) : sf::Color::White);
     // Over him: his rockets and their warnings start on the right edge, where he stands
     drawAttack(boss);
+    drawReturning();
     if (cyberpsycho)
         drawHealth(boss);
 }
@@ -189,7 +198,7 @@ void Smasher::drawAttack(const BossState &boss)
     if (boss.attack == BossAttack::Rockets) {
         float screen_x = warning ? Screen::WIDTH - tile * 1.5f : run.toScreen({boss.rockets_x, 0}).x;
         for (int row = 0; row < rows; row++) {
-            if (!rocketRow(row, boss.y))
+            if (!rocketRow(row, boss.y) || (boss.reflected >> row & 1))
                 continue;
             float y = run.toScreen({0, row + 0.5f}).y;
             if (warning) {
@@ -231,6 +240,32 @@ void Smasher::drawAttack(const BossState &boss)
             rect(canvas, {0, y - thickness / 2}, {Screen::WIDTH, thickness}, withAlpha(NEON_ORANGE, 200));
         }
     }
+}
+
+// Nose to the right now, flying back into him in RETURN_TIME, blowing up on him
+void Smasher::drawReturning()
+{
+    static constexpr float RETURN_TIME = 0.2f;
+    float tile = run.view.tile_size;
+    sf::Vector2i frame(sprites.smasher_missile.getSize().x / 2, sprites.smasher_missile.getSize().y);
+    float scale = tile * 1.8f / frame.x;
+
+    for (const Returning &rocket : returning) {
+        float share = rocket.age.getElapsedTime().asSeconds() / RETURN_TIME;
+        float target = run.view.camera_x + shown_x + 1;
+        sf::Vector2f pos = run.toScreen({rocket.from_x + (target - rocket.from_x) * std::min(share, 1.0f), rocket.row + 0.5f});
+        if (share >= 1) {
+            canvas.halo(pos, tile * 2 * (2 - share), withAlpha(NEON_ORANGE, static_cast<uint8_t>(160 * (2 - share))));
+            continue;
+        }
+        sf::Sprite missile(sprites.smasher_missile, {{frame.x * canvas.blink(), 0}, frame});
+        missile.setOrigin({0, frame.y / 2.f});
+        missile.setScale({-scale, scale});
+        missile.setPosition(pos);
+        missile.setColor(sf::Color(170, 240, 255));
+        canvas.draw(missile);
+    }
+    std::erase_if(returning, [](const Returning &rocket) { return rocket.age.getElapsedTime().asSeconds() > 2 * RETURN_TIME; });
 }
 
 // Across the top of the screen, under his name

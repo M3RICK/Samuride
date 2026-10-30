@@ -54,6 +54,50 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
+        case RIPPERDOC_OFFER:
+            // Smasher's arena behind: the run waits on your pick (drawRipperdoc)
+            if (mine) {
+                audio.play(Audio::Sfx::MenuConfirm);
+                ripperdoc_clock.restart();
+            }
+            return;
+        case EVENT_AHEAD:
+            // Everyone gets it: the same road for all
+            run.events[effect.y] = static_cast<RunEvent>(effect.x);
+            if (mine) {
+                static const char *NAMES[RUN_EVENTS] = {"", "BLACKOUT AHEAD", "DRONE SWARM AHEAD", "GRAVITY FLIP AHEAD"};
+                audio.play(Audio::Sfx::Siren);
+                run.callout = NAMES[std::clamp(effect.x, 0, RUN_EVENTS - 1)];
+                run.callout_color = NEON_ORANGE;
+                run.callout_clock.restart();
+            }
+            return;
+        case BOON_OFFER:
+            if (mine) {
+                audio.play(Audio::Sfx::MenuConfirm);
+                boon_clock.restart();
+                for (int i = 0; i < 3; i++)
+                    boon_cards[i] = static_cast<Boon>((effect.x >> (8 * i)) & 0xFF);
+            }
+            return;
+        case BOON_TAKEN:
+            if (mine && effect.x > 0 && effect.x <= static_cast<int>(Boon::Signature)) {
+                boon = static_cast<Boon>(effect.x);
+                audio.play(Audio::Sfx::Jackpot);
+                run.callout = boonLook(boon, weaponOf(run.characterOf(me))).name;
+                run.callout_color = static_cast<int>(boon) >= FIRST_PACT && boon != Boon::Signature ? NEON_RED : NEON_YELLOW;
+                run.callout_clock.restart();
+            }
+            return;
+        case IMPLANT_INSTALLED:
+            if (mine && effect.x > 0 && effect.x <= IMPLANTS) {
+                implant = effect.x;
+                audio.play(Audio::Sfx::Jackpot);
+                run.callout = IMPLANT_LOOKS[implant].name;
+                run.callout_color = NEON_CYAN;
+                run.callout_clock.restart();
+            }
+            return;
         case TRAUMA_OFFER:
             // The hit that should have killed you: the run waits on your answer (drawTraumaOffer)
             run.shakeAtLeast(0.4f);
@@ -69,6 +113,23 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case PINATA_DROP:
             pinataBurst(effect);
             return;
+        case PERFECT_DODGE:
+            // Wraith blinked out of Smasher's strike at the last moment: the charge came back
+            audio.play(Audio::Sfx::UltimateReady);
+            particles.emit({effect.x + 0.5f, effect.y + 1.0f}, 20, sf::Color::White, 6, 0.4f, 0);
+            run.callout = "PERFECT";
+            run.callout_color = NEON_CYAN;
+            run.callout_clock.restart();
+            return;
+        case CLOSE_CALL:
+            // Wraith blinked through a zapper or a drone: the bounty, said where he landed
+            if (mine) {
+                audio.play(Audio::Sfx::Coin);
+                run.callout = "CLOSE CALL +" + std::to_string(BLINK_CLOSE_CALL_BOUNTY);
+                run.callout_color = NEON_PURPLE;
+                run.callout_clock.restart();
+            }
+            return;
         case SHIFT_TILE:
             // The Attack Titan's orb: the transformation roars and smokes on its own (players.cpp)
             if (mine)
@@ -83,9 +144,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
                 return;
             }
     }
-    // Dante's drones pay at his style rank
+    // Dante's drones pay at his style rank, everyone's at their wanted level
     int bounty = effect.type == TITAN_KILL ? TITAN_BOUNTY : effect.type == BOSS_KILL ? BOSS_BOUNTY
-                 : static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown]));
+                 : wantedBounty(static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[style_shown])), wanted_shown);
     effects.push_back({effect, sf::Clock(), mine, bounty});
 }
 
@@ -141,7 +202,13 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
         react(Mood::Kill);
     last_drone[effect.player] = center;
     // Mikasa's blade bites: a hard jolt and white sparks; any other kill, a light one
-    if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
+    if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blink) {
+        // Wraith cuts through on his way: the same catch, in his violet
+        hit_stop = HIT_STOP * 1.5f;
+        run.shakeAtLeast(0.15f, 16);
+        particles.emit(center, 16, NEON_PURPLE, 10, 0.3f, 0);
+        particles.emit(center, 8, sf::Color::White, 7, 0.2f, 0);
+    } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
         // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
         hit_stop = HIT_STOP;
         cuts.push_back({center, sf::Clock()});

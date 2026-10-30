@@ -14,16 +14,19 @@ void Horde::reset()
 
 // ponytail: a titan can pass under a zapper that closes the gap above it; add a check
 // against the map ahead if such deaths feel unfair
-void Horde::spawn(float leader_x, float dt, std::mt19937 &rng)
+void Horde::spawn(float leader_x, float dt, std::mt19937 &rng, const std::function<bool(const Titan &)> &fits)
 {
     if (leader_x < TITAN_FIRST_DISTANCE || (timer -= dt) > 0)
         return;
 
     std::uniform_real_distribution<float> interval(TITAN_MIN_INTERVAL, std::max(TITAN_MIN_INTERVAL, TITAN_MAX_INTERVAL));
     std::uniform_int_distribution<int> type(0, TITAN_TYPES - 1);
+    Titan titan{static_cast<TitanType>(type(rng)), leader_x + TITAN_SPAWN_AHEAD};
 
+    if (!fits(titan))
+        return;
     timer = interval(rng);
-    titans.push_back({static_cast<TitanType>(type(rng)), leader_x + TITAN_SPAWN_AHEAD});
+    titans.push_back(titan);
 }
 
 void Horde::update(float rear_x, float dt)

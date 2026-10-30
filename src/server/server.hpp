@@ -11,12 +11,15 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <array>
+#include <functional>
 #include <set>
 #include <random>
 #include "../common/socket.hpp"
 #include "../common/map.hpp"
 #include "../common/protocol.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/events.hpp"
 #include "titans.hpp"
 #include "snipers.hpp"
 #include "boss.hpp"
@@ -29,6 +32,39 @@ struct ServerConfig {
     bool debug_mode = false;
     bool quiet = false;         // no status lines: when running inside the game
 };
+
+// What a runner needs in a column to get past a threat: free rows (3: room to sidestep a sniper's
+// row) and the lowest row their top may reach (above a titan)
+struct WayNeed {
+    int rows = 2;
+    int lowest = 1 << 20;
+};
+
+// From (x, y), a row up or down a column at most, through the columns up to `to`: is there a way
+// between the blocked tiles, with what need(x) asks in each column?
+// ponytail: a row a column is the jetpack at top speed, roughly; momentum and gravity ignored
+template <typename Blocked, typename Need>
+bool wayThrough(float x, float y, float to, int height, Blocked blocked, Need need)
+{
+    std::vector<bool> reach(height, false);
+    reach[std::clamp(static_cast<int>(y + 0.5f), 0, height - 2)] = true;
+
+    for (int column = static_cast<int>(x) + 1; column < to; column++) {
+        WayNeed n = need(column);
+        std::vector<bool> next(height, false);
+        for (int top = 0; top + n.rows <= height && top <= n.lowest; top++) {
+            bool came = reach[top] || (top > 0 && reach[top - 1]) || (top + 1 < height && reach[top + 1]);
+            bool free = true;
+            for (int row = top; row < top + n.rows && free; row++)
+                free = !blocked(column, row);
+            next[top] = came && free;
+        }
+        if (std::ranges::none_of(next, [](bool r) { return r; }))
+            return false;
+        reach = std::move(next);
+    }
+    return true;
+}
 
 class Server {
 private:
@@ -64,6 +100,7 @@ private:
     int chunks_generated = 0;
     int last_orb_chunk = -SHIFT_MIN_GAP_CHUNKS;     // chunk of the last Attack Titan orb
     float run_speed = START_SPEED;
+    bool slowed_after_boss = false;     // the pace dropped once past Smasher's arena
     Phase phase = Phase::Waiting;
     int countdown = 0;
     int countdown_ticks = 0;
@@ -91,6 +128,19 @@ private:
         float left;     // seconds before it comes anyway
     };
     std::map<int, TraumaOffer> trauma_offers;
+    // The Ripperdoc past Smasher: who hasn't picked yet, and how long the run still waits for them
+    std::set<int> ripperdoc_waiting;
+    float ripperdoc_left = 0;
+    // The boons at BOON_DISTANCE: the three cards each runner still has to pick from, and the time left
+    std::map<int, std::array<Boon, 3>> boon_offers;
+    float boon_left = 0;
+    bool boons_given = false;
+    // Each event's kind, rolled when the map or the warning first needs it; the last one announced
+    std::map<int, RunEvent> run_events;
+    int events_announced = -1;
+    RunEvent eventOf(int index);
+    RunEvent eventAt(float x) { int index = eventIndex(x); return index < 0 ? RunEvent::None : eventOf(index); }
+    void offerBoons();
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -183,6 +233,7 @@ private:
     //===========================================================================
 
     void handleAttack(int client_fd);
+    void releaseAttack(int client_fd);
 
     void handleUltimate(int client_fd);
 
@@ -217,6 +268,8 @@ private:
     bool hurt(Player &player, char cause, int x, int y);
     // Yes: the rescue; no: the death the hit was
     void answerTraumaTeam(int client_fd, bool call);
+    void answerRipperdoc(int client_fd, int implant);
+    void answerBoon(int client_fd, int card);
 
 public:
     static constexpr int TICK_RATE = 60;
@@ -258,8 +311,21 @@ public:
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);
-    // Smasher fighting with his x between these two
-    bool bossBetween(float from, float to) const { return boss.fighting() && boss.x() >= from && boss.x() <= to; }
+    // Wraith's Blink: the rockets it sweeps through turn back (how many), and the seconds a strike of
+    // Smasher's about to land on him lasts (0 if none: Boss::threatens)
+    int reflectRockets(float left, float right, float top, float bottom)
+    {
+        return boss.reflect(left, right, top, bottom, game_map.getHeight());
+    }
+    float bossThreatens(const Player &player) const
+    {
+        return boss.threatens(player, game_map.getHeight(), BLINK_PERFECT_WINDOW);
+    }
+    // Smasher fighting with his body (half a tile before his x to 2.5 after) between these two
+    bool bossBetween(float from, float to) const
+    {
+        return boss.fighting() && boss.x() - 0.5f < to && boss.x() + 2.5f > from;
+    }
     // ... with a blade, if he is within its reach (close by after a slam)
     bool slashBoss(Player &player, float reach);
 
@@ -270,8 +336,25 @@ public:
     void scorch(int owner_fd, float from, float to, float titans_from, int top = 0, int bottom = 1 << 20);
 
     bool isLiveDrone(int x, int y) const;
+    // Can this runner get through the columns up to `to` between the live zappers and drones? See wayThrough
+    bool wayThrough(const Player &player, float to, const std::function<WayNeed(int)> &need) const
+    {
+        return ::wayThrough(player.getX(), player.getY(), to, static_cast<int>(game_map.getHeight()),
+                            [&](int x, int y) { return isLiveZapper(x, y) || isLiveDrone(x, y); }, need);
+    }
+    // The highest NCPD wanted level among the runners: the map and the snipers follow it
+    int wantedStars() const
+    {
+        int stars = 0;
+        for (const auto &[fd, player] : players)
+            stars = std::max(stars, player.wantedStars());
+        return stars;
+    }
+    bool isLiveZapper(int x, int y) const { return game_map.getTile(x, y) == ZAPPER_TILE && !hacked_zappers.count({x, y}); }
 
     void destroyDrone(int owner_fd, int x, int y);
+    // The eddie or the power-up on this tile, if any is left: true when he took one
+    bool pickUp(Player &player, int x, int y);
 
     // A drone shot down, or a zapper switched off
     bool isOff(int x, int y) const { return destroyed_drones.count({x, y}) || hacked_zappers.count({x, y}); }

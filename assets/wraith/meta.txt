@@ -1,0 +1,14 @@
+name WRAITH
+sheet sheet.png
+portrait portrait.png
+frame 147 171
+feet 140
+body 128
+exhaust 140 60 230
+run 0 8 12 loop
+takeoff 1 5 14 once
+rise 2 4 10 loop
+hover 3 4 8 loop
+fall 4 4 10 loop
+attack 5 5 16 once
+death 6 7 10 hide

@@ -17,6 +17,11 @@ bool Server::resetMap()
     destroyed_drones.clear();
     pinata_drops.clear();
     trauma_offers.clear();
+    ripperdoc_waiting.clear();
+    boon_offers.clear();
+    boons_given = false;
+    run_events.clear();
+    events_announced = -1;
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -39,13 +44,20 @@ void Server::extendMap(float leader_x)
 {
     while (game_map.getWidth() < leader_x + LOOKAHEAD) {
         size_t from = game_map.getWidth();
-        float difficulty = std::min(1.0f, chunks_generated++ / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
+        // Adam Smasher's arena: nothing in the way but him, and its empty chunks don't make what follows harder
+        bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
+        float difficulty = std::min(1.0f, chunks_generated / static_cast<float>(CHUNKS_TO_MAX_DIFFICULTY));
+        chunks_generated += !arena;
 
         bool drones = mode == GameMode::Cyberpsycho;
-        // Adam Smasher's arena: nothing in the way but him
-        bool arena = boss.holds(from) || boss.holds(from + CHUNK_WIDTH - 1);
+        bool swarm = eventAt(from) == RunEvent::Swarm || eventAt(from + CHUNK_WIDTH - 1) == RunEvent::Swarm;
+        // Upside down is hard enough: a gravity flip's road is the easiest
+        if (eventAt(from) == RunEvent::Flip || eventAt(from + CHUNK_WIDTH - 1) == RunEvent::Flip)
+            difficulty = 0;
         std::vector<std::string> rows = arena ? std::vector<std::string>(game_map.getHeight(), std::string(CHUNK_WIDTH, EMPTY_TILE))
-                                              : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones);
+                                              : generateChunk(rng, CHUNK_WIDTH, game_map.getHeight(), difficulty, drones,
+                                                              WANTED_DRONES_PER_STAR * wantedStars() +
+                                                                  (swarm ? SWARM_DRONES : 0));
         if (!arena) {
             placeShiftOrb(rows);
             placePowerUp(rows);
@@ -108,6 +120,7 @@ void Server::startGame()
     countdown = COUNTDOWN_SECONDS;
     countdown_ticks = 0;
     run_speed = START_SPEED;
+    slowed_after_boss = false;
     ready_clients.clear();
 
     announce("Game starting with " + std::to_string(players.size()) + " players");
@@ -166,6 +179,20 @@ void Server::updatePlayers()
         sendGameState();
         return;
     }
+    // At the Ripperdoc's or picking a boon: the run waits for everyone's pick, or for the time to run out
+    if (!ripperdoc_waiting.empty()) {
+        if ((ripperdoc_left -= TICK_DT) <= 0)
+            ripperdoc_waiting.clear();
+        sendGameState();
+        return;
+    }
+    if (!boon_offers.empty()) {
+        if ((boon_left -= TICK_DT) <= 0)
+            boon_offers.clear();
+        sendGameState();
+        return;
+    }
+
     // The Trauma Team at work on someone: the whole run waits for it
     bool waiting = false;
     for (auto &[client_fd, player] : players)
@@ -175,12 +202,44 @@ void Server::updatePlayers()
         return;
     }
 
-    run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    // Smasher's arena: the pace holds while he fights, then drops once he's behind
+    float front = 0;
+    for (const auto &[client_fd, player] : players)
+        front = std::max(front, player.getX());
+    if (!boss.holds(front))
+        run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+    // The next event, told to everyone EVENT_WARNING tiles before it starts
+    if (front >= eventStart(events_announced + 1) - EVENT_WARNING) {
+        events_announced++;
+        RunEvent event = eventOf(events_announced);
+        if (event != RunEvent::None)
+            for (auto &[client_fd, player] : players)
+                notifyCollision(EVENT_AHEAD, player, static_cast<int>(event), events_announced);
+    }
+    for (auto &[client_fd, player] : players)
+        player.setFlipped(eventAt(player.getX()) == RunEvent::Flip);
+    if (!boons_given && front >= BOON_DISTANCE) {
+        boons_given = true;
+        if (mode == GameMode::Cyberpsycho)
+            offerBoons();
+    }
+    if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
+        run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
+        slowed_after_boss = true;
+        // ... and the Ripperdoc opens (answerRipperdoc)
+        if (mode == GameMode::Cyberpsycho) {
+            ripperdoc_left = RIPPERDOC_TIME;
+            for (auto &[client_fd, player] : players) {
+                ripperdoc_waiting.insert(client_fd);
+                notifyCollision(RIPPERDOC_OFFER, player, static_cast<int>(player.getX()), static_cast<int>(player.getY()));
+            }
+        }
+    }
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);
         // Berserk attacks on its own, as soon as the cooldown allows
-        if (player.isBerserk())
+        if (player.isBerserk() && player.weapon().autoFires())
             handleAttack(client_fd);
         // What the weapon does on its own: the rest of a Pow-Pow burst
         if (mode == GameMode::Cyberpsycho)
@@ -189,9 +248,13 @@ void Server::updatePlayers()
         rear_x = std::min(rear_x, player.getX());
     }
 
-    titans.update(rear_x, TICK_DT);
-    snipers.update(TICK_DT, players);
-    boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
+    // Wraith's Stillness: the titans, the snipers and Smasher stand still, even the sights stop following
+    bool frozen = std::ranges::any_of(players, [](const auto &entry) { return entry.second.ultimate().freezes(); });
+    titans.update(rear_x, frozen ? 0 : TICK_DT);
+    if (!frozen) {
+        snipers.update(TICK_DT, players);
+        boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
+    }
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -201,10 +264,29 @@ void Server::updatePlayers()
             survivors.push_back(player.getPlayerNumber());
     }
 
-    // No titan nor sniper in Smasher's arena, nor charging into it
-    if (!boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
-        titans.spawn(leader_x, TICK_DT, rng);
-        snipers.spawn(leader_x, TICK_DT, rng, players);
+    // No titan nor sniper in Smasher's arena, nor charging into it. Never both at once, and each waits
+    // until every runner has a way past it (wayThrough).
+    if (!frozen && !boss.holds(leader_x) && !boss.holds(leader_x + LOOKAHEAD)) {
+        titans.spawn(leader_x, TICK_DT, rng, [&](const Horde::Titan &titan) {
+            TitanStats stats = titanStats(titan.type);
+            int lowest = static_cast<int>(game_map.getHeight() - stats.height - Player::HEIGHT);
+            return !snipers.active() && std::ranges::all_of(players, [&](const auto &entry) {
+                const Player &player = entry.second;
+                // Where they cross: the titan runs at its speed, them at the run's
+                float meet = player.getX() + (titan.x - player.getX()) * run_speed / (run_speed + stats.speed);
+                return wayThrough(player, titan.x + stats.width + 2, [&](int x) {
+                    return x >= meet - 3 && x <= meet + stats.width + 2 ? WayNeed{2, lowest} : WayNeed{};
+                });
+            });
+        });
+        bool titan_ahead = titans.any([&](const Horde::Titan &titan) { return titan.x + 3 > rear_x; });
+        // The NCPD sends them faster as the wanted level climbs
+        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players, [&](const Player &player) {
+            // Where the sight freezes and fires: room to step out of its row
+            float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;
+            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + SNIPER_FIRE_TIME) + 1;
+            return !titan_ahead && wayThrough(player, shot, [&](int x) { return x >= freeze ? WayNeed{3} : WayNeed{}; });
+        });
     }
     updateProjectiles();
     updateUltimates();
@@ -237,13 +319,7 @@ bool Server::checkPlayerCollisions(Player &player)
         int tile_y = static_cast<int>(py);
         char tile = game_map.getTile(tile_x, tile_y);
 
-        char power = powerUpAt(tile_x, tile_y);
-
-        if (tile == COIN_TILE) {
-            collectEddy(player, tile_x, tile_y);
-        } else if (power != EMPTY_TILE && player.takePickup(tile_x, tile_y)) {
-            player.powerUp(power);
-            notifyCollision(power, player, tile_x, tile_y);
+        if (pickUp(player, tile_x, tile_y)) {
         } else if (tile == SHIFT_TILE && player.getForm() == Form::Normal && player.takePickup(tile_x, tile_y)) {
             player.startShift();
             notifyCollision(SHIFT_TILE, player, tile_x, tile_y);
@@ -264,6 +340,21 @@ bool Server::checkPlayerCollisions(Player &player)
     if (!player.isInvincible() && boss.hit(player, game_map.getHeight()))
         return hurt(player, BOSS_HIT, player.getX(), player.getY() + 1);
     return false;
+}
+
+bool Server::pickUp(Player &player, int x, int y)
+{
+    char power = powerUpAt(x, y);
+
+    if (game_map.getTile(x, y) == COIN_TILE) {
+        collectEddy(player, x, y);
+        return true;
+    }
+    if (power == EMPTY_TILE || !player.takePickup(x, y))
+        return false;
+    player.powerUp(power);
+    notifyCollision(power, player, x, y);
+    return true;
 }
 
 // The eddie magnet upgrade: eddies whose center is within its reach of the body are picked up too.
@@ -293,7 +384,7 @@ void Server::collectEddy(Player &player, int x, int y)
     if (player.getForm() == Form::Titan && player.getUpgrades()[UPGRADE_SERUM] > 0)
         player.addScore(1);
 
-    float jackpot = jackpotChance(player.getUpgrades());
+    float jackpot = jackpotChance(player.getUpgrades()) + (player.hasBoon(Boon::Jackpot) ? JACKPOT_FEVER : 0);
     if (jackpot > 0 && std::uniform_real_distribution<float>(0, 1)(rng) < jackpot) {
         player.addScore(JACKPOT_EDDIES - 1);
         notifyCollision(JACKPOT, player, x, y);
@@ -319,6 +410,7 @@ void Server::sendGameState()
             .spears = player.ultimate().charges(),  // Mikasa's thunder spears left
             .grace = player.isGracing(),            // shield broken, Sandevistan or titan over
             .style = player.weapon().style(),
+            .wanted = player.wantedStars(),
         };
     }
 

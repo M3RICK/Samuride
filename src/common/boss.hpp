@@ -11,6 +11,8 @@
 // The arena: from BOSS_DISTANCE, BOSS_ARENA tiles with nothing but him (about 30 s at that speed)
 inline float BOSS_DISTANCE = 500;
 inline float BOSS_ARENA = 400;
+// The pace holds while he fights, and drops by BOSS_SPEED_DROP tiles a second once his arena is behind
+inline float BOSS_SPEED_DROP = 2;
 // He stands this many tiles ahead of the leader: the right edge of the screen
 inline float BOSS_AHEAD = 12;
 // Seconds of his entrance before the first attack, then between two attacks
@@ -23,6 +25,10 @@ inline int BOSS_SHOT_DAMAGE = 1;        // a bullet: Johnny, David, Jinx, Dante
 inline int BOSS_SPEAR_DAMAGE = 8;       // one of Mikasa's thunder spears
 inline int BOSS_HACK_DAMAGE = 8;        // Lucy hacking his cyberware, for a charge of RAM
 inline int BOSS_SLASH_DAMAGE = 5;       // a blade: Mikasa's, Dante's sword, while he is close after a slam
+inline int BOSS_STAB_DAMAGE = 8;        // Wraith blinking into him: more than a slash, it costs a charge
+inline int BOSS_REFLECT_DAMAGE = 4;     // each of his rockets Wraith blinks through, sent back at him
+inline float BOSS_REFLECT_SLACK = 3;    // tiles past where a Blink lands that its box still reaches the wall
+inline float BOSS_REFLECT_GRACE = 0.4f; // seconds untouchable after sending rockets back, while the wall passes
 inline int BOSS_ULTIMATE_DAMAGE = 15;   // any ultimate fired while he is there
 inline int BOSS_BOUNTY = 150;
 // His Sandevistan: under this share of his health, or past half his arena (in CLASSIC nothing hurts him),
@@ -75,13 +81,27 @@ inline bool rocketRow(int row, float gap_top)
     return row + 0.5f < gap_top || row + 0.5f > gap_top + BOSS_ROCKET_GAP;
 }
 
-// A rocket wall `ahead` tiles in front of a runner whose top is at py, on a floor `floor` tall
-inline bool rocketsHit(float ahead, float gap_top, float py, int floor)
+// His slam, or his cannon along `line`, striking within `window` a body whose top is at py: the seconds
+// until that strike is over, 0 when none is coming for it that soon. A Blink then is PERFECT.
+inline float strikeComing(BossAttack attack, float time, float line, float py, float floor, float window)
+{
+    bool slam = attack == BossAttack::Slam;
+    float start = slam ? BOSS_SLAM_WARN : BOSS_CANNON_TRACK + BOSS_CANNON_AIM;
+
+    if ((!slam && attack != BossAttack::Cannon) || time >= start || time + window < start)
+        return 0;
+    bool hit = slam ? bandHits(floor - BOSS_SLAM_HEIGHT, floor, py) : bandHits(line - BOSS_CANNON_HALF, line + BOSS_CANNON_HALF, py);
+    return hit ? start + (slam ? BOSS_SLAM_TIME : BOSS_CANNON_TIME) - time : 0;
+}
+
+// A rocket wall `ahead` tiles in front of a runner whose top is at py, on a floor `floor` tall; the rows
+// set in `reflected` were sent back by Wraith
+inline bool rocketsHit(float ahead, float gap_top, float py, int floor, uint16_t reflected = 0)
 {
     if (ahead > 1 || ahead < -0.5f)
         return false;
     for (int row = 0; row < floor; row++)
-        if (rocketRow(row, gap_top) && bandHits(row + 0.15f, row + 0.85f, py))
+        if (rocketRow(row, gap_top) && !(reflected >> row & 1) && bandHits(row + 0.15f, row + 0.85f, py))
             return true;
     return false;
 }

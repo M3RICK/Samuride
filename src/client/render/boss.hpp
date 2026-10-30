@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/System/Clock.hpp>
+#include <vector>
 #include "../state.hpp"
 
 class Canvas;
@@ -34,6 +35,9 @@ private:
     // Still standing at the arena's end, he leaps away off the top: tiles ahead of the camera, and since when
     float leave_x = -1;
     sf::Clock since_leave;
+    // Rockets Wraith sent back, flying from the wall to him: their row, where they turned (world x)
+    struct Returning { int row; float from_x; sf::Clock age; };
+    std::vector<Returning> returning;
 
     void react(const BossState &boss);
     // The animation and frame his state shows
@@ -41,11 +45,12 @@ private:
     void drawBody(const Animation &anim, int frame, float x, float lift, sf::Color color);
     void drawAttack(const BossState &boss);
     void drawHealth(const BossState &boss);
+    void drawReturning();
 
 public:
     Smasher(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio);
 
-    void reset() { last = {}; shown_x = 0; death_x = -1; leave_x = -1; }
+    void reset() { last = {}; shown_x = 0; death_x = -1; leave_x = -1; returning.clear(); }
     void draw(const BossState &boss, bool cyberpsycho);
 };
 

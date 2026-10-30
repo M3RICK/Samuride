@@ -23,11 +23,21 @@ namespace Touch {
     // The phone's back gesture doesn't always reach the game.
     constexpr sf::Vector2f MENU_BUTTON{1920 / 2, 1080 - 110};
     constexpr sf::Vector2f MENU_BUTTON_SIZE{380, 100};
+    // ... and either side of it, straight to the runners or the districts
+    constexpr sf::Vector2f RUNNER_BUTTON{1920 / 2 - 420, 1080 - 110};
+    constexpr sf::Vector2f DISTRICT_BUTTON{1920 / 2 + 420, 1080 - 110};
 
     // The Trauma Team's question, in the middle: call it, or let me die
     constexpr sf::Vector2f TRAUMA_CALL{1920 / 2 - 240, 1080 / 2 + 170};
     constexpr sf::Vector2f TRAUMA_DECLINE{1920 / 2 + 240, 1080 / 2 + 170};
     constexpr sf::Vector2f TRAUMA_BUTTON_SIZE{420, 110};
+
+    // The Ripperdoc's implants side by side, 1 to 3, and walking out (0) under them
+    constexpr sf::Vector2f IMPLANT_CARD_SIZE{520, 230};
+    constexpr sf::Vector2f implantCard(int implant)
+    {
+        return implant == 0 ? sf::Vector2f(1920 / 2, 1080 / 2 + 300) : sf::Vector2f(1920 / 2 + (implant - 2) * 580, 1080 / 2 + 20);
+    }
 
     inline bool onBox(sf::Vector2f center, sf::Vector2f size, sf::Vector2f pos)
     {

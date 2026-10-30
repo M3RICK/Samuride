@@ -51,7 +51,9 @@ void Players::emitExhaust(const std::map<int, PlayerState> &players)
 bool Players::updateAirState(int player_num)
 {
     PlayerAnim &state = run.player_anims[player_num];
-    bool on_ground = run.display_positions[player_num].y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
+    sf::Vector2f pos = run.display_positions[player_num];
+    // In a gravity flip the ceiling is the ground
+    bool on_ground = run.eventAt(pos.x) == RunEvent::Flip ? pos.y <= 0.01f : pos.y >= run.floor() - Run::PLAYER_HEIGHT - 0.01f;
 
     if (on_ground) {
         state.on_ground = true;
@@ -135,6 +137,11 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sprite.setOrigin({character.frame_size.x / 2.f, character.feet});
     sprite.setScale({scale, scale});
     sprite.setPosition(feet);
+    // Upside down in a gravity flip, feet to the ceiling
+    if (run.eventAt(run.display_positions[player_num].x) == RunEvent::Flip) {
+        sprite.setScale({scale, -scale});
+        sprite.setPosition(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT));
+    }
     // Down without a death that falls: their fall, laid on its back, head toward the medic on the left
     float rescue = run.rescueShare(player_num);
     bool down = rescue >= 0 && rescue < Run::RESCUE_UP;
@@ -164,16 +171,19 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (down ? 1.2f : Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
 
-    // Lucy's RAM, over her head where it can be read without looking away from the run: thin red bars,
-    // like the RAM units of Cyberpunk 2077, lit while loaded, hollow once spent
-    if (run.cyberpsycho && weaponOf(run.characterOf(player_num)) == Weapon::Hack) {
-        for (int i = 0; i < RAM_MAX; i++) {
+    // Lucy's RAM (or Wraith's Blinks, in cyan), over her head where it can be read without looking away
+    // from the run: thin bars, like the RAM units of Cyberpunk 2077, lit while loaded, hollow once spent
+    Weapon weapon = weaponOf(run.characterOf(player_num));
+    if (run.cyberpsycho && (weapon == Weapon::Hack || weapon == Weapon::Blink)) {
+        int units = weapon == Weapon::Hack ? RAM_MAX : BLINK_CHARGES;
+        sf::Color color = weapon == Weapon::Hack ? NEON_RED : NEON_CYAN;
+        for (int i = 0; i < units; i++) {
             bool loaded = i < player.ram;
             sf::RectangleShape unit({9, 26});
             unit.setOrigin({4.5f, 13});
-            unit.setPosition(tag_pos + sf::Vector2f((i - (RAM_MAX - 1) / 2.f) * 15, -40));
-            unit.setFillColor(loaded ? NEON_RED : sf::Color(0, 0, 0, 120));
-            unit.setOutlineColor(withAlpha(NEON_RED, loaded ? 255 : 140));
+            unit.setPosition(tag_pos + sf::Vector2f((i - (units - 1) / 2.f) * 15, -40));
+            unit.setFillColor(loaded ? color : sf::Color(0, 0, 0, 120));
+            unit.setOutlineColor(withAlpha(color, loaded ? 255 : 140));
             unit.setOutlineThickness(2);
             canvas.draw(unit);
             if (loaded)

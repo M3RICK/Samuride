@@ -3,6 +3,7 @@
 #include "inputs.hpp"
 #include "client.hpp"
 #include "touch.hpp"
+#include "../common/upgrades.hpp"
 
 InputManager::InputManager(Client *client, sf::RenderWindow *window, const Settings &settings)
     : client(client), window(window), jetpack_key(settings.jetpack_key), attack_key(settings.attack_key),
@@ -14,6 +15,7 @@ InputManager::InputManager(Client *client, sf::RenderWindow *window, const Setti
 void InputManager::processInputs()
 {
     back_requested = false;
+    back_to = Back::Menu;
     confirm_pressed = false;
 
     while (const std::optional event = window->pollEvent()) {
@@ -22,6 +24,11 @@ void InputManager::processInputs()
         else if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
             if (key->code == sf::Keyboard::Key::Escape)
                 back_requested = true;
+            // The run over: C picks another runner, M another district
+            if (client->runEnded() && (key->code == sf::Keyboard::Key::C || key->code == sf::Keyboard::Key::M)) {
+                back_requested = true;
+                back_to = key->code == sf::Keyboard::Key::C ? Back::Runner : Back::District;
+            }
             if (key->code == sf::Keyboard::Key::Space || key->code == sf::Keyboard::Key::Enter)
                 confirm_pressed = true;
             if (key->code == attack_key) {
@@ -35,6 +42,13 @@ void InputManager::processInputs()
                 client->answerTraumaTeam(true);
             if (key->code == sf::Keyboard::Key::N)
                 client->answerTraumaTeam(false);
+            // The Ripperdoc: 1 to 3 buy an implant, 0 or N walks out
+            for (int implant = 0; implant <= IMPLANTS; implant++)
+                if (key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Num0) + implant) ||
+                    key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Numpad0) + implant))
+                    client->answerRipperdoc(implant), client->answerBoon(implant);
+            if (key->code == sf::Keyboard::Key::N)
+                client->answerRipperdoc(0), client->answerBoon(0);
         } else if (const auto *released = event->getIf<sf::Event::KeyReleased>()) {
             if (released->code == attack_key)
                 attack_key_down = false;
@@ -45,10 +59,22 @@ void InputManager::processInputs()
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
             fingers[touch->finger] = pos;
             // Once a game is over, the menu button goes back, a tap anywhere else is a rematch
-            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos))
+            if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos)) {
                 back_requested = true;
+            } else if (Touch::ENABLED && client->runEnded() && Touch::onBox(Touch::RUNNER_BUTTON, Touch::MENU_BUTTON_SIZE, pos)) {
+                back_requested = true;
+                back_to = Back::Runner;
+            } else if (Touch::ENABLED && client->runEnded() && Touch::onBox(Touch::DISTRICT_BUTTON, Touch::MENU_BUTTON_SIZE, pos)) {
+                back_requested = true;
+                back_to = Back::District;
+            }
             else
                 confirm_pressed = true;
+            if (Touch::ENABLED && (client->ripperdocOpen() || client->boonOpen())) {
+                for (int card = 0; card <= 3; card++)
+                    if (Touch::onBox(Touch::implantCard(card), Touch::IMPLANT_CARD_SIZE, pos))
+                        client->answerRipperdoc(card), client->answerBoon(card);
+            }
             if (Touch::ENABLED && client->traumaOffered()) {
                 if (Touch::onBox(Touch::TRAUMA_CALL, Touch::TRAUMA_BUTTON_SIZE, pos))
                     client->answerTraumaTeam(true);

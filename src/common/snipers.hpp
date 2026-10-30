@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-// No shot before this distance, then one every SNIPER_MIN_INTERVAL to SNIPER_MAX_INTERVAL seconds
+// No shot before this distance, then one every SNIPER_MIN_INTERVAL to SNIPER_MAX_INTERVAL seconds, never two at once
 inline float SNIPER_FIRST_DISTANCE = 150;
 inline float SNIPER_MIN_INTERVAL = 5;
 inline float SNIPER_MAX_INTERVAL = 10;

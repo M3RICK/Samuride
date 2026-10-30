@@ -98,6 +98,7 @@ void Boss::start(std::mt19937 &rng, const std::map<int, Player> &players, float 
         attack = static_cast<BossAttack>(std::uniform_int_distribution<int>(1, 3)(rng));
     while (attack == last);
     time = 0;
+    reflected = 0;
 
     if (attack == BossAttack::Rockets)
         y = std::uniform_real_distribution<float>(0, floor - BOSS_ROCKET_GAP)(rng);
@@ -114,7 +115,7 @@ bool Boss::hit(const Player &player, float floor) const
         return false;
     switch (attack) {
         case BossAttack::Rockets:
-            return rocketsHit(rocketsX() - player.getX(), y, player.getY(), static_cast<int>(floor));
+            return rocketsHit(rocketsX() - player.getX(), y, player.getY(), static_cast<int>(floor), reflected);
         case BossAttack::Slam:
             return bandHits(floor - BOSS_SLAM_HEIGHT, floor, player.getY());
         default:
@@ -133,6 +134,30 @@ bool Boss::damage(int amount)
     return true;
 }
 
+// The wall within reach of the box, with slack: a rocket flies a third of a tile a tick, and the player
+// aims at where it was drawn, a little late. Every row the box touches, and the one beside it at each end,
+// so drifting with the jetpack right after doesn't run into one he just missed.
+int Boss::reflect(float left, float right, float top, float bottom, float floor)
+{
+    if (!fighting() || attack != BossAttack::Rockets || phaseOf(attack, time) != BossPhase::Strike ||
+        rocketsX() < left - 1 || rocketsX() > right + BOSS_REFLECT_SLACK)
+        return 0;
+    int count = 0;
+    for (int row = 0; row < static_cast<int>(floor) && row < 16; row++) {
+        bool covered = row + 1 > top - 0.5f && row < bottom + 0.5f;
+        if (covered && rocketRow(row, y) && !(reflected >> row & 1)) {
+            reflected |= 1 << row;
+            count++;
+        }
+    }
+    return count;
+}
+
+float Boss::threatens(const Player &player, float floor, float window) const
+{
+    return fighting() ? strikeComing(attack, time, y, player.getY(), floor, window) : 0;
+}
+
 bool Boss::sandevistan() const
 {
     return fighting() && (health <= BOSS_HEALTH * BOSS_SANDEVISTAN_HEALTH || leader >= BOSS_DISTANCE + BOSS_ARENA / 2);
@@ -141,5 +166,5 @@ bool Boss::sandevistan() const
 BossState Boss::state() const
 {
     return {fighting(), std::clamp(health * 100 / std::max(1, BOSS_HEALTH), 0, 100), attack, phaseOf(attack, time),
-            x(), rocketsX(), y, time, sandevistan()};
+            x(), rocketsX(), y, time, sandevistan(), reflected};
 }
