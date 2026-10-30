@@ -848,6 +848,28 @@ static void testWanted()
     assert(wantedBounty(DRONE_BOUNTY, 0) == DRONE_BOUNTY && wantedBounty(DRONE_BOUNTY, 5) == 10);
 }
 
+// The Ripperdoc's implants: paid from the run, refused when too dear, and what they do
+static void testRipperdoc()
+{
+    Player runner(1);
+    runner.reset(0, 0);
+    assert(!runner.buyImplant(1));
+    runner.addScore(IMPLANT_PRICES[1]);
+    assert(runner.buyImplant(1) && runner.getScore() == 0 && runner.hasShield());
+    // Subdermal Armor: the shield grows back
+    assert(runner.absorbHit() && !runner.hasShield());
+    for (float t = 0; t < ARMOR_REGEN + 0.1f; t += 0.05f)
+        runner.update(0.05f, 0, 10);
+    assert(runner.hasShield());
+
+    Player synaptic(2);
+    synaptic.reset(0, 0);
+    synaptic.addScore(IMPLANT_PRICES[3]);
+    assert(synaptic.buyImplant(3));
+    synaptic.addScore(10);
+    assert(synaptic.getUltimateCharge() == std::min(ultimateCharge(0), IMPLANT_PRICES[3] + 10 * SYNAPTIC_RATE));
+}
+
 int main()
 {
     testPacketFraming();
@@ -868,6 +890,7 @@ int main()
     testWraith();
     testWraithSmasher();
     testWanted();
+    testRipperdoc();
     testTuning();
     testWallet();
     testUpgrades();

@@ -29,6 +29,13 @@ namespace Touch {
     constexpr sf::Vector2f TRAUMA_DECLINE{1920 / 2 + 240, 1080 / 2 + 170};
     constexpr sf::Vector2f TRAUMA_BUTTON_SIZE{420, 110};
 
+    // The Ripperdoc's implants side by side, 1 to 3, and walking out (0) under them
+    constexpr sf::Vector2f IMPLANT_CARD_SIZE{520, 230};
+    constexpr sf::Vector2f implantCard(int implant)
+    {
+        return implant == 0 ? sf::Vector2f(1920 / 2, 1080 / 2 + 300) : sf::Vector2f(1920 / 2 + (implant - 2) * 580, 1080 / 2 + 20);
+    }
+
     inline bool onBox(sf::Vector2f center, sf::Vector2f size, sf::Vector2f pos)
     {
         sf::Vector2f offset = pos - center;

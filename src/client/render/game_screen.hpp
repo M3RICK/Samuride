@@ -101,6 +101,8 @@ private:
     int spears_shown = 0;       // to see one thrown
     int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
     sf::Clock style_clock;      // since it last went up
+    sf::Clock ripperdoc_clock;  // since the Ripperdoc opened
+    int implant = 0;            // the one bought this run, 0 none
     int wanted_shown = 0;       // your NCPD stars last frame, to hear the siren when one comes
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
@@ -175,6 +177,7 @@ private:
     void drawTouchButtons(const PlayerState &player, int me);
     void drawMenuButton();
     void drawTraumaOffer(const PlayerState &me);
+    void drawRipperdoc(const PlayerState &me);
     void drawFlashAndCallout();
     void drawBanner();
     void drawCountdown(Phase phase, int countdown);

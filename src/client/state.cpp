@@ -23,6 +23,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     winner = -1;
     rematch_requested = false;
     trauma_offer = false;
+    ripperdoc_open = false;
     players.clear();
     my_coins.clear();
     pending_effects.clear();
@@ -55,8 +56,10 @@ void GameState::handleCollision(char type, int player, int x, int y)
     if (type == PINATA_DROP)
         pinata_drops.insert({x, y});
     // Asked until something else happens to me: the rescue, or the death I chose
-    if (player == my_player_number)
+    if (player == my_player_number) {
         trauma_offer = type == TRAUMA_OFFER;
+        ripperdoc_open = type == RIPPERDOC_OFFER;
+    }
     pending_effects.push_back({type, player, x, y});
 }
 
@@ -81,6 +84,7 @@ void GameState::setWinner(int player_number)
     winner = player_number;
     phase = Phase::Over;
     trauma_offer = false;
+    ripperdoc_open = false;
 }
 
 void GameState::pushMapData(std::vector<uint8_t> data)
@@ -274,6 +278,13 @@ bool GameState::isTraumaOffered() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return trauma_offer;
+}
+
+bool GameState::isRipperdocOpen() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return ripperdoc_open;
 }
 
 bool GameState::answerTraumaOffer()

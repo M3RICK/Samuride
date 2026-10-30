@@ -54,6 +54,22 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
+        case RIPPERDOC_OFFER:
+            // Smasher's arena behind: the run waits on your pick (drawRipperdoc)
+            if (mine) {
+                audio.play(Audio::Sfx::MenuConfirm);
+                ripperdoc_clock.restart();
+            }
+            return;
+        case IMPLANT_INSTALLED:
+            if (mine && effect.x > 0 && effect.x <= IMPLANTS) {
+                implant = effect.x;
+                audio.play(Audio::Sfx::Jackpot);
+                run.callout = IMPLANT_LOOKS[implant].name;
+                run.callout_color = NEON_CYAN;
+                run.callout_clock.restart();
+            }
+            return;
         case TRAUMA_OFFER:
             // The hit that should have killed you: the run waits on your answer (drawTraumaOffer)
             run.shakeAtLeast(0.4f);

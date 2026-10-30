@@ -82,6 +82,9 @@ public:
     // The Trauma Team's question: call it (true) or let me die
     void answerTraumaTeam(bool call);
     bool traumaOffered() const;
+    // The Ripperdoc's implant, 1 to IMPLANTS, or 0 for none
+    void answerRipperdoc(int implant);
+    bool ripperdocOpen() const;
     // CYBERPSYCHO: the attack and ultimate buttons are on screen
     bool combatRun() const;
     // The run is over or the server is gone: the menu button is on screen

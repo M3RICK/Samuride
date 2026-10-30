@@ -20,6 +20,8 @@ void Player::reset(int number, float spawn_y)
     score = 0;
     wanted_heat = 0;
     wanted_calm = 0;
+    implant = 0;
+    armor_timer = 0;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
@@ -53,7 +55,17 @@ bool Player::collectCoin(int tile_x, int tile_y)
 void Player::addScore(int points)
 {
     score += points;
-    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points);
+    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points * (implant == 3 ? SYNAPTIC_RATE : 1));
+}
+
+bool Player::buyImplant(int id)
+{
+    if (id < 1 || id > IMPLANTS || score < IMPLANT_PRICES[id])
+        return false;
+    score -= IMPLANT_PRICES[id];
+    implant = id;
+    shield |= id == 1;
+    return true;
 }
 
 void Player::startShift()
@@ -131,7 +143,12 @@ void Player::updateForm(float dt)
 void Player::update(float dt, float forward_speed, float max_y)
 {
     updateForm(dt);
-    attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1));
+    attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1) * (implant == 2 ? KERENZIKOV_RATE : 1));
+    // Subdermal Armor grows the shield back
+    if (implant == 1 && !shield && (armor_timer += dt) >= ARMOR_REGEN) {
+        shield = true;
+        armor_timer = 0;
+    }
     grace_timer = std::max(0.0f, grace_timer - dt);
     if ((wanted_calm += dt) > WANTED_CALM_TIME)
         wanted_heat = std::max(0.0f, wanted_heat - WANTED_COOLING * dt);

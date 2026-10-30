@@ -25,6 +25,11 @@ taken from this file. Players on different versions can't play together: update 
   the drone count. Each star makes drones pay 20% more (x2 at 5 stars), puts more drones on the road ahead and
   sends the snipers more often. Go 5 seconds without a kill and the NCPD starts to forget you, a star every
   12 seconds or so: you pick your own difficulty.
+- **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, the run stops for 10 seconds and you
+  can spend the run's eddies on one implant for the rest of the run, with 1, 2, 3 (0 or N to walk out):
+  **Subdermal Armor** (250, a shield that grows back 30 s after it breaks), **Kerenzikov** (200, attacks
+  30% faster) or **Synaptic Accelerator** (200, your ultimate charges twice as fast). Your implant shows under
+  the wanted stars.
 
 ### Balance
 - After Adam Smasher the run no longer gets deadly at once: the speed stops climbing during his fight and

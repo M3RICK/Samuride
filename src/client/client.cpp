@@ -306,6 +306,17 @@ void Client::answerTraumaTeam(bool call)
         sendToServer(Protocol::createPacket(MSG_TRAUMA, {static_cast<uint8_t>(call)}));
 }
 
+void Client::answerRipperdoc(int implant)
+{
+    if (game_state.isRipperdocOpen())
+        sendToServer(Protocol::createPacket(MSG_RIPPERDOC, {static_cast<uint8_t>(implant)}));
+}
+
+bool Client::ripperdocOpen() const
+{
+    return game_state.isRipperdocOpen();
+}
+
 bool Client::traumaOffered() const
 {
     return game_state.isTraumaOffered();

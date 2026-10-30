@@ -65,6 +65,20 @@ bool Server::hurt(Player &player, char cause, int x, int y)
     return true;
 }
 
+// One implant, or none, and the run goes on once everyone has picked
+void Server::answerRipperdoc(int client_fd, int implant)
+{
+    if (!ripperdoc_waiting.count(client_fd))
+        return;
+    Player &player = players.at(client_fd);
+    // One they can't afford: still choosing
+    if (implant != 0 && !player.buyImplant(implant))
+        return;
+    ripperdoc_waiting.erase(client_fd);
+    // x = the implant, 0 for none: their clinic closes either way
+    notifyCollision(IMPLANT_INSTALLED, player, implant, 0);
+}
+
 void Server::answerTraumaTeam(int client_fd, bool call)
 {
     auto offer = trauma_offers.find(client_fd);

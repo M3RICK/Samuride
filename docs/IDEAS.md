@@ -112,5 +112,5 @@ Everyone flies a jetpack and attacks ahead today: these change how you move, or 
    moment during the boss.
 7. **NCPD wanted level**, built on 3.1 (2026-10-30): like GTA's stars, the more drones you kill the higher it climbs; each
    level adds snipers and drones but multiplies the eddies. You pick your own difficulty.
-8. **Ripperdoc after Smasher**, liked: a 10 s stop where you spend the run's eddies on implants for
+8. **Ripperdoc after Smasher**, built on 3.1 (2026-10-30): a 10 s stop where you spend the run's eddies on implants for
    the rest of the run. Beating the boss earns more than eddies.

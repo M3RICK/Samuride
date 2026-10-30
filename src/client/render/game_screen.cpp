@@ -87,6 +87,7 @@ void GameScreen::resetRun()
     spears_shown = 0;
     style_shown = 0;
     wanted_shown = 0;
+    implant = 0;
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;
@@ -222,6 +223,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (state.isRipperdocOpen() && players.count(me) && ripperdoc_clock.getElapsedTime().asSeconds() < RIPPERDOC_TIME)
+        drawRipperdoc(players.at(me));
     if (state.isTraumaOffered() && players.count(me))
         drawTraumaOffer(players.at(me));
 

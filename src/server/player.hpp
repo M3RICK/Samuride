@@ -47,6 +47,8 @@ private:
     int ultimate_charge = 0;    // eddies earned since the last ultimate, up to its runner's charge
     float wanted_heat = 0;      // drones down, cooling once calm (cyberpsycho.hpp)
     float wanted_calm = 0;      // seconds since the last drone down
+    int implant = 0;            // bought from the Ripperdoc this run (upgrades.hpp), 0 none
+    float armor_timer = 0;      // Subdermal Armor: seconds since the shield broke
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
     std::unique_ptr<RunnerWeapon> runner_weapon = makeWeapon(weaponOf(0));
     std::unique_ptr<RunnerUltimate> runner_ultimate = makeUltimate(ultimateOf(0));
@@ -97,6 +99,8 @@ public:
     bool awaitRescue(float dt, float max_y);
     void startShift();
     void addScore(int points);
+    // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
+    bool buyImplant(int id);
     int getUltimateCharge() const { return ultimate_charge; }
     bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs

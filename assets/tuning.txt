@@ -81,6 +81,20 @@ EMERGE_TIME 1
 SANDEVISTAN_PER_LEVEL 0.5
 # Tiles each eddie magnet level reaches
 MAGNET_PER_LEVEL 0.5
+# Seconds the run waits at the Ripperdoc, past Smasher (CYBERPSYCHO)
+RIPPERDOC_TIME 10
+# Subdermal Armor implant, in the run's eddies
+ARMOR_PRICE 250
+# Subdermal Armor: seconds before a broken shield grows back
+ARMOR_REGEN 30
+# Kerenzikov implant, in the run's eddies
+KERENZIKOV_PRICE 200
+# Kerenzikov: attacks come that many times faster
+KERENZIKOV_RATE 1.3
+# Synaptic Accelerator implant, in the run's eddies
+SYNAPTIC_PRICE 200
+# Synaptic Accelerator: the ultimate gauge fills that many times faster
+SYNAPTIC_RATE 2
 # Seconds you get to say whether to call the Trauma Team, after which it comes
 TRAUMA_OFFER_TIME 5
 # Seconds the run waits while the Trauma Team picks you up

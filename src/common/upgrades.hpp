@@ -61,6 +61,28 @@ constexpr char TRAUMA_RESCUE = 'T';
 constexpr char TRAUMA_OFFER = 'O';
 constexpr char JACKPOT = 'J';
 
+// The Ripperdoc, once Smasher's arena is behind (CYBERPSYCHO): the run stops RIPPERDOC_TIME seconds and each
+// runner may spend the run's eddies on one implant, for the rest of the run. Implant 0 is none.
+constexpr int IMPLANTS = 3;
+struct ImplantLook {
+    const char *name;
+    const char *what;
+};
+inline constexpr ImplantLook IMPLANT_LOOKS[IMPLANTS + 1] = {
+    {"", ""},
+    {"SUBDERMAL ARMOR", "A shield, back 30 s after it breaks"},
+    {"KERENZIKOV", "Attacks 30% faster"},
+    {"SYNAPTIC ACCELERATOR", "Ultimate charges twice as fast"},
+};
+inline int IMPLANT_PRICES[IMPLANTS + 1] = {0, 250, 200, 200};
+inline float RIPPERDOC_TIME = 10;
+inline float ARMOR_REGEN = 30;          // Subdermal Armor: seconds before a broken shield grows back
+inline float KERENZIKOV_RATE = 1.3f;    // attack cooldowns run that much faster
+inline int SYNAPTIC_RATE = 2;           // the ultimate gauge fills that much faster
+// MSG_COLLISION types: the Ripperdoc opens for a player; they bought implant x
+constexpr char RIPPERDOC_OFFER = 'R';
+constexpr char IMPLANT_INSTALLED = 'I';
+
 inline float sandevistanTime(const UpgradeLevels &levels)
 {
     return SANDEVISTAN_TIME + SANDEVISTAN_PER_LEVEL * levels[UPGRADE_SANDEVISTAN];

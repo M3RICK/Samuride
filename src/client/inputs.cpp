@@ -3,6 +3,7 @@
 #include "inputs.hpp"
 #include "client.hpp"
 #include "touch.hpp"
+#include "../common/upgrades.hpp"
 
 InputManager::InputManager(Client *client, sf::RenderWindow *window, const Settings &settings)
     : client(client), window(window), jetpack_key(settings.jetpack_key), attack_key(settings.attack_key),
@@ -35,6 +36,13 @@ void InputManager::processInputs()
                 client->answerTraumaTeam(true);
             if (key->code == sf::Keyboard::Key::N)
                 client->answerTraumaTeam(false);
+            // The Ripperdoc: 1 to 3 buy an implant, 0 or N walks out
+            for (int implant = 0; implant <= IMPLANTS; implant++)
+                if (key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Num0) + implant) ||
+                    key->code == static_cast<sf::Keyboard::Key>(static_cast<int>(sf::Keyboard::Key::Numpad0) + implant))
+                    client->answerRipperdoc(implant);
+            if (key->code == sf::Keyboard::Key::N)
+                client->answerRipperdoc(0);
         } else if (const auto *released = event->getIf<sf::Event::KeyReleased>()) {
             if (released->code == attack_key)
                 attack_key_down = false;
@@ -49,6 +57,11 @@ void InputManager::processInputs()
                 back_requested = true;
             else
                 confirm_pressed = true;
+            if (Touch::ENABLED && client->ripperdocOpen()) {
+                for (int implant = 0; implant <= IMPLANTS; implant++)
+                    if (Touch::onBox(Touch::implantCard(implant), Touch::IMPLANT_CARD_SIZE, pos))
+                        client->answerRipperdoc(implant);
+            }
             if (Touch::ENABLED && client->traumaOffered()) {
                 if (Touch::onBox(Touch::TRAUMA_CALL, Touch::TRAUMA_BUTTON_SIZE, pos))
                     client->answerTraumaTeam(true);

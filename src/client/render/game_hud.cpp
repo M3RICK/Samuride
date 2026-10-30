@@ -198,7 +198,9 @@ void GameScreen::drawWanted(const PlayerState &player, float y)
         canvas.draw(star);
     }
     if (stars > 0)
-        canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+        if (implant > 0)
+        canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
+    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
                     {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 
@@ -634,6 +636,36 @@ void GameScreen::drawTraumaOffer(const PlayerState &me)
         canvas.text(call ? Touch::hint("[Y] CALL THEM", "CALL THEM") : Touch::hint("[N] LET ME DIE", "LET ME DIE"), 40,
                     call ? NEON_CYAN : NEON_RED, pos);
     }
+}
+
+// Past Smasher: three implants for the run's eddies, the ones you can't afford dimmed, the time left draining
+void GameScreen::drawRipperdoc(const PlayerState &me)
+{
+    canvas.overlay(170);
+    sf::Vector2f center = Screen::CENTER;
+    canvas.glitchText("RIPPERDOC", 110, NEON_CYAN, center + sf::Vector2f(0, -330));
+    canvas.text(std::format("ONE IMPLANT FOR THE REST OF THE RUN     YOU HAVE {} EDDIES", me.score), 32, sf::Color::White,
+                center + sf::Vector2f(0, -230));
+
+    float left = std::clamp(1 - ripperdoc_clock.getElapsedTime().asSeconds() / RIPPERDOC_TIME, 0.0f, 1.0f);
+    sf::RectangleShape bar({600 * left, 10});
+    bar.setPosition(center + sf::Vector2f(-300, -180));
+    bar.setFillColor(NEON_CYAN);
+    canvas.draw(bar);
+
+    for (int i = 1; i <= IMPLANTS; i++) {
+        sf::Vector2f pos = Touch::implantCard(i);
+        bool affordable = me.score >= IMPLANT_PRICES[i];
+        sf::Color color = affordable ? NEON_CYAN : withAlpha(sf::Color::White, 90);
+        canvas.card(sf::FloatRect(pos - Touch::IMPLANT_CARD_SIZE / 2.f, Touch::IMPLANT_CARD_SIZE), affordable);
+        canvas.text(Touch::ENABLED ? std::string(IMPLANT_LOOKS[i].name) : std::format("[{}] {}", i, IMPLANT_LOOKS[i].name), 30, color,
+                    pos + sf::Vector2f(0, -60));
+        canvas.text(IMPLANT_LOOKS[i].what, 24, affordable ? sf::Color::White : color, pos);
+        canvas.text(std::format("{} EDDIES", IMPLANT_PRICES[i]), 32, affordable ? NEON_YELLOW : color, pos + sf::Vector2f(0, 60));
+    }
+    sf::Vector2f out = Touch::implantCard(0);
+    canvas.card(sf::FloatRect(out - sf::Vector2f(210, 55), {420, 110}), false);
+    canvas.text(Touch::hint("[0] NO THANKS", "NO THANKS"), 36, NEON_RED, out);
 }
 
 void GameScreen::drawConnectionLost()

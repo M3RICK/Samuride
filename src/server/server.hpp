@@ -92,6 +92,9 @@ private:
         float left;     // seconds before it comes anyway
     };
     std::map<int, TraumaOffer> trauma_offers;
+    // The Ripperdoc past Smasher: who hasn't picked yet, and how long the run still waits for them
+    std::set<int> ripperdoc_waiting;
+    float ripperdoc_left = 0;
 
     std::vector<Socket::PollEntry> poll_fds;
     std::map<int, Player> players;
@@ -219,6 +222,7 @@ private:
     bool hurt(Player &player, char cause, int x, int y);
     // Yes: the rescue; no: the death the hit was
     void answerTraumaTeam(int client_fd, bool call);
+    void answerRipperdoc(int client_fd, int implant);
 
 public:
     static constexpr int TICK_RATE = 60;

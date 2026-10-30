@@ -17,6 +17,7 @@ bool Server::resetMap()
     destroyed_drones.clear();
     pinata_drops.clear();
     trauma_offers.clear();
+    ripperdoc_waiting.clear();
     projectiles.clear();
     hacked_zappers.clear();
     titans.reset();
@@ -169,6 +170,14 @@ void Server::updatePlayers()
         sendGameState();
         return;
     }
+    // At the Ripperdoc's: the run waits for everyone's pick, or for the time to run out
+    if (!ripperdoc_waiting.empty()) {
+        if ((ripperdoc_left -= TICK_DT) <= 0)
+            ripperdoc_waiting.clear();
+        sendGameState();
+        return;
+    }
+
     // The Trauma Team at work on someone: the whole run waits for it
     bool waiting = false;
     for (auto &[client_fd, player] : players)
@@ -187,6 +196,14 @@ void Server::updatePlayers()
     if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
         run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
         slowed_after_boss = true;
+        // ... and the Ripperdoc opens (answerRipperdoc)
+        if (mode == GameMode::Cyberpsycho) {
+            ripperdoc_left = RIPPERDOC_TIME;
+            for (auto &[client_fd, player] : players) {
+                ripperdoc_waiting.insert(client_fd);
+                notifyCollision(RIPPERDOC_OFFER, player, static_cast<int>(player.getX()), static_cast<int>(player.getY()));
+            }
+        }
     }
 
     for (auto &[client_fd, player] : players) {
