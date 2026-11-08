@@ -101,6 +101,25 @@ private:
         int landed = 0;         // eddies already on the counter, each heard as it lands
     };
     std::vector<ScrapPayout> scrap_payouts;
+    // DirtyBastrd's hit lines, one on every drone his kick downs: mostly a grunt, a rare line about this
+    // often, a surprise. The same take twice in a row comes the second time at another pitch.
+    static constexpr float RARE_HIT_LINE_CHANCE = 0.15f;
+    static constexpr float HIT_LINE_REPEAT_PITCH = 1.1f;
+    // Drones a kick downs together, in the same instant, share one line instead of a chorus
+    static constexpr float HIT_LINE_SAME_KICK = 0.05f;
+    sf::Clock hit_line_clock;       // since the last hit line
+    bool last_hit_rare = false;     // the last hit line: which pool, which take, at what pitch
+    int last_hit_take = -1;
+    float last_hit_pitch = 1;
+    std::set<std::pair<int, int>> sawn_drones;  // drones his thrown saw hit: their kill is the saw's, not his kick's
+    // His saw's loop: revved up this much at the start of a lunge; his choom's at this share of the volume,
+    // under yours, or the two would drone on together
+    static constexpr float SAW_REV_PITCH = 0.3f;
+    static constexpr float CHOOM_SAW_VOLUME = 0.35f;
+    // Thrown, the saw leaves his hands a message before it shows up in the air: the loop waits this long
+    // before stopping, so it carries on instead of starting over
+    static constexpr float SAW_LOOP_LINGER = 0.1f;
+    std::map<int, sf::Clock> saw_heard;     // since each player's saw was last out or in the air
     std::map<int, sf::Vector2f> hud_counters;   // where each player's eddies are written in the HUD
     int heard_countdown = -1;   // last countdown value beeped
 
@@ -157,6 +176,7 @@ private:
     void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
+    void sayHitLine();
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
     void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss);
