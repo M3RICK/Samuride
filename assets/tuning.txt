@@ -364,7 +364,7 @@ CHAINSAW_SCRAP_MAX 30
 # Drones, titans and zappers the thrown saw (the attack key while it is out) takes down before it drops
 CHAINSAW_THROW_HITS 5
 # Tiles from where the thrown saw is to the next target ahead it ricochets to
-CHAINSAW_THROW_RANGE 8
+CHAINSAW_THROW_RANGE 15
 # Tiles per second the thrown saw flies, not on top of the run speed
 CHAINSAW_THROW_SPEED 40
 # Tiles per second up the thrown saw starts its drop to the floor with

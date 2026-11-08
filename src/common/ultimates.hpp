@@ -114,7 +114,7 @@ inline int chainsawScrap(int kills, float seconds)
 // Out of hits or of targets, it drops to the floor in an arc and bursts into its scrap like a snap, each
 // hit a kill: a good throw pays more than the saw would have, a throw at nothing pays the least.
 inline int CHAINSAW_THROW_HITS = 5;
-inline float CHAINSAW_THROW_RANGE = 8;          // tiles from where it is to the next target
+inline float CHAINSAW_THROW_RANGE = 15;         // tiles from where it is to the next target: the screen ahead, like the breach
 inline float CHAINSAW_THROW_SPEED = 40;         // tiles per second, not on top of the run speed: 2.5 times the top one
 inline float CHAINSAW_THROW_DROP_LIFT = 6;      // tiles per second up as it starts dropping, then the arc
 inline float CHAINSAW_THROW_DROP_GRAVITY = 40;  // tiles per second, every second, pulling it down
