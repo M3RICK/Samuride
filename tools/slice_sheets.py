@@ -159,11 +159,12 @@ CHARACTERS = {
         "death":   animation((0, 855, 605, 1000), 10, mode="once", frames=[0, 1, 2, 3, 4, 5], scale=1.8),
         "attack":  animation((775, 560, 1536, 694), 16, mode="once", effects_ahead=True, splits=[1028],
                              scale=1.6),
-    # Two kick frames overlap wing over wing: a thin seam cuts them apart
-    # chainsaw.png: the glowing saw of his ultimate, drawn over him while it runs; the bat icon's
-    # wing touches its sparks
+    # The wings reach up into the rows' labels: erased first
     }, {"erase": [(772, 200, 975, 232), (840, 376, 1020, 406), (0, 540, 210, 570), (775, 540, 1070, 570),
-                  (0, 850, 170, 880), (1027, 570, 1029, 615), (1399, 903, 1420, 978)],
+                  (0, 850, 170, 880),
+                  (1027, 570, 1029, 615),   # two kick frames overlap wing over wing: a thin seam cuts them apart
+                  (1399, 903, 1420, 978)],  # the bat icon's wing, touching the chainsaw's sparks
+        # chainsaw.png: the glowing saw of his ultimate, drawn over him while it runs
         "crops": {"chainsaw.png": (1298, 890, 1402, 978)}, "scale": 0.5, "smooth": True, "carried": True}),
     # Adam Smasher, the boss (render/boss.cpp): drawn facing right over a glow, he faces the runners
     "smasher": ("sources/Adam_Smasher.png", None, {
