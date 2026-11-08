@@ -60,6 +60,12 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case CHAINSAW_ZAPPER_CUT:
             zapperSawn(effect, mine);
             return;
+        case CHAINSAW_THROW_HIT:
+            sawRicocheted(effect, mine);
+            return;
+        case CHAINSAW_THROW_SCRAP:
+            sawLanded(effect);
+            return;
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
@@ -316,6 +322,28 @@ void GameScreen::zapperSawn(const CollisionEffect &effect, bool mine)
     particles.emit(centerOf(effect), 20, sf::Color::White, 9, 0.3f, 0);
     audio.play(Audio::Sfx::SawZap);
     run.shakeAtLeast(0.2f, mine ? 14 : 5);
+}
+
+// His thrown saw bites into what it hit and ricochets on: a clank, sparks, a short jolt (what it hit goes down
+// in its own effect)
+void GameScreen::sawRicocheted(const CollisionEffect &effect, bool mine)
+{
+    audio.play(Audio::Sfx::SawClank);
+    run.shakeAtLeast(0.12f, mine ? 12 : 5);
+    particles.emit(centerOf(effect), 18, sf::Color::White, 9, 0.25f, 6);
+    particles.emit(centerOf(effect), 14, NEON_ORANGE, 7, 0.35f, 10);
+    particles.emit(centerOf(effect), 10, NEON_CYAN, 6, 0.3f, 0);
+}
+
+// It lands and bursts into its scrap (its y is how many eddies), on their way to circle him
+void GameScreen::sawLanded(const CollisionEffect &effect)
+{
+    sf::Vector2f landed(effect.x + 0.5f, run.floor() - 0.5f);
+
+    audio.play(Audio::Sfx::SawSnap);
+    particles.emit(landed, 24, NEON_CYAN, 7, 0.4f, 10);
+    particles.emit(landed, 16, SAWDUST, 5, 0.5f, 12);
+    payOutScrap(effect.player, effect.y, landed);
 }
 
 // The saw's scrap earned: its eddies burst from `from` (in tiles) and gather around him first

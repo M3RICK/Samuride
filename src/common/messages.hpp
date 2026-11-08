@@ -92,6 +92,14 @@ struct BossState {
     uint16_t reflected = 0;     // the rows of the rocket wall Wraith sent back at him, one bit each
 };
 
+// MSG_SAWS, one per thrown chainsaw in the air (DirtyBastrd)
+struct SawState {
+    int player;     // who threw it
+    float x;        // its middle, in tiles
+    float y;
+    bool dropping;  // done ricocheting, falling to the floor
+};
+
 // MSG_COLLISION
 struct CollisionEffect {
     char type;
@@ -111,6 +119,7 @@ namespace Message {
     std::vector<uint8_t> encode(const std::vector<SniperState> &snipers);
     std::vector<uint8_t> encode(const BossState &boss);
     std::vector<uint8_t> encode(const CollisionEffect &collision);
+    std::vector<uint8_t> encode(const std::vector<SawState> &saws);
 
     bool decode(const std::vector<uint8_t> &payload, ConnectRequest &connect);
     bool decode(const std::vector<uint8_t> &payload, GameStart &start);
@@ -121,6 +130,7 @@ namespace Message {
     bool decode(const std::vector<uint8_t> &payload, std::vector<SniperState> &snipers);
     bool decode(const std::vector<uint8_t> &payload, BossState &boss);
     bool decode(const std::vector<uint8_t> &payload, CollisionEffect &collision);
+    bool decode(const std::vector<uint8_t> &payload, std::vector<SawState> &saws);
 }
 
 #endif

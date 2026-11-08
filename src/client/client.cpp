@@ -191,6 +191,9 @@ void Client::processMessage(const MessageHeader &header, const std::vector<uint8
         case MSG_BOSS:
             handleBoss(payload);
             break;
+        case MSG_SAWS:
+            handleSaws(payload);
+            break;
         case MSG_GAME_END:
             handleGameEnd(payload);
             break;
@@ -229,6 +232,14 @@ void Client::handleBoss(const std::vector<uint8_t> &payload)
 
     if (Message::decode(payload, boss))
         game_state.setBoss(boss);
+}
+
+void Client::handleSaws(const std::vector<uint8_t> &payload)
+{
+    std::vector<SawState> saws;
+
+    if (Message::decode(payload, saws))
+        game_state.setSaws(std::move(saws));
 }
 
 void Client::handleShot(const std::vector<uint8_t> &payload)

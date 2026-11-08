@@ -13,6 +13,7 @@
 #include "../common/weapons.hpp"
 #include "../common/ultimates.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/messages.hpp"
 
 class Server;
 class Player;
@@ -73,6 +74,8 @@ public:
     virtual bool sawOut() const { return false; }
     virtual bool lunging() const { return false; }
     virtual int scrap() const { return 0; }
+    // What it has flying for the clients to draw, MSG_SAWS (DirtyBastrd's thrown saws; the server sets whose)
+    virtual std::vector<SawState> inAir() const { return {}; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -147,10 +150,12 @@ public:
     bool autoFires() const override { return false; }
 };
 
-// DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp)
+// DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp); with his chainsaw out,
+// the key throws it instead, as it comes back up (Berserk never throws it)
 class Kick : public RunnerWeapon {
 public:
     float attack(Server &server, Player &player) override;
+    float release(Server &server, Player &player) override;
 };
 
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
@@ -241,6 +246,9 @@ class Chainsaw : public RunnerUltimate {
     float lunge_timer = 0;      // seconds of the lunge left
     float lunge_cooldown = 0;   // seconds before the next lunge
     float zapper_cut_timer = 0; // seconds left of the lunge's window to cut through zappers
+    std::vector<ThrownSaw> thrown;  // in the air, ricocheting or dropping
+
+    void fly(Server &server, Player &player, ThrownSaw &saw);
 
 public:
     void fire(Server &server, Player &player, float start, float line) override;
@@ -261,6 +269,11 @@ public:
     // Lunging, it cuts the zapper he runs into: true when it did (a kill for its scrap), false when the
     // zapper kills him
     bool cutZapper();
+    // It leaves his hands from where he holds it, with what it took down and how long he held it, and the
+    // ultimate is over: false without a saw
+    bool throwSaw(const Player &player);
+    const std::vector<ThrownSaw> &flying() const { return thrown; }
+    std::vector<SawState> inAir() const override;
 };
 
 class Fishbones : public RunnerUltimate {

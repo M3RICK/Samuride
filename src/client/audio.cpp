@@ -210,6 +210,9 @@ void Audio::synthesize()
     // His saw lunging through a zapper: an electric crack, then the beam whining out
     buffers[Sfx::SawZap] = toBuffer(concat(burst(0.06f, 0.5f, 0.95f),
                                            mix(tone(Wave::Saw, 1600, 300, 0.25f, 0.15f), burst(0.25f, 0.3f, 0.8f))));
+    // His thrown saw ricocheting off what it hits: a bright metal clank, two notes ringing over a click
+    buffers[Sfx::SawClank] = toBuffer(mix(mix(tone(Wave::Square, 2600, 2000, 0.14f, 0.15f), tone(Wave::Square, 3900, 3300, 0.1f, 0.08f)),
+                                          burst(0.05f, 0.35f, 0.9f)));
     // The saw snapping: a metal twang over a crack
     buffers[Sfx::SawSnap] = toBuffer(mix(tone(Wave::Square, 2200, 500, 0.18f, 0.15f), burst(0.25f, 0.35f, 0.9f)));
     // Berserk: a low growl revving up

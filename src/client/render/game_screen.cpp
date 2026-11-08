@@ -241,6 +241,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     runners.draw(players, me, phase == Phase::Running);
     drawTraumaTeam();
     ultimates.draw();
+    ultimates.drawThrownSaws(state.getSaws());
     shots.draw();
     drawCuts();
     drawZaps();

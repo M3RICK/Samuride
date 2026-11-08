@@ -296,3 +296,30 @@ bool Message::decode(const std::vector<uint8_t> &payload, CollisionEffect &colli
     collision.y = r.u16();
     return r.ok();
 }
+
+// [count]([player][x, 4 bytes][y, 2 bytes][1 dropping])...
+std::vector<uint8_t> Message::encode(const std::vector<SawState> &saws)
+{
+    Writer w;
+    w.u8(saws.size());
+    for (const SawState &saw : saws) {
+        w.u8(saw.player);
+        w.pos32(saw.x);
+        w.pos16(saw.y);
+        w.u8(saw.dropping);
+    }
+    return w.data;
+}
+
+bool Message::decode(const std::vector<uint8_t> &payload, std::vector<SawState> &saws)
+{
+    Reader r(payload);
+    saws.clear();
+    for (int count = r.u8(); count > 0 && r.ok(); count--) {
+        int player = r.u8();
+        float x = r.pos32();
+        float y = r.pos16();
+        saws.push_back({player, x, y, r.u8() != 0});
+    }
+    return r.ok();
+}

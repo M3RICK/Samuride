@@ -312,6 +312,13 @@ public:
     void slashTitans(Player &player, float reach);
     // ... and every titan running into him, as his saw snaps (DirtyBastrd)
     void sawTitans(Player &player);
+    // The titans charging, and the one standing at x taken down (DirtyBastrd's thrown saw), his bounty paid
+    std::vector<TitanState> titanStates() const { return titans.states(); }
+    void takeDownTitan(Player &player, float x);
+    // Where Adam Smasher stands while he fights in CYBERPSYCHO (his body from half a tile before), -1 when he
+    // isn't there; knocked down close by, like after a slam (DirtyBastrd's thrown saw)
+    float bossAt() const { return mode == GameMode::Cyberpsycho && boss.fighting() ? boss.x() : -1; }
+    void staggerBoss() { boss.stagger(); }
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);

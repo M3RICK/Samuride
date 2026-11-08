@@ -12,9 +12,12 @@ taken from this file. Players on different versions can't play together: update 
   - **Invisible Chainsaw** ultimate: for 10 seconds it shreds the drones at his hands, and `E` again lunges with
     it, cutting through any zapper in the way. It takes one hit from a drone, a titan (which goes down with it) or
     Adam Smasher before snapping into up to 30 scrap eddies, more for every kill and every second it lasted: a
-    meter by its gauge shows how much. The eddies circle him, then fly to his counter one by one. Snipers still
-    kill him, and so do zappers when he isn't lunging.
-  - **Against Adam Smasher**, his kick cuts like a blade while Smasher gets up after a slam.
+    meter by its gauge shows how much. `F` throws it instead: it ricochets through up to 5 drones, titans or
+    zappers ahead of him, each one a kill, then drops into its scrap, and he's on his own again. The eddies
+    circle him, then fly to his counter one by one. Snipers still kill him, and so do zappers when he isn't
+    lunging.
+  - **Against Adam Smasher**, his kick cuts like a blade while Smasher gets up after a slam, and a thrown saw
+    hits him once (8) and knocks him down close by for those 2 seconds: kick away.
 
 ## v3.1
 

@@ -292,9 +292,12 @@ void Blink::tick(const Player &player, float dt)
 }
 
 // Every drone in reach goes down, no titan; Smasher takes it like a blade's cut when he's close. Steel Toes:
-// each drone kicked down flies into the next one ahead in its row.
+// each drone kicked down flies into the next one ahead in its row. Nothing while the saw is out: the key
+// throws it as it comes back up (release).
 float Kick::attack(Server &server, Player &player)
 {
+    if (player.ultimate().sawOut())
+        return 0;
     server.announceShot(player, Weapon::Kick);
     for (auto [x, y] : server.dronesInReach(player, KICK_REACH, player.getY())) {
         server.destroyDrone(player.getClientFd(), x, y);
@@ -309,6 +312,12 @@ float Kick::attack(Server &server, Player &player)
     }
     server.slashBoss(player, KICK_REACH);
     return KICK_COOLDOWN;
+}
+
+float Kick::release(Server &, Player &player)
+{
+    auto *saw = dynamic_cast<Chainsaw *>(&player.ultimate());
+    return saw && saw->throwSaw(player) ? KICK_COOLDOWN : 0;
 }
 
 //=============================================================================
@@ -474,9 +483,12 @@ void Chainsaw::tick(float dt)
         timer = 0;
 }
 
-// Every drone in reach goes down, in the row at his hands only
+// Every drone in reach goes down, in the row at his hands only; the thrown saws fly on
 void Chainsaw::act(Server &server, Player &player)
 {
+    for (ThrownSaw &saw : thrown)
+        fly(server, player, saw);
+    std::erase_if(thrown, [&](const ThrownSaw &saw) { return saw.landed(server.map().getHeight() - 0.5f); });
     if (!sawOut())
         return;
     int row = static_cast<int>(player.getY() + CHAINSAW_HEIGHT);
@@ -538,4 +550,77 @@ int Chainsaw::snap()
     lunge_timer = 0;
     zapper_cut_timer = 0;
     return burst;
+}
+
+bool Chainsaw::throwSaw(const Player &player)
+{
+    if (!sawOut())
+        return false;
+    thrown.push_back({player.getX() + 1.3f, player.getY() + CHAINSAW_HEIGHT, kills, held});
+    snap();
+    return true;
+}
+
+// The thrown saw ricochets from what's ahead of it to what's next within its range, taking each down (his
+// bounty, as if he had), then drops and pays its scrap where it lands, lying on the floor
+void Chainsaw::fly(Server &server, Player &player, ThrownSaw &saw)
+{
+    int height = server.map().getHeight();
+
+    // What it can hit, and what each one is: a drone's or a zapper's tile, {-1, -1} a titan, {-2, -2} Smasher
+    std::vector<SawTarget> targets;
+    std::vector<std::pair<int, int>> tiles;
+    std::vector<float> titan_x;
+    int end = std::min(static_cast<int>(server.map().getWidth()) - 1, static_cast<int>(saw.x + CHAINSAW_THROW_RANGE));
+    for (int x = std::max(0, static_cast<int>(saw.x)); x <= end; x++) {
+        for (int y = 0; y < height; y++) {
+            if (server.isLiveDrone(x, y) || server.isLiveZapper(x, y)) {
+                targets.push_back({x + 0.5f, y + 0.5f});
+                tiles.push_back({x, y});
+                titan_x.push_back(0);
+            }
+        }
+    }
+    for (const TitanState &titan : server.titanStates()) {
+        TitanStats stats = titanStats(titan.type);
+        targets.push_back({titan.x + stats.width / 2, height - stats.height / 2});
+        tiles.push_back({-1, -1});
+        titan_x.push_back(titan.x);
+    }
+    if (float boss = server.bossAt(); boss >= 0) {
+        targets.push_back({boss + 1, height - 2.5f, true});
+        tiles.push_back({-2, -2});
+        titan_x.push_back(0);
+    }
+
+    int hit = saw.fly(Server::TICK_DT, targets);
+    if (hit >= 0) {
+        auto [x, y] = tiles[hit];
+        server.notifyCollision(CHAINSAW_THROW_HIT, player, static_cast<int>(saw.x), static_cast<int>(saw.y));
+        if (x == -2) {
+            server.hitBoss(player, CHAINSAW_THROW_BOSS_DAMAGE);
+            server.staggerBoss();
+        } else if (x == -1) {
+            server.takeDownTitan(player, titan_x[hit]);
+        } else if (server.isLiveDrone(x, y)) {
+            server.destroyDrone(player.getClientFd(), x, y);
+        } else {
+            for (std::pair<int, int> node : zapperNodes(server.map(), x, y))
+                server.switchOffZapper(node.first, node.second, 1e9f);
+            server.notifyCollision(CHAINSAW_ZAPPER_CUT, player, x, y);
+        }
+    }
+    if (saw.landed(height - 0.5f)) {
+        int scrap = saw.scrap();
+        player.addScore(scrap);
+        server.notifyCollision(CHAINSAW_THROW_SCRAP, player, static_cast<int>(saw.x), scrap);
+    }
+}
+
+std::vector<SawState> Chainsaw::inAir() const
+{
+    std::vector<SawState> saws;
+    for (const ThrownSaw &saw : thrown)
+        saws.push_back({0, saw.x, saw.y, saw.dropping});
+    return saws;
 }

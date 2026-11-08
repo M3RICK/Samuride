@@ -381,3 +381,29 @@ void Ultimates::draw()
     drawRockets();
     drawDoubles();
 }
+
+// DirtyBastrd's thrown saw, spinning end over end as it flies, glowing, sparks and sawdust trailing behind it
+void Ultimates::drawThrownSaws(const std::vector<SawState> &saws)
+{
+    static constexpr float SPIN = 1440;     // degrees per second
+    const sf::Texture &texture = sprites.chainsaw;
+    float tile_size = run.view.tile_size;
+
+    if (texture.getSize().x == 0)
+        return;
+    for (const SawState &saw : saws) {
+        sf::Vector2f middle(saw.x, saw.y);
+        sf::Sprite sprite(texture);
+        float scale = tile_size * 1.3f / texture.getSize().x;
+        sprite.setOrigin(sf::Vector2f(texture.getSize()) / 2.0f);
+        sprite.setScale({scale, scale});
+        sprite.setPosition(run.toScreen(middle));
+        sprite.setRotation(sf::degrees(saw_spin.getElapsedTime().asSeconds() * SPIN));
+        canvas.halo(run.toScreen(middle), tile_size * 0.8f, withAlpha(NEON_CYAN, 60));
+        canvas.draw(sprite);
+        canvas.draw(sprite, sf::BlendAdd);
+        particles.emit(middle, 2, std::rand() % 2 ? NEON_ORANGE : NEON_CYAN, 3, 0.2f, 6);
+        if (!saw.dropping)
+            particles.emit(middle, 1, SAWDUST, 2, 0.3f, 8);
+    }
+}

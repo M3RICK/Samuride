@@ -40,6 +40,7 @@ Positions travel in hundredths of a tile.
 | 17 | `MSG_TRAUMA` | client → server | My answer to the Trauma Team's offer (`O`): 1 call it, 0 let me die |
 | 18 | `MSG_RIPPERDOC` | client → server | The implant I buy at the Ripperdoc (`R`): 1 to 3, 0 none. One I can't afford is ignored, I'm still choosing |
 | 19 | `MSG_BOON` | client → server | The boon card I pick (`B`): 1 to 3, 0 none |
+| 20 | `MSG_SAWS` | server → client | DirtyBastrd's thrown chainsaws in the air, every tick |
 
 ### `MSG_VERSION`
 
@@ -163,7 +164,9 @@ A 14-byte record per player, 60 times per second:
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flew into the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
-| `z` | Lunging, DirtyBastrd's chainsaw cut through the zapper with a node on that tile: all its nodes are out for the rest of the run |
+| `z` | DirtyBastrd's chainsaw, lunging or thrown, cut through the zapper with a node on that tile: all its nodes are out for the rest of the run |
+| `u` | DirtyBastrd's thrown chainsaw hit what is on that tile (its `d`, `k`, `z`, or Adam Smasher's hit, follows) and ricochets on |
+| `o` | DirtyBastrd's thrown chainsaw landed on that column; the row field is the scrap eddies it burst into (already in the score) |
 | `n` | DirtyBastrd's chainsaw took a deadly hit (drone, titan or Adam Smasher) and snapped: 1 s of invincibility, and the column field is the scrap eddies it burst into (already in the score) |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
@@ -193,7 +196,8 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 ### `MSG_ATTACK`
 
 One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up, which the
-server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
+server ignores but for Wraith (he blinks then) and DirtyBastrd with his chainsaw out (he throws it then, and the
+key going down does nothing). CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead, DirtyBastrd's kick every
 drone (no titan) within 2 tiles, and both cut Adam Smasher when he is that close. With his Steel Toes boon, each
@@ -254,8 +258,23 @@ reaches 2.5 tiles; then 1.2 s before the next lunge. It takes one deadly hit fro
 Smasher (`n`), never a zapper's or a sniper's; a titan that breaks it goes down with it (`k`, then `n`). For
 0.35 s from the start of a lunge, a zapper he runs into doesn't kill him: the saw cuts through it (`z`),
 a kill for the scrap, and the saw stays.
+
+The attack key while the saw is out throws it as it comes back up, and the ultimate ends there (no hit taken,
+no lunge). The saw flies at 40 tiles per second to the nearest live drone, titan or zapper ahead of it (not
+behind) within 8 tiles, takes it down (`u`, then `d`, `k` or `z`, the bounty to the thrower) and ricochets to
+the next, 5 hits at most. Adam Smasher is a target too, once a throw: the hit takes 8 off his health and knocks
+him down where his slam leaves him, getting up close by for 2 s (`MSG_BOSS` shows his slam's recovery). Out of
+hits or of targets in range, it drops in an arc to the floor and bursts into its scrap (`o`), counted like a
+snap's with each hit a kill. `MSG_SAWS` streams it while it flies.
 Snapping, it gives 5 eddies, plus 3 per drone or titan downed while it was out and 1 per second it
 lasted, 30 at most (bits 2-6 say how much it would give now). Running out gives nothing.
+
+### `MSG_SAWS`
+
+| Bytes | Field |
+| --- | --- |
+| 1 | Count |
+| 8 per saw | Player who threw it, X (4 bytes) and Y (2 bytes) of its middle, 1 once it is dropping to the floor (0 ricocheting) |
 
 ### `MSG_TITANS`
 
@@ -307,7 +326,7 @@ kills a player. Every number is in `src/common/boss.hpp` and `assets/tuning.txt`
    per second: 3, 2, 1, 0.
 3. During the run the server ticks 60 times per second: players move forward, faster and faster,
    gravity or thrust applies, new map chunks are generated ahead of the leader, collisions are
-   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS` and `MSG_SNIPERS` every tick, `MSG_COLLISION` and `MSG_SHOT`
+   checked. It sends `MSG_GAME_STATE`, `MSG_TITANS`, `MSG_SNIPERS`, `MSG_BOSS` and `MSG_SAWS` every tick, `MSG_COLLISION` and `MSG_SHOT`
    when they happen, and `MSG_MAP_DATA` for each new chunk. Clients send `MSG_PLAYER_INPUT` and
    `MSG_ATTACK`.
 4. At the first death the server sends `MSG_GAME_END`. Clients answer `MSG_READY` for a rematch,

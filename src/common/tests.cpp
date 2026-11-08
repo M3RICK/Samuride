@@ -111,6 +111,10 @@ static void testMessages()
     assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
         return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
     });
+    assertRoundTrip(std::vector<SawState>{{1, 140.5f, 4.25f, true}, {0, 9, 0, false}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].player == b[0].player && a[0].x == b[0].x && a[0].y == b[0].y &&
+               a[0].dropping == b[0].dropping && a[1].dropping == b[1].dropping;
+    });
 
     // Connect: a short one from an older client still goes through, the missing parts left out
     ConnectRequest connect{.character = 4, .district = 1, .mode = 1, .upgrades = {}};
@@ -492,6 +496,25 @@ static void testChainsaw()
     lunger.update(CHAINSAW_LUNGE_COOLDOWN, 10, 8);
     assert(lunging.lunge());
 
+    // Thrown, the saw is gone from his hands at once, protection and lunges with it, and can't be thrown
+    // again; one that ran out can't be thrown at all
+    Player thrower(-1);
+    thrower.setCharacter(7);
+    thrower.reset(0, 4);
+    auto &throwing = dynamic_cast<Chainsaw &>(thrower.ultimate());
+    assert(!throwing.throwSaw(thrower));
+    throwing.start();
+    throwing.killed();
+    thrower.update(2, 10, 8);
+    assert(throwing.throwSaw(thrower) && throwing.flying().size() == 1);
+    ThrownSaw out = throwing.flying()[0];
+    assert(out.kills == 1 && out.held > 1.9f);
+    assert(!throwing.sawOut() && !throwing.throwSaw(thrower) && !throwing.lunge() && !throwing.cutZapper());
+    assert(throwing.scrap() == 0 && !throwing.takesHit(server, thrower, TITAN_HIT, 0, 0) && !thrower.isInvincible());
+    throwing.start();
+    thrower.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(!throwing.throwSaw(thrower));
+
     // A zapper kills him without the saw, and with it out but no lunge; lunging, the saw cuts through it
     // instead (the saw stays, the zapper is a kill for its scrap), until the lunge's window is over
     Player zapped(-1);
@@ -506,6 +529,65 @@ static void testChainsaw()
     assert(cutter.scrap() == before_cut + CHAINSAW_SCRAP_PER_KILL && !zapped.isInvincible());
     zapped.update(CHAINSAW_LUNGE_ZAPPER_TIME + 0.01f, 10, 8);
     assert(cutter.sawOut() && !cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+}
+
+// DirtyBastrd's thrown saw in the air: it flies until it lies on the floor, the caller taking down each target it
+// hits. CHAINSAW_THROW_HITS at most, each a kill, then the snap's formula; it stops early with nothing in range,
+// only bounces forward, and hits Adam Smasher once a throw
+static void testThrownSaw()
+{
+    ThrownSaw out{10, 5, 1, 2.0f};
+    auto fly = [](ThrownSaw saw, std::vector<SawTarget> &targets) {
+        for (int tick = 0; tick < 60 * 30 && !saw.landed(9.5f); tick++) {
+            int hit = saw.fly(1.0f / 60, targets);
+            if (hit >= 0 && !targets[hit].boss)
+                targets.erase(targets.begin() + hit);
+        }
+        assert(saw.landed(9.5f));
+        return saw;
+    };
+    std::vector<SawTarget> row;
+    for (int i = 1; i <= CHAINSAW_THROW_HITS + 2; i++)
+        row.push_back({out.x + 1.5f * i, out.y});
+    ThrownSaw ricochet = fly(out, row);
+    assert(ricochet.hits == CHAINSAW_THROW_HITS && row.size() == 2);
+    assert(ricochet.kills == out.kills + CHAINSAW_THROW_HITS);
+    assert(ricochet.scrap() == chainsawScrap(out.kills + CHAINSAW_THROW_HITS, out.held));
+    std::vector<SawTarget> gap = {{out.x + 2, out.y}, {out.x + 4, out.y + 2}, {out.x + 5 + CHAINSAW_THROW_RANGE, out.y}};
+    assert(fly(out, gap).hits == 2 && gap.size() == 1);
+    std::vector<SawTarget> behind = {{out.x - 1, out.y}, {out.x + 3, out.y + 1}};
+    ThrownSaw forward = fly(out, behind);
+    assert(forward.hits == 1 && behind.size() == 1 && behind[0].x < out.x);
+    std::vector<SawTarget> none;
+    ThrownSaw wasted = fly(out, none);
+    assert(wasted.hits == 0 && wasted.scrap() == chainsawScrap(out.kills, out.held));
+    // Smasher stays standing after the hit: once a throw, the next target is something else
+    std::vector<SawTarget> smasher = {{out.x + 3, out.y, true}, {out.x + 6, out.y}};
+    ThrownSaw boss_hit = fly(out, smasher);
+    assert(boss_hit.hits == 2 && boss_hit.hit_boss && smasher.size() == 1 && smasher[0].boss);
+
+    // The saw knocks him down where a slam leaves him: close by, in the kick's reach, for BOSS_SLAM_RECOVER
+    std::map<int, Player> players;
+    std::mt19937 rng(3);
+    players.emplace(3, Player(3));
+    players.at(3).reset(0, 8);
+    Boss boss;
+    boss.reset();
+    boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
+    Player kicker(4);
+    kicker.reset(1, 8);
+    kicker.blinkTo(BOSS_DISTANCE);
+    assert(!boss.reached(kicker, KICK_REACH));
+    boss.stagger();
+    BossState down = boss.state();
+    assert(down.attack == BossAttack::Slam && down.phase == BossPhase::Recover && boss.x() == BOSS_DISTANCE + BOSS_SLAM_LAND);
+    assert(boss.reached(kicker, KICK_REACH) && !boss.hit(kicker, 10));
+    int health = boss.state().health;
+    assert(!boss.damage(BOSS_SLASH_DAMAGE) && boss.state().health < health);
+    boss.update(BOSS_DISTANCE, BOSS_SLAM_RECOVER * 0.9f, rng, players, 10);
+    assert(boss.reached(kicker, KICK_REACH));
+    boss.update(BOSS_DISTANCE, BOSS_SLAM_RECOVER * 0.2f, rng, players, 10);
+    assert(!boss.reached(kicker, KICK_REACH));
 }
 
 // Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
@@ -1097,6 +1179,7 @@ int main()
     testWraith();
     testKick();
     testChainsaw();
+    testThrownSaw();
     testWraithSmasher();
     testWanted();
     testRipperdoc();

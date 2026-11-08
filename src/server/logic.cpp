@@ -295,6 +295,11 @@ void Server::updatePlayers()
     broadcastToAllClients(Protocol::createPacket(MSG_TITANS, Message::encode(titans.states())));
     broadcastToAllClients(Protocol::createPacket(MSG_SNIPERS, Message::encode(snipers.states())));
     broadcastToAllClients(Protocol::createPacket(MSG_BOSS, Message::encode(boss.state())));
+    std::vector<SawState> saws;
+    for (const auto &[client_fd, player] : players)
+        for (SawState saw : player.ultimate().inAir())
+            saws.push_back({player.getPlayerNumber(), saw.x, saw.y, saw.dropping});
+    broadcastToAllClients(Protocol::createPacket(MSG_SAWS, Message::encode(saws)));
 
     if (survivors.size() < players.size())
         endGame(survivors.size() == 1 && !config.solo ? survivors[0] : -1);
