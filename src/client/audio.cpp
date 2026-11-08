@@ -207,6 +207,9 @@ void Audio::synthesize()
     // His chainsaw, revved when it comes out and on each lunge: a sputter climbing into a snarl
     buffers[Sfx::Chainsaw] = toBuffer(concat(tone(Wave::Saw, 70, 160, 0.2f, 0.25f),
                                              mix(tone(Wave::Saw, 160, 230, 0.4f, 0.25f), burst(0.4f, 0.15f, 0.6f))));
+    // His saw lunging through a zapper: an electric crack, then the beam whining out
+    buffers[Sfx::SawZap] = toBuffer(concat(burst(0.06f, 0.5f, 0.95f),
+                                           mix(tone(Wave::Saw, 1600, 300, 0.25f, 0.15f), burst(0.25f, 0.3f, 0.8f))));
     // The saw snapping: a metal twang over a crack
     buffers[Sfx::SawSnap] = toBuffer(mix(tone(Wave::Square, 2200, 500, 0.18f, 0.15f), burst(0.25f, 0.35f, 0.9f)));
     // Berserk: a low growl revving up

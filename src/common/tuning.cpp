@@ -224,6 +224,7 @@ std::vector<Entry> &entries()
             VALUE(CHAINSAW_LUNGE_PUSH, "Extra pace at the start of a lunge, times the run speed, easing back to none"),
             VALUE(CHAINSAW_LUNGE_REACH, "Tiles ahead the saw shreds while lunging"),
             VALUE(CHAINSAW_LUNGE_COOLDOWN, "Seconds from one lunge to the next"),
+            VALUE(CHAINSAW_LUNGE_ZAPPER_TIME, "Seconds from the start of a lunge its saw cuts through zappers instead of him dying"),
             VALUE(CHAINSAW_SCRAP_BASE, "Eddies the saw bursts into when a hit snaps it (running out gives none)"),
             VALUE(CHAINSAW_SCRAP_PER_KILL, "Eddies more per drone or titan he took down while it was out"),
             VALUE(CHAINSAW_SCRAP_PER_SECOND, "Eddies more per second it lasted"),

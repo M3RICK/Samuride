@@ -457,6 +457,7 @@ bool Chainsaw::lunge()
         return false;
     lunge_timer = CHAINSAW_LUNGE_TIME;
     lunge_cooldown = CHAINSAW_LUNGE_COOLDOWN;
+    zapper_cut_timer = CHAINSAW_LUNGE_ZAPPER_TIME;
     return true;
 }
 
@@ -465,6 +466,7 @@ void Chainsaw::tick(float dt)
 {
     lunge_timer = std::max(0.0f, lunge_timer - dt);
     lunge_cooldown = std::max(0.0f, lunge_cooldown - dt);
+    zapper_cut_timer = std::max(0.0f, zapper_cut_timer - dt);
     if (!sawOut())
         return;
     held += dt;
@@ -491,10 +493,17 @@ float Chainsaw::pace() const
 }
 
 // A drone's, a titan's or Smasher's hit: it snaps, its scrap paid, a second of grace like a shield's. A titan
-// that breaks it goes down with it. Zappers and snipers go past it.
+// that breaks it goes down with it. Lunging, a zapper's beams are cut and go out for good, the saw stays.
+// Snipers go past it.
 bool Chainsaw::takesHit(Server &server, Player &player, char cause, int x, int y)
 {
     bool drone = cause == ZAPPER_TILE && server.isLiveDrone(x, y);
+    if (cause == ZAPPER_TILE && !drone && cutZapper()) {
+        for (std::pair<int, int> node : zapperNodes(server.map(), x, y))
+            server.switchOffZapper(node.first, node.second, 1e9f);
+        server.notifyCollision(CHAINSAW_ZAPPER_CUT, player, x, y);
+        return true;
+    }
     if (!sawOut() || !(drone || cause == TITAN_HIT || cause == BOSS_HIT))
         return false;
     if (cause == TITAN_HIT)
@@ -503,6 +512,14 @@ bool Chainsaw::takesHit(Server &server, Player &player, char cause, int x, int y
     player.addScore(scrap);
     player.dodge(SHIELD_GRACE);
     server.notifyCollision(CHAINSAW_SNAP, player, scrap, y);
+    return true;
+}
+
+bool Chainsaw::cutZapper()
+{
+    if (!sawOut() || zapper_cut_timer <= 0)
+        return false;
+    kills++;
     return true;
 }
 
@@ -519,5 +536,6 @@ int Chainsaw::snap()
     held = 0;
     kills = 0;
     lunge_timer = 0;
+    zapper_cut_timer = 0;
     return burst;
 }

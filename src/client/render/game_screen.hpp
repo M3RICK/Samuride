@@ -175,6 +175,7 @@ private:
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
     void sawSnapped(const CollisionEffect &effect, bool mine);
+    void zapperSawn(const CollisionEffect &effect, bool mine);
     void payOutScrap(int player, int scrap, sf::Vector2f from);
     void drawScrapPayouts();
     int scrapInFlight(int player) const;

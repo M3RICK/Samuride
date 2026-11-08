@@ -10,9 +10,10 @@ taken from this file. Players on different versions can't play together: update 
   drones right in front of him out of the air with his Timberlands: shorter than Mikasa's blade but back
   sooner, and no titans. His own boon, **Steel Toes**: a drone he kicks down flies into the next one ahead.
   - **Invisible Chainsaw** ultimate: for 10 seconds it shreds the drones at his hands, and `E` again lunges with
-    it. It takes one hit from a drone, a titan (which goes down with it) or Adam Smasher before snapping into up
-    to 30 scrap eddies, more for every kill and every second it lasted: a meter by its gauge shows how much. The
-    eddies circle him, then fly to his counter one by one. Snipers and zappers still kill him.
+    it, cutting through any zapper in the way. It takes one hit from a drone, a titan (which goes down with it) or
+    Adam Smasher before snapping into up to 30 scrap eddies, more for every kill and every second it lasted: a
+    meter by its gauge shows how much. The eddies circle him, then fly to his counter one by one. Snipers still
+    kill him, and so do zappers when he isn't lunging.
   - **Against Adam Smasher**, his kick cuts like a blade while Smasher gets up after a slam.
 
 ## v3.1

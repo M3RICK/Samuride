@@ -240,6 +240,7 @@ class Chainsaw : public RunnerUltimate {
     int kills = 0;
     float lunge_timer = 0;      // seconds of the lunge left
     float lunge_cooldown = 0;   // seconds before the next lunge
+    float zapper_cut_timer = 0; // seconds left of the lunge's window to cut through zappers
 
 public:
     void fire(Server &server, Player &player, float start, float line) override;
@@ -257,6 +258,9 @@ public:
     bool lunge();
     // The saw snaps: the scrap eddies it bursts into (the caller pays them), 0 without a saw
     int snap();
+    // Lunging, it cuts the zapper he runs into: true when it did (a kill for its scrap), false when the
+    // zapper kills him
+    bool cutZapper();
 };
 
 class Fishbones : public RunnerUltimate {

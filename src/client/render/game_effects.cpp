@@ -57,6 +57,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case CHAINSAW_SNAP:
             sawSnapped(effect, mine);
             return;
+        case CHAINSAW_ZAPPER_CUT:
+            zapperSawn(effect, mine);
+            return;
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
@@ -301,6 +304,18 @@ void GameScreen::sawSnapped(const CollisionEffect &effect, bool mine)
     particles.emit(saw, 30, NEON_CYAN, 9, 0.5f, 10);
     particles.emit(saw, 12, sf::Color::White, 6, 0.3f, 10);
     payOutScrap(effect.player, effect.x, saw);
+}
+
+// Lunging, his saw cut through a zapper: its beams go out for good in a burst of electric sparks
+void GameScreen::zapperSawn(const CollisionEffect &effect, bool mine)
+{
+    for (std::pair<int, int> node : zapperNodes(run.map, effect.x, effect.y)) {
+        run.burnt_zappers.insert(node);
+        particles.emit({node.first + 0.5f, node.second + 0.5f}, 12, NEON_CYAN, 7, 0.4f, 0);
+    }
+    particles.emit(centerOf(effect), 20, sf::Color::White, 9, 0.3f, 0);
+    audio.play(Audio::Sfx::SawZap);
+    run.shakeAtLeast(0.2f, mine ? 14 : 5);
 }
 
 // The saw's scrap earned: its eddies burst from `from` (in tiles) and gather around him first

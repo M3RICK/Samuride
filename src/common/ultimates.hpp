@@ -70,7 +70,7 @@ inline float STILLNESS_TIME = 4;
 // DirtyBastrd's invisible chainsaw: held out in front of him for CHAINSAW_TIME, shredding every drone
 // within CHAINSAW_REACH each tick, in the row it is held at: drones at his head or his feet still get
 // him, steering still matters. It takes one deadly hit from a drone, a titan or Smasher, then snaps (a titan
-// that breaks it is cut down as it does); zappers and snipers still kill him.
+// that breaks it is cut down as it does); snipers still kill him, and so do zappers unless he lunges through them.
 // Like a shield, the snap leaves a second of grace (SHIELD_GRACE). Holding both, the saw goes first.
 inline float CHAINSAW_TIME = 10.0f;
 inline float CHAINSAW_REACH = 1.2f;      // tiles ahead: what is right in front of him, less than his kick
@@ -84,6 +84,12 @@ inline float CHAINSAW_LUNGE_TIME = 0.35f;
 inline float CHAINSAW_LUNGE_PUSH = 1.0f;
 inline float CHAINSAW_LUNGE_REACH = 2.5f;
 inline float CHAINSAW_LUNGE_COOLDOWN = 1.2f;     // seconds from one lunge to the next
+
+// Lunging, the saw cuts through electricity too: for CHAINSAW_LUNGE_ZAPPER_TIME from the start of a lunge
+// (its whole length by default, set apart from it), a zapper he runs into goes out for good instead of
+// killing him, and counts as a kill for the scrap. With the saw merely out, a zapper still kills him.
+inline float CHAINSAW_LUNGE_ZAPPER_TIME = 0.35f;
+constexpr char CHAINSAW_ZAPPER_CUT = 'z';       // collision type: lunging, the saw cut the zapper on that tile
 
 // When the saw snaps (not when it runs out), it bursts into eddies: the better it was used, the more.
 // Kills are the drones and titans taken down while it was out, by the saw or by his kicks.

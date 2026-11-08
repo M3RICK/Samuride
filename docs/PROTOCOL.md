@@ -163,6 +163,7 @@ A 14-byte record per player, 60 times per second:
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flew into the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
+| `z` | Lunging, DirtyBastrd's chainsaw cut through the zapper with a node on that tile: all its nodes are out for the rest of the run |
 | `n` | DirtyBastrd's chainsaw took a deadly hit (drone, titan or Adam Smasher) and snapped: 1 s of invincibility, and the column field is the scrap eddies it burst into (already in the score) |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
@@ -250,7 +251,9 @@ The chainsaw lasts 10 s (bit 0 of the record's last byte in `MSG_GAME_STATE`): e
 drones within 1.2 tiles ahead (`d`), in the row 1 tile below Y only (where it is held). The ultimate key
 again lunges with it (bit 1): for 0.35 s the runner goes up to twice as fast, easing back, and the saw
 reaches 2.5 tiles; then 1.2 s before the next lunge. It takes one deadly hit from a drone, a titan or Adam
-Smasher (`n`), never a zapper's or a sniper's; a titan that breaks it goes down with it (`k`, then `n`).
+Smasher (`n`), never a zapper's or a sniper's; a titan that breaks it goes down with it (`k`, then `n`). For
+0.35 s from the start of a lunge, a zapper he runs into doesn't kill him: the saw cuts through it (`z`),
+a kill for the scrap, and the saw stays.
 Snapping, it gives 5 eddies, plus 3 per drone or titan downed while it was out and 1 per second it
 lasted, 30 at most (bits 2-6 say how much it would give now). Running out gives nothing.
 

@@ -491,6 +491,21 @@ static void testChainsaw()
     assert(lunger.getX() > 10 * CHAINSAW_LUNGE_TIME + 1 && lunging.pace() == 1);
     lunger.update(CHAINSAW_LUNGE_COOLDOWN, 10, 8);
     assert(lunging.lunge());
+
+    // A zapper kills him without the saw, and with it out but no lunge; lunging, the saw cuts through it
+    // instead (the saw stays, the zapper is a kill for its scrap), until the lunge's window is over
+    Player zapped(-1);
+    zapped.setCharacter(7);
+    zapped.reset(0, 4);
+    auto &cutter = dynamic_cast<Chainsaw &>(zapped.ultimate());
+    assert(!cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+    cutter.start();
+    assert(!cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+    int before_cut = cutter.scrap();
+    assert(cutter.lunge() && cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3) && cutter.sawOut());
+    assert(cutter.scrap() == before_cut + CHAINSAW_SCRAP_PER_KILL && !zapped.isInvincible());
+    zapped.update(CHAINSAW_LUNGE_ZAPPER_TIME + 0.01f, 10, 8);
+    assert(cutter.sawOut() && !cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
 }
 
 // Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
