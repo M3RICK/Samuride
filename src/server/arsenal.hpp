@@ -151,7 +151,7 @@ public:
 };
 
 // DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp); with his chainsaw out,
-// the key throws it instead, as it comes back up (Berserk never throws it)
+// a press of the key throws it instead, as it comes back up (Berserk never throws it, nor a press from before)
 class Kick : public RunnerWeapon {
     // Steel Toes: a kicked drone in the air, the drone it flies into and the seconds before it gets there
     struct Flight {
@@ -160,6 +160,8 @@ class Kick : public RunnerWeapon {
         float left;
     };
     std::vector<Flight> flights;
+    bool saw_out = false;   // his chainsaw is out: Berserk doesn't kick on its own then
+    bool aimed = false;     // the key went down while it was out: its release throws it
 
     void launch(Server &server, Player &player, int x, int y, const std::vector<std::pair<int, int>> &kicked);
 
@@ -167,6 +169,8 @@ public:
     void act(Server &server, Player &player) override;
     float attack(Server &server, Player &player) override;
     float release(Server &server, Player &player) override;
+    void tick(const Player &player, float dt) override;
+    bool autoFires() const override { return !saw_out; }
 };
 
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones

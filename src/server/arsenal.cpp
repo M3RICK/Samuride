@@ -324,8 +324,10 @@ void Kick::act(Server &server, Player &player)
 // throws it as it comes back up (release).
 float Kick::attack(Server &server, Player &player)
 {
-    if (player.ultimate().sawOut())
+    if (player.ultimate().sawOut()) {
+        aimed = true;
         return 0;
+    }
     server.announceShot(player, Weapon::Kick);
     std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY());
     for (auto [x, y] : kicked) {
@@ -340,7 +342,13 @@ float Kick::attack(Server &server, Player &player)
 float Kick::release(Server &, Player &player)
 {
     auto *saw = dynamic_cast<Chainsaw *>(&player.ultimate());
-    return saw && saw->throwSaw(player) ? KICK_COOLDOWN : 0;
+    bool throwing = std::exchange(aimed, false);
+    return throwing && saw && saw->throwSaw(player) ? KICK_COOLDOWN : 0;
+}
+
+void Kick::tick(const Player &player, float)
+{
+    saw_out = player.ultimate().sawOut();
 }
 
 //=============================================================================
