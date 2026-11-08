@@ -81,6 +81,13 @@ private:
     };
     std::vector<Zap> zaps;
     std::set<int> bounced;      // players whose next drone down is the one their hack jumped to
+    // Steel Toes: drones DirtyBastrd kicked down, tumbling into the nearest one
+    struct KickedDrone {
+        sf::Vector2f from, to;  // in tiles
+        sf::Clock age;
+        float duration;         // seconds to get there, at STEEL_TOES_SPEED
+    };
+    std::vector<KickedDrone> kicked_drones;
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
@@ -191,6 +198,7 @@ private:
     void droneDown(const CollisionEffect &effect, int me);
     void hackBounced(const CollisionEffect &effect);
     void droneKicked(const CollisionEffect &effect);
+    void drawKickedDrones();
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);

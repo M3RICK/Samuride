@@ -295,8 +295,10 @@ BLINK_PERFECT_WINDOW 0.3
 KICK_COOLDOWN 0.4
 # Tiles ahead his kick downs drones (no titans)
 KICK_REACH 2
-# Steel Toes: tiles ahead in its row a kicked drone flies into the next one
+# Steel Toes: tiles from a kicked drone to the nearest one it flies into, any way
 STEEL_TOES_RANGE 8
+# Tiles per second a kicked drone flies
+STEEL_TOES_SPEED 12
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second

@@ -106,21 +106,40 @@ constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, wher
 // and back sooner: he has to get close. No titan (their nape stays hers); Smasher takes it like a blade's cut.
 inline float KICK_COOLDOWN = 0.4f;
 inline float KICK_REACH = 2.0f;
-// Steel Toes, his own boon: a drone he kicks down flies straight ahead and downs the first live drone in its
-// row within STEEL_TOES_RANGE tiles. One jump, no chain; a kill like any other.
+// Steel Toes, his own boon: like his thrown saw, every drone he kicks down tumbles off at STEEL_TOES_SPEED toward
+// the live drone nearest to it within STEEL_TOES_RANGE tiles, any way, and downs it when it gets there. One jump,
+// no chain; a kill like any other. With nothing in range, it breaks where it was kicked.
 inline float STEEL_TOES_RANGE = 8;
-constexpr char DRONE_KICKED = 'i';      // collision type: a kicked drone flew into the drone on that tile, from his
-                                        // last kill; that drone's own collision follows
+inline float STEEL_TOES_SPEED = 12;     // tiles per second: slow enough to see it tumble, there within a blink anyway
+constexpr char DRONE_KICKED = 'i';      // collision type: a kicked drone (his last kill) flies toward the drone on that
+                                        // tile, which goes down as it arrives (its own collision then); its own tile
+                                        // when nothing was in range: it breaks there
 
-// Where a drone kicked down at (x, y) lands: the column of the first live drone straight ahead in its row,
-// within STEEL_TOES_RANGE, -1 for none. live(x, y): that drone is still up.
+// Where a drone kicked down at (x, y) flies: the nearest live drone within STEEL_TOES_RANGE of it, any way, {-1, -1}
+// for none. live(x, y): that drone is still up and nobody else's target.
 template <typename Live>
-int kickedDroneLands(int x, int y, Live live)
+std::pair<int, int> kickedDroneLands(int x, int y, Live live)
 {
-    for (int column = x + 1; column <= x + STEEL_TOES_RANGE; column++)
-        if (live(column, y))
-            return column;
-    return -1;
+    int range = static_cast<int>(STEEL_TOES_RANGE);
+    std::pair<int, int> target = {-1, -1};
+    float best = STEEL_TOES_RANGE;
+
+    for (int tx = x - range; tx <= x + range; tx++) {
+        for (int ty = y - range; ty <= y + range; ty++) {
+            float distance = std::hypot(static_cast<float>(tx - x), static_cast<float>(ty - y));
+            if (distance <= best && (tx != x || ty != y) && live(tx, ty)) {
+                best = distance;
+                target = {tx, ty};
+            }
+        }
+    }
+    return target;
+}
+
+// Seconds a kicked drone takes from (x, y) to (to_x, to_y): the server downs the target then, the clients draw it
+inline float kickedDroneFlight(int x, int y, int to_x, int to_y)
+{
+    return std::hypot(static_cast<float>(to_x - x), static_cast<float>(to_y - y)) / STEEL_TOES_SPEED;
 }
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp

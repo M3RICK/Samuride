@@ -9,7 +9,7 @@ taken from this file. Players on different versions can't play together: update 
 - **DirtyBastrd**, eighth runner, 1500 eddies, hanging from a giant headless bat. In CYBERPSYCHO he kicks the
   drones right in front of him out of the air with his Timberlands: shorter than Mikasa's blade but back
   sooner, and no titans. He grunts at every one he downs, and now and then lets something worse slip ("Suck ma
-  toes!"). His own boon, **Steel Toes**: a drone he kicks down flies into the next one ahead.
+  toes!"). His own boon, **Steel Toes**: every drone he kicks down tumbles into the nearest one around it.
   - **Invisible Chainsaw** ultimate ("Eat this!"), revved by his own mouth for as long as it runs: for 10
     seconds it shreds the drones at his hands, and `E` again lunges with it, cutting through any zapper in the
     way. It takes one hit from a drone, a titan (which goes down with it) or Adam Smasher before snapping into

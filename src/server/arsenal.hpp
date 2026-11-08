@@ -153,7 +153,18 @@ public:
 // DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp); with his chainsaw out,
 // the key throws it instead, as it comes back up (Berserk never throws it)
 class Kick : public RunnerWeapon {
+    // Steel Toes: a kicked drone in the air, the drone it flies into and the seconds before it gets there
+    struct Flight {
+        int to_x;
+        int to_y;
+        float left;
+    };
+    std::vector<Flight> flights;
+
+    void launch(Server &server, Player &player, int x, int y, const std::vector<std::pair<int, int>> &kicked);
+
 public:
+    void act(Server &server, Player &player) override;
     float attack(Server &server, Player &player) override;
     float release(Server &server, Player &player) override;
 };
