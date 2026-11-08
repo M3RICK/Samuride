@@ -114,15 +114,19 @@ private:
     static constexpr float HIT_LINE_REPEAT_PITCH = 1.1f;
     // Drones a kick downs together, in the same instant, share one line instead of a chorus
     static constexpr float HIT_LINE_SAME_KICK = 0.05f;
-    sf::Clock hit_line_clock;       // since the last hit line
-    bool last_hit_rare = false;     // the last hit line: which pool, which take, at what pitch
-    int last_hit_take = -1;
-    float last_hit_pitch = 1;
+    // Each player's last hit line (both may play him): when, from which pool, which take, at what pitch
+    struct HitLine {
+        sf::Clock since;
+        bool rare = false;
+        int take = -1;
+        float pitch = 1;
+    };
+    std::map<int, HitLine> hit_lines;
     std::set<std::pair<int, int>> sawn_drones;  // drones his thrown saw hit: their kill is the saw's, not his kick's
-    // His saw's loop: revved up this much at the start of a lunge; his choom's at this share of the volume,
-    // under yours, or the two would drone on together
+    // His saw's loop: revved up this much at the start of a lunge. His choom's loop and hit lines at this share of
+    // the volume, under yours, or the two would drone on together
     static constexpr float SAW_REV_PITCH = 0.3f;
-    static constexpr float CHOOM_SAW_VOLUME = 0.35f;
+    static constexpr float CHOOM_VOLUME = 0.35f;
     // Thrown, the saw leaves his hands a message before it shows up in the air: the loop waits this long
     // before stopping, so it carries on instead of starting over
     static constexpr float SAW_LOOP_LINGER = 0.1f;
@@ -183,7 +187,7 @@ private:
     void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
-    void sayHitLine();
+    void sayHitLine(int player, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
     void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss);

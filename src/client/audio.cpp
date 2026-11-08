@@ -141,6 +141,8 @@ Audio::Audio()
         voices.emplace_back(buffers.at(Sfx::Coin));
     for (size_t i = 0; i < LINE_VOICES; i++)
         line_voices.emplace_back(buffers.at(Sfx::Coin));
+    voice_shares.assign(VOICES, 1);
+    line_shares.assign(LINE_VOICES, 1);
 
     jet.emplace(jet_buffer);
     jet->setLooping(true);
@@ -287,7 +289,7 @@ void Audio::greet()
     greeting.play();
 }
 
-void Audio::play(Sfx sfx, float pitch, int take)
+void Audio::play(Sfx sfx, float pitch, int take, float volume)
 {
     auto last = last_played.find({sfx, pitch});
     if (last != last_played.end() && last->second.getElapsedTime().asSeconds() < REPEAT_GAP)
@@ -297,13 +299,16 @@ void Audio::play(Sfx sfx, float pitch, int take)
     const sf::SoundBuffer *buffer = bufferOf(sfx, take);
     if (!buffer)
         return;
-    bool line = lines.count(sfx) > 0;
+    bool line = isVoice(sfx);
     std::vector<sf::Sound> &pool = line ? line_voices : voices;
+    std::vector<float> &shares = line ? line_shares : voice_shares;
     size_t &next = line ? next_line_voice : next_voice;
     sf::Sound &voice = pool[next];
+    shares[next] = volume;
     next = (next + 1) % pool.size();
     voice.setBuffer(*buffer);
     voice.setPitch(pitch);
+    voice.setVolume(sfx_volume * volume * (line ? 1 : duck));
     voice.play();
 }
 
@@ -367,16 +372,16 @@ void Audio::setVolumes(int music, int sfx)
     applyVolumes();
 }
 
-// The recorded lines at the effects' volume, the rest ducked under them (update)
+// The voice lines at the effects' volume, the rest ducked under them (update)
 void Audio::applyVolumes()
 {
     menu_music.setVolume(music_volume * 0.8f * duck);
     game_music.setVolume(music_volume * 0.8f * duck);
 
-    for (sf::Sound &voice : voices)
-        voice.setVolume(sfx_volume * duck);
-    for (sf::Sound &voice : line_voices)
-        voice.setVolume(sfx_volume);
+    for (size_t i = 0; i < voices.size(); i++)
+        voices[i].setVolume(sfx_volume * voice_shares[i] * duck);
+    for (size_t i = 0; i < line_voices.size(); i++)
+        line_voices[i].setVolume(sfx_volume * line_shares[i]);
     for (auto &[owner, loop] : loops)
         loop.sound.setVolume(sfx_volume * loop.volume * duck);
     jet->setVolume(sfx_volume * 0.5f * duck);
