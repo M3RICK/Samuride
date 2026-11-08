@@ -22,7 +22,8 @@ public:
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
         Kick,                                                       // DirtyBastrd's boot
         SawSnap, SawZap, SawClank,                                  // his chainsaw
-        DirtyBastrdEatThis, DirtyBastrdSaw, DirtyBastrdHit, DirtyBastrdRareHit,     // recorded: his lines
+        DirtyBastrdEatThis, DirtyBastrdSaw,                         // recorded: his lines
+        DirtyBastrdHit, DirtyBastrdRareHit,
     };
 
     Audio();
@@ -30,8 +31,9 @@ public:
     void playMusic(bool in_game);
     // Johnny's greeting, played once each time the main menu opens
     void greet();
-    // Higher than 1, higher pitched (and faster). A recorded sound plays the take asked for, or any.
-    void play(Sfx sfx, float pitch = 1, int take = -1);
+    // Higher than 1, higher pitched (and faster). A recorded sound plays the take asked for, or any, at a share
+    // of the effects' volume.
+    void play(Sfx sfx, float pitch = 1, int take = -1, float volume = 1);
     // How many takes of a recorded sound were loaded
     int takes(Sfx sfx) const;
     // A sound looping for one owner (DirtyBastrd's saw: a player number) until stopped, at a share of the
@@ -49,8 +51,8 @@ public:
 
 private:
     static constexpr size_t VOICES = 12;
-    // The recorded lines have voices of their own: a row of coins or a payout's eddies, a dozen sounds in
-    // half a second, would otherwise cut a line off before it's said
+    // The voice lines have voices of their own: a row of coins or a payout's eddies, a dozen sounds in half a
+    // second, would otherwise cut a line off before it's said
     static constexpr size_t LINE_VOICES = 4;
 
     sf::Music greeting;     // Johnny's line, once per visit to the menu
@@ -61,8 +63,10 @@ private:
     // A recorded sound has a few takes: play() picks one at random
     std::map<Sfx, std::vector<sf::SoundBuffer>> lines;
     std::vector<sf::Sound> voices;     // played round-robin so effects can overlap
+    std::vector<float> voice_shares;   // the share of the effects' volume each plays at
     size_t next_voice = 0;
     std::vector<sf::Sound> line_voices;
+    std::vector<float> line_shares;
     size_t next_line_voice = 0;
     // A sound started again within this is skipped: twenty coins in one frame ring as one. At another
     // pitch it is another sound: the coins of a payout, each a little higher, all ring.
@@ -77,7 +81,7 @@ private:
     float sfx_volume = 70;
     float music_volume = 50;
 
-    // While a recorded line plays (his, Johnny's, Jinx's, Dante's), the effects, the saw, the jetpack and the
+    // While a voice line plays (his, Johnny's, Jinx's, Dante's), the effects, the saw, the jetpack and the
     // music drop to DUCK_LEVEL so the line cuts through a run's explosions and coins: down in DUCK_DOWN_TIME,
     // back up in DUCK_UP_TIME once no line has played for DUCK_HOLD_TIME, so lines back to back don't pump
     static constexpr float DUCK_LEVEL = 0.5f;
@@ -95,6 +99,8 @@ private:
     void loadLines();
     void synthesize();
     void applyVolumes();
+    // Spoken: plays on the line voices and ducks the rest. Johnny's gun is recorded but a gunshot, an effect.
+    bool isVoice(Sfx sfx) const { return lines.count(sfx) > 0 && sfx != Sfx::JohnnyGun; }
     const sf::SoundBuffer *bufferOf(Sfx sfx, int take) const;
 };
 

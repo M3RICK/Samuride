@@ -79,6 +79,7 @@ void GameScreen::resetRun()
     zaps.clear();
     scrap_payouts.clear();
     sawn_drones.clear();
+    hit_lines.clear();
     saw_heard.clear();
     audio.stopLoops();
     bounced.clear();
@@ -188,7 +189,7 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
         auto heard = saw_heard.find(player_num);
         if (out) {
             saw_heard[player_num].restart();
-            audio.startLoop(player_num, Audio::Sfx::DirtyBastrdSaw, player_num == me ? 1 : CHOOM_SAW_VOLUME);
+            audio.startLoop(player_num, Audio::Sfx::DirtyBastrdSaw, player_num == me ? 1 : CHOOM_VOLUME);
         } else if (phase != Phase::Running || heard == saw_heard.end() ||
                    heard->second.getElapsedTime().asSeconds() > SAW_LOOP_LINGER) {
             audio.stopLoop(player_num);
@@ -198,18 +199,27 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
         float rev = player.chainsaw && anim.lunged ? 1 - anim.lunge_clock.getElapsedTime().asSeconds() / CHAINSAW_LUNGE_TIME : 0;
         audio.setLoopPitch(player_num, 1 + SAW_REV_PITCH * std::max(0.0f, rev));
     }
+    // ... and a player who left mid-saw takes theirs along
+    std::erase_if(saw_heard, [&](const auto &entry) {
+        if (players.count(entry.first))
+            return false;
+        audio.stopLoop(entry.first);
+        return true;
+    });
 }
 
 // Mostly "Hmm" or "Hump", now and then a rare line. The same take right after itself comes at another pitch,
-// so a run of them doesn't sound like a stuck record.
-void GameScreen::sayHitLine()
+// so a run of them doesn't sound like a stuck record; his choom's quieter.
+void GameScreen::sayHitLine(int player, int me)
 {
     // Its own generator: the particles draw from std::rand thousands of times a frame
     static std::mt19937 rng(std::random_device{}());
+    auto [entry, first] = hit_lines.try_emplace(player);
+    HitLine &last = entry->second;
 
-    if (hit_line_clock.getElapsedTime().asSeconds() < HIT_LINE_SAME_KICK)
+    if (!first && last.since.getElapsedTime().asSeconds() < HIT_LINE_SAME_KICK)
         return;
-    hit_line_clock.restart();
+    last.since.restart();
 
     bool rare = std::uniform_real_distribution<float>(0, 1)(rng) < RARE_HIT_LINE_CHANCE;
     Audio::Sfx pool = rare ? Audio::Sfx::DirtyBastrdRareHit : Audio::Sfx::DirtyBastrdHit;
@@ -218,12 +228,12 @@ void GameScreen::sayHitLine()
     if (count == 0)
         return;
     int take = std::uniform_int_distribution<int>(0, count - 1)(rng);
-    bool repeat = rare == last_hit_rare && take == last_hit_take;
-    float pitch = repeat && last_hit_pitch == 1 ? HIT_LINE_REPEAT_PITCH : 1;
-    audio.play(pool, pitch, take);
-    last_hit_rare = rare;
-    last_hit_take = take;
-    last_hit_pitch = pitch;
+    bool repeat = rare == last.rare && take == last.take;
+    float pitch = repeat && last.pitch == 1 ? HIT_LINE_REPEAT_PITCH : 1;
+    audio.play(pool, pitch, take, player == me ? 1 : CHOOM_VOLUME);
+    last.rare = rare;
+    last.take = take;
+    last.pitch = pitch;
 }
 
 // The lights go out over a blackout's stretch, fading in and out over its first and last tiles: the world
