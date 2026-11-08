@@ -412,8 +412,9 @@ static void testWraith()
     assert(!wraith.ultimate().freezes());
 }
 
-// DirtyBastrd's kick: drones only, shorter than Mikasa's blade but back sooner. Steel Toes, his own boon: a drone
-// he kicks down flies into the first live drone straight ahead in its row, within range, one jump only
+// DirtyBastrd's kick: drones only, shorter than Mikasa's blade but back sooner. Steel Toes, his own boon, only once
+// picked (a run, and a rematch, start without it): a drone he kicks down flies into the live drone nearest to it
+// within range, any way, one jump only, and breaks where it was with none
 static void testKick()
 {
     assert(weaponOf(7) == Weapon::Kick);
@@ -430,14 +431,27 @@ static void testKick()
     assert(kicker.canAttack());
 
     assert(boonLook(Boon::Signature, Weapon::Kick).name == std::string("STEEL TOES"));
-    std::set<std::pair<int, int>> drones = {{12, 4}, {15, 3}, {18, 4}};
+    assert(!kicker.hasBoon(Boon::Signature));
+    kicker.takeBoon(Boon::Signature);
+    assert(kicker.hasBoon(Boon::Signature));
+    kicker.reset(0, 0);     // the rematch: Server::startGame resets everyone, like the first run
+    assert(!kicker.hasBoon(Boon::Signature));
+    using Tile = std::pair<int, int>;
+    std::set<Tile> drones = {{11, 9}};
     auto live = [&](int x, int y) { return drones.count({x, y}) > 0; };
-    assert(kickedDroneLands(10, 4, live) == 12);    // the first one ahead in its row, not the next
-    assert(kickedDroneLands(10, 3, live) == 15);
-    assert(kickedDroneLands(12, 2, live) == -1);    // nothing in its row
-    assert(kickedDroneLands(18, 4, live) == -1);    // nothing ahead: never back
-    drones = {{10 + static_cast<int>(STEEL_TOES_RANGE) + 1, 4}};
-    assert(kickedDroneLands(10, 4, live) == -1);    // too far
+    assert(kickedDroneLands(10, 6, live) == Tile(11, 9));     // at another height
+    drones = {{14, 5}, {11, 7}};
+    assert(kickedDroneLands(10, 5, live) == Tile(11, 7));     // the nearest, diagonally, not the one in its row
+    drones = {{6, 5}, {13, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(13, 5));     // ahead or behind: whichever is nearer
+    drones = {{8, 4}, {13, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(8, 4));      // behind it, back toward him
+    drones = {{10, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(-1, -1));    // not itself
+    drones = {{10 + static_cast<int>(STEEL_TOES_RANGE), 3}, {10 - static_cast<int>(STEEL_TOES_RANGE), 7}};
+    assert(kickedDroneLands(10, 5, live) == Tile(-1, -1));    // too far either way: it breaks where it was
+    // It flies there, not at once: the server downs the target once it gets there, the clients draw it as long
+    assert(std::abs(kickedDroneFlight(10, 5, 13, 9) - 5 / STEEL_TOES_SPEED) < 1e-5f);
 }
 
 // DirtyBastrd's chainsaw: it takes one titan's or Smasher's hit (a drone's too), then it is gone with a second of

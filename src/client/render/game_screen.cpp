@@ -84,6 +84,7 @@ void GameScreen::resetRun()
     bounced.clear();
     coin_streak = 0;
     last_drone.clear();
+    kicked_drones.clear();
     new_record = false;
     new_drone_record = false;
     bests = Bests::load();
@@ -295,6 +296,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     shots.draw();
     drawCuts();
     drawZaps();
+    drawKickedDrones();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);

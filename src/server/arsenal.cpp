@@ -291,24 +291,47 @@ void Blink::tick(const Player &player, float dt)
     }
 }
 
+// Right after its own collision: the clients draw it from the last drone this player took to the one it flies into,
+// or break it there when nothing is in range. Not into a drone this kick takes down, nor one another kicked drone
+// already flies into.
+void Kick::launch(Server &server, Player &player, int x, int y, const std::vector<std::pair<int, int>> &kicked)
+{
+    auto taken = [&](int tx, int ty) {
+        return std::ranges::find(kicked, std::pair{tx, ty}) != kicked.end() ||
+               std::ranges::any_of(flights, [&](const Flight &f) { return f.to_x == tx && f.to_y == ty; });
+    };
+    auto [to_x, to_y] = kickedDroneLands(x, y, [&](int tx, int ty) { return server.isLiveDrone(tx, ty) && !taken(tx, ty); });
+    if (to_x < 0) {
+        server.notifyCollision(DRONE_KICKED, player, x, y);
+        return;
+    }
+    server.notifyCollision(DRONE_KICKED, player, to_x, to_y);
+    flights.push_back({to_x, to_y, kickedDroneFlight(x, y, to_x, to_y)});
+}
+
+// The kicked drones get there: the one they fly into goes down, if nothing took it first
+void Kick::act(Server &server, Player &player)
+{
+    for (Flight &flight : flights) {
+        if ((flight.left -= Server::TICK_DT) <= 0 && server.isLiveDrone(flight.to_x, flight.to_y))
+            server.destroyDrone(player.getClientFd(), flight.to_x, flight.to_y);
+    }
+    std::erase_if(flights, [](const Flight &flight) { return flight.left <= 0; });
+}
+
 // Every drone in reach goes down, no titan; Smasher takes it like a blade's cut when he's close. Steel Toes:
-// each drone kicked down flies into the next one ahead in its row. Nothing while the saw is out: the key
+// each drone kicked down flies into the drone nearest to it (launch). Nothing while the saw is out: the key
 // throws it as it comes back up (release).
 float Kick::attack(Server &server, Player &player)
 {
     if (player.ultimate().sawOut())
         return 0;
     server.announceShot(player, Weapon::Kick);
-    for (auto [x, y] : server.dronesInReach(player, KICK_REACH, player.getY())) {
+    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY());
+    for (auto [x, y] : kicked) {
         server.destroyDrone(player.getClientFd(), x, y);
-        if (!player.hasBoon(Boon::Signature))
-            continue;
-        int to = kickedDroneLands(x, y, [&server](int tx, int ty) { return server.isLiveDrone(tx, ty); });
-        // Before the drone goes down: the clients draw its flight from the last drone this player took
-        if (to >= 0) {
-            server.notifyCollision(DRONE_KICKED, player, to, y);
-            server.destroyDrone(player.getClientFd(), to, y);
-        }
+        if (player.hasBoon(Boon::Signature))
+            launch(server, player, x, y, kicked);
     }
     server.slashBoss(player, KICK_REACH);
     return KICK_COOLDOWN;

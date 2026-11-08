@@ -162,7 +162,7 @@ A 14-byte record per player, 60 times per second:
 | `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
-| `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flew into the drone on that tile; that drone's `d` follows |
+| `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flies toward the drone on that tile at 12 tiles per second, which goes down as it arrives (its `d` then); its own tile when nothing was in range: it breaks there |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 | `z` | DirtyBastrd's chainsaw, lunging or thrown, cut through the zapper with a node on that tile: all its nodes are out for the rest of the run |
 | `u` | DirtyBastrd's thrown chainsaw hit what is on that tile (its `d`, `k`, `z`, or Adam Smasher's hit, follows) and ricochets on |
@@ -201,7 +201,8 @@ key going down does nothing). CYBERPSYCHO only (ignored otherwise). The server e
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
 up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead, DirtyBastrd's kick every
 drone (no titan) within 2 tiles, and both cut Adam Smasher when he is that close. With his Steel Toes boon, each
-drone he kicks down flies into the first live drone ahead in its row within 8 tiles (`i`). Lucy hacks
+drone he kicks down flies at 12 tiles per second toward the live drone nearest to it within 8 tiles, any way
+(`i`), and downs it when it gets there; with none in range it breaks where it was kicked. Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
 feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Wraith blinks, for one of his 2
 charges: 4 tiles ahead; the drones his body crosses go down (`d`), Adam Smasher's rockets it crosses

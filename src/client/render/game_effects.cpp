@@ -262,15 +262,47 @@ void GameScreen::hackBounced(const CollisionEffect &effect)
     bounced.insert(effect.player);
 }
 
-// Steel Toes: the drone DirtyBastrd kicked down flies into the next one (its blast comes next), trailing dust
+// Steel Toes: the drone DirtyBastrd kicked down tumbles off toward the drone the server sent it to, as fast as it
+// flies there (the blast of the one it hits comes as it arrives); sent to its own tile, it breaks there
 void GameScreen::droneKicked(const CollisionEffect &effect)
 {
     sf::Vector2f to = centerOf(effect);
     sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : to;
 
-    for (int i = 1; i <= 8; i++)
-        particles.emit(from + (to - from) * (i / 8.0f), 3, i % 2 ? BOOT_DUST : NEON_ORANGE, 3, 0.35f, 2);
-    audio.play(Audio::Sfx::Kick);
+    if ((to - from).length() < 0.5f) {
+        particles.emit(to, 16, sf::Color(150, 150, 165), 6, 0.5f, 14);
+        particles.emit(to, 10, BOOT_DUST, 5, 0.4f, 6);
+        return;
+    }
+    kicked_drones.push_back({from, to, sf::Clock(), (to - from).length() / STEEL_TOES_SPEED});
+    particles.emit(from, 10, BOOT_DUST, 5, 0.3f, 2);
+}
+
+// Each one spinning end over end along its way, dust and sparks trailing; gone when it gets there
+void GameScreen::drawKickedDrones()
+{
+    const sf::Texture &texture = sprites.drone;
+    sf::Vector2i frame_size(texture.getSize().x / Sprites::DRONE_FRAMES, texture.getSize().y);
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(kicked_drones, [](const KickedDrone &drone) {
+        return drone.age.getElapsedTime().asSeconds() >= drone.duration;
+    });
+    if (frame_size.x == 0)
+        return;
+    for (const KickedDrone &drone : kicked_drones) {
+        float t = drone.age.getElapsedTime().asSeconds() / std::max(0.01f, drone.duration);
+        sf::Vector2f at = drone.from + (drone.to - drone.from) * t;
+        sf::Sprite sprite(texture);
+        sprite.setTextureRect(sf::IntRect({0, 0}, frame_size));
+        sprite.setOrigin(sf::Vector2f(frame_size) / 2.f);
+        float scale = tile_size * 0.9f / frame_size.x;
+        sprite.setScale({scale, scale});
+        sprite.setPosition(run.toScreen(at));
+        sprite.setRotation(sf::degrees(t * 720));
+        canvas.draw(sprite);
+        particles.emit(at, 1, std::rand() % 2 ? BOOT_DUST : NEON_ORANGE, 2, 0.3f, 2);
+    }
 }
 
 void GameScreen::spearBlast(const CollisionEffect &effect)
