@@ -343,15 +343,15 @@ STILLNESS_TIME 4
 CHAINSAW_TIME 10
 # Tiles ahead it shreds drones, in the row at his hands only
 CHAINSAW_REACH 1.2
-# Tiles below the top of his body of that row
+# Tiles below the top of his body: the row it cuts, at his hands
 CHAINSAW_HEIGHT 1
-# Seconds a lunge lasts (the ultimate key again while the saw is out)
+# Seconds a lunge lasts (the ultimate key again while the saw is out), 0.05 to 1
 CHAINSAW_LUNGE_TIME 0.35
 # Extra pace at the start of a lunge, times the run speed, easing back to none
 CHAINSAW_LUNGE_PUSH 1
 # Tiles ahead the saw shreds while lunging
 CHAINSAW_LUNGE_REACH 2.5
-# Seconds from one lunge to the next
+# Seconds from one lunge to the next, 1.1 at least: always longer than a lunge
 CHAINSAW_LUNGE_COOLDOWN 1.2
 # Seconds from the start of a lunge its saw cuts through zappers instead of him dying
 CHAINSAW_LUNGE_ZAPPER_TIME 0.35

@@ -82,10 +82,12 @@ constexpr char CHAINSAW_SNAP = 'n';         // collision type: the saw took a hi
 // The ultimate key again while it runs: he revs and lunges, his pace pushed up by CHAINSAW_LUNGE_PUSH
 // times the run speed and easing back over CHAINSAW_LUNGE_TIME (a tile and a half to three tiles further
 // depending on the run speed, far less than the Sandevistan), the saw reaching CHAINSAW_LUNGE_REACH.
-inline float CHAINSAW_LUNGE_TIME = 0.35f;
+inline float CHAINSAW_LUNGE_TIME = 0.35f;         // never 0 (tuning.txt holds it to 0.05 to 1 s)
 inline float CHAINSAW_LUNGE_PUSH = 1.0f;
 inline float CHAINSAW_LUNGE_REACH = 2.5f;
-inline float CHAINSAW_LUNGE_COOLDOWN = 1.2f;     // seconds from one lunge to the next
+// Seconds from one lunge to the next, always longer than a lunge (tuning.txt: 1.1 s at least): the clients spot
+// each lunge by its bit coming on, so it has to go off in between
+inline float CHAINSAW_LUNGE_COOLDOWN = 1.2f;
 
 // Lunging, the saw cuts through electricity too: for CHAINSAW_LUNGE_ZAPPER_TIME from the start of a lunge
 // (its whole length by default, set apart from it), a zapper he runs into goes out for good instead of
