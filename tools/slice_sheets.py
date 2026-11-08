@@ -26,7 +26,7 @@ SHADOW_ROWS = 12    # bottom rows of a region where ground shadows join the fram
 
 
 def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead=False, splits=(), cuts=None,
-              solo=False, scale=1):
+              solo=False, scale=1, source=None):
     """One animation of a sheet.
 
     region:         box (x0, y0, x1, y1) holding the frames, labels left out; or a list of them, one per
@@ -41,10 +41,12 @@ def animation(region, fps, ground=False, mode="loop", frames=None, effects_ahead
                     columns between boundaries; either the boundaries' x positions, or
                     ("seams", frame centres) to cut at the emptiest column between two centres
     solo:           with cuts, only the biggest blob of each column: a neighbour's trail is left out
-    scale:          frames resized by this, for a row drawn bigger than the others
+    scale:          frames resized by this, for a row drawn bigger or smaller than the others; a number, or
+                    one per frame
+    source:         another picture in assets/ to take this animation from, instead of the character's sheet
     """
-    return {"region": region, "fps": fps, "ground": ground, "mode": mode,
-            "frames": frames, "effects_ahead": effects_ahead, "splits": splits, "cuts": cuts, "solo": solo, "scale": scale}
+    return {"region": region, "fps": fps, "ground": ground, "mode": mode, "frames": frames, "effects_ahead": effects_ahead,
+            "splits": splits, "cuts": cuts, "solo": solo, "scale": scale, "source": source}
 
 
 # Titan sheet: frames sit above their numbered labels, cut at the emptiest column between two
@@ -58,6 +60,10 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
 #   crops:          {file: box} extra pictures cut as they are, trimmed to their opaque pixels
 #   min_alpha:      pixels less opaque than this go: a see-through glow drawn behind the frames
+#   scale:          every frame resized by it, for a sheet drawn much bigger than the game needs
+#   smooth:         frames are resized smoothly (painted art), not pixel by pixel
+#   carried:        flying, the character hangs under something big and dark: air frames are centred on the
+#                   character alone, so the body fills the hitbox and what carries it sits above
 TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
 
 # Eren's transformation: smoke column, titan emerging from it, titan running.
@@ -138,6 +144,27 @@ CHARACTERS = {
                              scale=1.25),
         "death":   animation((0, 890, 512, 997), 10, mode="hide", scale=1.25),
     }, {"effects": False}),
+    # A giant headless bat carries him; its wings reach up past the labels of their rows and over
+    # the neighbouring frames, so the flying rows are split between the bodies. Under the bat he is
+    # drawn about half his running size: those rows are scaled back up, the takeoff as he leaves the ground.
+    # The whole sheet is then scaled down to the others' resolution.
+    "dirtybastrd": ("sources/dirtybastrd.png", (980, 890, 1060, 985), {
+        # The sheet's own run is one pose drawn seven times: his run cycle has its own picture, drawn bigger
+        "run":     animation((0, 0, 2172, 724), 12, ground=True, scale=0.355, source="sources/dirtybastrd_run.png"),
+        "takeoff": animation((770, 195, 1536, 368), 16, mode="once", splits=[1100, 1215, 1325, 1430],
+                             scale=[1.25, 1.25, 1.5, 1.6, 1.7, 1.8, 1.8]),
+        "rise":    animation((840, 376, 1536, 532), 12, scale=1.9),
+        "hover":   animation((0, 405, 835, 532), 12, splits=[125, 236, 345, 446, 542, 638, 734], scale=1.9),
+        "fall":    animation((0, 560, 772, 694), 12, splits=[102, 189, 274, 359, 445, 527, 610, 690], scale=1.9),
+        "death":   animation((0, 855, 605, 1000), 10, mode="once", frames=[0, 1, 2, 3, 4, 5], scale=1.8),
+        "attack":  animation((775, 560, 1536, 694), 16, mode="once", effects_ahead=True, splits=[1028],
+                             scale=1.6),
+    # Two kick frames overlap wing over wing: a thin seam cuts them apart
+    # chainsaw.png: the glowing saw of his ultimate, drawn over him while it runs; the bat icon's
+    # wing touches its sparks
+    }, {"erase": [(772, 200, 975, 232), (840, 376, 1020, 406), (0, 540, 210, 570), (775, 540, 1070, 570),
+                  (0, 850, 170, 880), (1027, 570, 1029, 615), (1399, 903, 1420, 978)],
+        "crops": {"chainsaw.png": (1298, 890, 1402, 978)}, "scale": 0.5, "smooth": True, "carried": True}),
     # Adam Smasher, the boss (render/boss.cpp): drawn facing right over a glow, he faces the runners
     "smasher": ("sources/Adam_Smasher.png", None, {
         "run":      animation((15, 40, 740, 205), 8, ground=True),
@@ -228,7 +255,8 @@ DISPLAY_NAMES = {"johny": "JOHNNY", "johny_mount": "PORSCHE", "david_mount": "CY
 # Tiles tall in the game, for the mounts (Eren's titan is TITAN_FORM_HEIGHT): a car is not a giant
 HEIGHTS = {"johny_mount": 2.2, "david_mount": 3.6, "jinx_mount": 3.6}
 
-EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "wraith": "140 60 230"}
+EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "wraith": "140 60 230",
+           "dirtybastrd": "150 10 20"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -389,8 +417,12 @@ def key_background(sheet):
     return Image.fromarray(px)
 
 
-def body_centre(frame, effects=True):
+def body_centre(frame, effects=True, carried=False):
     core = core_mask(np.array(frame), effects)
+    if carried:
+        # The coloured part of the frame: what carries him is black, its stump and drips blood red
+        r, g, b = (np.array(frame)[..., i].astype(int) for i in range(3))
+        core &= (np.maximum(np.maximum(r, g), b) >= 80) & ~((r > 100) & (r > 2 * g) & (r > 2 * b))
     if not core.any():
         core = np.array(frame)[..., 3] > ALPHA
     ys, xs = np.nonzero(core)
@@ -416,13 +448,17 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
 
     frames = {}
     for anim, spec in animations.items():
-        found = [crop_frame(sheet, box, mask) for box, mask in find_frames(pixels, spec, effects)]
-        if spec["scale"] != 1:
-            found = [f.resize((round(f.width * spec["scale"]), round(f.height * spec["scale"])), Image.NEAREST)
-                     for f in found]
+        source = Image.open(ROOT / spec["source"]).convert("RGBA") if spec["source"] else sheet
+        found = [crop_frame(source, box, mask) for box, mask in find_frames(np.array(source), spec, effects)]
         if options.get("mirror"):
             found = [ImageOps.mirror(frame) for frame in found]
         frames[anim] = [found[i] for i in spec["frames"]] if spec["frames"] else found
+        scales = spec["scale"] if isinstance(spec["scale"], list) else [spec["scale"]] * len(frames[anim])
+        scales = [k * options.get("scale", 1) for k in scales]
+        smooth = Image.LANCZOS if options.get("smooth") else Image.NEAREST
+        if any(k != 1 for k in scales):
+            frames[anim] = [f.resize((round(f.width * k), round(f.height * k)), smooth)
+                            for f, k in zip(frames[anim], scales)]
 
     # Body height: the tallest running frame, the game scales it to the player's hitbox
     body = max(f.height for f in frames["run"])
@@ -432,7 +468,7 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     half_w, top, bottom = 0, 0, 0
     for anim, spec in animations.items():
         for f in frames[anim]:
-            cx, cy = body_centre(f, effects)
+            cx, cy = body_centre(f, effects, options.get("carried", False) and not spec["ground"])
             # anchor: x of the body centre, y of the feet (ground) or the body centre (air)
             ay = f.height if spec["ground"] else cy + body / 2
             placed.setdefault(anim, []).append((f, cx, ay))
@@ -481,6 +517,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         overlay = sheet.copy()
         draw = ImageDraw.Draw(overlay)
         for anim, spec in animations.items():
+            if spec["source"]:
+                continue    # cut from another picture
             for region in spec["region"] if isinstance(spec["region"], list) else [spec["region"]]:
                 draw.rectangle(region, outline=(255, 255, 0, 255))
             for box, _ in find_frames(pixels, spec, effects):
