@@ -545,6 +545,49 @@ static void testChainsaw()
     assert(cutter.sawOut() && !cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
 }
 
+// The held saw against a real drone: its contact comes through the zapper's path while the drone is still up, and
+// the saw takes exactly one such hit. And the throw: only a press of the key made while the saw is out throws it,
+// on its release; one held from before doesn't, and Berserk never presses it while the saw is out.
+static void testSawDrone()
+{
+    std::string path = (std::filesystem::temp_directory_path() / "samuride_saw_drone.txt").string();
+    {
+        std::ofstream map(path);
+        for (int row = 0; row < 10; row++)
+            map << (row == 5 ? std::string(8, '_') + "d" + std::string(11, '_') : std::string(20, '_')) << "\n";
+    }
+    ServerConfig config;
+    config.port = 47131;
+    config.quiet = true;
+    config.solo = true;
+    config.map_path = path;
+    Server server(config);      // never run: its map is enough
+    assert(server.initialize() && server.isLiveDrone(8, 5));
+
+    Player sawer(-1);
+    sawer.setCharacter(7);
+    sawer.reset(0, 4);
+    auto &saw = dynamic_cast<Chainsaw &>(sawer.ultimate());
+    saw.start();
+    assert(saw.takesHit(server, sawer, ZAPPER_TILE, 8, 5) && !saw.sawOut() && sawer.isInvincible());
+    assert(sawer.getScore() == CHAINSAW_SCRAP_BASE && !saw.takesHit(server, sawer, ZAPPER_TILE, 8, 5));
+    std::filesystem::remove(path);
+
+    Player thrower(-1);
+    thrower.setCharacter(7);
+    thrower.reset(0, 4);
+    auto &kick = dynamic_cast<Kick &>(thrower.weapon());
+    auto &held = dynamic_cast<Chainsaw &>(thrower.ultimate());
+    assert(kick.attack(server, thrower) == KICK_COOLDOWN);     // F down, no saw: a kick
+    held.start();                                               // E while F is still held
+    thrower.update(0.01f, 10, 8);
+    assert(!kick.autoFires() && kick.release(server, thrower) == 0 && held.sawOut() && held.flying().empty());
+    assert(kick.attack(server, thrower) == 0);                  // F down again, the saw out
+    assert(kick.release(server, thrower) == KICK_COOLDOWN && !held.sawOut() && held.flying().size() == 1);
+    thrower.update(0.01f, 10, 8);
+    assert(kick.autoFires() && kick.release(server, thrower) == 0);
+}
+
 // DirtyBastrd's thrown saw in the air: it flies until it lies on the floor, the caller taking down each target it
 // hits. CHAINSAW_THROW_HITS at most, each a kill, then the snap's formula; it stops early with nothing in range,
 // can swing back to what's between him and it but never behind him, and hits Adam Smasher once a throw
@@ -1198,6 +1241,7 @@ int main()
     testWraith();
     testKick();
     testChainsaw();
+    testSawDrone();
     testThrownSaw();
     testWraithSmasher();
     testWanted();
