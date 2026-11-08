@@ -76,6 +76,7 @@ void GameScreen::resetRun()
     hit_stop = 0;
     cuts.clear();
     zaps.clear();
+    scrap_payouts.clear();
     bounced.clear();
     coin_streak = 0;
     last_drone.clear();
@@ -250,6 +251,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawEffects();
     titans.drawWarnings(titan_states);
     snipers.draw(state.getSnipers());
+    drawScrapPayouts();
     smasher.draw(state.getBoss(), state.getMode() == GameMode::Cyberpsycho);
     if (players.count(me))
         drawPowerUps(players.at(me), me);

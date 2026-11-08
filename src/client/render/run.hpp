@@ -25,6 +25,11 @@ struct PlayerAnim {
     bool berserk = false;
     sf::Clock berserk_clock;
     sf::Clock shot_clock;   // since the last shot: Jinx's sprite kicks back on each bullet
+    bool chainsaw = false;  // DirtyBastrd's saw out, and since when: its gauge drains in the HUD
+    sf::Clock saw_clock;
+    bool lunging = false;
+    bool lunged = false;    // since the saw came out, and since the last lunge: the gauge over his head
+    sf::Clock lunge_clock;
 };
 
 struct Run {

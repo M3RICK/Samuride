@@ -47,6 +47,9 @@ struct PlayerState {
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
     int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
     int wanted = 0;             // NCPD wanted level, 0 to WANTED_MAX_STARS
+    bool chainsaw = false;      // DirtyBastrd's saw is out
+    bool lunging = false;       // and he lunges with it
+    int scrap = 0;              // the eddies it would burst into if it snapped now
 };
 
 // MSG_SHOT: someone attacked in CYBERPSYCHO

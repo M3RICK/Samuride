@@ -69,7 +69,7 @@ static void testMessages()
 {
     PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
                        .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
-                       .wanted = 3};
+                       .wanted = 3, .chainsaw = true, .lunging = true, .scrap = 17};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
     assertRoundTrip(players, [](auto &a, auto &b) {
         return a.size() == b.size() && std::ranges::all_of(a, [&](auto &entry) {
@@ -78,12 +78,12 @@ static void testMessages()
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
                    p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
                    p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
-                   p.wanted == q.wanted;
+                   p.wanted == q.wanted && p.chainsaw == q.chainsaw && p.lunging == q.lunging && p.scrap == q.scrap;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59, 71}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -434,6 +434,63 @@ static void testKick()
     assert(kickedDroneLands(18, 4, live) == -1);    // nothing ahead: never back
     drones = {{10 + static_cast<int>(STEEL_TOES_RANGE) + 1, 4}};
     assert(kickedDroneLands(10, 4, live) == -1);    // too far
+}
+
+// DirtyBastrd's chainsaw: it takes one titan's or Smasher's hit (a drone's too), then it is gone with a second of
+// grace and its scrap paid; a zapper's or a sniper's goes past it (the shield's path); it runs out on its own
+static void testChainsaw()
+{
+    assert(ultimateOf(7) == Ultimate::Chainsaw);
+    ServerConfig config;
+    Server server(config);      // never started: no map, no client to tell
+    Player sawer(-1);
+    sawer.setCharacter(7);
+    sawer.reset(0, 0);
+    auto &saw = dynamic_cast<Chainsaw &>(sawer.ultimate());
+    assert(!saw.sawOut() && !saw.takesHit(server, sawer, TITAN_HIT, 0, 0) && !saw.press(server, sawer));
+    saw.fire(server, sawer, 1, 1);
+    assert(saw.sawOut() && !saw.takesHit(server, sawer, ZAPPER_TILE, 3, 3) && !saw.takesHit(server, sawer, SNIPER_HIT, 0, 0));
+    assert(saw.takesHit(server, sawer, TITAN_HIT, 0, 0) && !saw.sawOut() && sawer.isInvincible());
+    assert(sawer.getScore() == CHAINSAW_SCRAP_BASE && !saw.takesHit(server, sawer, TITAN_HIT, 0, 0));
+    saw.fire(server, sawer, 1, 1);
+    assert(saw.takesHit(server, sawer, BOSS_HIT, 0, 0) && !saw.sawOut());
+    saw.start();
+    sawer.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(!saw.sawOut());
+
+    // Its scrap: the base for an instant snap, kills and seconds on top, never past the cap, nothing when it
+    // runs out; a kill after it's gone doesn't count toward the next one
+    saw.start();
+    assert(saw.scrap() == CHAINSAW_SCRAP_BASE && saw.snap() == CHAINSAW_SCRAP_BASE && saw.scrap() == 0);
+    saw.start();
+    saw.killed();
+    saw.killed();
+    sawer.update(1.5f, 10, 8);
+    assert(saw.snap() == CHAINSAW_SCRAP_BASE + 2 * CHAINSAW_SCRAP_PER_KILL + 3 * CHAINSAW_SCRAP_PER_SECOND / 2);
+    saw.start();
+    for (int i = 0; i < 20; i++)
+        saw.killed();
+    assert(saw.snap() == CHAINSAW_SCRAP_MAX);
+    saw.start();
+    saw.killed();
+    sawer.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(saw.snap() == 0);
+    saw.killed();
+    saw.start();
+    assert(saw.snap() == CHAINSAW_SCRAP_BASE);
+
+    // The lunge: only with the saw out (the key is its own then), a push forward, then its cooldown
+    Player lunger(-1);
+    lunger.setCharacter(7);
+    lunger.reset(0, 4);
+    auto &lunging = dynamic_cast<Chainsaw &>(lunger.ultimate());
+    assert(!lunging.lunge());
+    lunging.start();
+    assert(lunging.lunge() && !lunging.lunge() && lunging.press(server, lunger) && lunging.pace() > 1);
+    lunger.update(CHAINSAW_LUNGE_TIME, 10, 8);
+    assert(lunger.getX() > 10 * CHAINSAW_LUNGE_TIME + 1 && lunging.pace() == 1);
+    lunger.update(CHAINSAW_LUNGE_COOLDOWN, 10, 8);
+    assert(lunging.lunge());
 }
 
 // Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
@@ -1024,6 +1081,7 @@ int main()
     testDante();
     testWraith();
     testKick();
+    testChainsaw();
     testWraithSmasher();
     testWanted();
     testRipperdoc();

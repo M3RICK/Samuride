@@ -3,11 +3,13 @@
 // the client (who draws them). Which runner has which ultimate: runners.hpp.
 //
 // The rule they all follow: none of them makes you invincible (the Sandevistan, the Attack Titan and
-// the shield already do). They act on the scenery, you still steer and can die.
+// the shield already do). They act on the scenery, you still steer and can die. DirtyBastrd's chainsaw
+// bends it on purpose: it takes one hit, and only some.
 
 #ifndef ULTIMATES_HPP
     #define ULTIMATES_HPP
 
+#include <algorithm>
 #include <cstdint>
 #include <utility>
 
@@ -20,6 +22,7 @@ enum class Ultimate : uint8_t {
     Fishbones,      // Jinx
     Doppelganger,   // Dante
     Stillness,      // Wraith
+    Chainsaw,       // DirtyBastrd
 };
 
 // Johnny palms his gun: a wall of fire sweeps the screen ahead, burning drones, zappers and titans
@@ -63,6 +66,38 @@ inline float DOPPELGANGER_TIME = 8;
 // Adam Smasher and his rockets stop where they are (still deadly to run into); Smasher no longer keeps
 // pace, Wraith can catch up and blink into him.
 inline float STILLNESS_TIME = 4;
+
+// DirtyBastrd's invisible chainsaw: held out in front of him for CHAINSAW_TIME, shredding every drone
+// within CHAINSAW_REACH each tick, in the row it is held at: drones at his head or his feet still get
+// him, steering still matters. It takes one deadly hit from a drone, a titan or Smasher, then snaps (a titan
+// that breaks it is cut down as it does); zappers and snipers still kill him.
+// Like a shield, the snap leaves a second of grace (SHIELD_GRACE). Holding both, the saw goes first.
+inline float CHAINSAW_TIME = 10.0f;
+inline float CHAINSAW_REACH = 1.2f;      // tiles ahead: what is right in front of him, less than his kick
+inline float CHAINSAW_HEIGHT = 1.0f;     // below the top of his body: his hands, where it cuts
+constexpr char CHAINSAW_SNAP = 'n';         // collision type: the saw took a hit; x is the scrap it gave
+
+// The ultimate key again while it runs: he revs and lunges, his pace pushed up by CHAINSAW_LUNGE_PUSH
+// times the run speed and easing back over CHAINSAW_LUNGE_TIME (a tile and a half to three tiles further
+// depending on the run speed, far less than the Sandevistan), the saw reaching CHAINSAW_LUNGE_REACH.
+inline float CHAINSAW_LUNGE_TIME = 0.35f;
+inline float CHAINSAW_LUNGE_PUSH = 1.0f;
+inline float CHAINSAW_LUNGE_REACH = 2.5f;
+inline float CHAINSAW_LUNGE_COOLDOWN = 1.2f;     // seconds from one lunge to the next
+
+// When the saw snaps (not when it runs out), it bursts into eddies: the better it was used, the more.
+// Kills are the drones and titans taken down while it was out, by the saw or by his kicks.
+inline int CHAINSAW_SCRAP_BASE = 5;
+inline int CHAINSAW_SCRAP_PER_KILL = 3;
+inline int CHAINSAW_SCRAP_PER_SECOND = 1;    // for each second it lasted: kills should count most
+inline int CHAINSAW_SCRAP_MAX = 30;          // a titan's bounty and two drones': a bonus, not a farm. Sent
+                                             // in 5 bits: 31 at most
+
+inline int chainsawScrap(int kills, float seconds)
+{
+    int scrap = CHAINSAW_SCRAP_BASE + CHAINSAW_SCRAP_PER_KILL * kills + static_cast<int>(CHAINSAW_SCRAP_PER_SECOND * seconds);
+    return std::min(CHAINSAW_SCRAP_MAX, scrap);
+}
 
 // Where the double's body is, its top at y, for a body `height` tall in a corridor `floor` tiles high
 inline float mirrored(float y, float height, float floor) { return floor - height - y; }

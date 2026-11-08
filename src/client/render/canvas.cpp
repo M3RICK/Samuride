@@ -284,6 +284,8 @@ UltimateLook ultimateLook(Ultimate ultimate)
             return {"DOPPELGANGER", Palette::NEON_RED};
         case Ultimate::Stillness:
             return {"STILLNESS", Palette::NEON_CYAN};
+        case Ultimate::Chainsaw:
+            return {"INVISIBLE CHAINSAW", Palette::NEON_CYAN};
         default:
             return {"", sf::Color::White};
     }

@@ -85,6 +85,23 @@ private:
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
     std::map<int, sf::Vector2f> last_drone;     // each player's last drone down, where Lucy's hack bounces from
+    // DirtyBastrd's saw paying out its scrap: the eddies gather in a ring around him (SCRAP_GATHER_TIME),
+    // leave it for his counter one after the other over SCRAP_LEAVE_TIME, each flying SCRAP_FLY_TIME, then
+    // the total pops up by the counter. About a second and a half, whatever the amount.
+    static constexpr float SCRAP_GATHER_TIME = 0.3f;
+    static constexpr float SCRAP_LEAVE_TIME = 0.75f;
+    static constexpr float SCRAP_FLY_TIME = 0.3f;
+    static constexpr float SCRAP_POP_TIME = 0.9f;
+    static constexpr float SCRAP_PITCH_STEP = 0.025f;   // each eddy landing rings this much higher: 30 end near 1.75
+    struct ScrapPayout {
+        int player;
+        int scrap;
+        sf::Vector2f from;      // where the eddies burst from, in tiles
+        sf::Clock age;
+        int landed = 0;         // eddies already on the counter, each heard as it lands
+    };
+    std::vector<ScrapPayout> scrap_payouts;
+    std::map<int, sf::Vector2f> hud_counters;   // where each player's eddies are written in the HUD
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes
@@ -157,6 +174,10 @@ private:
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
+    void sawSnapped(const CollisionEffect &effect, bool mine);
+    void payOutScrap(int player, int scrap, sf::Vector2f from);
+    void drawScrapPayouts();
+    int scrapInFlight(int player) const;
     void traumaRescue(const CollisionEffect &effect, bool mine);
     void drawTraumaTeam();
     void drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height);
@@ -173,6 +194,7 @@ private:
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
+    void drawScrapMeter(int scrap, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
     void drawStyle(const PlayerState &player);
     void drawWanted(const PlayerState &player, int me, float y);

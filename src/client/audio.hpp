@@ -21,6 +21,7 @@ public:
         Blink,                                                      // Wraith's teleport
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
         Kick,                                                       // DirtyBastrd's boot
+        Chainsaw, SawSnap,                                          // his ultimate
     };
 
     Audio();
@@ -28,7 +29,8 @@ public:
     void playMusic(bool in_game);
     // Johnny's greeting, played once each time the main menu opens
     void greet();
-    void play(Sfx sfx);
+    // Higher than 1, higher pitched (and faster)
+    void play(Sfx sfx, float pitch = 1);
     // Thrust rumble, looping while the jetpack is on
     void setJetpack(bool on);
     // Percentages, from the options
@@ -46,9 +48,10 @@ private:
     std::map<Sfx, std::vector<sf::SoundBuffer>> lines;
     std::vector<sf::Sound> voices;     // played round-robin so effects can overlap
     size_t next_voice = 0;
-    // A sound started again within this is skipped: twenty coins in one frame ring as one
+    // A sound started again within this is skipped: twenty coins in one frame ring as one. At another
+    // pitch it is another sound: the coins of a payout, each a little higher, all ring.
     static constexpr float REPEAT_GAP = 0.04f;
-    std::map<Sfx, sf::Clock> last_played;
+    std::map<std::pair<Sfx, float>, sf::Clock> last_played;
 
     sf::SoundBuffer jet_buffer;
     std::optional<sf::Sound> jet;

@@ -36,6 +36,7 @@ namespace Palette {
     constexpr sf::Color HINT_GREY{150, 150, 150};
     constexpr sf::Color FADED{255, 255, 255, 130};   // unselected cards
     constexpr sf::Color BOOT_DUST{205, 160, 100};       // DirtyBastrd's kicks, the tan of his Timberlands
+    constexpr sf::Color SAWDUST{235, 215, 160};         // his chainsaw lunging through what's ahead
 }
 
 // An ultimate's name and colour, wherever it shows

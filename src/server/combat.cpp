@@ -228,6 +228,13 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from, int t
         titanDown(owner->second, x);
 }
 
+// The titans running into DirtyBastrd as his saw snaps go down with it: a kill for its scrap
+void Server::sawTitans(Player &player)
+{
+    for (float x : titans.takeDown([&](const Horde::Titan &titan) { return Horde::touches(player, titan, game_map.getHeight()); }))
+        titanDown(player, x);
+}
+
 void Server::slashTitans(Player &player, float reach)
 {
     for (float x : titans.takeDown(titanReached(player, reach)))
@@ -247,6 +254,7 @@ bool Server::hitBoss(Player &player, int damage)
 
 void Server::titanDown(Player &player, float x)
 {
+    player.ultimate().killed();
     player.addScore(TITAN_BOUNTY);
     notifyCollision(TITAN_KILL, player, x, game_map.getHeight() - 1);
 }
@@ -271,6 +279,7 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
+    owner->second.ultimate().killed();
     owner->second.addScore(wantedBounty(owner->second.weapon().droneDown(), owner->second.wantedStars()));
     owner->second.raiseWanted();
     notifyCollision(DRONE_TILE, owner->second, x, y);

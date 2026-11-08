@@ -40,6 +40,8 @@ std::unique_ptr<RunnerUltimate> makeUltimate(Ultimate id)
             return std::make_unique<Doppelganger>();
         case Ultimate::Stillness:
             return std::make_unique<Stillness>();
+        case Ultimate::Chainsaw:
+            return std::make_unique<Chainsaw>();
         default:
             return std::make_unique<FireWave>();
     }
@@ -424,4 +426,98 @@ void Fishbones::tick(float dt)
 float Fishbones::pace() const
 {
     return 1 - (1 + FISHBONES_RECOIL_PUSH) * recoil_timer / FISHBONES_RECOIL_TIME;
+}
+
+// He pulls it out of nowhere: it shreds in act, lunges with this same key (press)
+void Chainsaw::fire(Server &, Player &, float, float)
+{
+    start();
+}
+
+void Chainsaw::start()
+{
+    timer = CHAINSAW_TIME;
+    held = 0;
+    kills = 0;
+    lunge_cooldown = 0;
+}
+
+// While it runs, the key is the lunge's, ready or not
+bool Chainsaw::press(Server &, Player &)
+{
+    if (!sawOut())
+        return false;
+    lunge();    // the clients see it in MSG_GAME_STATE
+    return true;
+}
+
+bool Chainsaw::lunge()
+{
+    if (!sawOut() || lunge_cooldown > 0)
+        return false;
+    lunge_timer = CHAINSAW_LUNGE_TIME;
+    lunge_cooldown = CHAINSAW_LUNGE_COOLDOWN;
+    return true;
+}
+
+// Running out gives nothing: only a snap pays
+void Chainsaw::tick(float dt)
+{
+    lunge_timer = std::max(0.0f, lunge_timer - dt);
+    lunge_cooldown = std::max(0.0f, lunge_cooldown - dt);
+    if (!sawOut())
+        return;
+    held += dt;
+    if ((timer -= dt) <= 0)
+        timer = 0;
+}
+
+// Every drone in reach goes down, in the row at his hands only
+void Chainsaw::act(Server &server, Player &player)
+{
+    if (!sawOut())
+        return;
+    int row = static_cast<int>(player.getY() + CHAINSAW_HEIGHT);
+    float reach = lunging() ? CHAINSAW_LUNGE_REACH : CHAINSAW_REACH;
+    for (int x = static_cast<int>(player.getX() + 0.5f); x <= static_cast<int>(player.getX() + 0.5f + reach); x++)
+        if (server.isLiveDrone(x, row))
+            server.destroyDrone(player.getClientFd(), x, row);
+}
+
+// Jinx's recoil the other way: thrown forward, then picking the run's pace back up
+float Chainsaw::pace() const
+{
+    return 1 + CHAINSAW_LUNGE_PUSH * lunge_timer / CHAINSAW_LUNGE_TIME;
+}
+
+// A drone's, a titan's or Smasher's hit: it snaps, its scrap paid, a second of grace like a shield's. A titan
+// that breaks it goes down with it. Zappers and snipers go past it.
+bool Chainsaw::takesHit(Server &server, Player &player, char cause, int x, int y)
+{
+    bool drone = cause == ZAPPER_TILE && server.isLiveDrone(x, y);
+    if (!sawOut() || !(drone || cause == TITAN_HIT || cause == BOSS_HIT))
+        return false;
+    if (cause == TITAN_HIT)
+        server.sawTitans(player);
+    int scrap = snap();
+    player.addScore(scrap);
+    player.dodge(SHIELD_GRACE);
+    server.notifyCollision(CHAINSAW_SNAP, player, scrap, y);
+    return true;
+}
+
+void Chainsaw::killed()
+{
+    if (sawOut())
+        kills++;
+}
+
+int Chainsaw::snap()
+{
+    int burst = scrap();
+    timer = 0;
+    held = 0;
+    kills = 0;
+    lunge_timer = 0;
+    return burst;
 }

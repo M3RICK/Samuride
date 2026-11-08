@@ -310,6 +310,8 @@ public:
 
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);
+    // ... and every titan running into him, as his saw snaps (DirtyBastrd)
+    void sawTitans(Player &player);
 
     // CYBERPSYCHO: a hit on Adam Smasher while he fights, his bounty if it downs him. False when he isn't there.
     bool hitBoss(Player &player, int damage);

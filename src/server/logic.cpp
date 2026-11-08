@@ -411,6 +411,9 @@ void Server::sendGameState()
             .grace = player.isGracing(),            // shield broken, Sandevistan or titan over
             .style = player.weapon().style(),
             .wanted = player.wantedStars(),
+            .chainsaw = player.ultimate().sawOut(),
+            .lunging = player.ultimate().lunging(),
+            .scrap = player.ultimate().scrap(),
         };
     }
 

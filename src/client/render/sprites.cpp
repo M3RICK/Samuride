@@ -17,6 +17,7 @@ void Sprites::load()
     // Pixel art: scaled up without smoothing
     loadTexture(drone, "assets/drone/drone.png", false);
     loadTexture(hack_target, "assets/lucy/target.png");
+    loadTexture(chainsaw, "assets/dirtybastrd/chainsaw.png");
     loadTexture(fishbones, "assets/jinx/fishbones.png", false);
     loadTexture(smasher_missile, "assets/smasher/missile.png", false);
 

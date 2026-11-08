@@ -204,6 +204,11 @@ void Audio::synthesize()
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
     // DirtyBastrd's kick: a low thud with a scuff of noise on top
     buffers[Sfx::Kick] = toBuffer(mix(tone(Wave::Sine, 160, 50, 0.12f, 0.6f), burst(0.08f, 0.3f, 0.3f)));
+    // His chainsaw, revved when it comes out and on each lunge: a sputter climbing into a snarl
+    buffers[Sfx::Chainsaw] = toBuffer(concat(tone(Wave::Saw, 70, 160, 0.2f, 0.25f),
+                                             mix(tone(Wave::Saw, 160, 230, 0.4f, 0.25f), burst(0.4f, 0.15f, 0.6f))));
+    // The saw snapping: a metal twang over a crack
+    buffers[Sfx::SawSnap] = toBuffer(mix(tone(Wave::Square, 2200, 500, 0.18f, 0.15f), burst(0.25f, 0.35f, 0.9f)));
     // Berserk: a low growl revving up
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Johnny's fire wave: a roaring blast
@@ -270,12 +275,12 @@ void Audio::greet()
     greeting.play();
 }
 
-void Audio::play(Sfx sfx)
+void Audio::play(Sfx sfx, float pitch)
 {
-    auto last = last_played.find(sfx);
+    auto last = last_played.find({sfx, pitch});
     if (last != last_played.end() && last->second.getElapsedTime().asSeconds() < REPEAT_GAP)
         return;
-    last_played[sfx].restart();
+    last_played[{sfx, pitch}].restart();
 
     sf::Sound &voice = voices[next_voice];
 
@@ -288,6 +293,7 @@ void Audio::play(Sfx sfx)
         voice.setBuffer(buffers.at(sfx));
     else
         return;
+    voice.setPitch(pitch);
     voice.play();
 }
 

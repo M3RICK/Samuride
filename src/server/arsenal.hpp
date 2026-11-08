@@ -64,6 +64,15 @@ public:
     virtual bool travels() const { return false; }
     // True while the world stands still: Wraith's Stillness
     virtual bool freezes() const { return false; }
+    // A deadly hit it takes instead of the runner (DirtyBastrd's chainsaw), from what `cause` (a MSG_COLLISION
+    // type) says hit them at (x, y): true when it did
+    virtual bool takesHit(Server &, Player &, char, int, int) { return false; }
+    // A drone or a titan this runner took down, with anything
+    virtual void killed() {}
+    // DirtyBastrd's chainsaw, for MSG_GAME_STATE: out, lunging with it, the scrap eddies it would give now
+    virtual bool sawOut() const { return false; }
+    virtual bool lunging() const { return false; }
+    virtual int scrap() const { return 0; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -221,6 +230,33 @@ public:
     void fire(Server &, Player &, float, float) override { timer = STILLNESS_TIME; }
     void tick(float dt) override { timer = std::max(0.0f, timer - dt); }
     bool freezes() const override { return timer > 0; }
+};
+
+// DirtyBastrd's invisible chainsaw (CHAINSAW_* in ultimates.hpp): it shreds what's at his hands, lunges with the
+// ultimate key again, and takes one hit before snapping into scrap eddies
+class Chainsaw : public RunnerUltimate {
+    float timer = 0;            // seconds it still runs; 0 once it ran out or snapped
+    float held = 0;             // seconds it has been out, and what it took down: its scrap when it snaps
+    int kills = 0;
+    float lunge_timer = 0;      // seconds of the lunge left
+    float lunge_cooldown = 0;   // seconds before the next lunge
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    bool press(Server &server, Player &player) override;
+    void tick(float dt) override;
+    void act(Server &server, Player &player) override;
+    float pace() const override;
+    bool takesHit(Server &server, Player &player, char cause, int x, int y) override;
+    void killed() override;
+    bool sawOut() const override { return timer > 0; }
+    bool lunging() const override { return lunge_timer > 0; }
+    int scrap() const override { return sawOut() ? chainsawScrap(kills, held) : 0; }
+    void start();
+    // True when he lunged: with the saw out, once the last lunge is far enough
+    bool lunge();
+    // The saw snaps: the scrap eddies it bursts into (the caller pays them), 0 without a saw
+    int snap();
 };
 
 class Fishbones : public RunnerUltimate {

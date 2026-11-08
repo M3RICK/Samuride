@@ -123,7 +123,7 @@ Sent when the input changes, not every frame.
 
 ### `MSG_GAME_STATE`
 
-A 13-byte record per player, 60 times per second:
+A 14-byte record per player, 60 times per second:
 
 | Bytes | Field |
 | --- | --- |
@@ -134,7 +134,8 @@ A 13-byte record per player, 60 times per second:
 | 1 | Flags: bit 0 jetpack, bits 1-2 form (0 normal, 1 shifting, 2 Attack Titan, 3 emerging), bit 3 shield, bit 4 Sandevistan, bits 5-6 the weapon's charges (Lucy's RAM, Wraith's Blinks), bit 7 Berserk |
 | 1 | Ultimate gauge, in percent |
 | 1 | Mikasa's thunder spears left |
-| 1 | Flags: bit 0 grace, invincible for a second after a broken shield, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS); bits 4-6 the NCPD wanted level, 0 to 5 stars |
+| 1 | Flags: bit 0 grace, invincible for a second after a broken shield or saw, the Sandevistan or the titan; bits 1-3 Dante's style rank, 0 (D) to 6 (SSS); bits 4-6 the NCPD wanted level, 0 to 5 stars |
+| 1 | DirtyBastrd's chainsaw: bit 0 out, bit 1 lunging with it, bits 2-6 the scrap eddies it would give if it snapped now |
 
 ### `MSG_COLLISION`
 
@@ -162,6 +163,7 @@ A 13-byte record per player, 60 times per second:
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
 | `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flew into the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
+| `n` | DirtyBastrd's chainsaw took a deadly hit (drone, titan or Adam Smasher) and snapped: 1 s of invincibility, and the column field is the scrap eddies it burst into (already in the score) |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
 | `B` | CYBERPSYCHO, the leader at 250 m: the boons offered to a player, x their three ids a byte each (first card lowest; 1-6 general, 7-8 pacts, 9 the runner's own). The run waits up to 10 s for their `MSG_BOON` |
@@ -217,7 +219,7 @@ the last one) and the runner has an ultimate. From the server, to everyone:
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Stillness (Wraith) |
+| 1 | Ultimate: 1 fire wave (Johnny), 2 nuke (David), 3 breach (Lucy), 4 thunder spears (Mikasa), 5 Fishbones (Jinx), 6 Doppelganger (Dante), 7 Stillness (Wraith), 8 chainsaw (DirtyBastrd) |
 | 4 | X where it starts |
 | 2 | Y of its line: the middle of the runner's body |
 
@@ -243,6 +245,14 @@ there and its shots themselves. Its kills come as his.
 
 Stillness sends nothing more: for 4 seconds the server stops the titans, the snipers and Adam Smasher
 (his x and his rockets stay where they are). Their states keep coming, standing still.
+
+The chainsaw lasts 10 s (bit 0 of the record's last byte in `MSG_GAME_STATE`): every tick it downs the
+drones within 1.2 tiles ahead (`d`), in the row 1 tile below Y only (where it is held). The ultimate key
+again lunges with it (bit 1): for 0.35 s the runner goes up to twice as fast, easing back, and the saw
+reaches 2.5 tiles; then 1.2 s before the next lunge. It takes one deadly hit from a drone, a titan or Adam
+Smasher (`n`), never a zapper's or a sniper's; a titan that breaks it goes down with it (`k`, then `n`).
+Snapping, it gives 5 eddies, plus 3 per drone or titan downed while it was out and 1 per second it
+lasted, 30 at most (bits 2-6 say how much it would give now). Running out gives nothing.
 
 ### `MSG_TITANS`
 

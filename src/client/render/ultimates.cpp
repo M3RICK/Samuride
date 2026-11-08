@@ -74,6 +74,11 @@ void Ultimates::start(const UltimateEvent &ultimate)
         run.flashScreen(sf::Color::White, 0.2f);
         particles.emit(body, 30, NEON_CYAN, 6, 0.5f, 0);
         stillnesses.emplace_back(ultimate.player, sf::Clock());
+    } else if (ultimate.ultimate == Ultimate::Chainsaw) {
+        // He pulls it out of nowhere: a cyan flash where it appears (players.cpp draws it while it lasts)
+        audio.play(Audio::Sfx::Chainsaw);
+        run.flashScreen(NEON_CYAN, 0.2f);
+        particles.emit(body + sf::Vector2f(1.2f, 0), 30, NEON_CYAN, 6, 0.4f, 0);
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
