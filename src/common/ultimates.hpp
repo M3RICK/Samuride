@@ -109,8 +109,9 @@ inline int chainsawScrap(int kills, float seconds)
 
 // The attack key while it runs throws the saw ahead, spinning, and ends the ultimate right there: no more
 // hit taken for him, no more lunges, and what it doesn't reach can still kill him. It flies at
-// CHAINSAW_THROW_SPEED to the nearest drone, titan or zapper ahead of it within CHAINSAW_THROW_RANGE,
-// takes it down (a zapper goes out for good) and ricochets on to the next, CHAINSAW_THROW_HITS in all.
+// CHAINSAW_THROW_SPEED to the nearest drone, titan or zapper within CHAINSAW_THROW_RANGE of it that is ahead
+// of him (never behind him: it can swing back toward him), takes it down (a zapper goes out for good) and
+// ricochets on to the next, CHAINSAW_THROW_HITS in all.
 // Out of hits or of targets, it drops to the floor in an arc and bursts into its scrap like a snap, each
 // hit a kill: a good throw pays more than the saw would have, a throw at nothing pays the least.
 inline int CHAINSAW_THROW_HITS = 5;
@@ -142,16 +143,16 @@ struct ThrownSaw {
     bool dropping = false;
     float drop_speed = 0;   // tiles per second, down
 
-    // One step: toward the nearest target not behind it within range, or falling. Returns the index of the
-    // target it hit, -1 for none; the caller takes that one down before the next step.
-    int fly(float dt, const std::vector<SawTarget> &targets)
+    // One step: toward the nearest target within range that isn't behind `ahead_of` (his middle), or falling.
+    // Returns the index of the target it hit, -1 for none; the caller takes that one down before the next step.
+    int fly(float dt, const std::vector<SawTarget> &targets, float ahead_of)
     {
         if (!dropping) {
             int next = -1;
             float nearest = CHAINSAW_THROW_RANGE;
             for (size_t i = 0; i < targets.size(); i++) {
                 float distance = std::hypot(targets[i].x - x, targets[i].y - y);
-                if (targets[i].x >= x && distance <= nearest && !(targets[i].boss && hit_boss)) {
+                if (targets[i].x >= ahead_of && distance <= nearest && !(targets[i].boss && hit_boss)) {
                     next = static_cast<int>(i);
                     nearest = distance;
                 }

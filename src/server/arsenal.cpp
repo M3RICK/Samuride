@@ -561,18 +561,19 @@ bool Chainsaw::throwSaw(const Player &player)
     return true;
 }
 
-// The thrown saw ricochets from what's ahead of it to what's next within its range, taking each down (his
+// The thrown saw ricochets from what's ahead of him to what's next within its range, taking each down (his
 // bounty, as if he had), then drops and pays its scrap where it lands, lying on the floor
 void Chainsaw::fly(Server &server, Player &player, ThrownSaw &saw)
 {
     int height = server.map().getHeight();
+    float ahead_of = player.getX() + 0.5f;
 
     // What it can hit, and what each one is: a drone's or a zapper's tile, {-1, -1} a titan, {-2, -2} Smasher
     std::vector<SawTarget> targets;
     std::vector<std::pair<int, int>> tiles;
     std::vector<float> titan_x;
     int end = std::min(static_cast<int>(server.map().getWidth()) - 1, static_cast<int>(saw.x + CHAINSAW_THROW_RANGE));
-    for (int x = std::max(0, static_cast<int>(saw.x)); x <= end; x++) {
+    for (int x = std::max(0, static_cast<int>(std::max(ahead_of, saw.x - CHAINSAW_THROW_RANGE))); x <= end; x++) {
         for (int y = 0; y < height; y++) {
             if (server.isLiveDrone(x, y) || server.isLiveZapper(x, y)) {
                 targets.push_back({x + 0.5f, y + 0.5f});
@@ -593,7 +594,7 @@ void Chainsaw::fly(Server &server, Player &player, ThrownSaw &saw)
         titan_x.push_back(0);
     }
 
-    int hit = saw.fly(Server::TICK_DT, targets);
+    int hit = saw.fly(Server::TICK_DT, targets, ahead_of);
     if (hit >= 0) {
         auto [x, y] = tiles[hit];
         server.notifyCollision(CHAINSAW_THROW_HIT, player, static_cast<int>(saw.x), static_cast<int>(saw.y));

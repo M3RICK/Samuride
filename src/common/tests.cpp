@@ -533,13 +533,14 @@ static void testChainsaw()
 
 // DirtyBastrd's thrown saw in the air: it flies until it lies on the floor, the caller taking down each target it
 // hits. CHAINSAW_THROW_HITS at most, each a kill, then the snap's formula; it stops early with nothing in range,
-// only bounces forward, and hits Adam Smasher once a throw
+// can swing back to what's between him and it but never behind him, and hits Adam Smasher once a throw
 static void testThrownSaw()
 {
     ThrownSaw out{10, 5, 1, 2.0f};
-    auto fly = [](ThrownSaw saw, std::vector<SawTarget> &targets) {
+    float him = out.x - 0.8f;      // his middle: the saw leaves his hands 1.3 tiles ahead of his x
+    auto fly = [him](ThrownSaw saw, std::vector<SawTarget> &targets) {
         for (int tick = 0; tick < 60 * 30 && !saw.landed(9.5f); tick++) {
-            int hit = saw.fly(1.0f / 60, targets);
+            int hit = saw.fly(1.0f / 60, targets, him);
             if (hit >= 0 && !targets[hit].boss)
                 targets.erase(targets.begin() + hit);
         }
@@ -555,9 +556,13 @@ static void testThrownSaw()
     assert(ricochet.scrap() == chainsawScrap(out.kills + CHAINSAW_THROW_HITS, out.held));
     std::vector<SawTarget> gap = {{out.x + 2, out.y}, {out.x + 4, out.y + 2}, {out.x + 5 + CHAINSAW_THROW_RANGE, out.y}};
     assert(fly(out, gap).hits == 2 && gap.size() == 1);
-    std::vector<SawTarget> behind = {{out.x - 1, out.y}, {out.x + 3, out.y + 1}};
+    std::vector<SawTarget> behind = {{him - 1, out.y}, {out.x + 3, out.y + 1}};
     ThrownSaw forward = fly(out, behind);
-    assert(forward.hits == 1 && behind.size() == 1 && behind[0].x < out.x);
+    assert(forward.hits == 1 && behind.size() == 1 && behind[0].x < him);
+    // Back toward him: what's between him and the saw is still ahead of him (behind the saw, it used to be left)
+    std::vector<SawTarget> back = {{out.x + 4, out.y}, {out.x - 0.5f, out.y + 2}};
+    ThrownSaw swung = fly(out, back);
+    assert(swung.hits == 2 && back.empty());
     std::vector<SawTarget> none;
     ThrownSaw wasted = fly(out, none);
     assert(wasted.hits == 0 && wasted.scrap() == chainsawScrap(out.kills, out.held));
