@@ -257,6 +257,8 @@ HEIGHTS = {"johny_mount": 2.2, "david_mount": 3.6, "jinx_mount": 3.6}
 
 EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "wraith": "140 60 230",
            "dirtybastrd": "150 10 20"}
+# No jetpack, so no flames: carried by a headless bat dripping blood from its neck (players.cpp)
+DRIPS = {"dirtybastrd"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
 FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
@@ -503,6 +505,8 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
         lines.append(f"exhaust {EXHAUST[name]}")
     if name in HEIGHTS:
         lines.append(f"height {HEIGHTS[name]}")
+    if name in DRIPS:
+        lines.append("drips")
     if name in FACES:
         source, columns, rows = FACES[name]
         slice_faces(source, columns, rows, out)

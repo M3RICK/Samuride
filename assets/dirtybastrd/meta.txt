@@ -5,6 +5,7 @@ frame 150 125
 feet 110
 body 60
 exhaust 150 10 20
+drips
 run 0 8 12 loop
 takeoff 1 7 16 once
 rise 2 7 12 loop

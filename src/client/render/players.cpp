@@ -33,7 +33,8 @@ void Players::draw(const std::map<int, PlayerState> &players, int me, bool live)
         drawPlayer(me, mine->second, true);
 }
 
-// Exhaust stays in the world, so it trails behind as the player runs
+// Exhaust stays in the world, so it trails behind as the player runs. DirtyBastrd has no jetpack: the bat
+// carrying him drips blood from its neck stump as it flaps, and sheds a feather now and then.
 void Players::emitExhaust(const std::map<int, PlayerState> &players)
 {
     for (const auto &[player_num, player] : players) {
@@ -41,7 +42,12 @@ void Players::emitExhaust(const std::map<int, PlayerState> &players)
         sf::Vector2f nozzle = run.display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
         bool flying = player.form == Form::Normal || player.form == Form::Emerging;
 
-        if (flying && player.jet_active) {
+        if (flying && player.jet_active && character.drips) {
+            sf::Vector2f stump = run.display_positions[player_num] + sf::Vector2f(0.55f, -0.7f);
+            particles.emit(stump, 1, character.exhaust, 0.6f, 0.7f, 16);
+            if (std::rand() % 8 == 0)
+                particles.emit(stump + sf::Vector2f(randf(-0.6f, 0.6f), 0), 1, sf::Color(20, 16, 24), 0.8f, 1.0f, 2);
+        } else if (flying && player.jet_active) {
             particles.emit(nozzle, 2, character.exhaust, 1.5f, 0.35f, 0, {0, 8});
             particles.emit(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
