@@ -243,6 +243,10 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
     } else {
         run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
     }
+    // Whichever runner he is, his kick downing it gets a hit line: not his saw's kills, held or thrown
+    bool sawn = sawn_drones.erase({effect.x, effect.y}) > 0 || run.player_anims[effect.player].chainsaw;
+    if (weaponOf(run.characterOf(effect.player)) == Weapon::Kick && !sawn)
+        sayHitLine();
     shots.land(effect.player, center.x);
     particles.emit(center, 30, NEON_ORANGE, 8, 0.6f, 6);
     particles.emit(center, 15, NEON_RED, 5, 0.5f, 6);
@@ -329,6 +333,8 @@ void GameScreen::zapperSawn(const CollisionEffect &effect, bool mine)
 void GameScreen::sawRicocheted(const CollisionEffect &effect, bool mine)
 {
     audio.play(Audio::Sfx::SawClank);
+    if (run.map.getTile(effect.x, effect.y) == DRONE_TILE)
+        sawn_drones.insert({effect.x, effect.y});
     run.shakeAtLeast(0.12f, mine ? 12 : 5);
     particles.emit(centerOf(effect), 18, sf::Color::White, 9, 0.25f, 6);
     particles.emit(centerOf(effect), 14, NEON_ORANGE, 7, 0.35f, 10);

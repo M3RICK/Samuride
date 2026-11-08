@@ -267,7 +267,6 @@ void Players::updateChainsaw(int player_num, const PlayerState &player, bool is_
     if (player.lunging && !state.lunging) {
         state.lunged = true;
         state.lunge_clock.restart();
-        audio.play(Audio::Sfx::Chainsaw);
         run.shakeAtLeast(0.2f, is_me ? 14 : 5);
         particles.emit(saw, 30, NEON_CYAN, 9, 0.35f, 0, {6, 0});
         particles.emit(saw, 14, sf::Color::White, 7, 0.25f, 0, {6, 0});

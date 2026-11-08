@@ -50,8 +50,11 @@ void Renderer::beginFrame(bool in_game)
     sf::RenderWindow &window = canvas.target();
 
     audio.playMusic(in_game);
-    if (!in_game)
+    audio.update();
+    if (!in_game) {
         audio.setJetpack(false);
+        audio.stopLoops();
+    }
 
     window.setView(canvas.screenView());
     window.clear(sf::Color::Black);
