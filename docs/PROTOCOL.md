@@ -260,8 +260,8 @@ Smasher (`n`), never a zapper's or a sniper's; a titan that breaks it goes down 
 a kill for the scrap, and the saw stays.
 
 The attack key while the saw is out throws it as it comes back up, and the ultimate ends there (no hit taken,
-no lunge). The saw flies at 40 tiles per second to the nearest live drone, titan or zapper ahead of it (not
-behind) within 15 tiles, takes it down (`u`, then `d`, `k` or `z`, the bounty to the thrower) and ricochets to
+no lunge). The saw flies at 40 tiles per second to the nearest live drone, titan or zapper within 15 tiles of it that is
+ahead of the runner (never behind him: it can swing back toward him), takes it down (`u`, then `d`, `k` or `z`, the bounty to the thrower) and ricochets to
 the next, 5 hits at most. Adam Smasher is a target too, once a throw: the hit takes 8 off his health and knocks
 him down where his slam leaves him, getting up close by for 2 s (`MSG_BOSS` shows his slam's recovery). Out of
 hits or of targets in range, it drops in an arc to the floor and bursts into its scrap (`o`), counted like a
