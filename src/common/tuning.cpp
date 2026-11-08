@@ -192,6 +192,9 @@ std::vector<Entry> &entries()
             VALUE(BLINK_COOLDOWN, "Seconds between two Blinks"),
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (3 at most)"),
             VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),
+            VALUE(KICK_COOLDOWN, "DirtyBastrd: seconds between two kicks"),
+            VALUE(KICK_REACH, "Tiles ahead his kick downs drones (no titans)"),
+            VALUE(STEEL_TOES_RANGE, "Steel Toes: tiles ahead in its row a kicked drone flies into the next one"),
 
             Entry("Ultimates (CYBERPSYCHO)"),
             VALUE(FIRE_WAVE_SPEED, "Johnny: the fire wave's speed, tiles per second"),

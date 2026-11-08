@@ -138,6 +138,12 @@ public:
     bool autoFires() const override { return false; }
 };
 
+// DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp)
+class Kick : public RunnerWeapon {
+public:
+    float attack(Server &server, Player &player) override;
+};
+
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
 struct Sweep {
     float start;    // in tiles

@@ -153,6 +153,7 @@ private:
     void bossDown(const CollisionEffect &effect, bool mine);
     void droneDown(const CollisionEffect &effect, int me);
     void hackBounced(const CollisionEffect &effect);
+    void droneKicked(const CollisionEffect &effect);
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);

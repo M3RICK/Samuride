@@ -83,7 +83,7 @@ void Server::fireProjectile(const Player &player, Weapon weapon, float y)
 }
 
 // The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y
-static std::vector<std::pair<int, int>> dronesInReach(const Server &server, const Player &player, float reach, float y)
+std::vector<std::pair<int, int>> Server::dronesInReach(const Player &player, float reach, float y) const
 {
     std::vector<std::pair<int, int>> drones;
     int top = static_cast<int>(y) - 1;
@@ -93,7 +93,7 @@ static std::vector<std::pair<int, int>> dronesInReach(const Server &server, cons
 
     for (int x = front; x <= end; x++)
         for (int y = std::max(0, top); y <= bottom; y++)
-            if (server.isLiveDrone(x, y))
+            if (isLiveDrone(x, y))
                 drones.emplace_back(x, y);
     return drones;
 }
@@ -107,7 +107,7 @@ static auto titanReached(const Player &player, float reach)
 
 int Server::strike(const Player &player, float reach, float y)
 {
-    std::vector<std::pair<int, int>> drones = dronesInReach(*this, player, reach, y);
+    std::vector<std::pair<int, int>> drones = dronesInReach(player, reach, y);
 
     for (auto [x, y] : drones)
         destroyDrone(player.getClientFd(), x, y);
@@ -122,7 +122,7 @@ static bool bossReached(const Boss &boss, const Player &player, float reach)
 
 bool Server::inReach(const Player &player, float reach, float y) const
 {
-    return !dronesInReach(*this, player, reach, y).empty() || titans.any(titanReached(player, reach)) ||
+    return !dronesInReach(player, reach, y).empty() || titans.any(titanReached(player, reach)) ||
            (mode == GameMode::Cyberpsycho && bossReached(boss, player, reach));
 }
 

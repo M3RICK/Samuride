@@ -42,6 +42,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case HACK_BOUNCE:
             hackBounced(effect);
             return;
+        case DRONE_KICKED:
+            droneKicked(effect);
+            return;
         case SPEAR_BLAST:
             spearBlast(effect);
             break;
@@ -208,6 +211,10 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
         run.shakeAtLeast(0.15f, 16);
         particles.emit(center, 16, NEON_PURPLE, 10, 0.3f, 0);
         particles.emit(center, 8, sf::Color::White, 7, 0.2f, 0);
+    } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Kick) {
+        // DirtyBastrd's boot connects: a solid jolt and the drone's dust flying, no hit-stop, no slash marks
+        run.shakeAtLeast(0.12f, 14);
+        particles.emit(center, 14, BOOT_DUST, 8, 0.3f, 4);
     } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
         // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
         hit_stop = HIT_STOP;
@@ -237,6 +244,17 @@ void GameScreen::hackBounced(const CollisionEffect &effect)
 
     zaps.push_back({from, to, sf::Clock()});
     bounced.insert(effect.player);
+}
+
+// Steel Toes: the drone DirtyBastrd kicked down flies into the next one (its blast comes next), trailing dust
+void GameScreen::droneKicked(const CollisionEffect &effect)
+{
+    sf::Vector2f to = centerOf(effect);
+    sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : to;
+
+    for (int i = 1; i <= 8; i++)
+        particles.emit(from + (to - from) * (i / 8.0f), 3, i % 2 ? BOOT_DUST : NEON_ORANGE, 3, 0.35f, 2);
+    audio.play(Audio::Sfx::Kick);
 }
 
 void GameScreen::spearBlast(const CollisionEffect &effect)

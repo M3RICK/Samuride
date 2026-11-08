@@ -291,6 +291,12 @@ BLINK_COOLDOWN 0.3
 BLINK_RECHARGE 2
 # Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back
 BLINK_PERFECT_WINDOW 0.3
+# DirtyBastrd: seconds between two kicks
+KICK_COOLDOWN 0.4
+# Tiles ahead his kick downs drones (no titans)
+KICK_REACH 2
+# Steel Toes: tiles ahead in its row a kicked drone flies into the next one
+STEEL_TOES_RANGE 8
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second

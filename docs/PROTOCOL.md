@@ -55,7 +55,7 @@ server's, or never came (a build from before it existed), the server answers its
 
 | Bytes | Field |
 | --- | --- |
-| 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante (the order of `src/common/runners.hpp`) |
+| 1 | Runner: 0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante, 6 Wraith, 7 DirtyBastrd (the order of `src/common/runners.hpp`) |
 | 1 | District: 0 The Corridor, 1 Worlds Collide, 2 Night City, 3 The Walls, 4 Zaun, 5 Both Worlds; `0xFF` when joining |
 | 1 | Mode: 0 CLASSIC, 1 CYBERPSYCHO; `0xFF` when joining |
 | 1 per upgrade | Upgrade levels, in the order of `src/common/upgrades.hpp`: Sandevistan, eddie magnet, subdermal armor, Trauma Team, Lucky Chip, Titan Serum, Drone Pinata |
@@ -160,6 +160,7 @@ A 13-byte record per player, 60 times per second:
 | `l` | One of Mikasa's thunder spears blew up at that column: everything 2 tiles around it, floor to ceiling, goes down |
 | `h` | Lucy hacked the zapper with a node on that tile: all its nodes are off for 2 s |
 | `j` | Lucy's hack jumped from the drone she hacked (the last `d` of that player) to the drone on that tile; that drone's `d` follows |
+| `i` | Steel Toes: the drone DirtyBastrd kicked down (the last `d` of that player) flew into the drone on that tile; that drone's `d` follows |
 | `b` | A shield took a deadly hit (zapper, drone, titan or sniper) instead of the player, who gets 1 s of invincibility |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
@@ -191,7 +192,9 @@ server sends a fresh `MSG_MAP_DATA` (offset 0) and `MSG_GAME_START` to everyone.
 One byte: 1 when the attack key goes down (also when empty), 0 when it comes back up, which the
 server ignores. CYBERPSYCHO only (ignored otherwise). The server enforces the weapon cooldown. Johnny
 and David shoot guns, Jinx her minigun in bursts of 3 (a steady spray in Berserk): a projectile flies ahead at run speed plus the weapon's speed, for
-up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead. Lucy hacks
+up to 22 tiles. Mikasa's blade destroys every drone and titan within 2.5 tiles ahead, DirtyBastrd's kick every
+drone (no titan) within 2 tiles, and both cut Adam Smasher when he is that close. With his Steel Toes boon, each
+drone he kicks down flies into the first live drone ahead in its row within 8 tiles (`i`). Lucy hacks
 the first drone or zapper in her way (7 tiles ahead, from a tile above her head to a tile below her
 feet), for one of her 2 RAM charges; nothing in her way, nothing spent. Wraith blinks, for one of his 2
 charges: 4 tiles ahead; the drones his body crosses go down (`d`), Adam Smasher's rockets it crosses
@@ -204,7 +207,7 @@ Berserk never blinks on its own.
 | Bytes | Field |
 | --- | --- |
 | 1 | Player number |
-| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 6 blink, sent before he moves (Dante's attacks go out as 0 in the air, 2 on the ground) |
+| 1 | Weapon: 0 gun, 1 minigun, 2 blade, 3 hack, 4 thunder spear, 6 blink, sent before he moves (Dante's attacks go out as 0 in the air, 2 on the ground), 7 kick |
 
 ### `MSG_ULTIMATE`
 

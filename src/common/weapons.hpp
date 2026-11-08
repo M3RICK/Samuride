@@ -22,6 +22,7 @@ enum class Weapon : uint8_t {
     Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
                 // like Gun); its shots go out as those two, it has no stats of its own
     Blink,      // Wraith: no weapon, a teleport that kills the drones it crosses (BLINK_*); no stats either
+    Kick,       // DirtyBastrd: his Timberlands, the drones right in front of him (KICK_*); no stats either
 };
 
 struct WeaponStats {
@@ -100,6 +101,27 @@ float blinkLanding(float x, float y, Deadly deadly)
 // untouchable until it's over, and the charge comes back
 inline float BLINK_PERFECT_WINDOW = 0.3f;
 constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, where he landed
+
+// DirtyBastrd's kick: every drone within KICK_REACH in front of him goes down, like Mikasa's blade but shorter
+// and back sooner: he has to get close. No titan (their nape stays hers); Smasher takes it like a blade's cut.
+inline float KICK_COOLDOWN = 0.4f;
+inline float KICK_REACH = 2.0f;
+// Steel Toes, his own boon: a drone he kicks down flies straight ahead and downs the first live drone in its
+// row within STEEL_TOES_RANGE tiles. One jump, no chain; a kill like any other.
+inline float STEEL_TOES_RANGE = 8;
+constexpr char DRONE_KICKED = 'i';      // collision type: a kicked drone flew into the drone on that tile, from his
+                                        // last kill; that drone's own collision follows
+
+// Where a drone kicked down at (x, y) lands: the column of the first live drone straight ahead in its row,
+// within STEEL_TOES_RANGE, -1 for none. live(x, y): that drone is still up.
+template <typename Live>
+int kickedDroneLands(int x, int y, Live live)
+{
+    for (int column = x + 1; column <= x + STEEL_TOES_RANGE; column++)
+        if (live(column, y))
+            return column;
+    return -1;
+}
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {

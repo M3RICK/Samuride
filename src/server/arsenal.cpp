@@ -18,6 +18,8 @@ std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id)
             return std::make_unique<Rebellion>();
         case Weapon::Blink:
             return std::make_unique<Blink>();
+        case Weapon::Kick:
+            return std::make_unique<Kick>();
         default:
             return std::make_unique<Gun>();
     }
@@ -285,6 +287,26 @@ void Blink::tick(const Player &player, float dt)
         charges_left++;
         recharge_timer = BLINK_RECHARGE;
     }
+}
+
+// Every drone in reach goes down, no titan; Smasher takes it like a blade's cut when he's close. Steel Toes:
+// each drone kicked down flies into the next one ahead in its row.
+float Kick::attack(Server &server, Player &player)
+{
+    server.announceShot(player, Weapon::Kick);
+    for (auto [x, y] : server.dronesInReach(player, KICK_REACH, player.getY())) {
+        server.destroyDrone(player.getClientFd(), x, y);
+        if (!player.hasBoon(Boon::Signature))
+            continue;
+        int to = kickedDroneLands(x, y, [&server](int tx, int ty) { return server.isLiveDrone(tx, ty); });
+        // Before the drone goes down: the clients draw its flight from the last drone this player took
+        if (to >= 0) {
+            server.notifyCollision(DRONE_KICKED, player, to, y);
+            server.destroyDrone(player.getClientFd(), to, y);
+        }
+    }
+    server.slashBoss(player, KICK_REACH);
+    return KICK_COOLDOWN;
 }
 
 //=============================================================================

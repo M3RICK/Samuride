@@ -20,6 +20,7 @@ public:
         StyleUp,                                                    // Dante's style rank going up
         Blink,                                                      // Wraith's teleport
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
+        Kick,                                                       // DirtyBastrd's boot
     };
 
     Audio();

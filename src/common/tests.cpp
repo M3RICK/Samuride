@@ -408,6 +408,34 @@ static void testWraith()
     assert(!wraith.ultimate().freezes());
 }
 
+// DirtyBastrd's kick: drones only, shorter than Mikasa's blade but back sooner. Steel Toes, his own boon: a drone
+// he kicks down flies into the first live drone straight ahead in its row, within range, one jump only
+static void testKick()
+{
+    assert(weaponOf(7) == Weapon::Kick);
+    assert(KICK_REACH > 0 && KICK_REACH < statsOf(Weapon::Blade).reach && KICK_COOLDOWN < statsOf(Weapon::Blade).cooldown);
+
+    Player kicker(-1);
+    kicker.setCharacter(7);
+    kicker.reset(0, 0);
+    assert(kicker.weapon().autoFires() && kicker.weapon().charges() == 0);
+    kicker.startCooldown(KICK_COOLDOWN);
+    kicker.update(KICK_COOLDOWN - 0.05f, 10, 8);
+    assert(!kicker.canAttack());
+    kicker.update(0.1f, 10, 8);
+    assert(kicker.canAttack());
+
+    assert(boonLook(Boon::Signature, Weapon::Kick).name == std::string("STEEL TOES"));
+    std::set<std::pair<int, int>> drones = {{12, 4}, {15, 3}, {18, 4}};
+    auto live = [&](int x, int y) { return drones.count({x, y}) > 0; };
+    assert(kickedDroneLands(10, 4, live) == 12);    // the first one ahead in its row, not the next
+    assert(kickedDroneLands(10, 3, live) == 15);
+    assert(kickedDroneLands(12, 2, live) == -1);    // nothing in its row
+    assert(kickedDroneLands(18, 4, live) == -1);    // nothing ahead: never back
+    drones = {{10 + static_cast<int>(STEEL_TOES_RANGE) + 1, 4}};
+    assert(kickedDroneLands(10, 4, live) == -1);    // too far
+}
+
 // Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
 // fire threatens whoever is on its line, until it's over
 static void testWraithSmasher()
@@ -995,6 +1023,7 @@ int main()
     testUltimate();
     testDante();
     testWraith();
+    testKick();
     testWraithSmasher();
     testWanted();
     testRipperdoc();

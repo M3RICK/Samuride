@@ -202,6 +202,8 @@ void Audio::synthesize()
     buffers[Sfx::Minigun] = toBuffer(tone(Wave::Square, 900, 450, 0.04f, 0.1f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // DirtyBastrd's kick: a low thud with a scuff of noise on top
+    buffers[Sfx::Kick] = toBuffer(mix(tone(Wave::Sine, 160, 50, 0.12f, 0.6f), burst(0.08f, 0.3f, 0.3f)));
     // Berserk: a low growl revving up
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Johnny's fire wave: a roaring blast
