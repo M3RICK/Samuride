@@ -70,13 +70,20 @@ inline float DOPPELGANGER_TIME = 8;
 inline float STILLNESS_TIME = 4;
 
 // DirtyBastrd's invisible chainsaw: held out in front of him for CHAINSAW_TIME, shredding every drone
-// within CHAINSAW_REACH each tick, in the row it is held at: drones at his head or his feet still get
-// him, steering still matters. It takes one deadly hit from a drone, a titan or Smasher, then snaps (a titan
+// within CHAINSAW_REACH each tick, in the rows its blade is over (CHAINSAW_BLADE above and below his hands): one
+// or two, as it is drawn. Drones at his head or his feet still get him, steering still matters. It takes one deadly hit from a drone, a titan or Smasher, then snaps (a titan
 // that breaks it is cut down as it does); snipers still kill him, and so do zappers unless he lunges through them.
 // Like a shield, the snap leaves a second of grace (SHIELD_GRACE). Holding both, the saw goes first.
 inline float CHAINSAW_TIME = 10.0f;
 inline float CHAINSAW_REACH = 1.2f;      // tiles ahead: what is right in front of him, less than his kick
 inline float CHAINSAW_HEIGHT = 1.0f;     // below the top of his body: his hands, where it cuts
+inline float CHAINSAW_BLADE = 0.3f;      // tiles above and below his hands the blade cuts: thinner than it is drawn
+
+// The rows the saw cuts, first to last, for a body whose top is at y
+inline std::pair<int, int> chainsawRows(float y)
+{
+    return {std::max(0, static_cast<int>(y + CHAINSAW_HEIGHT - CHAINSAW_BLADE)), static_cast<int>(y + CHAINSAW_HEIGHT + CHAINSAW_BLADE)};
+}
 constexpr char CHAINSAW_SNAP = 'n';         // collision type: the saw took a hit; x is the scrap it gave
 
 // The ultimate key again while it runs: he revs and lunges, his pace pushed up by CHAINSAW_LUNGE_PUSH
@@ -84,7 +91,7 @@ constexpr char CHAINSAW_SNAP = 'n';         // collision type: the saw took a hi
 // depending on the run speed, far less than the Sandevistan), the saw reaching CHAINSAW_LUNGE_REACH.
 inline float CHAINSAW_LUNGE_TIME = 0.35f;         // never 0 (tuning.txt holds it to 0.05 to 1 s)
 inline float CHAINSAW_LUNGE_PUSH = 1.0f;
-inline float CHAINSAW_LUNGE_REACH = 2.5f;
+inline float CHAINSAW_LUNGE_REACH = 2.0f;         // the arc drawn off its tip
 // Seconds from one lunge to the next, always longer than a lunge (tuning.txt: 1.1 s at least): the clients spot
 // each lunge by its bit coming on, so it has to go off in between
 inline float CHAINSAW_LUNGE_COOLDOWN = 1.2f;

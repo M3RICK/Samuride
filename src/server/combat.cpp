@@ -1,5 +1,6 @@
 // CYBERPSYCHO: attacks, ultimates, projectiles and drones. What each runner's weapon and ultimate does: arsenal.cpp.
 
+#include <cmath>
 #include "server.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
@@ -82,12 +83,14 @@ void Server::fireProjectile(const Player &player, Weapon weapon, float y)
     projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
 }
 
-// The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y
-std::vector<std::pair<int, int>> Server::dronesInReach(const Player &player, float reach, float y) const
+// The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y.
+// A blade sweeps a row above the body and down to the one at its feet; `body_only` (a kick) keeps to the rows
+// the body is in.
+std::vector<std::pair<int, int>> Server::dronesInReach(const Player &player, float reach, float y, bool body_only) const
 {
     std::vector<std::pair<int, int>> drones;
-    int top = static_cast<int>(y) - 1;
-    int bottom = static_cast<int>(y + Player::HEIGHT);
+    int top = static_cast<int>(y) - !body_only;
+    int bottom = body_only ? static_cast<int>(std::ceil(y + Player::HEIGHT)) - 1 : static_cast<int>(y + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
     int end = static_cast<int>(player.getX() + 0.5f + reach);
 

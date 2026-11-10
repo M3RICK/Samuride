@@ -103,9 +103,10 @@ inline float BLINK_PERFECT_WINDOW = 0.3f;
 constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, where he landed
 
 // DirtyBastrd's kick: every drone within KICK_REACH in front of him goes down, like Mikasa's blade but shorter
-// and back sooner: he has to get close. No titan (their nape stays hers); Smasher takes it like a blade's cut.
+// and back sooner: he has to get close. Only in the rows his body is in: none over his head, where the bat is,
+// nor under his feet. No titan (their nape stays hers); Smasher takes it like a blade's cut.
 inline float KICK_COOLDOWN = 0.4f;
-inline float KICK_REACH = 2.0f;
+inline float KICK_REACH = 1.6f;         // where his boot is drawn landing: just into Smasher getting up from a slam
 // Steel Toes, his own boon: like his thrown saw, every drone he kicks down tumbles off at STEEL_TOES_SPEED toward
 // the live drone nearest to it within STEEL_TOES_RANGE tiles, any way, and downs it when it gets there. One jump,
 // no chain; a kill like any other. With nothing in range, it breaks where it was kicked.

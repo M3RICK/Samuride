@@ -293,8 +293,8 @@ BLINK_RECHARGE 2
 BLINK_PERFECT_WINDOW 0.3
 # DirtyBastrd: seconds between two kicks
 KICK_COOLDOWN 0.4
-# Tiles ahead his kick downs drones (no titans)
-KICK_REACH 2
+# Tiles ahead his kick downs drones, in the rows his body is in (no titans)
+KICK_REACH 1.6
 # Steel Toes: tiles from a kicked drone to the nearest one it flies into, any way
 STEEL_TOES_RANGE 8
 # Tiles per second a kicked drone flies
@@ -341,16 +341,18 @@ DOPPELGANGER_TIME 8
 STILLNESS_TIME 4
 # DirtyBastrd: seconds his chainsaw lasts, unless a hit snaps it first
 CHAINSAW_TIME 10
-# Tiles ahead it shreds drones, in the row at his hands only
+# Tiles ahead it shreds drones, in the rows its blade is over only
 CHAINSAW_REACH 1.2
-# Tiles below the top of his body: the row it cuts, at his hands
+# Tiles below the top of his body it is held at, at his hands
 CHAINSAW_HEIGHT 1
+# Tiles above and below his hands the blade cuts: every row it is over
+CHAINSAW_BLADE 0.3
 # Seconds a lunge lasts (the ultimate key again while the saw is out), 0.05 to 1
 CHAINSAW_LUNGE_TIME 0.35
 # Extra pace at the start of a lunge, times the run speed, easing back to none
 CHAINSAW_LUNGE_PUSH 1
 # Tiles ahead the saw shreds while lunging
-CHAINSAW_LUNGE_REACH 2.5
+CHAINSAW_LUNGE_REACH 2
 # Seconds from one lunge to the next, 1.1 at least: always longer than a lunge
 CHAINSAW_LUNGE_COOLDOWN 1.2
 # Seconds from the start of a lunge its saw cuts through zappers instead of him dying
