@@ -69,9 +69,10 @@ class Canvas {
 private:
     sf::RenderWindow window;
     sf::Font font;
-    // The jetpack font has no punctuation: text that needs some falls back to this one
+    // Titles and numbers are drawn in the display font, in capitals; text with any of this punctuation
+    // is a sentence, drawn in the other one as written
     sf::Font fallback_font;
-    std::string missing_glyphs;
+    static constexpr const char *PUNCTUATION = "!\"#%&'()*+,-/:;<=>?@[\\]^_`|~";
     sf::Clock clock;
 
 public:
