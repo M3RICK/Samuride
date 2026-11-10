@@ -591,6 +591,17 @@ static void testSawDrone()
     assert(kick.release(server, thrower) == KICK_COOLDOWN && !held.sawOut() && held.flying().size() == 1);
     thrower.update(0.01f, 10, 8);
     assert(kick.autoFires() && kick.release(server, thrower) == 0);
+
+    // A kick a little early: the drone out of reach at the press goes down as he runs into it with his boot still
+    // out, in the rows of his body only
+    Player early(-1);
+    early.setCharacter(7);
+    early.reset(0, 4);
+    early.blinkTo(4);
+    assert(early.weapon().attack(server, early) == KICK_COOLDOWN && server.isLiveDrone(8, 5));
+    early.blinkTo(6.5f);
+    early.weapon().act(server, early);
+    assert(!server.isLiveDrone(8, 5));
 }
 
 // DirtyBastrd's thrown saw in the air: it flies until it lies on the floor, the caller taking down each target it

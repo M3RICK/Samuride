@@ -106,6 +106,9 @@ constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, wher
 // and back sooner: he has to get close. Only in the rows his body is in: none over his head, where the bat is,
 // nor under his feet. No titan (their nape stays hers); Smasher takes it like a blade's cut.
 inline float KICK_COOLDOWN = 0.4f;
+// The boot stays out for KICK_ACTIVE, as it is drawn: a kick a little early still downs the drone he runs into.
+// Without it the press has to land in the tenth of a second the drone is in reach, and a miss is a death.
+inline float KICK_ACTIVE = 0.25f;
 inline float KICK_REACH = 1.6f;         // where his boot is drawn landing: just into Smasher getting up from a slam
 // Steel Toes, his own boon: like his thrown saw, every drone he kicks down tumbles off at STEEL_TOES_SPEED toward
 // the live drone nearest to it within STEEL_TOES_RANGE tiles, any way, and downs it when it gets there. One jump,

@@ -309,7 +309,8 @@ void Kick::launch(Server &server, Player &player, int x, int y, const std::vecto
     flights.push_back({to_x, to_y, kickedDroneFlight(x, y, to_x, to_y)});
 }
 
-// The kicked drones get there: the one they fly into goes down, if nothing took it first
+// The kicked drones get there: the one they fly into goes down, if nothing took it first. His boot is still
+// out for KICK_ACTIVE after the key: what he runs into meanwhile goes down too.
 void Kick::act(Server &server, Player &player)
 {
     for (Flight &flight : flights) {
@@ -317,11 +318,25 @@ void Kick::act(Server &server, Player &player)
             server.destroyDrone(player.getClientFd(), flight.to_x, flight.to_y);
     }
     std::erase_if(flights, [](const Flight &flight) { return flight.left <= 0; });
+    if (out > 0) {
+        out -= Server::TICK_DT;
+        strike(server, player);
+    }
 }
 
-// Every drone in reach goes down, no titan; Smasher takes it like a blade's cut when he's close. Steel Toes:
-// each drone kicked down flies into the drone nearest to it (launch). Nothing while the saw is out: the key
-// throws it as it comes back up (release).
+// Every drone in his boot's reach goes down. Steel Toes: each one flies into the drone nearest to it (launch).
+void Kick::strike(Server &server, Player &player)
+{
+    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY(), true);
+    for (auto [x, y] : kicked) {
+        server.destroyDrone(player.getClientFd(), x, y);
+        if (player.hasBoon(Boon::Signature))
+            launch(server, player, x, y, kicked);
+    }
+}
+
+// Every drone in reach goes down, now and for as long as his boot is out (act), no titan; Smasher takes it like
+// a blade's cut when he's close. Nothing while the saw is out: the key throws it as it comes back up (release).
 float Kick::attack(Server &server, Player &player)
 {
     if (player.ultimate().sawOut()) {
@@ -329,12 +344,8 @@ float Kick::attack(Server &server, Player &player)
         return 0;
     }
     server.announceShot(player, Weapon::Kick);
-    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY(), true);
-    for (auto [x, y] : kicked) {
-        server.destroyDrone(player.getClientFd(), x, y);
-        if (player.hasBoon(Boon::Signature))
-            launch(server, player, x, y, kicked);
-    }
+    out = KICK_ACTIVE;
+    strike(server, player);
     server.slashBoss(player, KICK_REACH);
     return KICK_COOLDOWN;
 }

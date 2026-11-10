@@ -18,7 +18,8 @@ taken from this file. Players on different versions can't play together: update 
     a kill, then drops into its scrap, and he's on his own again. The eddies circle him, then fly to his
     counter one by one. Snipers still kill him, and so do zappers when he isn't lunging.
   - His kick and his saw hit where they are drawn: the kick only in the rows his body is in (none over his
-    head, where the bat is) and 1.6 tiles ahead, the saw in every row its blade is over, its lunge 2 tiles ahead.
+    head, where the bat is) and 1.6 tiles ahead, but his boot stays out a quarter of a second: a kick a
+    little early still downs the drone he runs into. The saw in every row its blade is over, its lunge 2 tiles ahead.
   - **Against Adam Smasher**, his kick cuts like a blade while Smasher gets up after a slam, and a thrown saw
     hits him once (8) and knocks him down close by for those 2 seconds: kick away.
 - **Voice lines cut through**: while one plays (Johnny's, Jinx's, Dante's or DirtyBastrd's), the music and every
