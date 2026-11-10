@@ -305,8 +305,9 @@ public:
 
     // The live drones a strike would take down, or a titan in its reach: Dante cuts only then
     bool inReach(const Player &player, float reach, float y) const;
-    // The live drones a strike would take down: from the player's front to `reach` ahead, a body whose top is at y
-    std::vector<std::pair<int, int>> dronesInReach(const Player &player, float reach, float y) const;
+    // The live drones a strike would take down: from the player's front to `reach` ahead, a body whose top is at y;
+    // body_only: none above its head or under its feet (DirtyBastrd's kick)
+    std::vector<std::pair<int, int>> dronesInReach(const Player &player, float reach, float y, bool body_only = false) const;
 
     // Every titan within reach in front of the player goes down
     void slashTitans(Player &player, float reach);

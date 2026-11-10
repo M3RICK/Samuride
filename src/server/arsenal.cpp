@@ -329,7 +329,7 @@ float Kick::attack(Server &server, Player &player)
         return 0;
     }
     server.announceShot(player, Weapon::Kick);
-    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY());
+    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY(), true);
     for (auto [x, y] : kicked) {
         server.destroyDrone(player.getClientFd(), x, y);
         if (player.hasBoon(Boon::Signature))
@@ -514,7 +514,7 @@ void Chainsaw::tick(float dt)
         timer = 0;
 }
 
-// Every drone in reach goes down, in the row at his hands only; the thrown saws fly on
+// Every drone in reach goes down, in the rows its blade is over only; the thrown saws fly on
 void Chainsaw::act(Server &server, Player &player)
 {
     for (ThrownSaw &saw : thrown)
@@ -522,11 +522,12 @@ void Chainsaw::act(Server &server, Player &player)
     std::erase_if(thrown, [&](const ThrownSaw &saw) { return saw.landed(server.map().getHeight() - 0.5f); });
     if (!sawOut())
         return;
-    int row = static_cast<int>(player.getY() + CHAINSAW_HEIGHT);
+    auto [top, bottom] = chainsawRows(player.getY());
     float reach = lunging() ? CHAINSAW_LUNGE_REACH : CHAINSAW_REACH;
     for (int x = static_cast<int>(player.getX() + 0.5f); x <= static_cast<int>(player.getX() + 0.5f + reach); x++)
-        if (server.isLiveDrone(x, row))
-            server.destroyDrone(player.getClientFd(), x, row);
+        for (int row = top; row <= bottom; row++)
+            if (server.isLiveDrone(x, row))
+                server.destroyDrone(player.getClientFd(), x, row);
 }
 
 // Jinx's recoil the other way: thrown forward, then picking the run's pace back up

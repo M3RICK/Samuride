@@ -419,6 +419,11 @@ static void testKick()
 {
     assert(weaponOf(7) == Weapon::Kick);
     assert(KICK_REACH > 0 && KICK_REACH < statsOf(Weapon::Blade).reach && KICK_COOLDOWN < statsOf(Weapon::Blade).cooldown);
+    // His saw cuts the rows its blade is over: one with his hands in the middle of a tile, two across an edge,
+    // and the same ones just before and after he crosses it
+    assert(chainsawRows(3.5f) == std::pair(4, 4));
+    assert(chainsawRows(3.9f) == std::pair(4, 5) && chainsawRows(4.1f) == std::pair(4, 5));
+    assert(chainsawRows(0) == std::pair(0, 1));
 
     Player kicker(-1);
     kicker.setCharacter(7);
