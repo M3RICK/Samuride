@@ -86,7 +86,7 @@ jobs:
     # Apple Silicon runner; the package runs on macOS 13.3 or newer
     needs: notes
     if: ${{ !failure() && !cancelled() }}
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 

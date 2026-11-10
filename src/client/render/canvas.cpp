@@ -5,6 +5,7 @@
 #include "../../common/powerups.hpp"
 #include "../../common/cyberpsycho.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 
 using namespace Palette;
@@ -42,13 +43,8 @@ bool Canvas::open()
 {
     setFullscreen(false);
 
-    if (!font.openFromFile("assets/font/jetpack_font.ttf") || !fallback_font.openFromFile("assets/font/Rajdhani-Bold.ttf"))
+    if (!font.openFromFile("assets/font/Anton-Regular.ttf") || !fallback_font.openFromFile("assets/font/Rajdhani-Bold.ttf"))
         DEBUG_LOG("Failed to load fonts, text will not be displayed");
-
-    for (char32_t c = '!'; c <= '~'; c++) {
-        if (font.getGlyph(c, 32, false).bounds.size.x == 0)
-            missing_glyphs += static_cast<char>(c);
-    }
     return window.isOpen();
 }
 
@@ -102,8 +98,10 @@ sf::View Canvas::screenView() const
 sf::Text Canvas::makeText(const std::string &content, unsigned int size, sf::Color color,
                           sf::Vector2f pos, sf::Vector2f anchor)
 {
-    bool needs_fallback = content.find_first_of(missing_glyphs) != std::string::npos;
-    sf::Text text(needs_fallback ? fallback_font : font, content, size);
+    bool punctuated = content.find_first_of(PUNCTUATION) != std::string::npos;
+    std::string capitals = content;
+    std::ranges::transform(capitals, capitals.begin(), [](unsigned char c) { return std::toupper(c); });
+    sf::Text text(punctuated ? fallback_font : font, punctuated ? content : capitals, size);
     sf::FloatRect bounds = text.getLocalBounds();
 
     text.setFillColor(color);

@@ -21,8 +21,8 @@ public:
         Blink,                                                      // Wraith's teleport
         JohnnyGun, JohnnyUlt, JinxUlt, DanteUlt,                    // recorded: assets/voices
         Kick,                                                       // DirtyBastrd's boot
-        SawSnap, SawZap, SawClank,                                  // his chainsaw
-        DirtyBastrdEatThis, DirtyBastrdSaw,                         // recorded: his lines
+        SawSnap, SawZap, SawClank, SawEngine,                       // his chainsaw
+        DirtyBastrdEatThis,                                         // recorded: his lines
         DirtyBastrdHit, DirtyBastrdRareHit,
     };
 

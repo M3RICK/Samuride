@@ -28,7 +28,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Subdermal shield**: the green hexagon takes one deadly hit for you (zapper, drone or titan), then gives you a second to get clear.
 - **Sandevistan**: the magenta chevrons send you into a 3-second sprint nothing can hurt, leaving afterimages behind.
 - **Berserk** (CYBERPSYCHO only): the gold crossed blades make you attack on your own, twice as often, for 8 seconds, and Lucy's RAM comes back three times faster.
-- **Ultimates** (CYBERPSYCHO): every eddy you earn charges your gauge; a full one fires your runner's ultimate with `E`. Johnny palms his gun and a wall of fire sweeps the screen ahead, burning drones, zappers and titans. David's arm cannon drops a mini-nuke ahead that razes everything around where it lands. Lucy breaches the network: every drone on screen goes down, every zapper on screen goes off for 3 seconds. Mikasa gets 5 thunder spears, thrown one at a time with `E` again (her blade stays on the attack key), that stick in the first drone or titan and blow up in a lightning column from floor to ceiling. Jinx fires Fishbones: a big rocket razes a band of the corridor at her height, and she can fly through it. Dante calls his Doppelganger: for 8 seconds his double flies at the opposite height and repeats every attack of his. Wraith stills time: for 4 seconds the titans, the snipers and Adam Smasher stand still, and only the runners move. DirtyBastrd pulls out an invisible chainsaw ("Eat this!"), revving it with his mouth for 10 seconds while it shreds the drones at his hands; `E` again lunges with it, cutting through any zapper in the way, and it takes one hit from a drone, a titan or Adam Smasher (never a zapper's or a sniper's) before snapping into scrap eddies, more the better it was used. Or he throws it with `F`: it ricochets from drone to titan to zapper ahead of him, five of them at most, then drops into its scrap, but his saw is gone. No ultimate makes you invincible.
+- **Ultimates** (CYBERPSYCHO): every eddy you earn charges your gauge; a full one fires your runner's ultimate with `E`. Johnny palms his gun and a wall of fire sweeps the screen ahead, burning drones, zappers and titans. David's arm cannon drops a mini-nuke ahead that razes everything around where it lands. Lucy breaches the network: every drone on screen goes down, every zapper on screen goes off for 3 seconds. Mikasa gets 5 thunder spears, thrown one at a time with `E` again (her blade stays on the attack key), that stick in the first drone or titan and blow up in a lightning column from floor to ceiling. Jinx fires Fishbones: a big rocket razes a band of the corridor at her height, and she can fly through it. Dante calls his Doppelganger: for 8 seconds his double flies at the opposite height and repeats every attack of his. Wraith stills time: for 4 seconds the titans, the snipers and Adam Smasher stand still, and only the runners move. DirtyBastrd pulls out an invisible chainsaw ("Eat this!"): for 10 seconds it shreds the drones at his hands; `E` again lunges with it, cutting through any zapper in the way, and it takes one hit from a drone, a titan or Adam Smasher (never a zapper's or a sniper's) before snapping into scrap eddies, more the better it was used. Or he throws it with `F`: it ricochets from drone to titan to zapper ahead of him, five of them at most, then drops into its scrap, but his saw is gone. No ultimate makes you invincible.
 - In CYBERPSYCHO, **one drone in three drops a shield, a Sandevistan or a Berserk** when you shoot it down.
 - **Titans** charge along the floor past 300 m: a blinking red column warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20, and a titan that breaks DirtyBastrd's chainsaw goes down with it.
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires Pow-Pow, her minigun, in bursts of three (a steady spray in Berserk), Mikasa slices with her blades, and Lucy hacks: the first zapper in her way goes off for 2 seconds, or the first drone in her way goes down, and the hack jumps to the nearest drone within 4 tiles of it. She has 3 charges of RAM, one comes back every 3.5 seconds. Dante swings his sword on the ground and fires his guns in the air; his style rank, D to SSS, climbs with kills in a row and multiplies what each drone pays, up to 3 times. Wraith has no weapon: he blinks 4 tiles straight ahead (a diamond shows where), killing the drones he crosses; a Blink aimed into a zapper lands just past it, one through a zapper in his way pays 5 eddies; 3 charges, one back every 2 seconds. DirtyBastrd kicks the drones in front of him out of the air with his Timberlands (with a grunt, or worse, for each one).
@@ -131,7 +131,7 @@ A dedicated server and direct connection are available too:
 
 ## Under the hood
 
-- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send "jetpack on/off".
+- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send their key presses (jetpack, attack, ultimate) and the cards they pick.
 - **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
 - **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
 - **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
@@ -155,6 +155,22 @@ Plain text, one character per tile, all lines the same length:
 
 Aymeric — started as an Epitech project (B-NWP jetpack).
 
-Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
+[CrackedOnTiti](https://github.com/CrackedOnTiti) — DirtyBastrd, the eighth runner: his kick, his chainsaw and his voice.
 
-Non-commercial fan project. Johnny Silverhand and David Martinez belong to CD Projekt, Jinx to Riot Games, Mikasa Ackerman to Hajime Isayama / Kodansha, Lucy to CD Projekt and Studio Trigger. Not affiliated with any of them.
+## License and credits
+
+The MIT license in [`LICENSE`](LICENSE) covers the source code only (`src/`, `tools/`, `android/`). The characters, and the art, music and voice lines in `assets/`, are not under it.
+
+Samuride is a non-commercial fan project, not affiliated with, endorsed or sponsored by any of the rights holders below:
+
+- **Cyberpunk 2077** and its world (Johnny Silverhand, Adam Smasher, Arasaka, Trauma Team): CD Projekt and R. Talsorian Games.
+- **Cyberpunk: Edgerunners** (David Martinez, Lucy): CD Projekt and Studio Trigger.
+- **Jinx** (League of Legends, Arcane): Riot Games.
+- **Attack on Titan** (Mikasa Ackerman, Eren Yeager, the titans): Hajime Isayama / Kodansha.
+- **Dante** (Devil May Cry): Capcom.
+- **Wraith** (Apex Legends): Respawn Entertainment / Electronic Arts.
+- **Jetpack Joyride**, which inspired the run: Halfbrick Studios.
+
+DirtyBastrd is an original character. The run's music is ["punk music - no copyright"](https://pixabay.com/music/punk-punk-music-no-copyright-453224/) by PoorArtistt, under the Pixabay Content License. The sprites and illustrations were generated with AI, then sliced and aligned by `tools/slice_sheets.py`. Fonts: Anton by The Anton Project Authors and Rajdhani by Indian Type Foundry, both under the SIL Open Font License (their texts are in `assets/font/`).
+
+If you own any of this and want it taken out, open an issue: it will be removed.
