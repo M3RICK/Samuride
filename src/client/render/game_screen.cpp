@@ -189,7 +189,7 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
         auto heard = saw_heard.find(player_num);
         if (out) {
             saw_heard[player_num].restart();
-            audio.startLoop(player_num, Audio::Sfx::DirtyBastrdSaw, player_num == me ? 1 : CHOOM_VOLUME);
+            audio.startLoop(player_num, Audio::Sfx::SawEngine, player_num == me ? 1 : CHOOM_VOLUME);
         } else if (phase != Phase::Running || heard == saw_heard.end() ||
                    heard->second.getElapsedTime().asSeconds() > SAW_LOOP_LINGER) {
             audio.stopLoop(player_num);

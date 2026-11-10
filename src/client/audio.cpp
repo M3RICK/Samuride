@@ -94,6 +94,20 @@ Samples zap()
     return buzz;
 }
 
+// A chainsaw's engine: a low saw wave and its rasp, sputtering 30 times a second. Half a second holds whole
+// cycles of each and nothing fades: it loops without a click
+Samples engine()
+{
+    Samples out = noise(0.5f, 0.12f, 0.5f);
+
+    for (size_t i = 0; i < out.size(); i++) {
+        float t = static_cast<float>(i) / RATE;
+        float sputter = 0.6f + 0.4f * oscillator(Wave::Saw, 30 * t);
+        out[i] = (out[i] + 0.2f * oscillator(Wave::Saw, 110 * t) + 0.1f * oscillator(Wave::Square, 220 * t)) * sputter;
+    }
+    return out;
+}
+
 // Noise whose loudness follows the envelope, for whooshes and blasts
 Samples burst(float seconds, float volume, float smoothing)
 {
@@ -170,8 +184,6 @@ void Audio::loadLines()
                         "jinx_ult_watchthis", "jinx_ult_wo"}},
         {Sfx::DanteUlt, {"dante_ult_jackpot"}},
         {Sfx::DirtyBastrdEatThis, {"dirtybastrd_eat_this"}},
-        // His mouth doing the chainsaw, looped for as long as it runs
-        {Sfx::DirtyBastrdSaw, {"dirtybastrd_chainsaw"}},
         // On the drones his kick downs: mostly these, now and then a rare one
         {Sfx::DirtyBastrdHit, {"dirtybastrd_hit_hmm", "dirtybastrd_hit_hump"}},
         {Sfx::DirtyBastrdRareHit, {"dirtybastrd_rare_god_damnit", "dirtybastrd_rare_ma_timbs_1", "dirtybastrd_rare_ma_timbs_2",
@@ -221,6 +233,8 @@ void Audio::synthesize()
     // His thrown saw ricocheting off what it hits: a bright metal clank, two notes ringing over a click
     buffers[Sfx::SawClank] = toBuffer(mix(mix(tone(Wave::Square, 2600, 2000, 0.14f, 0.15f), tone(Wave::Square, 3900, 3300, 0.1f, 0.08f)),
                                           burst(0.05f, 0.35f, 0.9f)));
+    // The saw running: looped for as long as it is out or in the air
+    buffers[Sfx::SawEngine] = toBuffer(engine());
     // The saw snapping: a metal twang over a crack
     buffers[Sfx::SawSnap] = toBuffer(mix(tone(Wave::Square, 2200, 500, 0.18f, 0.15f), burst(0.25f, 0.35f, 0.9f)));
     // Berserk: a low growl revving up
