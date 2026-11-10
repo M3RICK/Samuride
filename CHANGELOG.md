@@ -7,6 +7,7 @@ taken from this file. Players on different versions can't play together: update 
 
 ### Other
 - DirtyBastrd's chainsaw runs on an engine's growl, still revving up on a lunge.
+- New title font, Anton: the same bold capitals, under an open license.
 
 ## v3.2
 
