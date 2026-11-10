@@ -46,7 +46,7 @@ uint32_t Protocol::getPayloadSize(const MessageHeader &header)
 
 void Protocol::setPayloadSize(MessageHeader &header, uint32_t size)
 {
-    if (size > 0xFFFFFF) // Faut pas depasser 3 bytes sinn kaboom
+    if (size > 0xFFFFFF) // the size travels in 3 bytes
         size = 0xFFFFFF;
 
     header.payload_size[0] = (size >> 16) & 0xFF;
