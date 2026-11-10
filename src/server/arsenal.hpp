@@ -162,6 +162,9 @@ class Kick : public RunnerWeapon {
     std::vector<Flight> flights;
     bool saw_out = false;   // his chainsaw is out: Berserk doesn't kick on its own then
     bool aimed = false;     // the key went down while it was out: its release throws it
+    float out = 0;          // seconds his boot is still out, kicking what he runs into
+
+    void strike(Server &server, Player &player);
 
     void launch(Server &server, Player &player, int x, int y, const std::vector<std::pair<int, int>> &kicked);
 

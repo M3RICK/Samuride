@@ -293,6 +293,8 @@ BLINK_RECHARGE 2
 BLINK_PERFECT_WINDOW 0.3
 # DirtyBastrd: seconds between two kicks
 KICK_COOLDOWN 0.4
+# Seconds his boot stays out after the key, downing the drones he runs into
+KICK_ACTIVE 0.25
 # Tiles ahead his kick downs drones, in the rows his body is in (no titans)
 KICK_REACH 1.6
 # Steel Toes: tiles from a kicked drone to the nearest one it flies into, any way

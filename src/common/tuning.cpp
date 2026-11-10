@@ -193,6 +193,7 @@ std::vector<Entry> &entries()
             VALUE(BLINK_RECHARGE, "Seconds to get one Blink back (3 at most)"),
             VALUE(BLINK_PERFECT_WINDOW, "Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back"),
             VALUE(KICK_COOLDOWN, "DirtyBastrd: seconds between two kicks"),
+            VALUE(KICK_ACTIVE, "Seconds his boot stays out after the key, downing the drones he runs into"),
             VALUE(KICK_REACH, "Tiles ahead his kick downs drones, in the rows his body is in (no titans)"),
             VALUE(STEEL_TOES_RANGE, "Steel Toes: tiles from a kicked drone to the nearest one it flies into, any way"),
             VALUE(STEEL_TOES_SPEED, "Tiles per second a kicked drone flies", 1),
