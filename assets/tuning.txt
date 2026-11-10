@@ -291,6 +291,16 @@ BLINK_COOLDOWN 0.3
 BLINK_RECHARGE 2
 # Blinking this many seconds before Smasher's slam or cannon hits him: through it, and the charge back
 BLINK_PERFECT_WINDOW 0.3
+# DirtyBastrd: seconds between two kicks
+KICK_COOLDOWN 0.4
+# Seconds his boot stays out after the key, downing the drones he runs into
+KICK_ACTIVE 0.25
+# Tiles ahead his kick downs drones, in the rows his body is in (no titans)
+KICK_REACH 1.6
+# Steel Toes: tiles from a kicked drone to the nearest one it flies into, any way
+STEEL_TOES_RANGE 8
+# Tiles per second a kicked drone flies
+STEEL_TOES_SPEED 12
 
 ## Ultimates (CYBERPSYCHO)
 # Johnny: the fire wave's speed, tiles per second
@@ -331,6 +341,44 @@ FISHBONES_RECOIL_PUSH 0.8
 DOPPELGANGER_TIME 8
 # Wraith: seconds the world stands still
 STILLNESS_TIME 4
+# DirtyBastrd: seconds his chainsaw lasts, unless a hit snaps it first
+CHAINSAW_TIME 10
+# Tiles ahead it shreds drones, in the rows its blade is over only
+CHAINSAW_REACH 1.2
+# Tiles below the top of his body it is held at, at his hands
+CHAINSAW_HEIGHT 1
+# Tiles above and below his hands the blade cuts: every row it is over
+CHAINSAW_BLADE 0.3
+# Seconds a lunge lasts (the ultimate key again while the saw is out), 0.05 to 1
+CHAINSAW_LUNGE_TIME 0.35
+# Extra pace at the start of a lunge, times the run speed, easing back to none
+CHAINSAW_LUNGE_PUSH 1
+# Tiles ahead the saw shreds while lunging
+CHAINSAW_LUNGE_REACH 2
+# Seconds from one lunge to the next, 1.1 at least: always longer than a lunge
+CHAINSAW_LUNGE_COOLDOWN 1.2
+# Seconds from the start of a lunge its saw cuts through zappers instead of him dying
+CHAINSAW_LUNGE_ZAPPER_TIME 0.35
+# Eddies the saw bursts into when a hit snaps it or it is thrown (running out gives none)
+CHAINSAW_SCRAP_BASE 5
+# Eddies more per drone or titan he took down while it was out
+CHAINSAW_SCRAP_PER_KILL 3
+# Eddies more per second it lasted
+CHAINSAW_SCRAP_PER_SECOND 1
+# Most eddies a snap or a throw gives (31 at most: it is sent in 5 bits)
+CHAINSAW_SCRAP_MAX 30
+# Drones, titans and zappers the thrown saw (the attack key while it is out) takes down before it drops
+CHAINSAW_THROW_HITS 5
+# Tiles from where the thrown saw is to the next target ahead it ricochets to
+CHAINSAW_THROW_RANGE 15
+# Tiles per second the thrown saw flies, not on top of the run speed
+CHAINSAW_THROW_SPEED 40
+# Tiles per second up the thrown saw starts its drop to the floor with
+CHAINSAW_THROW_DROP_LIFT 6
+# Tiles per second, every second, pulling the dropping saw down to the floor
+CHAINSAW_THROW_DROP_GRAVITY 40
+# Adam Smasher's health a thrown saw takes, once a throw; it knocks him down close by
+CHAINSAW_THROW_BOSS_DAMAGE 8
 
 ## Dante's style meter: ranks D, C, B, A, S, SS, SSS
 # Kills in a row to go up a rank
@@ -378,3 +426,6 @@ DANTE_AGILITY 1
 WRAITH_PRICE 1250
 WRAITH_ULTIMATE_CHARGE 150
 WRAITH_AGILITY 1
+DIRTYBASTRD_PRICE 1500
+DIRTYBASTRD_ULTIMATE_CHARGE 150
+DIRTYBASTRD_AGILITY 1

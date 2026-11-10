@@ -36,6 +36,12 @@ void Shots::handle(GameState &state)
                 if (doubled)
                     particles.emit(double_muzzle + sf::Vector2f(1, 0), 10, NEON_RED, 6, 0.25f, 0);
                 break;
+            case Weapon::Kick:
+                // The boot lands low and ahead: a thud, a white flash and a puff of dust at its toe
+                audio.play(Audio::Sfx::Kick);
+                particles.emit(muzzle + sf::Vector2f(0.8f, 0.4f), 5, sf::Color::White, 6, 0.12f, 0);
+                particles.emit(muzzle + sf::Vector2f(0.8f, 0.4f), 10, BOOT_DUST, 4, 0.3f, 3);
+                break;
             case Weapon::Hack:
                 audio.play(Audio::Sfx::Hack);
                 particles.emit(muzzle, 8, NEON_PURPLE, 3, 0.3f, 0);

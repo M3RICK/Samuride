@@ -123,6 +123,12 @@ bool Boss::hit(const Player &player, float floor) const
     }
 }
 
+// His body starts half a tile before his x
+bool Boss::reached(const Player &player, float reach) const
+{
+    return fighting() && x() - 0.5f < player.getX() + 0.5f + reach && x() + 2.5f > player.getX();
+}
+
 bool Boss::damage(int amount)
 {
     if (!fighting())
@@ -132,6 +138,16 @@ bool Boss::damage(int amount)
         return false;
     stage = Stage::Gone;
     return true;
+}
+
+// Straight into a slam's recovery, his other attack dropped
+void Boss::stagger()
+{
+    if (!fighting())
+        return;
+    attack = BossAttack::Slam;
+    time = BOSS_SLAM_WARN + BOSS_SLAM_TIME;
+    reflected = 0;
 }
 
 // The wall within reach of the box, with slack: a rocket flies a third of a tile a tick, and the player

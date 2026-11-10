@@ -29,12 +29,13 @@ enum MessageType : uint8_t {
                           // server: not the same as mine, which is this (then it hangs up)
     MSG_TRAUMA = 17,      // client: its answer to the Trauma Team's offer, 1 call it, 0 let me die
     MSG_RIPPERDOC = 18,   // client: the implant it buys from the Ripperdoc, 1 to IMPLANTS, 0 none
-    MSG_BOON = 19         // client: the boon card it picks, 1 to 3, 0 none
+    MSG_BOON = 19,        // client: the boon card it picks, 1 to 3, 0 none
+    MSG_SAWS = 20         // DirtyBastrd's thrown chainsaws in the air, every tick
 };
 
 // Bumped whenever a packet changes: builds that don't speak the same one can't play together.
 // Builds from before it existed send no MSG_VERSION: version 0.
-constexpr uint8_t PROTOCOL_VERSION = 4;
+constexpr uint8_t PROTOCOL_VERSION = 5;
 
 struct MessageHeader {
     MessageType type;

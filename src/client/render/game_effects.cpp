@@ -42,6 +42,9 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case HACK_BOUNCE:
             hackBounced(effect);
             return;
+        case DRONE_KICKED:
+            droneKicked(effect);
+            return;
         case SPEAR_BLAST:
             spearBlast(effect);
             break;
@@ -51,6 +54,18 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
         case SHIELD_BREAK:
             shieldBroken(effect, mine);
             break;
+        case CHAINSAW_SNAP:
+            sawSnapped(effect, mine);
+            return;
+        case CHAINSAW_ZAPPER_CUT:
+            zapperSawn(effect, mine);
+            return;
+        case CHAINSAW_THROW_HIT:
+            sawRicocheted(effect, mine);
+            return;
+        case CHAINSAW_THROW_SCRAP:
+            sawLanded(effect);
+            return;
         case TRAUMA_RESCUE:
             traumaRescue(effect, mine);
             break;
@@ -208,6 +223,10 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
         run.shakeAtLeast(0.15f, 16);
         particles.emit(center, 16, NEON_PURPLE, 10, 0.3f, 0);
         particles.emit(center, 8, sf::Color::White, 7, 0.2f, 0);
+    } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Kick) {
+        // DirtyBastrd's boot connects: a solid jolt and the drone's dust flying, no hit-stop, no slash marks
+        run.shakeAtLeast(0.12f, 14);
+        particles.emit(center, 14, BOOT_DUST, 8, 0.3f, 4);
     } else if (effect.player == me && weaponOf(run.characterOf(me)) == Weapon::Blade) {
         // Felt at the drone, not over the whole screen: she cuts often, the run must keep its rhythm
         hit_stop = HIT_STOP;
@@ -224,6 +243,11 @@ void GameScreen::droneDown(const CollisionEffect &effect, int me)
     } else {
         run.shakeAtLeast(0.12f, effect.player == me ? 8 : 4);
     }
+    // A drone DirtyBastrd's kick took down, whoever plays him: one of his hit lines (not for his saw's kills,
+    // held or thrown)
+    bool sawn = sawn_drones.erase({effect.x, effect.y}) > 0 || run.player_anims[effect.player].chainsaw;
+    if (weaponOf(run.characterOf(effect.player)) == Weapon::Kick && !sawn)
+        sayHitLine(effect.player, me);
     shots.land(effect.player, center.x);
     particles.emit(center, 30, NEON_ORANGE, 8, 0.6f, 6);
     particles.emit(center, 15, NEON_RED, 5, 0.5f, 6);
@@ -237,6 +261,49 @@ void GameScreen::hackBounced(const CollisionEffect &effect)
 
     zaps.push_back({from, to, sf::Clock()});
     bounced.insert(effect.player);
+}
+
+// Steel Toes: the drone DirtyBastrd kicked down tumbles off toward the drone the server sent it to, as fast as it
+// flies there (the blast of the one it hits comes as it arrives); sent to its own tile, it breaks there
+void GameScreen::droneKicked(const CollisionEffect &effect)
+{
+    sf::Vector2f to = centerOf(effect);
+    sf::Vector2f from = last_drone.count(effect.player) ? last_drone[effect.player] : to;
+
+    if ((to - from).length() < 0.5f) {
+        particles.emit(to, 16, sf::Color(150, 150, 165), 6, 0.5f, 14);
+        particles.emit(to, 10, BOOT_DUST, 5, 0.4f, 6);
+        return;
+    }
+    kicked_drones.push_back({from, to, sf::Clock(), (to - from).length() / STEEL_TOES_SPEED});
+    particles.emit(from, 10, BOOT_DUST, 5, 0.3f, 2);
+}
+
+// Each one spinning end over end along its way, dust and sparks trailing; gone when it gets there
+void GameScreen::drawKickedDrones()
+{
+    const sf::Texture &texture = sprites.drone;
+    sf::Vector2i frame_size(texture.getSize().x / Sprites::DRONE_FRAMES, texture.getSize().y);
+    float tile_size = run.view.tile_size;
+
+    std::erase_if(kicked_drones, [](const KickedDrone &drone) {
+        return drone.age.getElapsedTime().asSeconds() >= drone.duration;
+    });
+    if (frame_size.x == 0)
+        return;
+    for (const KickedDrone &drone : kicked_drones) {
+        float t = drone.age.getElapsedTime().asSeconds() / std::max(0.01f, drone.duration);
+        sf::Vector2f at = drone.from + (drone.to - drone.from) * t;
+        sf::Sprite sprite(texture);
+        sprite.setTextureRect(sf::IntRect({0, 0}, frame_size));
+        sprite.setOrigin(sf::Vector2f(frame_size) / 2.f);
+        float scale = tile_size * 0.9f / frame_size.x;
+        sprite.setScale({scale, scale});
+        sprite.setPosition(run.toScreen(at));
+        sprite.setRotation(sf::degrees(t * 720));
+        canvas.draw(sprite);
+        particles.emit(at, 1, std::rand() % 2 ? BOOT_DUST : NEON_ORANGE, 2, 0.3f, 2);
+    }
 }
 
 void GameScreen::spearBlast(const CollisionEffect &effect)
@@ -266,6 +333,130 @@ void GameScreen::shieldBroken(const CollisionEffect &effect, bool mine)
     run.shakeAtLeast(0.3f);
     particles.emit(centerOf(effect), 36, SHIELD_COLOR, 8, 0.6f, 10);
     particles.emit(centerOf(effect), 12, sf::Color::White, 5, 0.4f, 10);
+}
+
+// DirtyBastrd's saw breaks on what would have killed him and bursts into scrap (its x is how many eddies)
+void GameScreen::sawSnapped(const CollisionEffect &effect, bool mine)
+{
+    sf::Vector2f saw = run.display_positions[effect.player] + sf::Vector2f(1.3f, 1.0f);
+
+    audio.play(Audio::Sfx::SawSnap);
+    if (mine)
+        react(Mood::Surprised);
+    run.shakeAtLeast(0.3f);
+    particles.emit(saw, 30, NEON_CYAN, 9, 0.5f, 10);
+    particles.emit(saw, 12, sf::Color::White, 6, 0.3f, 10);
+    payOutScrap(effect.player, effect.x, saw);
+}
+
+// Lunging, his saw cut through a zapper: its beams go out for good in a burst of electric sparks
+void GameScreen::zapperSawn(const CollisionEffect &effect, bool mine)
+{
+    for (std::pair<int, int> node : zapperNodes(run.map, effect.x, effect.y)) {
+        run.burnt_zappers.insert(node);
+        particles.emit({node.first + 0.5f, node.second + 0.5f}, 12, NEON_CYAN, 7, 0.4f, 0);
+    }
+    particles.emit(centerOf(effect), 20, sf::Color::White, 9, 0.3f, 0);
+    audio.play(Audio::Sfx::SawZap);
+    run.shakeAtLeast(0.2f, mine ? 14 : 5);
+}
+
+// His thrown saw bites into what it hit and ricochets on: a clank, sparks, a short jolt (what it hit goes down
+// in its own effect)
+void GameScreen::sawRicocheted(const CollisionEffect &effect, bool mine)
+{
+    audio.play(Audio::Sfx::SawClank);
+    if (run.map.getTile(effect.x, effect.y) == DRONE_TILE)
+        sawn_drones.insert({effect.x, effect.y});
+    run.shakeAtLeast(0.12f, mine ? 12 : 5);
+    particles.emit(centerOf(effect), 18, sf::Color::White, 9, 0.25f, 6);
+    particles.emit(centerOf(effect), 14, NEON_ORANGE, 7, 0.35f, 10);
+    particles.emit(centerOf(effect), 10, NEON_CYAN, 6, 0.3f, 0);
+}
+
+// It lands and bursts into its scrap (its y is how many eddies), on their way to circle him
+void GameScreen::sawLanded(const CollisionEffect &effect)
+{
+    sf::Vector2f landed(effect.x + 0.5f, run.floor() - 0.5f);
+
+    audio.play(Audio::Sfx::SawSnap);
+    particles.emit(landed, 24, NEON_CYAN, 7, 0.4f, 10);
+    particles.emit(landed, 16, SAWDUST, 5, 0.5f, 12);
+    payOutScrap(effect.player, effect.y, landed);
+}
+
+// The saw's scrap earned: its eddies burst from `from` (in tiles) and gather around him first
+void GameScreen::payOutScrap(int player, int scrap, sf::Vector2f from)
+{
+    if (scrap > 0)
+        scrap_payouts.push_back({player, scrap, from, sf::Clock()});
+}
+
+// Eddies of a payout still on their way: his counter only counts them once they land
+int GameScreen::scrapInFlight(int player) const
+{
+    int left = 0;
+
+    for (const ScrapPayout &payout : scrap_payouts) {
+        if (payout.player == player)
+            left += payout.scrap - payout.landed;
+    }
+    return left;
+}
+
+// The eddies circle him, the more of them the denser the ring, following him as he flies; then one after the
+// other they leave it for his counter in the HUD, each heard as it lands, and the total pops up in red beside
+// the counter. Drawn over the HUD, so a counter from the last frame is good enough as a target.
+void GameScreen::drawScrapPayouts()
+{
+    static constexpr float RING_RADIUS = 1.7f;      // tiles from his middle
+    static constexpr float RING_SPIN = 2.5f;        // radians per second
+    float tile_size = run.view.tile_size;
+
+    auto lands_at = [](const ScrapPayout &payout) {
+        return SCRAP_GATHER_TIME + SCRAP_LEAVE_TIME * (payout.scrap - 1) / payout.scrap + SCRAP_FLY_TIME;
+    };
+    std::erase_if(scrap_payouts, [&](const ScrapPayout &payout) {
+        return payout.age.getElapsedTime().asSeconds() > lands_at(payout) + SCRAP_POP_TIME;
+    });
+    for (ScrapPayout &payout : scrap_payouts) {
+        float age = payout.age.getElapsedTime().asSeconds();
+        auto runner = run.display_positions.find(payout.player);
+        sf::Vector2f middle = runner != run.display_positions.end()
+                                  ? runner->second + sf::Vector2f(0.5f, Run::PLAYER_HEIGHT / 2) : payout.from;
+        auto counter = hud_counters.find(payout.player);
+        sf::Vector2f to = counter != hud_counters.end() ? counter->second : sf::Vector2f(200, 110);
+        float gathered = std::min(1.0f, age / SCRAP_GATHER_TIME);
+        int landed = 0;
+
+        for (int i = 0; i < payout.scrap; i++) {
+            float angle = 6.2832f * i / payout.scrap + RING_SPIN * age;
+            sf::Vector2f slot = run.toScreen(middle + sf::Vector2f(std::cos(angle), std::sin(angle)) * RING_RADIUS);
+            float t = (age - SCRAP_GATHER_TIME - SCRAP_LEAVE_TIME * i / payout.scrap) / SCRAP_FLY_TIME;
+            if (t >= 1) {
+                landed++;
+                continue;
+            }
+            sf::Vector2f pos;
+            if (t < 0) {
+                // Bursting out of the saw into its place on the ring, slowing as it gets there
+                sf::Vector2f start = run.toScreen(payout.from);
+                pos = start + (slot - start) * (1 - (1 - gathered) * (1 - gathered));
+            } else {
+                pos = slot + (to - slot) * (t * t);
+            }
+            canvas.image(sprites.coin, pos, tile_size * 0.45f * (1 - 0.4f * std::max(0.0f, t)), {0.5f, 0.5f}, sf::Color::White);
+        }
+        // Each a little higher than the last: a rising ding-ding-ding, not one coin
+        for (; payout.landed < landed; payout.landed++)
+            audio.play(Audio::Sfx::Coin, 1 + SCRAP_PITCH_STEP * payout.landed);
+
+        // A few fixed sizes, not one per frame: see drawFlashAndCallout
+        float pop = (age - lands_at(payout)) / SCRAP_POP_TIME;
+        if (pop >= 0)
+            canvas.text(std::format("+{}", payout.scrap), pop < 0.08f ? 72 : 60,
+                        withAlpha(NEON_RED, static_cast<uint8_t>(255 * (1 - pop * pop))), to + sf::Vector2f(190, 10 - 25 * pop));
+    }
 }
 
 void GameScreen::powerUpTaken(const CollisionEffect &effect, bool mine)

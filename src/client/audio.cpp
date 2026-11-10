@@ -139,6 +139,10 @@ Audio::Audio()
 
     for (size_t i = 0; i < VOICES; i++)
         voices.emplace_back(buffers.at(Sfx::Coin));
+    for (size_t i = 0; i < LINE_VOICES; i++)
+        line_voices.emplace_back(buffers.at(Sfx::Coin));
+    voice_shares.assign(VOICES, 1);
+    line_shares.assign(LINE_VOICES, 1);
 
     jet.emplace(jet_buffer);
     jet->setLooping(true);
@@ -165,6 +169,13 @@ void Audio::loadLines()
         {Sfx::JinxUlt, {"jinx_ult_byebye", "jinx_ult_catch", "jinx_ult_huh", "jinx_ult_seeya",
                         "jinx_ult_watchthis", "jinx_ult_wo"}},
         {Sfx::DanteUlt, {"dante_ult_jackpot"}},
+        {Sfx::DirtyBastrdEatThis, {"dirtybastrd_eat_this"}},
+        // His mouth doing the chainsaw, looped for as long as it runs
+        {Sfx::DirtyBastrdSaw, {"dirtybastrd_chainsaw"}},
+        // On the drones his kick downs: mostly these, now and then a rare one
+        {Sfx::DirtyBastrdHit, {"dirtybastrd_hit_hmm", "dirtybastrd_hit_hump"}},
+        {Sfx::DirtyBastrdRareHit, {"dirtybastrd_rare_god_damnit", "dirtybastrd_rare_ma_timbs_1", "dirtybastrd_rare_ma_timbs_2",
+                                   "dirtybastrd_rare_suck_ma_toes", "dirtybastrd_rare_well_damn"}},
     };
 
     for (const auto &[sfx, names] : files)
@@ -202,6 +213,16 @@ void Audio::synthesize()
     buffers[Sfx::Minigun] = toBuffer(tone(Wave::Square, 900, 450, 0.04f, 0.1f));
     buffers[Sfx::Rocket] = toBuffer(mix(burst(0.3f, 0.3f, 0.3f), tone(Wave::Saw, 220, 90, 0.3f, 0.15f)));
     buffers[Sfx::Slash] = toBuffer(burst(0.15f, 0.25f, 0.9f));
+    // DirtyBastrd's kick: a low thud with a scuff of noise on top
+    buffers[Sfx::Kick] = toBuffer(mix(tone(Wave::Sine, 160, 50, 0.12f, 0.6f), burst(0.08f, 0.3f, 0.3f)));
+    // His saw lunging through a zapper: an electric crack, then the beam whining out
+    buffers[Sfx::SawZap] = toBuffer(concat(burst(0.06f, 0.5f, 0.95f),
+                                           mix(tone(Wave::Saw, 1600, 300, 0.25f, 0.15f), burst(0.25f, 0.3f, 0.8f))));
+    // His thrown saw ricocheting off what it hits: a bright metal clank, two notes ringing over a click
+    buffers[Sfx::SawClank] = toBuffer(mix(mix(tone(Wave::Square, 2600, 2000, 0.14f, 0.15f), tone(Wave::Square, 3900, 3300, 0.1f, 0.08f)),
+                                          burst(0.05f, 0.35f, 0.9f)));
+    // The saw snapping: a metal twang over a crack
+    buffers[Sfx::SawSnap] = toBuffer(mix(tone(Wave::Square, 2200, 500, 0.18f, 0.15f), burst(0.25f, 0.35f, 0.9f)));
     // Berserk: a low growl revving up
     buffers[Sfx::Berserk] = toBuffer(mix(tone(Wave::Saw, 90, 260, 0.45f, 0.3f), tone(Wave::Square, 180, 520, 0.45f, 0.12f)));
     // Johnny's fire wave: a roaring blast
@@ -268,37 +289,120 @@ void Audio::greet()
     greeting.play();
 }
 
-void Audio::play(Sfx sfx)
+void Audio::play(Sfx sfx, float pitch, int take, float volume)
 {
-    auto last = last_played.find(sfx);
+    auto last = last_played.find({sfx, pitch});
     if (last != last_played.end() && last->second.getElapsedTime().asSeconds() < REPEAT_GAP)
         return;
-    last_played[sfx].restart();
+    last_played[{sfx, pitch}].restart();
 
-    sf::Sound &voice = voices[next_voice];
-
-    next_voice = (next_voice + 1) % VOICES;
-    static std::mt19937 rng(std::random_device{}());
-    auto takes = lines.find(sfx);
-    if (takes != lines.end())
-        voice.setBuffer(takes->second[std::uniform_int_distribution<size_t>(0, takes->second.size() - 1)(rng)]);
-    else if (buffers.count(sfx))
-        voice.setBuffer(buffers.at(sfx));
-    else
+    const sf::SoundBuffer *buffer = bufferOf(sfx, take);
+    if (!buffer)
         return;
+    bool line = isVoice(sfx);
+    std::vector<sf::Sound> &pool = line ? line_voices : voices;
+    std::vector<float> &shares = line ? line_shares : voice_shares;
+    size_t &next = line ? next_line_voice : next_voice;
+    sf::Sound &voice = pool[next];
+    shares[next] = volume;
+    next = (next + 1) % pool.size();
+    voice.setBuffer(*buffer);
+    voice.setPitch(pitch);
+    voice.setVolume(sfx_volume * volume * (line ? 1 : duck));
     voice.play();
+}
+
+// The take asked for, a random one for -1; the synthesized sound when nothing was recorded
+const sf::SoundBuffer *Audio::bufferOf(Sfx sfx, int take) const
+{
+    static std::mt19937 rng(std::random_device{}());
+    auto recorded = lines.find(sfx);
+
+    if (recorded != lines.end()) {
+        int count = static_cast<int>(recorded->second.size());
+        if (take < 0 || take >= count)
+            take = std::uniform_int_distribution<int>(0, count - 1)(rng);
+        return &recorded->second[take];
+    }
+    auto synthesized = buffers.find(sfx);
+    return synthesized != buffers.end() ? &synthesized->second : nullptr;
+}
+
+int Audio::takes(Sfx sfx) const
+{
+    auto recorded = lines.find(sfx);
+    return recorded != lines.end() ? static_cast<int>(recorded->second.size()) : 0;
+}
+
+void Audio::startLoop(int owner, Sfx sfx, float volume)
+{
+    const sf::SoundBuffer *buffer = bufferOf(sfx, 0);
+
+    if (loops.count(owner) || !buffer)
+        return;
+    Loop &loop = loops.emplace(owner, Loop{sf::Sound(*buffer), volume}).first->second;
+    loop.sound.setLooping(true);
+    loop.sound.setVolume(sfx_volume * volume * duck);
+    loop.sound.play();
+}
+
+void Audio::setLoopPitch(int owner, float pitch)
+{
+    auto loop = loops.find(owner);
+    if (loop != loops.end())
+        loop->second.sound.setPitch(pitch);
+}
+
+void Audio::stopLoop(int owner)
+{
+    loops.erase(owner);
+}
+
+void Audio::stopLoops()
+{
+    loops.clear();
 }
 
 // The tracks and the jetpack sit a little under the rest of their group
 void Audio::setVolumes(int music, int sfx)
 {
+    music_volume = music;
+    sfx_volume = sfx;
     greeting.setVolume(music);
-    menu_music.setVolume(music * 0.8f);
-    game_music.setVolume(music * 0.8f);
+    applyVolumes();
+}
 
-    for (sf::Sound &voice : voices)
-        voice.setVolume(sfx);
-    jet->setVolume(sfx * 0.5f);
+// The voice lines at the effects' volume, the rest ducked under them (update)
+void Audio::applyVolumes()
+{
+    menu_music.setVolume(music_volume * 0.8f * duck);
+    game_music.setVolume(music_volume * 0.8f * duck);
+
+    for (size_t i = 0; i < voices.size(); i++)
+        voices[i].setVolume(sfx_volume * voice_shares[i] * duck);
+    for (size_t i = 0; i < line_voices.size(); i++)
+        line_voices[i].setVolume(sfx_volume * line_shares[i]);
+    for (auto &[owner, loop] : loops)
+        loop.sound.setVolume(sfx_volume * loop.volume * duck);
+    jet->setVolume(sfx_volume * 0.5f * duck);
+}
+
+void Audio::update()
+{
+    // A frame stuck loading doesn't skip the fade
+    float dt = std::min(duck_clock.restart().asSeconds(), 0.1f);
+    bool speaking = std::ranges::any_of(line_voices, [](const sf::Sound &voice) {
+        return voice.getStatus() == sf::SoundSource::Status::Playing;
+    });
+
+    since_line = speaking ? 0 : since_line + dt;
+    float target = since_line < DUCK_HOLD_TIME ? DUCK_LEVEL : 1;
+    float step = (1 - DUCK_LEVEL) * dt / (target < duck ? DUCK_DOWN_TIME : DUCK_UP_TIME);
+    float next = target < duck ? std::max(target, duck - step) : std::min(target, duck + step);
+    if (next != duck) {
+        duck = next;
+        applyVolumes();
+    }
 }
 
 void Audio::setJetpack(bool on)

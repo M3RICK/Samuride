@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
+#include <random>
 
 using namespace Palette;
 
@@ -76,9 +77,15 @@ void GameScreen::resetRun()
     hit_stop = 0;
     cuts.clear();
     zaps.clear();
+    scrap_payouts.clear();
+    sawn_drones.clear();
+    hit_lines.clear();
+    saw_heard.clear();
+    audio.stopLoops();
     bounced.clear();
     coin_streak = 0;
     last_drone.clear();
+    kicked_drones.clear();
     new_record = false;
     new_drone_record = false;
     bests = Bests::load();
@@ -172,6 +179,61 @@ void GameScreen::updateSounds(GameState &state, Phase phase, const std::map<int,
 
     bool flying = mine != players.end() && mine->second.form != Form::Shifting && mine->second.form != Form::Titan;
     audio.setJetpack(phase == Phase::Running && alive && flying && mine->second.jet_active);
+
+    // DirtyBastrd's saw loops while it is out, follows it thrown until it lands, and revs up on a lunge.
+    // It stops when it snaps, lands or runs out (SAW_LOOP_LINGER later).
+    std::vector<SawState> saws = state.getSaws();
+    for (const auto &[player_num, player] : players) {
+        bool thrown = std::ranges::any_of(saws, [&](const SawState &saw) { return saw.player == player_num; });
+        bool out = phase == Phase::Running && (player.chainsaw || thrown);
+        auto heard = saw_heard.find(player_num);
+        if (out) {
+            saw_heard[player_num].restart();
+            audio.startLoop(player_num, Audio::Sfx::DirtyBastrdSaw, player_num == me ? 1 : CHOOM_VOLUME);
+        } else if (phase != Phase::Running || heard == saw_heard.end() ||
+                   heard->second.getElapsedTime().asSeconds() > SAW_LOOP_LINGER) {
+            audio.stopLoop(player_num);
+            continue;
+        }
+        const PlayerAnim &anim = run.player_anims[player_num];
+        float rev = player.chainsaw && anim.lunged ? 1 - anim.lunge_clock.getElapsedTime().asSeconds() / CHAINSAW_LUNGE_TIME : 0;
+        audio.setLoopPitch(player_num, 1 + SAW_REV_PITCH * std::max(0.0f, rev));
+    }
+    // ... and a player who left mid-saw takes theirs along
+    std::erase_if(saw_heard, [&](const auto &entry) {
+        if (players.count(entry.first))
+            return false;
+        audio.stopLoop(entry.first);
+        return true;
+    });
+}
+
+// Mostly "Hmm" or "Hump", now and then a rare line. The same take right after itself comes at another pitch,
+// so a run of them doesn't sound like a stuck record; his choom's quieter.
+void GameScreen::sayHitLine(int player, int me)
+{
+    // Its own generator: the particles draw from std::rand thousands of times a frame
+    static std::mt19937 rng(std::random_device{}());
+    auto [entry, first] = hit_lines.try_emplace(player);
+    HitLine &last = entry->second;
+
+    if (!first && last.since.getElapsedTime().asSeconds() < HIT_LINE_SAME_KICK)
+        return;
+    last.since.restart();
+
+    bool rare = std::uniform_real_distribution<float>(0, 1)(rng) < RARE_HIT_LINE_CHANCE;
+    Audio::Sfx pool = rare ? Audio::Sfx::DirtyBastrdRareHit : Audio::Sfx::DirtyBastrdHit;
+    int count = audio.takes(pool);
+
+    if (count == 0)
+        return;
+    int take = std::uniform_int_distribution<int>(0, count - 1)(rng);
+    bool repeat = rare == last.rare && take == last.take;
+    float pitch = repeat && last.pitch == 1 ? HIT_LINE_REPEAT_PITCH : 1;
+    audio.play(pool, pitch, take, player == me ? 1 : CHOOM_VOLUME);
+    last.rare = rare;
+    last.take = take;
+    last.pitch = pitch;
 }
 
 // The lights go out over a blackout's stretch, fading in and out over its first and last tiles: the world
@@ -240,9 +302,11 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     runners.draw(players, me, phase == Phase::Running);
     drawTraumaTeam();
     ultimates.draw();
+    ultimates.drawThrownSaws(state.getSaws());
     shots.draw();
     drawCuts();
     drawZaps();
+    drawKickedDrones();
     particles.draw(canvas, run.view);
 
     canvas.target().setView(ui_view);
@@ -250,6 +314,7 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawEffects();
     titans.drawWarnings(titan_states);
     snipers.draw(state.getSnipers());
+    drawScrapPayouts();
     smasher.draw(state.getBoss(), state.getMode() == GameMode::Cyberpsycho);
     if (players.count(me))
         drawPowerUps(players.at(me), me);

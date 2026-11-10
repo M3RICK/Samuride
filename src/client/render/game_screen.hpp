@@ -81,10 +81,57 @@ private:
     };
     std::vector<Zap> zaps;
     std::set<int> bounced;      // players whose next drone down is the one their hack jumped to
+    // Steel Toes: drones DirtyBastrd kicked down, tumbling into the nearest one
+    struct KickedDrone {
+        sf::Vector2f from, to;  // in tiles
+        sf::Clock age;
+        float duration;         // seconds to get there, at STEEL_TOES_SPEED
+    };
+    std::vector<KickedDrone> kicked_drones;
     int coin_streak = 0;        // eddies taken in a row, shown as one "+N"
     sf::Clock coin_clock;       // since the last one
     sf::Vector2f last_coin;     // where it was, in tiles
     std::map<int, sf::Vector2f> last_drone;     // each player's last drone down, where Lucy's hack bounces from
+    // DirtyBastrd's saw paying out its scrap: the eddies gather in a ring around him (SCRAP_GATHER_TIME),
+    // leave it for his counter one after the other over SCRAP_LEAVE_TIME, each flying SCRAP_FLY_TIME, then
+    // the total pops up by the counter. About a second and a half, whatever the amount.
+    static constexpr float SCRAP_GATHER_TIME = 0.3f;
+    static constexpr float SCRAP_LEAVE_TIME = 0.75f;
+    static constexpr float SCRAP_FLY_TIME = 0.3f;
+    static constexpr float SCRAP_POP_TIME = 0.9f;
+    static constexpr float SCRAP_PITCH_STEP = 0.025f;   // each eddy landing rings this much higher: 30 end near 1.75
+    struct ScrapPayout {
+        int player;
+        int scrap;
+        sf::Vector2f from;      // where the eddies burst from, in tiles
+        sf::Clock age;
+        int landed = 0;         // eddies already on the counter, each heard as it lands
+    };
+    std::vector<ScrapPayout> scrap_payouts;
+    // DirtyBastrd's hit lines, one on every drone his kick downs: mostly a grunt, a rare line about this
+    // often, a surprise. The same take twice in a row comes the second time at another pitch.
+    static constexpr float RARE_HIT_LINE_CHANCE = 0.15f;
+    static constexpr float HIT_LINE_REPEAT_PITCH = 1.1f;
+    // Drones a kick downs together, in the same instant, share one line instead of a chorus
+    static constexpr float HIT_LINE_SAME_KICK = 0.05f;
+    // Each player's last hit line (both may play him): when, from which pool, which take, at what pitch
+    struct HitLine {
+        sf::Clock since;
+        bool rare = false;
+        int take = -1;
+        float pitch = 1;
+    };
+    std::map<int, HitLine> hit_lines;
+    std::set<std::pair<int, int>> sawn_drones;  // drones his thrown saw hit: their kill is the saw's, not his kick's
+    // His saw's loop: revved up this much at the start of a lunge. His choom's loop and hit lines at this share of
+    // the volume, under yours, or the two would drone on together
+    static constexpr float SAW_REV_PITCH = 0.3f;
+    static constexpr float CHOOM_VOLUME = 0.35f;
+    // Thrown, the saw leaves his hands a message before it shows up in the air: the loop waits this long
+    // before stopping, so it carries on instead of starting over
+    static constexpr float SAW_LOOP_LINGER = 0.1f;
+    std::map<int, sf::Clock> saw_heard;     // since each player's saw was last out or in the air
+    std::map<int, sf::Vector2f> hud_counters;   // where each player's eddies are written in the HUD
     int heard_countdown = -1;   // last countdown value beeped
 
     // District banner ("ENTERING ..."), shown when the scenery changes
@@ -140,6 +187,7 @@ private:
     void bankEddies(GameState &state);
     void update(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void updateSounds(GameState &state, Phase phase, const std::map<int, PlayerState> &players, int me);
+    void sayHitLine(int player, int me);
     void drawWorld(GameState &state, const std::map<int, PlayerState> &players, int me, float dt);
     void drawHackTarget(const std::map<int, PlayerState> &players, int me, const std::set<std::pair<int, int>> &destroyed);
     void drawBlinkTarget(const std::map<int, PlayerState> &players, int me, float held, const BossState &boss);
@@ -153,9 +201,18 @@ private:
     void bossDown(const CollisionEffect &effect, bool mine);
     void droneDown(const CollisionEffect &effect, int me);
     void hackBounced(const CollisionEffect &effect);
+    void droneKicked(const CollisionEffect &effect);
+    void drawKickedDrones();
     void spearBlast(const CollisionEffect &effect);
     void zapperHacked(const CollisionEffect &effect);
     void shieldBroken(const CollisionEffect &effect, bool mine);
+    void sawSnapped(const CollisionEffect &effect, bool mine);
+    void zapperSawn(const CollisionEffect &effect, bool mine);
+    void sawRicocheted(const CollisionEffect &effect, bool mine);
+    void sawLanded(const CollisionEffect &effect);
+    void payOutScrap(int player, int scrap, sf::Vector2f from);
+    void drawScrapPayouts();
+    int scrapInFlight(int player) const;
     void traumaRescue(const CollisionEffect &effect, bool mine);
     void drawTraumaTeam();
     void drawLook(const Character &look, const Animation &anim, int frame, sf::Vector2f feet, float height);
@@ -172,6 +229,7 @@ private:
     void drawHUDLine(int player_num, const PlayerState &player, int me, float y);
     void drawPowerUps(const PlayerState &player, int me);
     void drawGauge(const std::string &label, sf::Color color, float left, float y);
+    void drawScrapMeter(int scrap, float y);
     void drawRunnerPanel(const PlayerState &player, int me, bool ultimate);
     void drawStyle(const PlayerState &player);
     void drawWanted(const PlayerState &player, int me, float y);

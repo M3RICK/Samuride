@@ -69,7 +69,7 @@ static void testMessages()
 {
     PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
                        .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
-                       .wanted = 3};
+                       .wanted = 3, .chainsaw = true, .lunging = true, .scrap = 17};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
     assertRoundTrip(players, [](auto &a, auto &b) {
         return a.size() == b.size() && std::ranges::all_of(a, [&](auto &entry) {
@@ -78,12 +78,12 @@ static void testMessages()
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
                    p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
                    p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
-                   p.wanted == q.wanted;
+                   p.wanted == q.wanted && p.chainsaw == q.chainsaw && p.lunging == q.lunging && p.scrap == q.scrap;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59, 71}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -110,6 +110,10 @@ static void testMessages()
     });
     assertRoundTrip(CollisionEffect{TITAN_KILL, 1, 1234, 9}, [](auto &a, auto &b) {
         return a.type == b.type && a.player == b.player && a.x == b.x && a.y == b.y;
+    });
+    assertRoundTrip(std::vector<SawState>{{1, 140.5f, 4.25f, true}, {0, 9, 0, false}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].player == b[0].player && a[0].x == b[0].x && a[0].y == b[0].y &&
+               a[0].dropping == b[0].dropping && a[1].dropping == b[1].dropping;
     });
 
     // Connect: a short one from an older client still goes through, the missing parts left out
@@ -406,6 +410,262 @@ static void testWraith()
     assert(wraith.ultimate().freezes());
     wraith.update(0.2f, 10, 8);
     assert(!wraith.ultimate().freezes());
+}
+
+// DirtyBastrd's kick: drones only, shorter than Mikasa's blade but back sooner. Steel Toes, his own boon, only once
+// picked (a run, and a rematch, start without it): a drone he kicks down flies into the live drone nearest to it
+// within range, any way, one jump only, and breaks where it was with none
+static void testKick()
+{
+    assert(weaponOf(7) == Weapon::Kick);
+    assert(KICK_REACH > 0 && KICK_REACH < statsOf(Weapon::Blade).reach && KICK_COOLDOWN < statsOf(Weapon::Blade).cooldown);
+    // His saw cuts the rows its blade is over: one with his hands in the middle of a tile, two across an edge,
+    // and the same ones just before and after he crosses it
+    assert(chainsawRows(3.5f) == std::pair(4, 4));
+    assert(chainsawRows(3.9f) == std::pair(4, 5) && chainsawRows(4.1f) == std::pair(4, 5));
+    assert(chainsawRows(0) == std::pair(0, 1));
+
+    Player kicker(-1);
+    kicker.setCharacter(7);
+    kicker.reset(0, 0);
+    assert(kicker.weapon().autoFires() && kicker.weapon().charges() == 0);
+    kicker.startCooldown(KICK_COOLDOWN);
+    kicker.update(KICK_COOLDOWN - 0.05f, 10, 8);
+    assert(!kicker.canAttack());
+    kicker.update(0.1f, 10, 8);
+    assert(kicker.canAttack());
+
+    assert(boonLook(Boon::Signature, Weapon::Kick).name == std::string("STEEL TOES"));
+    assert(!kicker.hasBoon(Boon::Signature));
+    kicker.takeBoon(Boon::Signature);
+    assert(kicker.hasBoon(Boon::Signature));
+    kicker.reset(0, 0);     // the rematch: Server::startGame resets everyone, like the first run
+    assert(!kicker.hasBoon(Boon::Signature));
+    using Tile = std::pair<int, int>;
+    std::set<Tile> drones = {{11, 9}};
+    auto live = [&](int x, int y) { return drones.count({x, y}) > 0; };
+    assert(kickedDroneLands(10, 6, live) == Tile(11, 9));     // at another height
+    drones = {{14, 5}, {11, 7}};
+    assert(kickedDroneLands(10, 5, live) == Tile(11, 7));     // the nearest, diagonally, not the one in its row
+    drones = {{6, 5}, {13, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(13, 5));     // ahead or behind: whichever is nearer
+    drones = {{8, 4}, {13, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(8, 4));      // behind it, back toward him
+    drones = {{10, 5}};
+    assert(kickedDroneLands(10, 5, live) == Tile(-1, -1));    // not itself
+    drones = {{10 + static_cast<int>(STEEL_TOES_RANGE), 3}, {10 - static_cast<int>(STEEL_TOES_RANGE), 7}};
+    assert(kickedDroneLands(10, 5, live) == Tile(-1, -1));    // too far either way: it breaks where it was
+    // It flies there, not at once: the server downs the target once it gets there, the clients draw it as long
+    assert(std::abs(kickedDroneFlight(10, 5, 13, 9) - 5 / STEEL_TOES_SPEED) < 1e-5f);
+}
+
+// DirtyBastrd's chainsaw: it takes one titan's or Smasher's hit (a drone's too), then it is gone with a second of
+// grace and its scrap paid; a zapper's or a sniper's goes past it (the shield's path); it runs out on its own
+static void testChainsaw()
+{
+    assert(ultimateOf(7) == Ultimate::Chainsaw);
+    ServerConfig config;
+    Server server(config);      // never started: no map, no client to tell
+    Player sawer(-1);
+    sawer.setCharacter(7);
+    sawer.reset(0, 0);
+    auto &saw = dynamic_cast<Chainsaw &>(sawer.ultimate());
+    assert(!saw.sawOut() && !saw.takesHit(server, sawer, TITAN_HIT, 0, 0) && !saw.press(server, sawer));
+    saw.fire(server, sawer, 1, 1);
+    assert(saw.sawOut() && !saw.takesHit(server, sawer, ZAPPER_TILE, 3, 3) && !saw.takesHit(server, sawer, SNIPER_HIT, 0, 0));
+    assert(saw.takesHit(server, sawer, TITAN_HIT, 0, 0) && !saw.sawOut() && sawer.isInvincible());
+    assert(sawer.getScore() == CHAINSAW_SCRAP_BASE && !saw.takesHit(server, sawer, TITAN_HIT, 0, 0));
+    saw.fire(server, sawer, 1, 1);
+    assert(saw.takesHit(server, sawer, BOSS_HIT, 0, 0) && !saw.sawOut());
+    saw.start();
+    sawer.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(!saw.sawOut());
+
+    // Its scrap: the base for an instant snap, kills and seconds on top, never past the cap, nothing when it
+    // runs out; a kill after it's gone doesn't count toward the next one
+    saw.start();
+    assert(saw.scrap() == CHAINSAW_SCRAP_BASE && saw.snap() == CHAINSAW_SCRAP_BASE && saw.scrap() == 0);
+    saw.start();
+    saw.killed();
+    saw.killed();
+    sawer.update(1.5f, 10, 8);
+    assert(saw.snap() == CHAINSAW_SCRAP_BASE + 2 * CHAINSAW_SCRAP_PER_KILL + 3 * CHAINSAW_SCRAP_PER_SECOND / 2);
+    saw.start();
+    for (int i = 0; i < 20; i++)
+        saw.killed();
+    assert(saw.snap() == CHAINSAW_SCRAP_MAX);
+    saw.start();
+    saw.killed();
+    sawer.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(saw.snap() == 0);
+    saw.killed();
+    saw.start();
+    assert(saw.snap() == CHAINSAW_SCRAP_BASE);
+
+    // The lunge: only with the saw out (the key is its own then), a push forward, then its cooldown
+    Player lunger(-1);
+    lunger.setCharacter(7);
+    lunger.reset(0, 4);
+    auto &lunging = dynamic_cast<Chainsaw &>(lunger.ultimate());
+    assert(!lunging.lunge());
+    lunging.start();
+    assert(lunging.lunge() && !lunging.lunge() && lunging.press(server, lunger) && lunging.pace() > 1);
+    lunger.update(CHAINSAW_LUNGE_TIME, 10, 8);
+    assert(lunger.getX() > 10 * CHAINSAW_LUNGE_TIME + 1 && lunging.pace() == 1);
+    lunger.update(CHAINSAW_LUNGE_COOLDOWN, 10, 8);
+    assert(lunging.lunge());
+
+    // Thrown, the saw is gone from his hands at once, protection and lunges with it, and can't be thrown
+    // again; one that ran out can't be thrown at all
+    Player thrower(-1);
+    thrower.setCharacter(7);
+    thrower.reset(0, 4);
+    auto &throwing = dynamic_cast<Chainsaw &>(thrower.ultimate());
+    assert(!throwing.throwSaw(thrower));
+    throwing.start();
+    throwing.killed();
+    thrower.update(2, 10, 8);
+    assert(throwing.throwSaw(thrower) && throwing.flying().size() == 1);
+    ThrownSaw out = throwing.flying()[0];
+    assert(out.kills == 1 && out.held > 1.9f);
+    assert(!throwing.sawOut() && !throwing.throwSaw(thrower) && !throwing.lunge() && !throwing.cutZapper());
+    assert(throwing.scrap() == 0 && !throwing.takesHit(server, thrower, TITAN_HIT, 0, 0) && !thrower.isInvincible());
+    throwing.start();
+    thrower.update(CHAINSAW_TIME + 0.01f, 10, 8);
+    assert(!throwing.throwSaw(thrower));
+
+    // A zapper kills him without the saw, and with it out but no lunge; lunging, the saw cuts through it
+    // instead (the saw stays, the zapper is a kill for its scrap), until the lunge's window is over
+    Player zapped(-1);
+    zapped.setCharacter(7);
+    zapped.reset(0, 4);
+    auto &cutter = dynamic_cast<Chainsaw &>(zapped.ultimate());
+    assert(!cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+    cutter.start();
+    assert(!cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+    int before_cut = cutter.scrap();
+    assert(cutter.lunge() && cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3) && cutter.sawOut());
+    assert(cutter.scrap() == before_cut + CHAINSAW_SCRAP_PER_KILL && !zapped.isInvincible());
+    zapped.update(CHAINSAW_LUNGE_ZAPPER_TIME + 0.01f, 10, 8);
+    assert(cutter.sawOut() && !cutter.cutZapper() && !cutter.takesHit(server, zapped, ZAPPER_TILE, 3, 3));
+}
+
+// The held saw against a real drone: its contact comes through the zapper's path while the drone is still up, and
+// the saw takes exactly one such hit. And the throw: only a press of the key made while the saw is out throws it,
+// on its release; one held from before doesn't, and Berserk never presses it while the saw is out.
+static void testSawDrone()
+{
+    std::string path = (std::filesystem::temp_directory_path() / "samuride_saw_drone.txt").string();
+    {
+        std::ofstream map(path);
+        for (int row = 0; row < 10; row++)
+            map << (row == 5 ? std::string(8, '_') + "d" + std::string(11, '_') : std::string(20, '_')) << "\n";
+    }
+    ServerConfig config;
+    config.port = 47131;
+    config.quiet = true;
+    config.solo = true;
+    config.map_path = path;
+    Server server(config);      // never run: its map is enough
+    assert(server.initialize() && server.isLiveDrone(8, 5));
+
+    Player sawer(-1);
+    sawer.setCharacter(7);
+    sawer.reset(0, 4);
+    auto &saw = dynamic_cast<Chainsaw &>(sawer.ultimate());
+    saw.start();
+    assert(saw.takesHit(server, sawer, ZAPPER_TILE, 8, 5) && !saw.sawOut() && sawer.isInvincible());
+    assert(sawer.getScore() == CHAINSAW_SCRAP_BASE && !saw.takesHit(server, sawer, ZAPPER_TILE, 8, 5));
+    std::filesystem::remove(path);
+
+    Player thrower(-1);
+    thrower.setCharacter(7);
+    thrower.reset(0, 4);
+    auto &kick = dynamic_cast<Kick &>(thrower.weapon());
+    auto &held = dynamic_cast<Chainsaw &>(thrower.ultimate());
+    assert(kick.attack(server, thrower) == KICK_COOLDOWN);     // F down, no saw: a kick
+    held.start();                                               // E while F is still held
+    thrower.update(0.01f, 10, 8);
+    assert(!kick.autoFires() && kick.release(server, thrower) == 0 && held.sawOut() && held.flying().empty());
+    assert(kick.attack(server, thrower) == 0);                  // F down again, the saw out
+    assert(kick.release(server, thrower) == KICK_COOLDOWN && !held.sawOut() && held.flying().size() == 1);
+    thrower.update(0.01f, 10, 8);
+    assert(kick.autoFires() && kick.release(server, thrower) == 0);
+
+    // A kick a little early: the drone out of reach at the press goes down as he runs into it with his boot still
+    // out, in the rows of his body only
+    Player early(-1);
+    early.setCharacter(7);
+    early.reset(0, 4);
+    early.blinkTo(4);
+    assert(early.weapon().attack(server, early) == KICK_COOLDOWN && server.isLiveDrone(8, 5));
+    early.blinkTo(6.5f);
+    early.weapon().act(server, early);
+    assert(!server.isLiveDrone(8, 5));
+}
+
+// DirtyBastrd's thrown saw in the air: it flies until it lies on the floor, the caller taking down each target it
+// hits. CHAINSAW_THROW_HITS at most, each a kill, then the snap's formula; it stops early with nothing in range,
+// can swing back to what's between him and it but never behind him, and hits Adam Smasher once a throw
+static void testThrownSaw()
+{
+    ThrownSaw out{10, 5, 1, 2.0f};
+    float him = out.x - 0.8f;      // his middle: the saw leaves his hands 1.3 tiles ahead of his x
+    auto fly = [him](ThrownSaw saw, std::vector<SawTarget> &targets) {
+        for (int tick = 0; tick < 60 * 30 && !saw.landed(9.5f); tick++) {
+            int hit = saw.fly(1.0f / 60, targets, him);
+            if (hit >= 0 && !targets[hit].boss)
+                targets.erase(targets.begin() + hit);
+        }
+        assert(saw.landed(9.5f));
+        return saw;
+    };
+    std::vector<SawTarget> row;
+    for (int i = 1; i <= CHAINSAW_THROW_HITS + 2; i++)
+        row.push_back({out.x + 1.5f * i, out.y});
+    ThrownSaw ricochet = fly(out, row);
+    assert(ricochet.hits == CHAINSAW_THROW_HITS && row.size() == 2);
+    assert(ricochet.kills == out.kills + CHAINSAW_THROW_HITS);
+    assert(ricochet.scrap() == chainsawScrap(out.kills + CHAINSAW_THROW_HITS, out.held));
+    std::vector<SawTarget> gap = {{out.x + 2, out.y}, {out.x + 4, out.y + 2}, {out.x + 5 + CHAINSAW_THROW_RANGE, out.y}};
+    assert(fly(out, gap).hits == 2 && gap.size() == 1);
+    std::vector<SawTarget> behind = {{him - 1, out.y}, {out.x + 3, out.y + 1}};
+    ThrownSaw forward = fly(out, behind);
+    assert(forward.hits == 1 && behind.size() == 1 && behind[0].x < him);
+    // Back toward him: what's between him and the saw is still ahead of him (behind the saw, it used to be left)
+    std::vector<SawTarget> back = {{out.x + 4, out.y}, {out.x - 0.5f, out.y + 2}};
+    ThrownSaw swung = fly(out, back);
+    assert(swung.hits == 2 && back.empty());
+    std::vector<SawTarget> none;
+    ThrownSaw wasted = fly(out, none);
+    assert(wasted.hits == 0 && wasted.scrap() == chainsawScrap(out.kills, out.held));
+    // Smasher stays standing after the hit: once a throw, the next target is something else
+    std::vector<SawTarget> smasher = {{out.x + 3, out.y, true}, {out.x + 6, out.y}};
+    ThrownSaw boss_hit = fly(out, smasher);
+    assert(boss_hit.hits == 2 && boss_hit.hit_boss && smasher.size() == 1 && smasher[0].boss);
+
+    // The saw knocks him down where a slam leaves him: close by, in the kick's reach, for BOSS_SLAM_RECOVER
+    std::map<int, Player> players;
+    std::mt19937 rng(3);
+    players.emplace(3, Player(3));
+    players.at(3).reset(0, 8);
+    Boss boss;
+    boss.reset();
+    boss.update(BOSS_DISTANCE, 0.1f, rng, players, 10);
+    Player kicker(4);
+    kicker.reset(1, 8);
+    kicker.blinkTo(BOSS_DISTANCE);
+    assert(!boss.reached(kicker, KICK_REACH));
+    boss.stagger();
+    BossState down = boss.state();
+    assert(down.attack == BossAttack::Slam && down.phase == BossPhase::Recover && boss.x() == BOSS_DISTANCE + BOSS_SLAM_LAND);
+    assert(boss.reached(kicker, KICK_REACH) && !boss.hit(kicker, 10));
+    int health = boss.state().health;
+    assert(!boss.damage(BOSS_SLASH_DAMAGE) && boss.state().health < health);
+    boss.update(BOSS_DISTANCE, BOSS_SLAM_RECOVER * 0.9f, rng, players, 10);
+    assert(boss.reached(kicker, KICK_REACH));
+    boss.update(BOSS_DISTANCE, BOSS_SLAM_RECOVER * 0.2f, rng, players, 10);
+    assert(!boss.reached(kicker, KICK_REACH));
 }
 
 // Against Smasher: the rockets Wraith blinks through turn back (and stop hitting), and his cannon about to
@@ -995,6 +1255,10 @@ int main()
     testUltimate();
     testDante();
     testWraith();
+    testKick();
+    testChainsaw();
+    testSawDrone();
+    testThrownSaw();
     testWraithSmasher();
     testWanted();
     testRipperdoc();

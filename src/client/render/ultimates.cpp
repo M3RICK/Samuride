@@ -74,6 +74,12 @@ void Ultimates::start(const UltimateEvent &ultimate)
         run.flashScreen(sf::Color::White, 0.2f);
         particles.emit(body, 30, NEON_CYAN, 6, 0.5f, 0);
         stillnesses.emplace_back(ultimate.player, sf::Clock());
+    } else if (ultimate.ultimate == Ultimate::Chainsaw) {
+        // He pulls it out of nowhere: a cyan flash where it appears (players.cpp draws it while it lasts, and
+        // the game screen loops its sound)
+        audio.play(Audio::Sfx::DirtyBastrdEatThis);
+        run.flashScreen(NEON_CYAN, 0.2f);
+        particles.emit(body + sf::Vector2f(1.2f, 0), 30, NEON_CYAN, 6, 0.4f, 0);
     } else if (ultimate.ultimate == Ultimate::Breach) {
         audio.play(Audio::Sfx::Breach);
         run.hackZappers(ultimate.x - 2, ultimate.x + BREACH_AHEAD, BREACH_TIME);
@@ -375,4 +381,30 @@ void Ultimates::draw()
     drawBreaches();
     drawRockets();
     drawDoubles();
+}
+
+// DirtyBastrd's thrown saw, spinning end over end as it flies, glowing, sparks and sawdust trailing behind it
+void Ultimates::drawThrownSaws(const std::vector<SawState> &saws)
+{
+    static constexpr float SPIN = 1440;     // degrees per second
+    const sf::Texture &texture = sprites.chainsaw;
+    float tile_size = run.view.tile_size;
+
+    if (texture.getSize().x == 0)
+        return;
+    for (const SawState &saw : saws) {
+        sf::Vector2f middle(saw.x, saw.y);
+        sf::Sprite sprite(texture);
+        float scale = tile_size * 1.3f / texture.getSize().x;
+        sprite.setOrigin(sf::Vector2f(texture.getSize()) / 2.0f);
+        sprite.setScale({scale, scale});
+        sprite.setPosition(run.toScreen(middle));
+        sprite.setRotation(sf::degrees(saw_spin.getElapsedTime().asSeconds() * SPIN));
+        canvas.halo(run.toScreen(middle), tile_size * 0.8f, withAlpha(NEON_CYAN, 60));
+        canvas.draw(sprite);
+        canvas.draw(sprite, sf::BlendAdd);
+        particles.emit(middle, 2, std::rand() % 2 ? NEON_ORANGE : NEON_CYAN, 3, 0.2f, 6);
+        if (!saw.dropping)
+            particles.emit(middle, 1, SAWDUST, 2, 0.3f, 8);
+    }
 }

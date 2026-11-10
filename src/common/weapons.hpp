@@ -22,6 +22,7 @@ enum class Weapon : uint8_t {
     Rebellion,  // Dante: his sword on the ground (cuts like Blade), Ebony & Ivory in the air (shoots
                 // like Gun); its shots go out as those two, it has no stats of its own
     Blink,      // Wraith: no weapon, a teleport that kills the drones it crosses (BLINK_*); no stats either
+    Kick,       // DirtyBastrd: his Timberlands, the drones right in front of him (KICK_*); no stats either
 };
 
 struct WeaponStats {
@@ -100,6 +101,50 @@ float blinkLanding(float x, float y, Deadly deadly)
 // untouchable until it's over, and the charge comes back
 inline float BLINK_PERFECT_WINDOW = 0.3f;
 constexpr char PERFECT_DODGE = 'f';     // collision type: a perfect Blink, where he landed
+
+// DirtyBastrd's kick: every drone within KICK_REACH in front of him goes down, like Mikasa's blade but shorter
+// and back sooner: he has to get close. Only in the rows his body is in: none over his head, where the bat is,
+// nor under his feet. No titan (their nape stays hers); Smasher takes it like a blade's cut.
+inline float KICK_COOLDOWN = 0.4f;
+// The boot stays out for KICK_ACTIVE, as it is drawn: a kick a little early still downs the drone he runs into.
+// Without it the press has to land in the tenth of a second the drone is in reach, and a miss is a death.
+inline float KICK_ACTIVE = 0.25f;
+inline float KICK_REACH = 1.6f;         // where his boot is drawn landing: just into Smasher getting up from a slam
+// Steel Toes, his own boon: like his thrown saw, every drone he kicks down tumbles off at STEEL_TOES_SPEED toward
+// the live drone nearest to it within STEEL_TOES_RANGE tiles, any way, and downs it when it gets there. One jump,
+// no chain; a kill like any other. With nothing in range, it breaks where it was kicked.
+inline float STEEL_TOES_RANGE = 8;
+inline float STEEL_TOES_SPEED = 12;     // tiles per second: slow enough to see it tumble, there within a blink anyway
+constexpr char DRONE_KICKED = 'i';      // collision type: a kicked drone (his last kill) flies toward the drone on that
+                                        // tile, which goes down as it arrives (its own collision then); its own tile
+                                        // when nothing was in range: it breaks there
+
+// Where a drone kicked down at (x, y) flies: the nearest live drone within STEEL_TOES_RANGE of it, any way, {-1, -1}
+// for none. live(x, y): that drone is still up and nobody else's target.
+template <typename Live>
+std::pair<int, int> kickedDroneLands(int x, int y, Live live)
+{
+    int range = static_cast<int>(STEEL_TOES_RANGE);
+    std::pair<int, int> target = {-1, -1};
+    float best = STEEL_TOES_RANGE;
+
+    for (int tx = x - range; tx <= x + range; tx++) {
+        for (int ty = y - range; ty <= y + range; ty++) {
+            float distance = std::hypot(static_cast<float>(tx - x), static_cast<float>(ty - y));
+            if (distance <= best && (tx != x || ty != y) && live(tx, ty)) {
+                best = distance;
+                target = {tx, ty};
+            }
+        }
+    }
+    return target;
+}
+
+// Seconds a kicked drone takes from (x, y) to (to_x, to_y): the server downs the target then, the clients draw it
+inline float kickedDroneFlight(int x, int y, int to_x, int to_y)
+{
+    return std::hypot(static_cast<float>(to_x - x), static_cast<float>(to_y - y)) / STEEL_TOES_SPEED;
+}
 
 // In the order of Weapon: a new weapon gets its line here, and its values in tuning.cpp
 inline WeaponStats WEAPON_STATS[] = {
