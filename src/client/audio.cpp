@@ -187,7 +187,7 @@ void Audio::loadLines()
         // On the drones his kick downs: mostly these, now and then a rare one
         {Sfx::DirtyBastrdHit, {"dirtybastrd_hit_hmm", "dirtybastrd_hit_hump"}},
         {Sfx::DirtyBastrdRareHit, {"dirtybastrd_rare_god_damnit", "dirtybastrd_rare_ma_timbs_1", "dirtybastrd_rare_ma_timbs_2",
-                                   "dirtybastrd_rare_suck_ma_toes", "dirtybastrd_rare_well_damn"}},
+                                   "dirtybastrd_rare_suck_ma_toes"}},
     };
 
     for (const auto &[sfx, names] : files)
