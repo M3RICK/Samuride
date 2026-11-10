@@ -38,12 +38,15 @@ void Horde::update(float rear_x, float dt)
 
 bool Horde::hit(const Player &player, float floor) const
 {
-    return std::ranges::any_of(titans, [&](const Titan &titan) {
-        TitanStats stats = titanStats(titan.type);
-        bool overlap_x = player.getX() + 0.8f > titan.x && player.getX() + 0.2f < titan.x + stats.width;
-        bool overlap_y = player.getY() + Player::HEIGHT > floor - stats.height + 0.3f;
-        return overlap_x && overlap_y;
-    });
+    return std::ranges::any_of(titans, [&](const Titan &titan) { return touches(player, titan, floor); });
+}
+
+bool Horde::touches(const Player &player, const Titan &titan, float floor)
+{
+    TitanStats stats = titanStats(titan.type);
+    bool overlap_x = player.getX() + 0.8f > titan.x && player.getX() + 0.2f < titan.x + stats.width;
+    bool overlap_y = player.getY() + Player::HEIGHT > floor - stats.height + 0.3f;
+    return overlap_x && overlap_y;
 }
 
 bool Horde::inPath(float from_x, float to_x, float y, float floor) const

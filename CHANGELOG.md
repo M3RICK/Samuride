@@ -3,6 +3,28 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## Next
+
+### New
+- **DirtyBastrd**, eighth runner, 1500 eddies, hanging from a giant headless bat. In CYBERPSYCHO he kicks the
+  drones right in front of him out of the air with his Timberlands: shorter than Mikasa's blade but back
+  sooner, and no titans. He grunts at every one he downs, and now and then lets something worse slip ("Suck ma
+  toes!"). His own boon, **Steel Toes**: every drone he kicks down tumbles into the nearest one around it.
+  - **Invisible Chainsaw** ultimate ("Eat this!"), revved by his own mouth for as long as it runs: for 10
+    seconds it shreds the drones at his hands, and `E` again lunges with it, cutting through any zapper in the
+    way. It takes one hit from a drone, a titan (which goes down with it) or Adam Smasher before snapping into
+    up to 30 scrap eddies, more for every kill and every second it lasted: a meter by its gauge shows how
+    much. `F` throws it instead: it ricochets through up to 5 drones, titans or zappers ahead of him, each one
+    a kill, then drops into its scrap, and he's on his own again. The eddies circle him, then fly to his
+    counter one by one. Snipers still kill him, and so do zappers when he isn't lunging.
+  - His kick and his saw hit where they are drawn: the kick only in the rows his body is in (none over his
+    head, where the bat is) and 1.6 tiles ahead, but his boot stays out a quarter of a second: a kick a
+    little early still downs the drone he runs into. The saw in every row its blade is over, its lunge 2 tiles ahead.
+  - **Against Adam Smasher**, his kick cuts like a blade while Smasher gets up after a slam, and a thrown saw
+    hits him once (8) and knocks him down close by for those 2 seconds: kick away.
+- **Voice lines cut through**: while one plays (Johnny's, Jinx's, Dante's or DirtyBastrd's), the music and every
+  other sound dip, so explosions and coins no longer bury it.
+
 ## v3.1
 
 ### New

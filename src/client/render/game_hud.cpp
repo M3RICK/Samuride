@@ -398,11 +398,14 @@ void GameScreen::drawFlashAndCallout()
 // Portrait, then "YOU   12 EDDIES", and a hexagon while shielded (Lucy's RAM is over her head, players.cpp)
 void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, float y)
 {
-    std::string line = playerLabel(player_num, me) + "   " + std::to_string(player.score) + " EDDIES";
+    // DirtyBastrd's scrap counts once its eddies land on it
+    int score = player.score - scrapInFlight(player_num);
+    std::string line = playerLabel(player_num, me) + "   " + std::to_string(score) + " EDDIES";
     sf::Text text = canvas.makeText(line, 28, player_num == me ? NEON_YELLOW : NEON_CYAN, {70, y}, {0, 0});
 
     canvas.image(sprites.character(run.characterOf(player_num)).portrait, {24, y - 2}, 34, {0, 0}, sf::Color::White);
     canvas.draw(text);
+    hud_counters[player_num] = text.getGlobalBounds().getCenter();
 
     sf::FloatRect bounds = text.getGlobalBounds();
     float x = bounds.position.x + bounds.size.x + 26;
@@ -445,9 +448,39 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
                                                        (sandevistan_time * (boon == Boon::Overclock ? 2 : 1)), y);
         y += 80;
     }
+    if (player.chainsaw) {
+        drawGauge("CHAINSAW", NEON_CYAN, 1 - anim.saw_clock.getElapsedTime().asSeconds() / CHAINSAW_TIME, y);
+        drawScrapMeter(player.scrap, y);
+        y += 80;
+    }
     if (player.berserk)
         drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() /
                                                  (BERSERK_TIME * (boon == Boon::Rage ? 2 : 1)), y);
+}
+
+// Beside the saw's gauge: the scrap it would burst into if it snapped now, filling toward the cap and
+// flashing once there
+void GameScreen::drawScrapMeter(int scrap, float y)
+{
+    sf::Vector2f pos(Screen::WIDTH / 2 + 270, y);
+    bool full = scrap >= CHAINSAW_SCRAP_MAX;
+    sf::Color color = full && canvas.blink() ? sf::Color::White : NEON_YELLOW;
+
+    sf::RectangleShape back({120, 18});
+    back.setPosition(pos);
+    back.setFillColor(sf::Color(0, 0, 0, 160));
+    back.setOutlineColor(color);
+    back.setOutlineThickness(2);
+    canvas.draw(back);
+
+    sf::RectangleShape fill({120.f * scrap / CHAINSAW_SCRAP_MAX, 18});
+    fill.setPosition(pos);
+    fill.setFillColor(color);
+    canvas.draw(fill);
+    if (full)
+        canvas.draw(fill, sf::BlendAdd);
+
+    canvas.text(std::format("+{}", scrap), 30, color, pos + sf::Vector2f(170, 9));
 }
 
 void GameScreen::drawGauge(const std::string &label, sf::Color color, float left, float y)

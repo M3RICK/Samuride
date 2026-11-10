@@ -102,7 +102,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, GameStart &start)
     return r.ok();
 }
 
-// Per player: [number][x, 4 bytes][y, 2][score, 2][flags][ultimate %][spears][flags 2]
+// Per player: [number][x, 4 bytes][y, 2][score, 2][flags][ultimate %][spears][flags 2][chainsaw]
 std::vector<uint8_t> Message::encode(const std::map<int, PlayerState> &players)
 {
     Writer w;
@@ -118,6 +118,8 @@ std::vector<uint8_t> Message::encode(const std::map<int, PlayerState> &players)
         w.u8(p.spears);
         // bit 0: a second of grace, bits 1-3: Dante's style rank, bits 4-6: wanted level
         w.u8(p.grace | p.style << 1 | p.wanted << 4);
+        // DirtyBastrd's chainsaw: bit 0 out, bit 1 lunging with it, bits 2-6 the scrap it would give
+        w.u8(p.chainsaw | p.lunging << 1 | p.scrap << 2);
     }
     return w.data;
 }
@@ -145,6 +147,10 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::map<int, PlayerSt
         p.grace = flags2 & 1;
         p.style = (flags2 >> 1) & 7;
         p.wanted = (flags2 >> 4) & 7;
+        uint8_t saw = r.u8();
+        p.chainsaw = saw & 1;
+        p.lunging = saw & 2;
+        p.scrap = saw >> 2;
         if (!r.ok())
             return false;
         players[number] = p;
@@ -288,5 +294,32 @@ bool Message::decode(const std::vector<uint8_t> &payload, CollisionEffect &colli
     collision.player = r.u8();
     collision.x = r.u32();
     collision.y = r.u16();
+    return r.ok();
+}
+
+// [count]([player][x, 4 bytes][y, 2 bytes][1 dropping])...
+std::vector<uint8_t> Message::encode(const std::vector<SawState> &saws)
+{
+    Writer w;
+    w.u8(saws.size());
+    for (const SawState &saw : saws) {
+        w.u8(saw.player);
+        w.pos32(saw.x);
+        w.pos16(saw.y);
+        w.u8(saw.dropping);
+    }
+    return w.data;
+}
+
+bool Message::decode(const std::vector<uint8_t> &payload, std::vector<SawState> &saws)
+{
+    Reader r(payload);
+    saws.clear();
+    for (int count = r.u8(); count > 0 && r.ok(); count--) {
+        int player = r.u8();
+        float x = r.pos32();
+        float y = r.pos16();
+        saws.push_back({player, x, y, r.u8() != 0});
+    }
     return r.ok();
 }

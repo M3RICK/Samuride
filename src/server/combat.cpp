@@ -1,5 +1,6 @@
 // CYBERPSYCHO: attacks, ultimates, projectiles and drones. What each runner's weapon and ultimate does: arsenal.cpp.
 
+#include <cmath>
 #include "server.hpp"
 #include "../common/debug.hpp"
 #include <algorithm>
@@ -82,18 +83,20 @@ void Server::fireProjectile(const Player &player, Weapon weapon, float y)
     projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
 }
 
-// The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y
-static std::vector<std::pair<int, int>> dronesInReach(const Server &server, const Player &player, float reach, float y)
+// The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y.
+// A blade sweeps a row above the body and down to the one at its feet; `body_only` (a kick) keeps to the rows
+// the body is in.
+std::vector<std::pair<int, int>> Server::dronesInReach(const Player &player, float reach, float y, bool body_only) const
 {
     std::vector<std::pair<int, int>> drones;
-    int top = static_cast<int>(y) - 1;
-    int bottom = static_cast<int>(y + Player::HEIGHT);
+    int top = static_cast<int>(y) - !body_only;
+    int bottom = body_only ? static_cast<int>(std::ceil(y + Player::HEIGHT)) - 1 : static_cast<int>(y + Player::HEIGHT);
     int front = static_cast<int>(player.getX() + 0.5f);
     int end = static_cast<int>(player.getX() + 0.5f + reach);
 
     for (int x = front; x <= end; x++)
         for (int y = std::max(0, top); y <= bottom; y++)
-            if (server.isLiveDrone(x, y))
+            if (isLiveDrone(x, y))
                 drones.emplace_back(x, y);
     return drones;
 }
@@ -107,28 +110,22 @@ static auto titanReached(const Player &player, float reach)
 
 int Server::strike(const Player &player, float reach, float y)
 {
-    std::vector<std::pair<int, int>> drones = dronesInReach(*this, player, reach, y);
+    std::vector<std::pair<int, int>> drones = dronesInReach(player, reach, y);
 
     for (auto [x, y] : drones)
         destroyDrone(player.getClientFd(), x, y);
     return static_cast<int>(drones.size());
 }
 
-// His body starts half a tile before his x
-static bool bossReached(const Boss &boss, const Player &player, float reach)
-{
-    return boss.fighting() && boss.x() - 0.5f < player.getX() + 0.5f + reach && boss.x() + 2.5f > player.getX();
-}
-
 bool Server::inReach(const Player &player, float reach, float y) const
 {
-    return !dronesInReach(*this, player, reach, y).empty() || titans.any(titanReached(player, reach)) ||
-           (mode == GameMode::Cyberpsycho && bossReached(boss, player, reach));
+    return !dronesInReach(player, reach, y).empty() || titans.any(titanReached(player, reach)) ||
+           (mode == GameMode::Cyberpsycho && boss.reached(player, reach));
 }
 
 bool Server::slashBoss(Player &player, float reach)
 {
-    return bossReached(boss, player, reach) && hitBoss(player, BOSS_SLASH_DAMAGE);
+    return boss.reached(player, reach) && hitBoss(player, BOSS_SLASH_DAMAGE);
 }
 
 void Server::updateProjectiles()
@@ -228,6 +225,19 @@ void Server::scorch(int owner_fd, float from, float to, float titans_from, int t
         titanDown(owner->second, x);
 }
 
+// The titans running into DirtyBastrd as his saw snaps go down with it: a kill for its scrap
+void Server::sawTitans(Player &player)
+{
+    for (float x : titans.takeDown([&](const Horde::Titan &titan) { return Horde::touches(player, titan, game_map.getHeight()); }))
+        titanDown(player, x);
+}
+
+void Server::takeDownTitan(Player &player, float x)
+{
+    for (float down : titans.takeDown([x](const Horde::Titan &titan) { return titan.x == x; }))
+        titanDown(player, down);
+}
+
 void Server::slashTitans(Player &player, float reach)
 {
     for (float x : titans.takeDown(titanReached(player, reach)))
@@ -247,6 +257,7 @@ bool Server::hitBoss(Player &player, int damage)
 
 void Server::titanDown(Player &player, float x)
 {
+    player.ultimate().killed();
     player.addScore(TITAN_BOUNTY);
     notifyCollision(TITAN_KILL, player, x, game_map.getHeight() - 1);
 }
@@ -271,6 +282,7 @@ void Server::destroyDrone(int owner_fd, int x, int y)
     if (owner == players.end())
         return;
 
+    owner->second.ultimate().killed();
     owner->second.addScore(wantedBounty(owner->second.weapon().droneDown(), owner->second.wantedStars()));
     owner->second.raiseWanted();
     notifyCollision(DRONE_TILE, owner->second, x, y);

@@ -54,6 +54,7 @@ inline BoonLook boonLook(Boon boon, Weapon weapon)
                 case Weapon::Hack: return {"OVERCLOCKED DECK", "RAM comes back twice as fast"};
                 case Weapon::Rebellion: return {"SHOWOFF", "Your style rank drops twice as slow"};
                 case Weapon::Blink: return {"VOID WALKER", "Blinks come back twice as fast"};
+                case Weapon::Kick: return {"STEEL TOES", "Drones you kick fly into the next one"};
                 default: return {"DOUBLE TAP", "Every shot fires two bullets"};
             }
         default: return {"", ""};

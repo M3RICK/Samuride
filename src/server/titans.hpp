@@ -29,6 +29,7 @@ public:
 
     // The player's body against a titan's: both stand on, or fly above, the same floor
     bool hit(const Player &player, float floor) const;
+    static bool touches(const Player &player, const Titan &titan, float floor);
     // A shot flying along line y between the columns from_x and to_x crossed a titan tall enough
     bool inPath(float from_x, float to_x, float y, float floor) const;
     template <typename Reached>

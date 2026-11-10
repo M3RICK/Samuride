@@ -47,10 +47,13 @@ char Server::powerUpAt(int x, int y) const
     return EMPTY_TILE;
 }
 
-// A deadly hit: the shield takes it if there is one, the Trauma Team offers to come if it can. Returns true
-// when the player dies.
+// A deadly hit: DirtyBastrd's chainsaw takes it if it can, then the shield if there is one, then the Trauma Team
+// offers to come if it can. The saw goes first: it would be gone in a few seconds anyway. Returns true when the
+// player dies.
 bool Server::hurt(Player &player, char cause, int x, int y)
 {
+    if (player.ultimate().takesHit(*this, player, cause, x, y))
+        return false;
     if (player.absorbHit()) {
         notifyCollision(SHIELD_BREAK, player, x, y);
         return false;

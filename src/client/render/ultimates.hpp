@@ -54,6 +54,7 @@ private:
     std::vector<Nuke> nukes;
     std::vector<Rocket> rockets;
     std::vector<sf::Clock> breaches;    // since each of Lucy's breaches
+    sf::Clock saw_spin;                 // turns DirtyBastrd's thrown saws
     std::vector<std::pair<int, sf::Clock>> stillnesses;    // whose, and since when
 
     void start(const UltimateEvent &ultimate);
@@ -76,6 +77,7 @@ public:
     // Starts the ultimates the server reported
     void handle(GameState &state);
     void draw();
+    void drawThrownSaws(const std::vector<SawState> &saws);
 };
 
 #endif

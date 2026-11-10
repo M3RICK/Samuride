@@ -7,6 +7,7 @@
 #include "run.hpp"
 #include "../audio.hpp"
 #include "../../common/upgrades.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -32,7 +33,8 @@ void Players::draw(const std::map<int, PlayerState> &players, int me, bool live)
         drawPlayer(me, mine->second, true);
 }
 
-// Exhaust stays in the world, so it trails behind as the player runs
+// Exhaust stays in the world, so it trails behind as the player runs. DirtyBastrd has no jetpack: the bat
+// carrying him drips blood from its neck stump as it flaps, and sheds a feather now and then.
 void Players::emitExhaust(const std::map<int, PlayerState> &players)
 {
     for (const auto &[player_num, player] : players) {
@@ -40,7 +42,12 @@ void Players::emitExhaust(const std::map<int, PlayerState> &players)
         sf::Vector2f nozzle = run.display_positions[player_num] + sf::Vector2f(0.25f, 1.55f);
         bool flying = player.form == Form::Normal || player.form == Form::Emerging;
 
-        if (flying && player.jet_active) {
+        if (flying && player.jet_active && character.drips) {
+            sf::Vector2f stump = run.display_positions[player_num] + sf::Vector2f(0.55f, -0.7f);
+            particles.emit(stump, 1, character.exhaust, 0.6f, 0.7f, 16);
+            if (std::rand() % 8 == 0)
+                particles.emit(stump + sf::Vector2f(randf(-0.6f, 0.6f), 0), 1, sf::Color(20, 16, 24), 0.8f, 1.0f, 2);
+        } else if (flying && player.jet_active) {
             particles.emit(nozzle, 2, character.exhaust, 1.5f, 0.35f, 0, {0, 8});
             particles.emit(nozzle, 1, NEON_ORANGE, 2.5f, 0.25f, 0, {0, 6});
         }
@@ -103,6 +110,7 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 {
     updateForm(player_num, player, is_me);
     updateSprint(player_num, player);
+    updateChainsaw(player_num, player, is_me);
     if (player.form == Form::Shifting || player.form == Form::Titan) {
         drawShift(player_num, player, is_me);
         return;
@@ -152,6 +160,8 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (player.sprinting)
         drawAfterimages(sprite, tile_size);
+    if (player.lunging)
+        drawLungeTrail(sprite, tile_size);
     if (player.berserk)
         canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * (0.9f + 0.15f * std::sin(canvas.time() * 16)),
                     withAlpha(BERSERK_COLOR, 70));
@@ -167,6 +177,8 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
 
     if (shocked && std::rand() % 2)
         canvas.draw(sprite, sf::BlendAdd);
+    if (player.chainsaw)
+        drawChainsaw(player_num, player, feet, tile_size);
 
     sf::Vector2f tag_pos = feet - sf::Vector2f(0, tile_size * (down ? 1.2f : Run::PLAYER_HEIGHT + 0.25f));
     canvas.text(is_me ? "YOU" : "CHOOM", 22, is_me ? NEON_YELLOW : NEON_CYAN, tag_pos);
@@ -190,6 +202,9 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
                 canvas.draw(unit, sf::BlendAdd);
         }
     }
+
+    if (player.chainsaw)
+        drawLungeGauge(player_num, tag_pos + sf::Vector2f(0, -40));
 
     // Mikasa's thunder spears left, over her head
     for (int i = 0; i < player.spears; i++) {
@@ -234,6 +249,110 @@ void Players::drawAfterimages(const sf::Sprite &sprite, float tile_size)
         ghost.setColor(withAlpha(i % 2 ? SANDEVISTAN_COLOR : sf::Color::White, 230 - 40 * i));
         canvas.draw(ghost, sf::BlendAdd);
     }
+}
+
+// DirtyBastrd's saw coming out starts its gauge's clock, the end leaves a cyan wisp. Each lunge revs it
+// and bursts: cyan sparks and sawdust thrown ahead, the screen kicked (hard for him, lightly for his choom).
+void Players::updateChainsaw(int player_num, const PlayerState &player, bool is_me)
+{
+    PlayerAnim &state = run.player_anims[player_num];
+    sf::Vector2f saw = run.display_positions[player_num] + sf::Vector2f(1.3f, 1.0f);
+
+    if (player.chainsaw && !state.chainsaw) {
+        state.saw_clock.restart();
+        state.lunged = false;
+    } else if (!player.chainsaw && state.chainsaw) {
+        particles.emit(saw, 10, NEON_CYAN, 2, 0.4f, -2);
+    }
+    if (player.lunging && !state.lunging) {
+        state.lunged = true;
+        state.lunge_clock.restart();
+        run.shakeAtLeast(0.2f, is_me ? 14 : 5);
+        particles.emit(saw, 30, NEON_CYAN, 9, 0.35f, 0, {6, 0});
+        particles.emit(saw, 14, sf::Color::White, 7, 0.25f, 0, {6, 0});
+        particles.emit(saw, 20, SAWDUST, 5, 0.6f, 10, {4, -2});
+    }
+    state.chainsaw = player.chainsaw;
+    state.lunging = player.lunging;
+}
+
+// Held out in front of him at hand height, shaking as it runs and glowing; lunging, it shakes harder
+// and throws sparks off its tip
+void Players::drawChainsaw(int player_num, const PlayerState &player, sf::Vector2f feet, float tile_size)
+{
+    const sf::Texture &texture = sprites.chainsaw;
+
+    if (texture.getSize().x == 0)
+        return;
+
+    float jitter = player.lunging ? 4 : 1.5f;
+    sf::Sprite saw(texture);
+    float scale = tile_size * 1.3f / texture.getSize().x;
+    saw.setOrigin({texture.getSize().x * 0.2f, texture.getSize().y * 0.6f});
+    saw.setScale({scale, scale});
+    saw.setPosition(feet + sf::Vector2f(tile_size * 0.35f + randf(-jitter, jitter), -tile_size * 1.0f + randf(-jitter, jitter)));
+    canvas.halo(saw.getPosition() + sf::Vector2f(tile_size * 0.5f, 0), tile_size * 0.7f, withAlpha(NEON_CYAN, 45));
+    canvas.draw(saw);
+    if (std::rand() % 3)
+        canvas.draw(saw, sf::BlendAdd);
+
+    // The chain bites the air the whole time: sparks spitting off the blade, a shower of them lunging
+    sf::Vector2f tip = run.display_positions[player_num] + sf::Vector2f(1.9f, 0.8f);
+    particles.emit(tip, 1, std::rand() % 2 ? NEON_ORANGE : NEON_CYAN, 4, 0.15f, 8, {-4, 0});
+    if (!player.lunging)
+        return;
+    particles.emit(tip, 4, NEON_ORANGE, 6, 0.2f, 8, {-6, 0});
+    particles.emit(tip, 2, sf::Color::White, 5, 0.15f, 0);
+    particles.emit(tip, 2, SAWDUST, 4, 0.4f, 10, {-3, 0});
+
+    // The cut: a white and cyan arc swept where the blade goes through, fading as the lunge eases off
+    float fade = std::clamp(1 - run.player_anims[player_num].lunge_clock.getElapsedTime().asSeconds() / CHAINSAW_LUNGE_TIME,
+                            0.0f, 1.0f);
+    sf::Vector2f cut = run.toScreen(tip - sf::Vector2f(0.3f, 0));
+    canvas.arc(cut, tile_size * 0.6f, tile_size * 0.9f, 20, 160, withAlpha(NEON_CYAN, static_cast<uint8_t>(160 * fade)));
+    canvas.arc(cut, tile_size * 0.72f, tile_size * 0.8f, 30, 150, withAlpha(sf::Color::White, static_cast<uint8_t>(230 * fade)));
+}
+
+// Lunging: cyan ghosts of him strung out behind, and speed streaks across his body
+void Players::drawLungeTrail(const sf::Sprite &sprite, float tile_size)
+{
+    sf::Sprite ghost = sprite;
+
+    for (int i = 3; i >= 1; i--) {
+        ghost.setPosition(sprite.getPosition() - sf::Vector2f(tile_size * 0.35f * i, 0));
+        ghost.setColor(withAlpha(i % 2 ? NEON_CYAN : sf::Color::White, 170 - 45 * i));
+        canvas.draw(ghost, sf::BlendAdd);
+    }
+    for (int i = 0; i < 5; i++) {
+        sf::RectangleShape streak({tile_size * randf(1.0f, 2.5f), 3});
+        streak.setPosition(sprite.getPosition() - sf::Vector2f(tile_size * randf(1.2f, 2.0f), tile_size * randf(0.2f, 1.9f)));
+        streak.setFillColor(withAlpha(NEON_CYAN, 150));
+        canvas.draw(streak, sf::BlendAdd);
+    }
+}
+
+// The lunge over his head, like Lucy's RAM: a bar lit when it is ready, refilling during its cooldown
+void Players::drawLungeGauge(int player_num, sf::Vector2f above)
+{
+    const PlayerAnim &state = run.player_anims[player_num];
+    float charged = state.lunged ? state.lunge_clock.getElapsedTime().asSeconds() / CHAINSAW_LUNGE_COOLDOWN : 1;
+    bool ready = charged >= 1;
+
+    sf::RectangleShape back({44, 9});
+    back.setOrigin({22, 4.5f});
+    back.setPosition(above);
+    back.setFillColor(sf::Color(0, 0, 0, 120));
+    back.setOutlineColor(withAlpha(NEON_CYAN, ready ? 255 : 140));
+    back.setOutlineThickness(2);
+    canvas.draw(back);
+
+    sf::RectangleShape fill({44 * std::min(1.0f, charged), 9});
+    fill.setOrigin({22, 4.5f});
+    fill.setPosition(above);
+    fill.setFillColor(ready ? NEON_CYAN : withAlpha(NEON_CYAN, 110));
+    canvas.draw(fill);
+    if (ready)
+        canvas.draw(fill, sf::BlendAdd);
 }
 
 // A hexagon plate behind the body, flickering a little

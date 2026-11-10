@@ -26,8 +26,13 @@ public:
     // Where he stands, in tiles: shots reaching it hit him. Close by after a slam.
     float x() const;
     bool hit(const Player &player, float floor) const;
+    // Within a blade's (or a kick's) reach in front of the player: close by after a slam
+    bool reached(const Player &player, float reach) const;
     // Takes `amount` off his health; true when it downed him
     bool damage(int amount);
+    // Knocked down where a slam leaves him (DirtyBastrd's thrown saw): he gets back up for BOSS_SLAM_RECOVER,
+    // close by, then attacks again
+    void stagger();
     // Wraith's Blink sweeping the box from (left, top) to (right, bottom): the rockets in it turn back.
     // Returns how many.
     int reflect(float left, float right, float top, float bottom, float floor);

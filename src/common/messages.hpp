@@ -47,6 +47,9 @@ struct PlayerState {
     bool grace = false;         // invincible for a second after a shield, a sprint or a titan
     int style = 0;              // Dante's style rank, 0 (D) to 6 (SSS)
     int wanted = 0;             // NCPD wanted level, 0 to WANTED_MAX_STARS
+    bool chainsaw = false;      // DirtyBastrd's saw is out
+    bool lunging = false;       // and he lunges with it
+    int scrap = 0;              // the eddies it would burst into if it snapped now
 };
 
 // MSG_SHOT: someone attacked in CYBERPSYCHO
@@ -89,6 +92,14 @@ struct BossState {
     uint16_t reflected = 0;     // the rows of the rocket wall Wraith sent back at him, one bit each
 };
 
+// MSG_SAWS, one per thrown chainsaw in the air (DirtyBastrd)
+struct SawState {
+    int player;     // who threw it
+    float x;        // its middle, in tiles
+    float y;
+    bool dropping;  // done ricocheting, falling to the floor
+};
+
 // MSG_COLLISION
 struct CollisionEffect {
     char type;
@@ -108,6 +119,7 @@ namespace Message {
     std::vector<uint8_t> encode(const std::vector<SniperState> &snipers);
     std::vector<uint8_t> encode(const BossState &boss);
     std::vector<uint8_t> encode(const CollisionEffect &collision);
+    std::vector<uint8_t> encode(const std::vector<SawState> &saws);
 
     bool decode(const std::vector<uint8_t> &payload, ConnectRequest &connect);
     bool decode(const std::vector<uint8_t> &payload, GameStart &start);
@@ -118,6 +130,7 @@ namespace Message {
     bool decode(const std::vector<uint8_t> &payload, std::vector<SniperState> &snipers);
     bool decode(const std::vector<uint8_t> &payload, BossState &boss);
     bool decode(const std::vector<uint8_t> &payload, CollisionEffect &collision);
+    bool decode(const std::vector<uint8_t> &payload, std::vector<SawState> &saws);
 }
 
 #endif

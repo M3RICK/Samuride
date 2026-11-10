@@ -16,6 +16,7 @@ struct Sprites {
     sf::Texture drone;          // DRONE_FRAMES frames side by side
     sf::Texture titan_face;     // on the power-up orb
     sf::Texture hack_target;    // Lucy's glitch ring, on what her hack will hit
+    sf::Texture chainsaw;       // DirtyBastrd's invisible chainsaw, a glowing outline, blade to the right
     sf::Texture fishbones;      // Jinx's shark rocket, nose to the right
     sf::Texture smasher_missile;    // Smasher's rocket, 2 frames side by side, nose to the left
 

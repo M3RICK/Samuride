@@ -31,6 +31,7 @@ struct Character {
     float body = 1;     // standing height in pixels, scaled to the player's hitbox
     float height = 0;   // tiles tall in the game, for a mount; 0: the titan's
     sf::Color exhaust{252, 238, 10};
+    bool drips = false;     // no jetpack: carried by a headless bat dripping blood from its neck (players.cpp)
 
     Animation run, takeoff, rise, hover, fall, death, attack;
     Animation shoot;            // Dante's guns: his attack when nothing is in his sword's reach

@@ -13,6 +13,7 @@
 #include "../common/weapons.hpp"
 #include "../common/ultimates.hpp"
 #include "../common/cyberpsycho.hpp"
+#include "../common/messages.hpp"
 
 class Server;
 class Player;
@@ -64,6 +65,17 @@ public:
     virtual bool travels() const { return false; }
     // True while the world stands still: Wraith's Stillness
     virtual bool freezes() const { return false; }
+    // A deadly hit it takes instead of the runner (DirtyBastrd's chainsaw), from what `cause` (a MSG_COLLISION
+    // type) says hit them at (x, y): true when it did
+    virtual bool takesHit(Server &, Player &, char, int, int) { return false; }
+    // A drone or a titan this runner took down, with anything
+    virtual void killed() {}
+    // DirtyBastrd's chainsaw, for MSG_GAME_STATE: out, lunging with it, the scrap eddies it would give now
+    virtual bool sawOut() const { return false; }
+    virtual bool lunging() const { return false; }
+    virtual int scrap() const { return 0; }
+    // What it has flying for the clients to draw, MSG_SAWS (DirtyBastrd's thrown saws; the server sets whose)
+    virtual std::vector<SawState> inAir() const { return {}; }
 };
 
 std::unique_ptr<RunnerWeapon> makeWeapon(Weapon id);
@@ -136,6 +148,32 @@ public:
     void tick(const Player &player, float dt) override;
     int charges() const override { return charges_left; }
     bool autoFires() const override { return false; }
+};
+
+// DirtyBastrd: his Timberlands, the drones right in front of him (KICK_* in weapons.hpp); with his chainsaw out,
+// a press of the key throws it instead, as it comes back up (Berserk never throws it, nor a press from before)
+class Kick : public RunnerWeapon {
+    // Steel Toes: a kicked drone in the air, the drone it flies into and the seconds before it gets there
+    struct Flight {
+        int to_x;
+        int to_y;
+        float left;
+    };
+    std::vector<Flight> flights;
+    bool saw_out = false;   // his chainsaw is out: Berserk doesn't kick on its own then
+    bool aimed = false;     // the key went down while it was out: its release throws it
+    float out = 0;          // seconds his boot is still out, kicking what he runs into
+
+    void strike(Server &server, Player &player);
+
+    void launch(Server &server, Player &player, int x, int y, const std::vector<std::pair<int, int>> &kicked);
+
+public:
+    void act(Server &server, Player &player) override;
+    float attack(Server &server, Player &player) override;
+    float release(Server &server, Player &player) override;
+    void tick(const Player &player, float dt) override;
+    bool autoFires() const override { return !saw_out; }
 };
 
 // A wall razing the rows top to bottom as it sweeps ahead: Johnny's fire wave, Jinx's Fishbones
@@ -215,6 +253,45 @@ public:
     void fire(Server &, Player &, float, float) override { timer = STILLNESS_TIME; }
     void tick(float dt) override { timer = std::max(0.0f, timer - dt); }
     bool freezes() const override { return timer > 0; }
+};
+
+// DirtyBastrd's invisible chainsaw (CHAINSAW_* in ultimates.hpp): it shreds what's at his hands, lunges with the
+// ultimate key again, and takes one hit before snapping into scrap eddies
+class Chainsaw : public RunnerUltimate {
+    float timer = 0;            // seconds it still runs; 0 once it ran out or snapped
+    float held = 0;             // seconds it has been out, and what it took down: its scrap when it snaps
+    int kills = 0;
+    float lunge_timer = 0;      // seconds of the lunge left
+    float lunge_cooldown = 0;   // seconds before the next lunge
+    float zapper_cut_timer = 0; // seconds left of the lunge's window to cut through zappers
+    std::vector<ThrownSaw> thrown;  // in the air, ricocheting or dropping
+
+    void fly(Server &server, Player &player, ThrownSaw &saw);
+
+public:
+    void fire(Server &server, Player &player, float start, float line) override;
+    bool press(Server &server, Player &player) override;
+    void tick(float dt) override;
+    void act(Server &server, Player &player) override;
+    float pace() const override;
+    bool takesHit(Server &server, Player &player, char cause, int x, int y) override;
+    void killed() override;
+    bool sawOut() const override { return timer > 0; }
+    bool lunging() const override { return lunge_timer > 0; }
+    int scrap() const override { return sawOut() ? chainsawScrap(kills, held) : 0; }
+    void start();
+    // True when he lunged: with the saw out, once the last lunge is far enough
+    bool lunge();
+    // The saw snaps: the scrap eddies it bursts into (the caller pays them), 0 without a saw
+    int snap();
+    // Lunging, it cuts the zapper he runs into: true when it did (a kill for its scrap), false when the
+    // zapper kills him
+    bool cutZapper();
+    // It leaves his hands from where he holds it, with what it took down and how long he held it, and the
+    // ultimate is over: false without a saw
+    bool throwSaw(const Player &player);
+    const std::vector<ThrownSaw> &flying() const { return thrown; }
+    std::vector<SawState> inAir() const override;
 };
 
 class Fishbones : public RunnerUltimate {

@@ -35,6 +35,11 @@ private:
     void updateSprint(int player_num, const PlayerState &player);
     void drawAfterimages(const sf::Sprite &sprite, float tile_size);
     void drawShieldBubble(sf::Vector2f center, float tile_size);
+    // DirtyBastrd's chainsaw: the clocks from the server's state, the saw held out, the lunge
+    void updateChainsaw(int player_num, const PlayerState &player, bool is_me);
+    void drawChainsaw(int player_num, const PlayerState &player, sf::Vector2f feet, float tile_size);
+    void drawLungeTrail(const sf::Sprite &sprite, float tile_size);
+    void drawLungeGauge(int player_num, sf::Vector2f above);
 
     // The Attack Titan: forms come from the server, how long a player has been in one is timed here
     void updateForm(int player_num, const PlayerState &player, bool is_me);
