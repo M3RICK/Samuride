@@ -171,6 +171,6 @@ Samuride is a non-commercial fan project, not affiliated with, endorsed or spons
 - **Wraith** (Apex Legends): Respawn Entertainment / Electronic Arts.
 - **Jetpack Joyride**, which inspired the run: Halfbrick Studios.
 
-DirtyBastrd is an original character. Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
+DirtyBastrd is an original character. The run's music is ["punk music - no copyright"](https://pixabay.com/music/punk-punk-music-no-copyright-453224/) by PoorArtistt, under the Pixabay Content License. Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
 
 If you own any of this and want it taken out, open an issue: it will be removed.
