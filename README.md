@@ -131,7 +131,7 @@ A dedicated server and direct connection are available too:
 
 ## Under the hood
 
-- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send "jetpack on/off".
+- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send their key presses (jetpack, attack, ultimate) and the cards they pick.
 - **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
 - **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
 - **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
@@ -155,6 +155,22 @@ Plain text, one character per tile, all lines the same length:
 
 Aymeric — started as an Epitech project (B-NWP jetpack).
 
-Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
+[CrackedOnTiti](https://github.com/CrackedOnTiti) — DirtyBastrd, the eighth runner: his kick, his chainsaw and his voice.
 
-Non-commercial fan project. Johnny Silverhand and David Martinez belong to CD Projekt, Jinx to Riot Games, Mikasa Ackerman to Hajime Isayama / Kodansha, Lucy to CD Projekt and Studio Trigger. Not affiliated with any of them.
+## License and credits
+
+The MIT license in [`LICENSE`](LICENSE) covers the source code only (`src/`, `tools/`, `android/`). The characters, and the art, music and voice lines in `assets/`, are not under it.
+
+Samuride is a non-commercial fan project, not affiliated with, endorsed or sponsored by any of the rights holders below:
+
+- **Cyberpunk 2077** and its world (Johnny Silverhand, Adam Smasher, Arasaka, Trauma Team): CD Projekt and R. Talsorian Games.
+- **Cyberpunk: Edgerunners** (David Martinez, Lucy): CD Projekt and Studio Trigger.
+- **Jinx** (League of Legends, Arcane): Riot Games.
+- **Attack on Titan** (Mikasa Ackerman, Eren Yeager, the titans): Hajime Isayama / Kodansha.
+- **Dante** (Devil May Cry): Capcom.
+- **Wraith** (Apex Legends): Respawn Entertainment / Electronic Arts.
+- **Jetpack Joyride**, which inspired the run: Halfbrick Studios.
+
+DirtyBastrd is an original character. Rajdhani font by Indian Type Foundry, under the SIL Open Font License.
+
+If you own any of this and want it taken out, open an issue: it will be removed.
