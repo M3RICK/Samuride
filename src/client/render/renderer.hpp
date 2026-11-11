@@ -43,7 +43,7 @@ public:
     void render(GameState &state, bool connected);
     void renderMenu(const MenuState &menu);
     void setLobbyInfo(const std::string &info) { lobby_info = info; }
-    sf::RenderWindow &getWindow() { return canvas.target(); }
+    sf::RenderWindow &getWindow() { return canvas.getWindow(); }
     void setFullscreen(bool fullscreen) { canvas.setFullscreen(fullscreen); }
     Audio &getAudio() { return audio; }
 };

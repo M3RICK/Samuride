@@ -75,6 +75,7 @@ void GameScreen::resetRun()
     heard_countdown = -1;
     drones_down = 0;
     hit_stop = 0;
+    sprint_split = 0;
     cuts.clear();
     zaps.clear();
     scrap_payouts.clear();
@@ -277,11 +278,15 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     // The world view shakes on hits and blasts, the HUD doesn't. It eases out over its last 0.15 s.
     sf::View ui_view = canvas.screenView();
     sf::View world_view = ui_view;
+    float strength = run.shake > 0 ? run.shake_strength * std::min(1.0f, run.shake / 0.15f) : 0;
     if (run.shake > 0) {
-        float strength = run.shake_strength * std::min(1.0f, run.shake / 0.15f);
         world_view.move({randf(-strength, strength), randf(-strength, strength)});
         run.shake -= dt;
     }
+    auto mine = players.find(me);
+    bool sprinting = mine != players.end() && mine->second.sprinting && phase == Phase::Running;
+    sprint_split += ((sprinting ? SPRINT_SPLIT : 0) - sprint_split) * std::min(1.0f, dt * 8);
+    canvas.colour_split = sprint_split + strength * SHAKE_SPLIT;
 
     canvas.target().setView(world_view);
     drawDistrict(state.getDistrict());
@@ -400,6 +405,7 @@ void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int 
 void GameScreen::drawDistrict(int district)
 {
     int current = backdrops.drawDistrict(canvas, run.view, district);
+    canvas.sceneryDone();
 
     if (current != shown_backdrop) {
         shown_backdrop = current;

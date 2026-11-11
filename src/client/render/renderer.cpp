@@ -47,7 +47,7 @@ void Renderer::renderMenu(const MenuState &menu)
 
 void Renderer::beginFrame(bool in_game)
 {
-    sf::RenderWindow &window = canvas.target();
+    sf::RenderTarget &window = canvas.target();
 
     audio.playMusic(in_game);
     audio.update();
@@ -62,13 +62,14 @@ void Renderer::beginFrame(bool in_game)
 
 void Renderer::endFrame()
 {
-    sf::RenderWindow &window = canvas.target();
+    sf::RenderWindow &window = canvas.getWindow();
 
-    window.setView(canvas.screenView());
-    window.draw(scanlines);
+    canvas.target().setView(canvas.screenView());
 #ifdef SAMURIDE_SHOW_FPS
     drawFrameStats();
 #endif
+    canvas.present();
+    window.draw(scanlines);
     window.display();
 }
 

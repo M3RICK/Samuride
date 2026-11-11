@@ -68,6 +68,11 @@ private:
     static constexpr float HIT_STOP = 0.035f;   // felt, not seen: longer breaks the run's rhythm
     static constexpr float CUT_TIME = 0.25f;
     float hit_stop = 0;         // seconds of freeze left
+    // The colours split at the screen's edges (see PostFx) while you sprint on the Sandevistan, eased in
+    // and out, and with every shake, by its strength in pixels
+    static constexpr float SPRINT_SPLIT = 0.008f;
+    static constexpr float SHAKE_SPLIT = 0.0005f;
+    float sprint_split = 0;
     struct Cut {
         sf::Vector2f pos;       // in tiles
         sf::Clock age;

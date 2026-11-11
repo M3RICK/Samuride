@@ -3,6 +3,15 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.3
+
+### New
+- **Neon glow**: eddies, zappers, shots, power-ups and the HUD now bleed light around them; the scenery
+  stays as it was, so nothing gets harder to read. The screen's corners are a touch darker.
+- The colours split at the edges of the screen while you sprint on the Sandevistan, and on every hit that
+  shakes it.
+- Not on Android: phones keep the picture they had.
+
 ## v3.2.3
 
 ### Fixes

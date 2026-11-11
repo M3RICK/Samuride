@@ -59,6 +59,7 @@ void MenuScreens::drawBackground(const MenuState &menu)
     } else {
         backdrops.draw(canvas, view, menu.district, 1);
     }
+    canvas.sceneryDone();
 }
 
 void MenuScreens::drawPoster()
