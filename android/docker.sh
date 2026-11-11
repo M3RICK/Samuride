@@ -11,4 +11,4 @@ IMAGE="samuride-android"
 
 docker image inspect "$IMAGE" > /dev/null 2>&1 || docker build -q -t "$IMAGE" "$ROOT/android" > /dev/null
 # As you, so build/ and dist/ stay yours
-docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SHOW_FPS="${SHOW_FPS:-0}" -v "$ROOT":/src -w /src "$IMAGE" android/package.sh "$@"
+docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SHOW_FPS="${SHOW_FPS:-0}" -e KEYSTORE_PASSWORD -v "$ROOT":/src -w /src "$IMAGE" android/package.sh "$@"

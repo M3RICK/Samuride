@@ -73,14 +73,16 @@ done
     --target-sdk-version "$TARGET_SDK" --version-name "$VERSION" -A "$STAGE/assets"
 (cd "$STAGE" && zip -q -0 -r "$BUILD/unaligned.apk" lib)
 
-# Signed with a key kept in build/android: reinstalls over a previous build need the same key
+# Signed with a key kept in build/android: reinstalls over a previous build need the same key.
+# Its password is "android" unless KEYSTORE_PASSWORD says otherwise (see README.md)
 KEYSTORE="$BUILD/debug.keystore"
+export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-android}"
 if [ ! -f "$KEYSTORE" ]; then
-    keytool -genkeypair -keystore "$KEYSTORE" -storepass android -keypass android -alias samuride \
+    keytool -genkeypair -keystore "$KEYSTORE" -storepass:env KEYSTORE_PASSWORD -keypass:env KEYSTORE_PASSWORD -alias samuride \
             -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Samuride" > /dev/null 2>&1
 fi
 mkdir -p "$ROOT/dist"
 "$TOOLS/zipalign" -f -p 4 "$BUILD/unaligned.apk" "$BUILD/aligned.apk"
 # No .idsig next to the APK: that v4 signature only serves adb's incremental installs
-"$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --v4-signing-enabled false --out "$ROOT/dist/$PACKAGE.apk" "$BUILD/aligned.apk"
+"$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass env:KEYSTORE_PASSWORD --v4-signing-enabled false --out "$ROOT/dist/$PACKAGE.apk" "$BUILD/aligned.apk"
 echo "Packed dist/$PACKAGE.apk"
