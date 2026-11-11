@@ -36,6 +36,7 @@ private:
     int character = 0;
     int version = 0;            // PROTOCOL_VERSION it sent, 0 if none
     bool introduced = false;    // sent MSG_CONNECT: the character is the one picked
+    int silent_ticks = 0;       // ticks spent in the lobby without introducing itself
     UpgradeLevels upgrades{};   // bought in the shop, sent with MSG_CONNECT
     float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
     Form form = Form::Normal;
@@ -136,6 +137,7 @@ public:
     void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
     const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
+    int waitSilently() { return ++silent_ticks; }
     void setVersion(int sent) { version = sent; }
     int getVersion() const { return version; }
 

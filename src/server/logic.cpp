@@ -74,6 +74,7 @@ void Server::updateGameState()
 {
     switch (phase) {
         case Phase::Waiting:
+            dropSilentClients();
             if (lobbyReady())
                 startGame();
             break;
@@ -93,6 +94,19 @@ bool Server::lobbyReady() const
 {
     return players.size() == required_players &&
            std::all_of(players.begin(), players.end(), [](const auto &entry) { return entry.second.isIntroduced(); });
+}
+
+// Connected, but never said who they play: their place goes back to the lobby
+void Server::dropSilentClients()
+{
+    std::vector<int> silent;
+
+    for (auto &[client_fd, player] : players) {
+        if (!player.isIntroduced() && player.waitSilently() > INTRO_TIMEOUT * TICK_RATE)
+            silent.push_back(client_fd);
+    }
+    for (int client_fd : silent)
+        removeClient(client_fd);
 }
 
 // Everyone gets the run's map, then who plays whom

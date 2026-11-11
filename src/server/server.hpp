@@ -149,6 +149,8 @@ private:
     static constexpr size_t MAX_PENDING_BYTES = 1024;
     // A client this far behind on what we send (minutes of game state) isn't reading anymore
     static constexpr size_t MAX_SEND_BACKLOG = 1 << 20;
+    // A client says who it plays as soon as it connects: one still silent after this is holding a place
+    static constexpr float INTRO_TIMEOUT = 3;
 
     //===========================================================================
     // Server Initialization
@@ -206,6 +208,7 @@ private:
     //===========================================================================
 
     bool lobbyReady() const;
+    void dropSilentClients();
     void startGame();
 
     void reopenLobby();

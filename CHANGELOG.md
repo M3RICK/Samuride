@@ -3,6 +3,14 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.2.3
+
+### Fixes
+- A connection that never picks a runner no longer holds a place in the lobby: it is dropped after 3 seconds.
+- CYBERPSYCHO: your implant's name shows under the wanted stars even with no star lit, and the eddies
+  multiplier only once you have one.
+- The game no longer trusts the host's server on which titan to draw.
+
 ## v3.2.2
 
 ### Other

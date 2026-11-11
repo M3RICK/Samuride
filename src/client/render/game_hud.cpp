@@ -204,13 +204,13 @@ void GameScreen::drawWanted(const PlayerState &player, int me, float y)
         star.setFillColor(lit ? ((i % 2 == 0) == red ? NEON_RED : NEON_CYAN) : sf::Color(255, 255, 255, 40));
         canvas.draw(star);
     }
-    if (stars > 0)
-        if (implant > 0)
+    if (implant > 0)
         canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
     if (boon != Boon::None)
         canvas.text(boonLook(boon, weaponOf(run.characterOf(me))).name, 22, NEON_YELLOW,
                     {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22)}, {0, 0.5f});
-    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+    if (stars > 0)
+        canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
                     {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 

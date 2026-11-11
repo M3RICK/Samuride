@@ -935,6 +935,20 @@ static void testServerRun()
         Socket::close(stranger.fd);
     }
 
+    // Someone who connects and never says who they play is shown out: the lobby isn't theirs to hold
+    {
+        TestClient mute(port);
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(6);
+        bool dropped = false;
+        while (!dropped && std::chrono::steady_clock::now() < deadline) {
+            std::vector<Socket::PollEntry> entries = {{mute.fd}};
+            if (Socket::poll(entries, 50) && (entries[0].readable || entries[0].closed))
+                dropped = !Socket::receive(mute.fd, mute.stream);
+        }
+        assert(dropped);
+        Socket::close(mute.fd);
+    }
+
     // Alice, first in, hosts: her district holds even when Bob's connect comes before hers
     TestClient alice(port);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
