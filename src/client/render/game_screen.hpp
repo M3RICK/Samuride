@@ -11,6 +11,7 @@
 #include "run.hpp"
 #include "../../common/boons.hpp"
 #include "../wallet.hpp"
+#include "../contracts.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
 #include "players.hpp"
@@ -150,6 +151,12 @@ private:
     bool new_record = false;
     bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
+    // Solo: the contracts once this run is counted, and those it finished (paid into the wallet)
+    Contracts contracts;
+    std::vector<Contract> contracts_done;
+    bool contracts_counted = false;
+    void settleContracts(GameState &state);
+    void drawContracts();
     std::string ultimate_key;   // its name, read from the settings at the start of each run
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown

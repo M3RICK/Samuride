@@ -11,6 +11,9 @@ taken from this file. Players on different versions can't play together: update 
 - The colours split at the edges of the screen while you sprint on the Sandevistan, and on every hit that
   shakes it.
 - Not on Android: phones keep the picture they had.
+- **Contracts**: three goals at a time, shown on the main menu and on the results: a distance, drones
+  down, eddies in one run, or a run as a given runner. Every solo run counts; a finished contract pays 60,
+  100 or 150 eddies and another takes its place. Not with a custom tuning, like the records.
 - **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
   runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
   the others, locked ones included.

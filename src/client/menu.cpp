@@ -27,6 +27,8 @@ MenuChoice Menu::run(Renderer &renderer, MenuState::Screen start)
     state.screen = start;
     state.bests = Bests::load();
     state.wallet = Wallet::load();
+    state.contracts = Contracts::load();
+    state.contracts.save();
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {

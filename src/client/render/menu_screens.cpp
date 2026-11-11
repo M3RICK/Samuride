@@ -103,11 +103,22 @@ void MenuScreens::drawMain(const MenuState &menu)
 
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter());
+    // The contracts under the list, where an error shows instead
+    if (menu.screen == MenuState::Screen::Main && menu.error.empty()) {
+        canvas.text("CONTRACTS, SOLO RUNS", 24, NEON_PINK, {x, 866});
+        for (int i = 0; i < Contracts::COUNT; i++) {
+            const Contract &contract = menu.contracts.slots[i];
+            std::string runner = contract.runner >= 0 && contract.runner < static_cast<int>(sprites.characters.size())
+                                     ? sprites.characters[contract.runner].name : "";
+            canvas.text(std::format("{}     {}/{}     +{} EDDIES", contract.label(runner), contract.progress, contract.goal,
+                                    contract.reward), 22, DIM_WHITE, {x, 898 + i * 28.0f});
+        }
+    }
     const Bests &bests = menu.bests;
     if (bests.classic > 0 || bests.cyberpsycho > 0)
         canvas.text(std::format("BEST  CLASSIC {} M    CYBERPSYCHO {} M, {} DRONES    {} EDDIES", bests.classic,
                                 bests.cyberpsycho, bests.drones, menu.wallet.eddies),
-                    28, NEON_YELLOW, {x, 960});
+                    26, NEON_YELLOW, {x, 990});
 
     canvas.text(Touch::hint("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", "TAP TO SELECT"), 22, HINT_GREY, {x, 1030});
 }

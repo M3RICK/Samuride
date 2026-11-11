@@ -9,6 +9,7 @@
 #include "../server/server.hpp"
 #include "socket.hpp"
 #include "../client/wallet.hpp"
+#include "../client/contracts.hpp"
 #include "cyberpsycho.hpp"
 #include "snipers.hpp"
 #include "tuning.hpp"
@@ -825,6 +826,31 @@ static void testWallet()
 // Adam Smasher: wakes up in his arena, the rocket wall leaves its gap free, the slam spares the air and
 // leaves him close by for a while,
 // he goes down at 0 health and leaves at the arena's end
+// A run counts for every contract; a finished one comes back and a new kind takes its slot
+static void testContracts()
+{
+    std::mt19937 rng(7);
+    Contracts contracts;
+    contracts.slots = {{{Contract::Distance, 400, 60, 0, -1}, {Contract::TotalDrones, 50, 60, 45, -1},
+                        {Contract::RunnerDistance, 300, 60, 0, 2}}};
+
+    // Too short, and not as Jinx: only the totals move, and the best run is remembered
+    assert(contracts.settle({350, 20, 3, 0}, rng, 1).empty());
+    assert(contracts.slots[0].progress == 350 && contracts.slots[1].progress == 48 && contracts.slots[2].progress == 0);
+    assert(contracts.settle({200, 20, 0, 2}, rng, 1).empty());
+    assert(contracts.slots[0].progress == 350 && contracts.slots[2].progress == 200);
+
+    std::vector<Contract> finished = contracts.settle({420, 20, 2, 2}, rng, 1);
+    assert(finished.size() == 3 && finished[0].kind == Contract::Distance && finished[1].progress == 50);
+    for (int i = 0; i < Contracts::COUNT; i++) {
+        const Contract &slot = contracts.slots[i];
+        assert(slot.goal > 0 && slot.progress == 0 && slot.reward > 0);
+        assert(slot.kind != Contract::RunnerDistance || slot.runner == 0);
+        for (int j = 0; j < i; j++)
+            assert(contracts.slots[j].kind != slot.kind);
+    }
+}
+
 static void testBoss()
 {
     std::map<int, Player> players;
@@ -1282,6 +1308,7 @@ int main()
     testEvents();
     testTuning();
     testWallet();
+    testContracts();
     testUpgrades();
     testNextGoal();
     std::cout << "All tests passed" << std::endl;

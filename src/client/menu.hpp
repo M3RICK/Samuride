@@ -9,6 +9,7 @@
 #include <string>
 #include "settings.hpp"
 #include "wallet.hpp"
+#include "contracts.hpp"
 
 class Renderer;
 class Audio;
@@ -41,6 +42,7 @@ struct MenuState {
     std::string error;
     Bests bests;
     Wallet wallet;
+    Contracts contracts;
 };
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)

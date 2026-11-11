@@ -54,6 +54,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
         recordSoloBests(state);
+        settleContracts(state);
         bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
@@ -75,6 +76,8 @@ void GameScreen::resetRun()
     heard_countdown = -1;
     drones_down = 0;
     hit_stop = 0;
+    contracts_done.clear();
+    contracts_counted = false;
     sprint_split = 0;
     cuts.clear();
     zaps.clear();
@@ -128,6 +131,26 @@ void GameScreen::recordSoloBests(GameState &state)
         bests.drones = drones_down;
     if (new_record || new_drone_record)
         bests.save();
+}
+
+// A solo run counts for the contracts, and those it finishes pay their eddies. Not with a custom tuning,
+// like the records.
+void GameScreen::settleContracts(GameState &state)
+{
+    static std::mt19937 rng(std::random_device{}());
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
+
+    if (players.size() != 1 || mine == players.end() || Tuning::custom())
+        return;
+
+    contracts = Contracts::load();
+    contracts_done = contracts.settle({static_cast<int>(mine->second.x), mine->second.score, drones_down,
+                                       run.characterOf(mine->first)}, rng, Wallet::load().unlocked);
+    contracts.save();
+    contracts_counted = true;
+    for (const Contract &contract : contracts_done)
+        Wallet::earn(contract.reward);
 }
 
 // The run's eddies go to the wallet, to buy runners with

@@ -549,15 +549,36 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
 
     canvas.overlay(190);
 
-    if (solo && mine != players.end())
+    if (solo && mine != players.end()) {
         drawSoloResults(mine->second);
-    else
+        drawContracts();
+    } else
         drawVersusResults(players, state.getWinner(), me);
 
     canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
     drawNextGoal(Screen::CENTER + sf::Vector2f(0, 192));
     if (phase_clock.getElapsedTime().asSeconds() >= PROMPT_DELAY)
         drawRematchPrompt(state, solo);
+}
+
+// At the top of the results: the contracts this run finished, then the three now running
+void GameScreen::drawContracts()
+{
+    float y = 70;
+    auto runnerName = [&](const Contract &contract) {
+        return contract.runner >= 0 && contract.runner < static_cast<int>(sprites.characters.size())
+                   ? sprites.characters[contract.runner].name : std::string();
+    };
+
+    if (!contracts_counted)
+        return;
+    canvas.text("CONTRACTS", 30, NEON_PINK, {Screen::WIDTH / 2, y});
+    for (const Contract &contract : contracts_done)
+        canvas.text(std::format("DONE:  {}     +{} EDDIES", contract.label(runnerName(contract)), contract.reward), 28,
+                    NEON_YELLOW, {Screen::WIDTH / 2, y += 34});
+    for (const Contract &contract : contracts.slots)
+        canvas.text(std::format("{}     {}/{}     +{} EDDIES", contract.label(runnerName(contract)), contract.progress,
+                                contract.goal, contract.reward), 24, DIM_WHITE, {Screen::WIDTH / 2, y += 32});
 }
 
 void GameScreen::drawSoloResults(const PlayerState &me)

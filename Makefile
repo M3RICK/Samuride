@@ -44,7 +44,7 @@ SERVER_SRCS = src/server/main.cpp $(SERVER_CORE_SRCS)
 
 # Client sources
 CLIENT_SRCS = src/client/main.cpp src/client/client.cpp src/client/inputs.cpp src/client/state.cpp \
-              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp src/client/wallet.cpp \
+              src/client/menu.cpp src/client/characters.cpp src/client/audio.cpp src/client/settings.cpp src/client/wallet.cpp src/client/contracts.cpp \
               $(wildcard src/client/render/*.cpp)
 CLIENT_LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
@@ -61,7 +61,7 @@ COMMON_OBJS = $(COMMON_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_OBJS = $(SERVER_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 SERVER_CORE_OBJS = $(SERVER_CORE_SRCS:%.cpp=$(OBJ_DIR)/%.o)
 CLIENT_OBJS = $(CLIENT_SRCS:%.cpp=$(OBJ_DIR)/%.o)
-TESTS_OBJS = $(OBJ_DIR)/src/common/tests.o $(SERVER_CORE_OBJS) $(OBJ_DIR)/src/client/wallet.o $(COMMON_OBJS)
+TESTS_OBJS = $(OBJ_DIR)/src/common/tests.o $(SERVER_CORE_OBJS) $(OBJ_DIR)/src/client/wallet.o $(OBJ_DIR)/src/client/contracts.o $(COMMON_OBJS)
 ALL_OBJS = $(COMMON_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) $(OBJ_DIR)/src/common/tests.o
 
 # Executables
