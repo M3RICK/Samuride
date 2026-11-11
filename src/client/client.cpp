@@ -128,14 +128,20 @@ void Client::networkLoop()
     }
 }
 
+// Sent as far as the socket takes it, the rest next time: a packet cut in half would scramble the stream
 void Client::processOutgoingMessages()
 {
-    std::lock_guard<std::mutex> lock(queue_mutex);
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
 
-    while (!message_queue.empty()) {
-        Socket::send(client_fd, message_queue.front());
-        message_queue.pop();
+        for (; !message_queue.empty(); message_queue.pop())
+            outgoing.insert(outgoing.end(), message_queue.front().begin(), message_queue.front().end());
     }
+
+    int sent = outgoing.empty() ? 0 : Socket::send(client_fd, outgoing);
+
+    if (sent > 0)
+        outgoing.erase(outgoing.begin(), outgoing.begin() + sent);
 }
 
 void Client::readIncomingData()

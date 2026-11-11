@@ -44,6 +44,7 @@ private:
     std::vector<uint8_t> stream;    // bytes received, not yet a full packet
 
     std::queue<std::vector<uint8_t>> message_queue;
+    std::vector<uint8_t> outgoing;  // bytes the socket hasn't taken yet (network thread only)
     std::mutex queue_mutex;
 
     bool connectToServer(int timeout_ms);
