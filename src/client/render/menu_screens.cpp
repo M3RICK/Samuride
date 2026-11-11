@@ -105,25 +105,57 @@ void MenuScreens::drawMain(const MenuState &menu)
         canvas.text(menu.error, 30, NEON_RED, MenuLayout::itemBox(MenuLayout::ITEM_COUNT).getCenter());
     // The contracts under the list, where an error shows instead
     if (menu.screen == MenuState::Screen::Main && menu.error.empty()) {
-        canvas.text("CONTRACTS, SOLO RUNS", 24, NEON_PINK, {x, 866});
-        for (int i = 0; i < Contracts::COUNT; i++) {
-            const Contract &contract = menu.contracts.slots[i];
-            std::string runner = contract.runner >= 0 && contract.runner < static_cast<int>(sprites.characters.size())
-                                     ? sprites.characters[contract.runner].name : "";
-            canvas.text(std::format("{}     {}/{}     +{} EDDIES", contract.label(runner), contract.progress, contract.goal,
-                                    contract.reward), 22, DIM_WHITE, {x, 898 + i * 28.0f});
-        }
+        canvas.text("CONTRACTS", 26, NEON_PINK, {x - 300, 800}, {0, 0.5f});
+        canvas.text("solo runs, paid at the end", 20, HINT_GREY, {x + 300, 802}, {1, 0.5f});
+        for (int i = 0; i < Contracts::COUNT; i++)
+            drawContractCard(canvas, sprites, menu.contracts.slots[i], MenuLayout::contractBox(i));
     }
     const Bests &bests = menu.bests;
     if (bests.classic > 0 || bests.cyberpsycho > 0)
         canvas.text(std::format("BEST  CLASSIC {} M    CYBERPSYCHO {} M, {} DRONES    {} EDDIES", bests.classic,
                                 bests.cyberpsycho, bests.drones, menu.wallet.eddies),
-                    26, NEON_YELLOW, {x, 990});
+                    24, NEON_YELLOW, {x, 1005});
 
-    canvas.text(Touch::hint("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", "TAP TO SELECT"), 22, HINT_GREY, {x, 1030});
+    canvas.text(Touch::hint("[ARROWS / MOUSE] SELECT     [ENTER] CONFIRM", "TAP TO SELECT"), 22, HINT_GREY, {x, 1042});
 }
 
 // The selected item glitches between two red markers
+void drawContractCard(Canvas &canvas, const Sprites &sprites, const Contract &contract, sf::FloatRect box)
+{
+    bool done = contract.done();
+    sf::Color accent = done ? NEON_YELLOW : NEON_CYAN;
+    float share = std::clamp(static_cast<float>(contract.progress) / std::max(1, contract.goal), 0.0f, 1.0f);
+    float middle = box.getCenter().y;
+    float right = box.position.x + box.size.x;
+    std::string runner = contract.runner >= 0 && contract.runner < static_cast<int>(sprites.characters.size())
+                             ? sprites.characters[contract.runner].name : "";
+
+    sf::RectangleShape panel(box.size);
+    panel.setPosition(box.position);
+    panel.setFillColor(sf::Color(10, 8, 20, 225));
+    panel.setOutlineColor(withAlpha(accent, done ? 255 : 90));
+    panel.setOutlineThickness(done ? 3 : 2);
+    canvas.draw(panel);
+
+    // How far it is: a wash over the card, and a bright line under it
+    sf::RectangleShape bar({box.size.x * share, box.size.y});
+    bar.setPosition(box.position);
+    bar.setFillColor(withAlpha(accent, done ? 55 : 35));
+    canvas.draw(bar);
+    bar.setSize({box.size.x * share, 4});
+    bar.setPosition({box.position.x, box.position.y + box.size.y - 4});
+    bar.setFillColor(accent);
+    canvas.draw(bar);
+
+    canvas.text(contract.label(runner), 24, done ? NEON_YELLOW : sf::Color::White, {box.position.x + 16, middle}, {0, 0.5f});
+    canvas.image(sprites.coin, {right - 12, middle}, 30, {1, 0.5f}, sf::Color::White);
+    canvas.text(std::format("+{}", contract.reward), 24, NEON_YELLOW, {right - 50, middle}, {1, 0.5f});
+    if (done)
+        canvas.text("DONE", 22, NEON_YELLOW, {right - 125, middle}, {1, 0.5f});
+    else
+        canvas.text(std::format("{}/{}", contract.progress, contract.goal), 20, HINT_GREY, {right - 125, middle}, {1, 0.5f});
+}
+
 void MenuScreens::drawMenuItem(int index, bool selected)
 {
     sf::Vector2f pos = MenuLayout::itemBox(index).getCenter();

@@ -54,8 +54,9 @@ struct Contracts {
     // A new contract in every empty slot, of a kind none of the others has, for one of the first
     // `unlocked` runners
     void fill(std::mt19937 &rng, int unlocked);
-    // Counts a run, then returns the contracts it finished, replaced by new ones
-    std::vector<Contract> settle(const RunStats &run, std::mt19937 &rng, int unlocked);
+    // Counts a run, then returns what each slot holds at its end: its contract, done() for those the run
+    // finished. These leave their slot to new ones.
+    std::array<Contract, COUNT> settle(const RunStats &run, std::mt19937 &rng, int unlocked);
 };
 
 #endif

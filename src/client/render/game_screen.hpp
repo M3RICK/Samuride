@@ -151,9 +151,8 @@ private:
     bool new_record = false;
     bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
-    // Solo: the contracts once this run is counted, and those it finished (paid into the wallet)
-    Contracts contracts;
-    std::vector<Contract> contracts_done;
+    // Solo: what each contract slot held once this run was counted; those it finished are paid into the wallet
+    std::array<Contract, Contracts::COUNT> contracts_ended;
     bool contracts_counted = false;
     void settleContracts(GameState &state);
     void drawContracts();

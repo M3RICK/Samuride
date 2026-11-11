@@ -70,10 +70,8 @@ void Contracts::fill(std::mt19937 &rng, int unlocked)
     }
 }
 
-std::vector<Contract> Contracts::settle(const RunStats &run, std::mt19937 &rng, int unlocked)
+std::array<Contract, Contracts::COUNT> Contracts::settle(const RunStats &run, std::mt19937 &rng, int unlocked)
 {
-    std::vector<Contract> finished;
-
     for (Contract &slot : slots) {
         switch (slot.kind) {
             case Contract::Distance:        slot.progress = std::max(slot.progress, run.distance); break;
@@ -85,11 +83,12 @@ std::vector<Contract> Contracts::settle(const RunStats &run, std::mt19937 &rng, 
                 if (run.runner == slot.runner)
                     slot.progress = std::max(slot.progress, run.distance);
         }
-        if (slot.done()) {
-            finished.push_back(slot);
+    }
+    std::array<Contract, COUNT> ended = slots;
+    for (Contract &slot : slots) {
+        if (slot.done())
             slot = {};
-        }
     }
     fill(rng, unlocked);
-    return finished;
+    return ended;
 }

@@ -76,7 +76,6 @@ void GameScreen::resetRun()
     heard_countdown = -1;
     drones_down = 0;
     hit_stop = 0;
-    contracts_done.clear();
     contracts_counted = false;
     sprint_split = 0;
     cuts.clear();
@@ -144,13 +143,13 @@ void GameScreen::settleContracts(GameState &state)
     if (players.size() != 1 || mine == players.end() || Tuning::custom())
         return;
 
-    contracts = Contracts::load();
-    contracts_done = contracts.settle({static_cast<int>(mine->second.x), mine->second.score, drones_down,
+    Contracts contracts = Contracts::load();
+    contracts_ended = contracts.settle({static_cast<int>(mine->second.x), mine->second.score, drones_down,
                                        run.characterOf(mine->first)}, rng, Wallet::load().unlocked);
     contracts.save();
     contracts_counted = true;
-    for (const Contract &contract : contracts_done)
-        Wallet::earn(contract.reward);
+    for (const Contract &contract : contracts_ended)
+        Wallet::earn(contract.done() ? contract.reward : 0);
 }
 
 // The run's eddies go to the wallet, to buy runners with

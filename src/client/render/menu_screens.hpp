@@ -11,6 +11,10 @@ struct MenuState;
 struct Sprites;
 struct Character;
 struct Wallet;
+struct Contract;
+
+// A contract as a card: its goal, a bar filling up behind it, how far it is and what it pays. Gold once done.
+void drawContractCard(Canvas &canvas, const Sprites &sprites, const Contract &contract, sf::FloatRect box);
 
 class MenuScreens {
 private:

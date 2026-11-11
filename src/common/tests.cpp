@@ -835,13 +835,16 @@ static void testContracts()
                         {Contract::RunnerDistance, 300, 60, 0, 2}}};
 
     // Too short, and not as Jinx: only the totals move, and the best run is remembered
-    assert(contracts.settle({350, 20, 3, 0}, rng, 1).empty());
+    auto finished = [](const std::array<Contract, Contracts::COUNT> &ended) {
+        return std::ranges::count_if(ended, &Contract::done);
+    };
+    assert(finished(contracts.settle({350, 20, 3, 0}, rng, 1)) == 0);
     assert(contracts.slots[0].progress == 350 && contracts.slots[1].progress == 48 && contracts.slots[2].progress == 0);
-    assert(contracts.settle({200, 20, 0, 2}, rng, 1).empty());
+    assert(finished(contracts.settle({200, 20, 0, 2}, rng, 1)) == 0);
     assert(contracts.slots[0].progress == 350 && contracts.slots[2].progress == 200);
 
-    std::vector<Contract> finished = contracts.settle({420, 20, 2, 2}, rng, 1);
-    assert(finished.size() == 3 && finished[0].kind == Contract::Distance && finished[1].progress == 50);
+    std::array<Contract, Contracts::COUNT> ended = contracts.settle({420, 20, 2, 2}, rng, 1);
+    assert(finished(ended) == 3 && ended[0].kind == Contract::Distance && ended[1].progress == 50);
     for (int i = 0; i < Contracts::COUNT; i++) {
         const Contract &slot = contracts.slots[i];
         assert(slot.goal > 0 && slot.progress == 0 && slot.reward > 0);

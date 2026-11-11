@@ -2,6 +2,8 @@
 
 #include "game_screen.hpp"
 #include "sprites.hpp"
+#include "menu_screens.hpp"
+#include "../menu.hpp"
 #include "../audio.hpp"
 #include "../touch.hpp"
 #include "../../common/tuning.hpp"
@@ -561,24 +563,14 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
         drawRematchPrompt(state, solo);
 }
 
-// At the top of the results: the contracts this run finished, then the three now running
+// Over the results, side by side: each contract as this run left it, gold for those it finished
 void GameScreen::drawContracts()
 {
-    float y = 70;
-    auto runnerName = [&](const Contract &contract) {
-        return contract.runner >= 0 && contract.runner < static_cast<int>(sprites.characters.size())
-                   ? sprites.characters[contract.runner].name : std::string();
-    };
-
     if (!contracts_counted)
         return;
-    canvas.text("CONTRACTS", 30, NEON_PINK, {Screen::WIDTH / 2, y});
-    for (const Contract &contract : contracts_done)
-        canvas.text(std::format("DONE:  {}     +{} EDDIES", contract.label(runnerName(contract)), contract.reward), 28,
-                    NEON_YELLOW, {Screen::WIDTH / 2, y += 34});
-    for (const Contract &contract : contracts.slots)
-        canvas.text(std::format("{}     {}/{}     +{} EDDIES", contract.label(runnerName(contract)), contract.progress,
-                                contract.goal, contract.reward), 24, DIM_WHITE, {Screen::WIDTH / 2, y += 32});
+    for (int i = 0; i < Contracts::COUNT; i++)
+        drawContractCard(canvas, sprites, contracts_ended[i],
+                         MenuLayout::centeredBox({Screen::WIDTH / 2 + (i - 1) * 620.0f, 250}, {600, 52}));
 }
 
 void GameScreen::drawSoloResults(const PlayerState &me)
