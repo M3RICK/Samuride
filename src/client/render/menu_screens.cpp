@@ -186,7 +186,125 @@ void MenuScreens::drawCharacterSelect(const MenuState &menu)
     if (!menu.error.empty())
         canvas.text(menu.error, 30, NEON_RED, {Screen::WIDTH / 2, 990});
 
-    canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] CONFIRM     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+    sf::FloatRect button = MenuLayout::infoButton();
+    canvas.card(button, false);
+    canvas.text(Touch::hint("[I] RUNNER INFO", "RUNNER INFO"), 28, NEON_CYAN, button.getCenter());
+    if (menu.info)
+        drawRunnerInfo(menu);
+    else
+        canvas.text(Touch::hint("[ARROWS] CHOOSE     [ENTER] CONFIRM     [I] INFO     [ESC] BACK", "TAP TO CHOOSE     [BACK] BACK"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
+}
+
+// How each runner plays in CYBERPSYCHO, in RUNNERS order, with the numbers the game runs on (tuning.txt)
+struct RunnerInfo {
+    std::string attack;
+    std::string ultimate;
+    std::string also;   // what else sets them apart; empty for most
+};
+
+static RunnerInfo runnerInfo(int runner)
+{
+    static const char *GUN = "Shoots straight ahead: the first drone on the bullet's line goes down.";
+
+    switch (runner) {
+        case 0:
+            return {GUN, std::format("A wall of fire sweeps {:g} tiles ahead, burning drones, zappers and titans.", FIRE_WAVE_RANGE), ""};
+        case 1:
+            return {GUN, std::format("His arm cannon drops a mini-nuke {:g} tiles ahead: it razes everything {:g} tiles around "
+                                     "where it lands.", NUKE_DISTANCE, NUKE_RADIUS), ""};
+        case 2:
+            return {std::format("Pow-Pow, her minigun: bursts of {} bullets, a steady spray in Berserk.", MINIGUN_BURST),
+                    "A big rocket razes a band of the corridor at her height, and she can fly through it.", ""};
+        case 3:
+            return {"Her blades cut what is right in front of her, titans included: take their nape for a big bounty.",
+                    std::format("{} spears, thrown one at a time with the ultimate key: each sticks in the first drone or "
+                                "titan and blows up in a lightning column, floor to ceiling. Her blades stay on the attack key.",
+                                THUNDER_SPEARS),
+                    "ODM gear: she turns faster in the air than anyone."};
+        case 4:
+            return {std::format("Hacks the first thing in her way: a zapper goes off for {:g} seconds, a drone goes down and the "
+                                "hack jumps to another one close by. {} charges of RAM, one back every {:g} seconds.",
+                                HACK_TIME, RAM_MAX, RAM_RECHARGE),
+                    std::format("Every drone on screen goes down, every zapper on screen goes off for {:g} seconds.", BREACH_TIME),
+                    "She can open a zapper, the others can only dodge it."};
+        case 5:
+            return {"His sword on the ground, his guns in the air.",
+                    std::format("For {:g} seconds his double flies at the opposite height and repeats every attack of his.",
+                                DOPPELGANGER_TIME),
+                    "Style, D to SSS: kills in a row raise it, and each drone pays up to 3 times more. It drops when "
+                    "he stops killing."};
+        case 6:
+            return {std::format("No weapon: he blinks {:g} tiles ahead, up to {:g} with the key held, killing the drones he "
+                                "crosses. {} charges, one back every {:g} seconds.",
+                                BLINK_DISTANCE, BLINK_FAR_DISTANCE, BLINK_CHARGES, BLINK_RECHARGE),
+                    std::format("For {:g} seconds the titans, the snipers and Adam Smasher stand still: only the runners move.",
+                                STILLNESS_TIME),
+                    "A Blink through a zapper pays a few eddies, and lands him just past it."};
+        case 7:
+            return {"Kicks the drones right in front of him: a short reach, but back sooner than a blade. No titans.",
+                    std::format("For {:g} seconds a chainsaw shreds the drones at his hands. Ultimate key again: a lunge that "
+                                "cuts through zappers. Attack key: he throws it through up to {} targets. One hit snaps it into "
+                                "scrap eddies.", CHAINSAW_TIME, CHAINSAW_THROW_HITS),
+                    ""};
+        default:
+            return {};
+    }
+}
+
+// Broken into lines of `width` characters at most, at the spaces
+static std::string wrapped(const std::string &text, size_t width)
+{
+    std::istringstream words(text);
+    std::string result, word;
+    size_t line = 0;
+
+    while (words >> word) {
+        if (line > 0 && line + 1 + word.size() > width) {
+            result += '\n';
+            line = 0;
+        } else if (line > 0) {
+            result += ' ';
+            line++;
+        }
+        result += word;
+        line += word.size();
+    }
+    return result;
+}
+
+// Over the cards: the selected runner, their attack, their ultimate and what else sets them apart
+void MenuScreens::drawRunnerInfo(const MenuState &menu)
+{
+    const Character &character = sprites.characters[menu.character];
+    RunnerInfo info = runnerInfo(menu.character);
+    sf::FloatRect box = MenuLayout::centeredBox({Screen::WIDTH / 2, 560}, {1500, 760});
+    float left = box.position.x + 420;
+    float y = box.position.y + 150;
+    std::string attack_key = Touch::hint(keyName(menu.settings.attack_key).c_str(), "ATTACK BUTTON");
+    std::string ultimate_key = Touch::hint(keyName(menu.settings.ultimate_key).c_str(), "ULTIMATE BUTTON");
+
+    canvas.overlay(235);
+    canvas.card(box, true);
+    canvas.image(character.portrait, {box.position.x + 210, box.position.y + 60}, 150, {0.5f, 0}, sf::Color::White);
+    drawCharacterPreview(character, {{box.position.x + 70, box.position.y + 240}, {280, 420}}, true, sf::Color::White, canvas.time());
+    canvas.text(character.name, 64, NEON_YELLOW, {left, box.position.y + 75}, {0, 0.5f});
+
+    auto section = [&](const std::string &title, sf::Color color, const std::string &body) {
+        if (body.empty())
+            return;
+        sf::Text text = canvas.makeText(wrapped(body, 74), 28, sf::Color::White, {left, y + 44}, {0, 0});
+        canvas.text(title, 34, color, {left, y}, {0, 0});
+        canvas.draw(text);
+        y += 44 + text.getLocalBounds().size.y + 50;
+    };
+    section(std::format("ATTACK   [{}]", attack_key), NEON_CYAN, info.attack);
+    section(std::format("ULTIMATE   [{}]   {}", ultimate_key, ultimateLook(ultimateOf(menu.character)).name),
+            ultimateLook(ultimateOf(menu.character)).color, info.ultimate);
+    section("ALSO:", NEON_PINK, info.also);
+
+    canvas.text("Attacks and ultimates are for CYBERPSYCHO: in CLASSIC, everyone just flies.", 24, HINT_GREY,
+                {Screen::WIDTH / 2, box.position.y + box.size.y - 40});
+    canvas.text(Touch::hint("[ARROWS] OTHER RUNNER     [I] CLOSE", "TAP TO CLOSE"), 24, HINT_GREY, {Screen::WIDTH / 2, 1030});
 }
 
 // Portrait, name, and the runner itself: running, then flying when selected.

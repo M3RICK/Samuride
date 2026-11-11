@@ -11,6 +11,9 @@ taken from this file. Players on different versions can't play together: update 
 - The colours split at the edges of the screen while you sprint on the Sandevistan, and on every hit that
   shakes it.
 - Not on Android: phones keep the picture they had.
+- **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
+  runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
+  the others, locked ones included.
 
 ## v3.2.3
 

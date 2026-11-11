@@ -30,6 +30,7 @@ struct MenuState {
     Screen screen = Screen::Main;
     int selected = 0;
     int character = 0;
+    bool info = false;      // character select: the selected runner's how-to is open
     int game_mode = 0;
     int district = 0;
     int option = 0;
@@ -106,6 +107,12 @@ namespace MenuLayout {
         float x = 960 + (index % CARD_COLUMNS - (CARD_COLUMNS - 1) / 2.0f) * CARD_SPACING;
         float y = CARD_Y + (index / CARD_COLUMNS) * CARD_ROW_SPACING;
         return centeredBox({x, y}, {CARD_WIDTH, CARD_HEIGHT});
+    }
+
+    // Character select: opens the selected runner's how-to
+    inline sf::FloatRect infoButton()
+    {
+        return centeredBox({1700, 235}, {300, 64});
     }
 
     // Upgrades shop: one card each, four to a row, a short last row centered

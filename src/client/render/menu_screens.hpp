@@ -31,6 +31,7 @@ private:
     void drawCharacterCard(int index, bool selected, const Wallet &wallet, float time);
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint, float time);
     void drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet);
+    void drawRunnerInfo(const MenuState &menu);
 
     void drawUpgrades(const MenuState &menu);
     void drawUpgradeCard(int index, bool selected, const Wallet &wallet);
