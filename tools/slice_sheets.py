@@ -55,6 +55,7 @@ TITAN_CUTS = ("seams", [200, 310, 420, 535, 645, 757, 867, 978, 1094, 1207, 1323
 # Sheet options:
 #   key_background: the "transparent" checkerboard is drawn in the picture, light greys become transparent
 #   key_black:      drawn on black, no transparency: black fades out (softly, the dark outlines stay)
+#   holes:          with key_black, points in pockets of background a frame closes off
 #   mirror:         frames face left in the game (they run toward the player)
 #   effects:        tell flames and smoke apart from the body; off when the body itself has those colours
 #   erase:          boxes cleared before slicing, for labels drawn over the rows
@@ -115,20 +116,22 @@ CHARACTERS = {
     # Her white hair would pass for smoke; a jump frame's head reaches the "JUMP" label's height
     # target.png: the glitch ring marking what her hack will hit
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
-    # Pixel art on black, from Alex. Two attacks: his sword on the ground, Ebony & Ivory in the air ("shoot")
-    "dante": ("../Samuride Files/Animation files/Dante/Dante_Sprite_Sheet.png", (106, 14, 160, 68), {
-        "run":    animation((80, 140, 1380, 252), 14, ground=True),
-        "rise":   animation((85, 278, 1515, 388), 12),
-        "hover":  animation((85, 278, 1515, 388), 12),
-        # The end of his fall row: leaning back, a gun up, the pose that loops well
-        "fall":   animation((105, 405, 1500, 528), 8, frames=[8, 9, 10, 11]),
-        "death":  animation((105, 915, 1480, 1012), 10, mode="once"),
+    # Pixel art on black, from Alex: demon wings instead of a jetpack. Two attacks: his sword on the ground,
+    # Ebony & Ivory in the air ("shoot")
+    "dante": ("../Samuride Files/Dante_Wings.png", (126, 14, 180, 68), {
+        "run":    animation((76, 140, 1390, 258), 14, ground=True),
+        # The last two frames of the row touch by a wing, and so do the last of his fall: left out
+        "rise":   animation((70, 264, 1510, 398), 12, frames=list(range(9))),
+        "hover":  animation((70, 264, 1510, 398), 12, frames=list(range(9))),
+        "fall":   animation((76, 408, 1500, 538), 8, frames=list(range(7))),
+        "death":  animation((95, 908, 1510, 1010), 10, mode="once"),
         # The wind-up, the swing and the big arc, shorter than the cooldown so a cut never restarts
-        "attack": animation((100, 785, 1375, 905), 18, mode="once", effects_ahead=True, frames=[2, 3, 4, 5, 9]),
-        # Each muzzle flash touches the next frame's jet flame: cut between them
-        "shoot":  animation((90, 668, 1445, 778), 18, mode="once",
-                            cuts=[90, 213, 342, 471, 591, 713, 833, 960, 1094, 1210, 1328, 1445], frames=[3, 4, 5]),
-    }, {"key_black": True}),
+        "attack": animation((95, 772, 1380, 902), 18, mode="once", effects_ahead=True, splits=[725, 852],
+                            frames=[2, 3, 4, 5, 9]),
+        # Each muzzle flash touches the next frame's wing: cut between them
+        "shoot":  animation((90, 660, 1430, 766), 18, mode="once",
+                            cuts=[90, 205, 335, 467, 592, 713, 837, 959, 1082, 1204, 1320, 1430], frames=[3, 4, 5]),
+    }, {"key_black": True, "holes": [(1310, 850)]}),
     # Wraith, from ChatGPT: sources/wraith/ holds the four pictures, stacked in sources/wraith.png at a third of
     # their size (run, flight, Blink and death; the Blink sheet's faint haze taken out), the portrait
     # shrunk to 300 px under them
@@ -394,14 +397,16 @@ def crop_frame(sheet, box, mask):
     return Image.fromarray(frame)
 
 
-def key_black(sheet):
+def key_black(sheet, holes=()):
     """The background (0 to 4 on Dante's sheet) goes; the dark pixels touching it fade with their
     brightness (outlines are 17 and up), the dark ones inside the character (his hair) stay. The
-    background is the black reaching the sheet's corner: black inside a body is part of it."""
+    background is the black reaching the sheet's corner: black inside a body is part of it, but for the
+    pockets at `holes` (the inside of a blade's arc closed by the body)."""
     px = np.array(sheet).astype(int)
     brightness = px[..., :3].max(axis=2)
     black = Image.fromarray(np.where(brightness <= 6, 255, 0).astype(np.uint8)).copy()  # writable
-    ImageDraw.floodfill(black, (0, 0), 128)
+    for seed in [(0, 0), *holes]:
+        ImageDraw.floodfill(black, seed, 128)
     background = np.array(black) == 128
     edge = background.copy()
     for dy in (-1, 0, 1):
@@ -438,7 +443,7 @@ def slice_character(name, sheet_name, portrait_box, animations, options, debug_d
     if options.get("key_background"):
         sheet = key_background(sheet)
     if options.get("key_black"):
-        sheet = key_black(sheet)
+        sheet = key_black(sheet, options.get("holes", ()))
     if options.get("min_alpha"):
         px = np.array(sheet)
         px[px[..., 3] < options["min_alpha"]] = 0
