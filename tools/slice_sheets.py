@@ -71,7 +71,7 @@ TITAN_SHEET = {"key_background": True, "mirror": True, "effects": False}
 SHIFT_SHEET = {"effects": False, "erase": [(0, 4, 170, 20), (0, 118, 170, 132), (0, 282, 170, 296)]}
 SHIFT_SMOKE_CUTS = [0, 37, 72, 115, 159, 205, 255, 305, 357, 410, 472, 533, 590, 679]
 
-DANTE_WINGS = "../Samuride Files/Dante_Wings.png"
+DANTE_WINGS = "sources/dante_wings.png"
 
 # name: (source sheet, portrait box or None for the head of the first run frame,
 #        {animation: animation(...)}[, sheet options])
@@ -119,7 +119,7 @@ CHARACTERS = {
     }, {"effects": False, "erase": [(18, 358, 250, 382)], "crops": {"target.png": (24, 880, 132, 990)}}),
     # Pixel art on black, from Alex, in two sheets: on the ground the first one, no wings; in the air the
     # second, his demon wings out. Two attacks: his sword on the ground, Ebony & Ivory in the air ("shoot")
-    "dante": ("../Samuride Files/Animation files/Dante/Dante_Sprite_Sheet.png", (106, 14, 160, 68), {
+    "dante": ("sources/dante.png", (106, 14, 160, 68), {
         "run":    animation((80, 140, 1380, 252), 14, ground=True),
         # The last two frames of the row touch by a wing, and so do the last of his fall: left out
         "rise":   animation((70, 264, 1510, 398), 12, frames=list(range(9)), source=DANTE_WINGS),
@@ -196,15 +196,15 @@ CHARACTERS = {
         "revive": animation((55, 575, 1480, 672), 8, ground=True, mode="once", effects_ahead=True),
     }, {"min_alpha": 200}),
     # The mounts, in place of Eren's titan for their runner (render/players.cpp): from Alex, on several rows
-    "johny_mount": ("../Samuride Files/Animation files/Johnny/Johnny_Porsche_NoBG.png", None, {
+    "johny_mount": ("sources/mounts/johnny.png", None, {
         "run": animation([(0, 85, 1408, 205), (0, 257, 1408, 377), (0, 444, 1408, 565), (0, 632, 1408, 754)], 14,
                          ground=True),
     }),
-    "david_mount": ("../Samuride Files/Animation files/David/David_Cyberpsycho_NoBG.png", None, {
+    "david_mount": ("sources/mounts/david.png", None, {
         # The source swaps his cannon arm for a fist every other frame: the cannon ones only
         "run": animation([(0, 55, 1408, 368), (0, 415, 1408, 725)], 8, ground=True, frames=[0, 2, 4, 5, 7]),
     }),
-    "jinx_mount": ("../Samuride Files/Animation files/Jinx/Warwick_Jinx_Mount_Alt_NoBG.png", None, {
+    "jinx_mount": ("sources/mounts/jinx_alt.png", None, {
         "run": animation([(0, 0, 1408, 250), (0, 260, 1408, 505), (0, 515, 1408, 758)], 14, ground=True),
     }),
     # Titans charge at the player; Eren's titan is also the transformation power-up

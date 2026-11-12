@@ -6,3 +6,5 @@ run_tests
 build/
 dist/
 __pycache__/
+/docs/IDEAS.md
+/docs/NEXT.md
