@@ -19,6 +19,9 @@ taken from this file. Players on different versions can't play together: update 
   the others, locked ones included.
 - **First runs**: until you have run 200 m in a mode, the keys are told one at a time as they come up: how to
   fly, then in CYBERPSYCHO the attack and the ultimate.
+- **New results screen** for solo runs: distance, drones and eddies each on their own plate against your best
+  (gold on a new record), the boons you ran with, then your contracts. The run's HUD no longer shows
+  through it.
 - **Pause**: in a solo run, `P` freezes everything and `P` again resumes; `Esc` leaves to the menu, as before.
   The run also pauses on its own when the window loses focus.
 - **New sounds**: recorded samples replace the synthesized bleeps for the guns, the explosions, the shield,

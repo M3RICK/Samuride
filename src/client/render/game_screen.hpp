@@ -278,7 +278,9 @@ private:
     void drawDeathCause(sf::Vector2f pos);
     void drawNextGoal(sf::Vector2f pos);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
-    void drawSoloResults(const PlayerState &me);
+    void drawSoloResults(const PlayerState &me, int number);
+    void drawResultTile(sf::Vector2f center, const std::string &label, const std::string &value, const std::string &note, bool record);
+    void drawResultBoons(int me, float y);
     void drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me);
     void drawRematchPrompt(GameState &state, bool solo);
     void drawConnectionLost();

@@ -605,46 +605,94 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
     canvas.overlay(190);
 
     if (solo && mine != players.end()) {
-        drawSoloResults(mine->second);
+        drawSoloResults(mine->second, me);
         drawContracts();
-    } else
+    } else {
         drawVersusResults(players, state.getWinner(), me);
-
-    canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
+        canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
+    }
     drawNextGoal(Screen::CENTER + sf::Vector2f(0, 192));
     if (phase_clock.getElapsedTime().asSeconds() >= PROMPT_DELAY)
         drawRematchPrompt(state, solo);
 }
 
-// Over the results, side by side: each contract as this run left it, gold for those it finished
+// Under the results, side by side: each contract as this run left it, gold for those it finished
 void GameScreen::drawContracts()
 {
     if (!contracts_counted)
         return;
     for (int i = 0; i < Contracts::COUNT; i++)
         drawContractCard(canvas, sprites, contracts_ended[i],
-                         MenuLayout::centeredBox({Screen::WIDTH / 2 + (i - 1) * 620.0f, 250}, {600, 52}));
+                         MenuLayout::centeredBox({Screen::WIDTH / 2 + (i - 1) * 620.0f, 640}, {600, 52}));
 }
 
-void GameScreen::drawSoloResults(const PlayerState &me)
+// One figure of the run on its plate: what it counts, the figure, and under it the best or what it adds up to
+void GameScreen::drawResultTile(sf::Vector2f center, const std::string &label, const std::string &value,
+                                const std::string &note, bool record)
 {
-    sf::Vector2f center = Screen::CENTER;
-    std::string result = cyberpsycho_run
-                             ? std::format("{} M      {} DRONES      {} EDDIES", static_cast<int>(me.x), drones_down, me.score)
-                             : std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
+    static constexpr sf::Vector2f SIZE{400, 170};
 
-    canvas.glitchText("FLATLINED", 140, NEON_RED, center + sf::Vector2f(0, -150));
-    drawDeathCause(center + sf::Vector2f(0, -55));
-    canvas.text(result, 44, sf::Color::White, center + sf::Vector2f(0, 10));
+    canvas.card(sf::FloatRect(center - SIZE / 2.f, SIZE), record);
+    canvas.text(label, 24, DIM_WHITE, center + sf::Vector2f(0, -58));
+    canvas.text(value, 68, record ? NEON_YELLOW : sf::Color::White, center + sf::Vector2f(0, -4));
+    canvas.text(note, 24, record ? NEON_YELLOW : DIM_WHITE, center + sf::Vector2f(0, 56));
+}
 
-    if (new_record || new_drone_record)
-        canvas.glitchText(new_record && new_drone_record ? "NEW PERSONAL BESTS" : new_record ? "NEW PERSONAL BEST" : "NEW DRONE RECORD",
-                          48, NEON_YELLOW, center + sf::Vector2f(0, 95));
-    else if (cyberpsycho_run)
-        canvas.text(std::format("BEST  {} M      {} DRONES", bests.cyberpsycho, bests.drones), 32, DIM_WHITE,
-                    center + sf::Vector2f(0, 95));
-    else
-        canvas.text(std::format("BEST  {} M", bests.classic), 32, DIM_WHITE, center + sf::Vector2f(0, 95));
+// The boons picked this run, side by side under the figures, the pacts in red; a second row when they are many
+void GameScreen::drawResultBoons(int me, float y)
+{
+    static constexpr float GAP = 44, ROW = 34, WIDEST = 1500;
+    std::vector<std::vector<sf::Text>> rows(1);
+    float width = 0;
+
+    for (Boon boon : boons) {
+        // A pact is told by its red: without its "PACT: ", the name stays in the display font
+        std::string_view title = boonLook(boon, run.characterOf(me)).name;
+        if (title.starts_with("PACT: "))
+            title.remove_prefix(6);
+        sf::Text name = canvas.makeText(std::string(title), 24, isPact(boon) ? NEON_RED : NEON_YELLOW, {0, 0}, {0, 0.5f});
+        float w = name.getGlobalBounds().size.x;
+        if (!rows.back().empty() && width + GAP + w > WIDEST) {
+            rows.emplace_back();
+            width = 0;
+        }
+        width += (rows.back().empty() ? 0 : GAP) + w;
+        rows.back().push_back(std::move(name));
+    }
+    for (size_t row = 0; row < rows.size(); row++) {
+        float total = -GAP;
+        for (const sf::Text &name : rows[row])
+            total += GAP + name.getGlobalBounds().size.x;
+        float x = Screen::WIDTH / 2 - total / 2;
+        for (sf::Text &name : rows[row]) {
+            name.setPosition({x, y + row * ROW});
+            canvas.draw(name);
+            x += name.getGlobalBounds().size.x + GAP;
+        }
+    }
+}
+
+// The run on one screen: how it ended, its figures against your bests, the boons it was run with
+void GameScreen::drawSoloResults(const PlayerState &me, int number)
+{
+    float middle = Screen::WIDTH / 2;
+    int distance = static_cast<int>(me.x);
+
+    canvas.glitchText("FLATLINED", 130, NEON_RED, {middle, 150});
+    drawDeathCause({middle, 245});
+
+    std::string best = std::format("BEST  {} M", bests.distance(cyberpsycho_run));
+    std::string wallet_note = std::format("WALLET  {}", wallet);
+    if (cyberpsycho_run) {
+        drawResultTile({middle - 430, 380}, "DISTANCE", std::format("{} M", distance), new_record ? "NEW PERSONAL BEST" : best, new_record);
+        drawResultTile({middle, 380}, "DRONES DOWN", std::to_string(drones_down),
+                       new_drone_record ? "NEW PERSONAL BEST" : std::format("BEST  {}", bests.drones), new_drone_record);
+        drawResultTile({middle + 430, 380}, "EDDIES", std::to_string(me.score), wallet_note, false);
+    } else {
+        drawResultTile({middle - 215, 380}, "DISTANCE", std::format("{} M", distance), new_record ? "NEW PERSONAL BEST" : best, new_record);
+        drawResultTile({middle + 215, 380}, "EDDIES", std::to_string(me.score), wallet_note, false);
+    }
+    drawResultBoons(number, 510);
 }
 
 void GameScreen::drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me)

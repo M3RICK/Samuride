@@ -348,7 +348,9 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     smasher.draw(state.getBoss(), state.getMode() == GameMode::Cyberpsycho);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
-    drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
+    // Not under a solo run's results: they say it all, and its lines would show through them
+    if (phase != Phase::Over || players.size() != 1)
+        drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
