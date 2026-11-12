@@ -1,15 +1,14 @@
 name JINX
 sheet sheet.png
 portrait portrait.png
-frame 141 124
-feet 92
-body 75
+frame 264 138
+feet 125
+body 105
 exhaust 255 40 200
-faces faces.png 9 6
-run 0 7 12 loop
-takeoff 1 8 16 once
-rise 2 7 12 loop
-hover 3 15 14 loop
+run 0 8 12 loop
+takeoff 1 10 16 once
+rise 2 13 12 loop
+hover 3 13 14 loop
 fall 4 8 12 loop
-death 5 9 10 hide
-attack 6 5 16 once
+death 5 10 10 hide
+attack 6 6 16 once
