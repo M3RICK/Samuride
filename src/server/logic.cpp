@@ -252,6 +252,12 @@ void Server::updatePlayers()
         if (mode == GameMode::Cyberpsycho)
             offerBoons();
     }
+    // Cards just dealt: nothing else happens to the runners this tick. An eddy picked up right after the
+    // offer would close it on their screen, and the run would wait on cards they can't see.
+    if (!boon_offers.empty() || !ripperdoc_waiting.empty()) {
+        sendGameState();
+        return;
+    }
 
     for (auto &[client_fd, player] : players) {
         player.update(TICK_DT, run_speed, max_y);

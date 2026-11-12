@@ -37,6 +37,8 @@ taken from this file. Players on different versions can't play together: update 
 - Dante flies on demon wings instead of a jetpack (a new sprite sheet from Alex); they fold away when he runs.
 
 ### Fixes
+- The run no longer freezes for 10 seconds at a boon or at the Ripperdoc with no cards on screen: picking
+  up an eddy at that very moment hid them.
 - Adam Smasher's rockets fly on until they leave the screen instead of vanishing behind you.
 - Wraith's Stillness no longer leaves Smasher behind, out of the screen and out of reach: he stops
   attacking but keeps pace with you.
