@@ -19,8 +19,10 @@ taken from this file. Players on different versions can't play together: update 
   the others, locked ones included.
 - **First runs**: until you have run 200 m in a mode, the keys are told one at a time as they come up: how to
   fly, then in CYBERPSYCHO the attack and the ultimate.
-- **Pause**: in a solo run, `Esc` freezes everything and `Esc` again resumes; `Q` leaves to the menu. The run
-  also pauses on its own when the window loses focus. (`Esc` still leaves a versus run right away.)
+- **Pause**: in a solo run, `P` freezes everything and `P` again resumes; `Esc` leaves to the menu, as before.
+  The run also pauses on its own when the window loses focus.
+- **New sounds**: recorded samples replace the synthesized bleeps for the guns, the explosions, the shield,
+  the Sandevistan, the Blink and the menus.
 - **Boons add up**: a new pick of three every 250 m instead of one for the whole run (never inside Adam
   Smasher's arena: the next comes once he is gone). No boon comes twice; the ones you hold are listed under
   your wanted stars, pacts in red.

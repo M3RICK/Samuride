@@ -544,12 +544,12 @@ void GameScreen::drawHints(const PlayerState &player, int me, bool cyberpsycho)
     canvas.draw(label);
 }
 
-// A solo run frozen with Escape, or by the window losing focus
+// A solo run frozen with P, or by the window losing focus
 void GameScreen::drawPause()
 {
     canvas.overlay(170);
     canvas.glitchText("PAUSED", 130, NEON_CYAN, Screen::CENTER + sf::Vector2f(0, -80));
-    canvas.text(Touch::hint("[ESC] RESUME        [Q] QUIT TO MENU", "TAP TO RESUME"), 36, sf::Color::White,
+    canvas.text(Touch::hint("[P] RESUME        [ESC] QUIT TO MENU", "TAP TO RESUME"), 36, sf::Color::White,
                 Screen::CENTER + sf::Vector2f(0, 60));
     if (Touch::ENABLED) {
         canvas.card(sf::FloatRect(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE), true);

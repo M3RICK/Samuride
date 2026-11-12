@@ -9,7 +9,8 @@
 // Music, sound effects synthesized at start-up, and the runners' recorded lines
 class Audio {
 public:
-    // Each one is synthesized in Audio::synthesize(), but the recorded ones loaded in loadLines()
+    // Each one is synthesized in Audio::synthesize(); the most heard are then replaced by the samples in
+    // assets/sfx (loadSamples), and the recorded lines are loaded in loadLines()
     enum class Sfx {
         Coin, Zap, Beep, Go, GameOver, MenuMove, MenuConfirm,       // the run and the menus
         Gun, Minigun, Rocket, Slash, Hack, Thunder, Explosion,      // CYBERPSYCHO attacks and drones
@@ -98,6 +99,7 @@ private:
     void loadMusic();
     void loadLines();
     void synthesize();
+    void loadSamples();
     void applyVolumes();
     // Spoken: plays on the line voices and ducks the rest. Johnny's gun is recorded but a gunshot, an effect.
     bool isVoice(Sfx sfx) const { return lines.count(sfx) > 0 && sfx != Sfx::JohnnyGun; }

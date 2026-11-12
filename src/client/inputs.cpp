@@ -22,10 +22,11 @@ void InputManager::processInputs()
         if (event->is<sf::Event::Closed>())
             close_requested = true;
         else if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
-            // Escape pauses a solo run and resumes it; paused, Q leaves. Anywhere else it leaves.
-            if (key->code == sf::Keyboard::Key::Escape && !client->pause(!client->paused()))
-                back_requested = true;
-            if (key->code == sf::Keyboard::Key::Q && client->paused())
+            // P pauses a solo run and resumes it; Escape leaves, as everywhere. On a phone the back button
+            // (Escape) is the only key: it pauses first.
+            if (key->code == sf::Keyboard::Key::P)
+                client->pause(!client->paused());
+            if (key->code == sf::Keyboard::Key::Escape && !(Touch::ENABLED && client->pause(true)))
                 back_requested = true;
             // The run over: C picks another runner, M another district
             if (client->runEnded() && (key->code == sf::Keyboard::Key::C || key->code == sf::Keyboard::Key::M)) {

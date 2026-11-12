@@ -173,6 +173,6 @@ Samuride is a non-commercial fan project, not affiliated with, endorsed or spons
 - **Wraith** (Apex Legends): Respawn Entertainment / Electronic Arts.
 - **Jetpack Joyride**, which inspired the run: Halfbrick Studios.
 
-DirtyBastrd is an original character. The run's music is ["punk music - no copyright"](https://pixabay.com/music/punk-punk-music-no-copyright-453224/) by PoorArtistt, under the Pixabay Content License. The sprites and illustrations were generated with AI, then sliced and aligned by `tools/slice_sheets.py`. Fonts: Anton by The Anton Project Authors and Rajdhani by Indian Type Foundry, both under the SIL Open Font License (their texts are in `assets/font/`).
+DirtyBastrd is an original character. The run's music is ["punk music - no copyright"](https://pixabay.com/music/punk-punk-music-no-copyright-453224/) by PoorArtistt, under the Pixabay Content License. The recorded sound effects in `assets/sfx/` are CC0, from [Kenney](https://kenney.nl)'s Sci-Fi Sounds, Digital Audio and UI Audio packs and from the "50 CC0 Sci-Fi SFX" pack on OpenGameArt; the other sounds are synthesized by the game. The sprites and illustrations were generated with AI, then sliced and aligned by `tools/slice_sheets.py`. Fonts: Anton by The Anton Project Authors and Rajdhani by Indian Type Foundry, both under the SIL Open Font License (their texts are in `assets/font/`).
 
 If you own any of this and want it taken out, open an issue: it will be removed.
