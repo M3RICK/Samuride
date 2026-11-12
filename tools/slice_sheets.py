@@ -88,16 +88,16 @@ CHARACTERS = {
         "hover": animation((0, 349, 500, 497), 12),
         "fall":  animation((0, 184, 500, 343), 1, frames=[1]),
     }),
-    # On her shark rocket, drawn on black: more frames than her first sheet
-    "jinx": ("sources/jinx.png", (44, 12, 98, 66), {
-        "run":     animation((0, 8, 1340, 100), 14, ground=True),
-        "takeoff": animation((0, 118, 1620, 236), 16, mode="once"),
-        "rise":    animation((0, 246, 1850, 364), 12),
-        "hover":   animation((0, 366, 1958, 456), 14),
-        "fall":    animation((0, 468, 1200, 568), 12),
-        "death":   animation((0, 574, 1360, 692), 10, mode="hide"),
-        "attack":  animation((0, 704, 860, 790), 16, mode="once", effects_ahead=True),
-    }, {"key_black": True}),
+    "jinx": ("sources/jinx.png", (1105, 929, 1185, 1005), {
+        "run":     animation((665, 42, 1200, 140), 12, ground=True),
+        "takeoff": animation((665, 185, 1536, 299), 16, mode="once"),
+        "rise":    animation((0, 440, 765, 592), 12),
+        "hover":   animation((0, 345, 1536, 420), 14),
+        "fall":    animation((770, 476, 1536, 592), 12),
+        "death":   animation((680, 779, 1480, 874), 10, mode="hide"),
+        "attack":  animation((780, 640, 1255, 732), 16, mode="once", effects_ahead=True),
+    # The rising heads reach past the "MONTEE" label's top
+    }, {"erase": [(10, 446, 98, 477)]}),
     "mikasa": ("sources/mikasa.png", (1140, 925, 1212, 1000), {
         "run":     animation((655, 40, 1240, 144), 12, ground=True),
         "takeoff": animation((0, 182, 640, 308), 16, mode="once"),
