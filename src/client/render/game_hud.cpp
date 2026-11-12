@@ -507,6 +507,43 @@ void GameScreen::drawGauge(const std::string &label, sf::Color color, float left
     canvas.text(label, 26, color, pos + sf::Vector2f(250, 40));
 }
 
+// The keys, for who never ran HINTS_UNTIL metres in this mode: how to fly until they do, what to do with it
+// for a moment, then in CYBERPSYCHO the attack until they use it, and the ultimate for a moment
+void GameScreen::drawHints(const PlayerState &player, int me, bool cyberpsycho)
+{
+    static constexpr float READ_TIME = 5;
+    if (bests.distance(cyberpsycho) >= HINTS_UNTIL)
+        return;
+
+    bool timed_out = hint_clock.getElapsedTime().asSeconds() > READ_TIME;
+    bool done = hint_step == 0 ? player.jet_active : hint_step == 2 ? run.attack_clocks.count(me) > 0 : timed_out;
+    if (done) {
+        hint_step++;
+        hint_clock.restart();
+    }
+
+    std::string text;
+    switch (hint_step) {
+        case 0: text = Touch::ENABLED ? "HOLD THE SCREEN TO FLY, LET GO TO DROP" : std::format("HOLD [{}] TO FLY, LET GO TO DROP", jetpack_key); break;
+        case 1: text = "GRAB THE EDDIES, STAY OFF THE ZAPPERS"; break;
+        case 2: text = !cyberpsycho ? "" : Touch::ENABLED ? "ATTACK BUTTON: TAKE THE DRONES DOWN" : std::format("[{}] ATTACK: TAKE THE DRONES DOWN", attack_key); break;
+        case 3: text = !cyberpsycho ? "" : Touch::ENABLED ? "EDDIES FILL YOUR GAUGE: THEN THE ULTIMATE BUTTON" : std::format("EDDIES FILL YOUR GAUGE: THEN [{}] FIRES YOUR ULTIMATE", ultimate_key); break;
+        default: break;
+    }
+    if (text.empty())
+        return;
+
+    // On a dark plate, low in the middle: readable over any district, out of the runner's way
+    sf::Vector2f pos(Screen::WIDTH / 2, Screen::HEIGHT - 170);
+    sf::Text label = canvas.makeText(text, 40, NEON_YELLOW, pos, {0.5f, 0.5f});
+    sf::FloatRect bounds = label.getGlobalBounds();
+    sf::RectangleShape plate(bounds.size + sf::Vector2f(60, 36));
+    plate.setPosition(bounds.position - sf::Vector2f(30, 18));
+    plate.setFillColor(sf::Color(0, 0, 0, 170));
+    canvas.draw(plate);
+    canvas.draw(label);
+}
+
 // A solo run frozen with Escape, or by the window losing focus
 void GameScreen::drawPause()
 {

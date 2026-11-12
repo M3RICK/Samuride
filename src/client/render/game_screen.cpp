@@ -93,6 +93,9 @@ void GameScreen::resetRun()
     new_drone_record = false;
     bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
+    jetpack_key = keyName(Settings::load().jetpack_key);
+    attack_key = keyName(Settings::load().attack_key);
+    hint_step = 0;
     ultimate_was_ready = false;
     spears_shown = 0;
     style_shown = 0;
@@ -349,6 +352,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (phase == Phase::Running && players.size() == 1 && players.count(me) && !state.isPaused())
+        drawHints(players.at(me), me, state.getMode() == GameMode::Cyberpsycho);
     if (state.isPaused())
         drawPause();
     if (state.isBoonOpen() && boon_clock.getElapsedTime().asSeconds() < BOON_TIME)

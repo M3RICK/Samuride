@@ -157,6 +157,12 @@ private:
     void settleContracts(GameState &state);
     void drawContracts();
     std::string ultimate_key;   // its name, read from the settings at the start of each run
+    std::string jetpack_key;
+    std::string attack_key;
+    // A new player's first runs (best under HINTS_UNTIL): the keys, told one at a time as they come up
+    static constexpr int HINTS_UNTIL = 200;
+    int hint_step = 0;
+    sf::Clock hint_clock;       // since the current hint came up
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
     int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
@@ -256,6 +262,7 @@ private:
     void drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me);
     void drawBoons(int me);
     void drawPause();
+    void drawHints(const PlayerState &player, int me, bool cyberpsycho);
     struct Card {
         std::string name;
         std::string what;
