@@ -165,7 +165,8 @@ private:
     int implant = 0;            // the one bought this run, 0 none
     sf::Clock boon_clock;       // since the boons were offered
     std::array<Boon, 3> boon_cards{};
-    Boon boon = Boon::None;     // the one picked this run
+    std::vector<Boon> boons;    // picked this run, in order
+    bool hasBoon(Boon b) const { return std::ranges::find(boons, b) != boons.end(); }
     int wanted_shown = 0;       // your NCPD stars last frame, to hear the siren when one comes
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.

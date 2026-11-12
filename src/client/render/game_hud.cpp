@@ -208,9 +208,11 @@ void GameScreen::drawWanted(const PlayerState &player, int me, float y)
     }
     if (implant > 0)
         canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
-    if (boon != Boon::None)
-        canvas.text(boonLook(boon, weaponOf(run.characterOf(me))).name, 22, NEON_YELLOW,
-                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22)}, {0, 0.5f});
+    // The run's boons, one under the other, the pacts in red; smaller once there are many
+    float line = boons.size() > 4 ? 22 : 28;
+    for (size_t i = 0; i < boons.size(); i++)
+        canvas.text(boonLook(boons[i], run.characterOf(me)).name, boons.size() > 4 ? 17 : 22, isPact(boons[i]) ? NEON_RED : NEON_YELLOW,
+                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22) + i * line}, {0, 0.5f});
     if (stars > 0)
         canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
                     {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
@@ -447,7 +449,8 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
         drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() /
-                                                       (sandevistan_time * (boon == Boon::Overclock ? 2 : 1)), y);
+                                                       (sandevistan_time * (hasBoon(Boon::Overclock) ? 2 : 1) *
+                                                        (hasBoon(Boon::RunnerPact) && run.characterOf(me) == DAVID ? CHROME_JUNKIE_TIME : 1)), y);
         y += 80;
     }
     if (player.chainsaw) {
@@ -457,7 +460,7 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
     }
     if (player.berserk)
         drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() /
-                                                 (BERSERK_TIME * (boon == Boon::Rage ? 2 : 1)), y);
+                                                 (BERSERK_TIME * (hasBoon(Boon::Rage) ? 2 : 1)), y);
 }
 
 // Beside the saw's gauge: the scrap it would burst into if it snapped now, filling toward the cap and
@@ -744,11 +747,15 @@ void GameScreen::drawBoons(int me)
 {
     std::vector<Card> cards;
     for (Boon card : boon_cards) {
-        BoonLook look = boonLook(card, weaponOf(run.characterOf(me)));
-        bool pact = static_cast<int>(card) >= FIRST_PACT && card != Boon::Signature;
-        cards.push_back({look.name, look.what, pact ? "RISKY" : card == Boon::Signature ? "YOURS ONLY" : "", true});
+        BoonLook look = boonLook(card, run.characterOf(me));
+        const char *tag = isPact(card) && isOwn(card) ? "RISKY, YOURS ONLY" : isPact(card) ? "RISKY" : isOwn(card) ? "YOURS ONLY" : "";
+        // Nothing left for that card
+        if (card == Boon::None)
+            cards.push_back({"-", "", "", false});
+        else
+            cards.push_back({look.name, look.what, tag, true});
     }
-    drawCards("PICK A BOON", NEON_YELLOW, "ONE FOR THE REST OF THE RUN, ON THE HOUSE",
+    drawCards("PICK A BOON", NEON_YELLOW, "ONE MORE FOR THE REST OF THE RUN, ON THE HOUSE",
               1 - boon_clock.getElapsedTime().asSeconds() / BOON_TIME, cards);
 }
 

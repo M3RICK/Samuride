@@ -19,7 +19,7 @@ bool Server::resetMap()
     trauma_offers.clear();
     ripperdoc_waiting.clear();
     boon_offers.clear();
-    boons_given = false;
+    next_boon = BOON_DISTANCE;
     run_events.clear();
     events_announced = -1;
     projectiles.clear();
@@ -232,11 +232,6 @@ void Server::updatePlayers()
     }
     for (auto &[client_fd, player] : players)
         player.setFlipped(eventAt(player.getX()) == RunEvent::Flip);
-    if (!boons_given && front >= BOON_DISTANCE) {
-        boons_given = true;
-        if (mode == GameMode::Cyberpsycho)
-            offerBoons();
-    }
     if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
         run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
         slowed_after_boss = true;
@@ -248,6 +243,14 @@ void Server::updatePlayers()
                 notifyCollision(RIPPERDOC_OFFER, player, static_cast<int>(player.getX()), static_cast<int>(player.getY()));
             }
         }
+    }
+
+    // Boons every BOON_DISTANCE; never in Smasher's arena (the next one waits for him to be gone), nor
+    // while the Ripperdoc is open: its cards take the same keys
+    if (front >= next_boon && !boss.holds(front) && ripperdoc_waiting.empty()) {
+        next_boon = front + BOON_DISTANCE;
+        if (mode == GameMode::Cyberpsycho)
+            offerBoons();
     }
 
     for (auto &[client_fd, player] : players) {
@@ -294,7 +297,9 @@ void Server::updatePlayers()
         });
         bool titan_ahead = titans.any([&](const Horde::Titan &titan) { return titan.x + 3 > rear_x; });
         // The NCPD sends them faster as the wanted level climbs
-        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players, [&](const Player &player) {
+        bool pursued = std::ranges::any_of(players, [](const auto &entry) { return entry.second.hasBoon(Boon::HotPursuit); });
+        float haste = (1 + WANTED_SNIPERS_PER_STAR * wantedStars()) * (pursued ? HOT_PURSUIT_SNIPERS : 1);
+        snipers.spawn(leader_x, TICK_DT * haste, rng, players, [&](const Player &player) {
             // Where the sight freezes and fires: room to step out of its row
             float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;
             float flight = SNIPER_BULLET_AHEAD / (SNIPER_BULLET_SPEED + run_speed);
@@ -380,7 +385,7 @@ bool Server::pickUp(Player &player, int x, int y)
 // A round reach, so it grabs what you graze, not the whole column.
 void Server::attractCoins(Player &player)
 {
-    float reach = magnetReach(player.getUpgrades());
+    float reach = magnetReach(player.getUpgrades()) + (player.hasBoon(Boon::Magnet) ? MAGNET_BOON_REACH : 0);
     float left = player.getX();
     float top = player.getY();
 

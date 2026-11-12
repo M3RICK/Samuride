@@ -95,7 +95,7 @@ SWARM_DRONES 0.35
 BLACKOUT_DARKNESS 200
 # Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)
 FLIP_GRACE 1.2
-# Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three
+# Boons (CYBERPSYCHO): the run stops every this many tiles to pick one of three
 BOON_DISTANCE 250
 # Seconds the run waits for the pick
 BOON_TIME 10

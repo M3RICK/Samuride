@@ -98,7 +98,7 @@ void GameScreen::resetRun()
     style_shown = 0;
     wanted_shown = 0;
     implant = 0;
-    boon = Boon::None;
+    boons.clear();
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;

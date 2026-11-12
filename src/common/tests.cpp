@@ -23,6 +23,7 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <set>
 #include <thread>
 
 static void testPacketFraming()
@@ -486,7 +487,7 @@ static void testKick()
     kicker.update(0.1f, 10, 8);
     assert(kicker.canAttack());
 
-    assert(boonLook(Boon::Signature, Weapon::Kick).name == std::string("STEEL TOES"));
+    assert(boonLook(Boon::Signature, DIRTYBASTRD).name == std::string("STEEL TOES"));
     assert(!kicker.hasBoon(Boon::Signature));
     kicker.takeBoon(Boon::Signature);
     assert(kicker.hasBoon(Boon::Signature));
@@ -1252,7 +1253,50 @@ static void testBoons()
         wanted.update(1, 0, 10);
     assert(wanted.wantedStars() == PRICE_ON_HEAD_FLOOR);
     // Every runner's own boon has its card
-    assert(boonLook(Boon::Signature, Weapon::Blink).name == std::string("VOID WALKER"));
+    assert(boonLook(Boon::Signature, WRAITH).name == std::string("VOID WALKER"));
+    // ... and every boon a card of its own, for every runner
+    for (int runner = 0; runner < RUNNER_COUNT; runner++) {
+        std::set<std::string> names;
+        for (int id = 1; id < BOONS_END; id++)
+            names.insert(boonLook(static_cast<Boon>(id), runner).name);
+        assert(names.size() == BOONS_END - 1 && !names.count(""));
+    }
+
+    // They add up
+    Player stacked(3);
+    stacked.setCharacter(DAVID);
+    stacked.reset(0, 0);
+    stacked.takeBoon(Boon::Adrenaline);
+    stacked.takeBoon(Boon::Plating);
+    stacked.takeBoon(Boon::Signature2);
+    assert(stacked.hasBoon(Boon::Adrenaline) && stacked.hasBoon(Boon::Plating) && !stacked.hasBoon(Boon::Scrapper));
+    assert(stacked.hasOwn(Boon::Signature2, DAVID) && !stacked.hasOwn(Boon::Signature2, JOHNNY));
+    for (int i = 0; i < 10; i++)
+        stacked.addScore(1);
+    assert(stacked.getUltimateCharge() == 15);      // Adrenaline: half as much again
+    stacked.addScore(1000);
+    stacked.spendUltimate();
+    assert(stacked.ultimatePercent() == 30);        // Spare Shell
+    // Chrome Junkie: three times the Sandevistan, the plating gone as it ends
+    stacked.takeBoon(Boon::RunnerPact);
+    stacked.powerUp(SANDEVISTAN_TILE);
+    float sprint = 0;
+    while (stacked.isSprinting() && (sprint += 0.01f) < 100)
+        stacked.update(0.01f, 0, 10);
+    assert(std::abs(sprint - sandevistanTime(stacked.getUpgrades()) * CHROME_JUNKIE_TIME) < 0.1f && !stacked.hasShield());
+
+    // Dante: never under B on Devil May Cry, a rank a kill on All or Nothing
+    Player dante(4);
+    dante.setCharacter(DANTE);
+    dante.reset(0, 0);
+    dante.takeBoon(Boon::Signature2);
+    dante.takeBoon(Boon::RunnerPact);
+    dante.update(0.01f, 0, 10);
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK);
+    dante.weapon().droneDown();
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK + 1);
+    dante.weapon().hurt();
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK);
 }
 
 // Over sockets: the run stops at BOON_DISTANCE with three cards, a pact last, and goes on with the one picked
@@ -1288,8 +1332,11 @@ static void testBoonPick()
     assert(runner.latest(0).x == x);
     runner.send(MSG_BOON, {3});
     assert(next(BOON_TAKEN).x == pact);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    // ... and stops again further on, with three others: never the one just taken
+    CollisionEffect second = next(BOON_OFFER);
     assert(runner.latest(0).x > x);
+    for (int card = 0; card < 3; card++)
+        assert(((second.x >> (8 * card)) & 0xFF) != pact);
 
     Socket::close(runner.fd);
     server.stop();

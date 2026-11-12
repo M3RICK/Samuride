@@ -96,11 +96,12 @@ void GameScreen::addEffect(const CollisionEffect &effect, int me)
             }
             return;
         case BOON_TAKEN:
-            if (mine && effect.x > 0 && effect.x <= static_cast<int>(Boon::Signature)) {
-                boon = static_cast<Boon>(effect.x);
+            if (mine && effect.x > 0 && effect.x < BOONS_END) {
+                Boon boon = static_cast<Boon>(effect.x);
+                boons.push_back(boon);
                 audio.play(Audio::Sfx::Jackpot);
-                run.callout = boonLook(boon, weaponOf(run.characterOf(me))).name;
-                run.callout_color = static_cast<int>(boon) >= FIRST_PACT && boon != Boon::Signature ? NEON_RED : NEON_YELLOW;
+                run.callout = boonLook(boon, run.characterOf(me)).name;
+                run.callout_color = isPact(boon) ? NEON_RED : NEON_YELLOW;
                 run.callout_clock.restart();
             }
             return;

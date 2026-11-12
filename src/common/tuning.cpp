@@ -89,7 +89,7 @@ std::vector<Entry> &entries()
             VALUE(SWARM_DRONES, "Drone swarm: added to the chance an obstacle is drones"),
             VALUE(BLACKOUT_DARKNESS, "Blackout: how dark, 0 to 255", 0, 255),
             VALUE(FLIP_GRACE, "Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)"),
-            VALUE(BOON_DISTANCE, "Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three"),
+            VALUE(BOON_DISTANCE, "Boons (CYBERPSYCHO): the run stops every this many tiles to pick one of three"),
             VALUE(BOON_TIME, "Seconds the run waits for the pick"),
             VALUE(COLD_BLOOD_AIM, "Cold Blood: seconds more a sniper's sight holds still before the shot"),
             VALUE(JACKPOT_FEVER, "Jackpot Fever: added to the chance an eddy is a jackpot", 0, 1),

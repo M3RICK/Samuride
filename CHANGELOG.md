@@ -17,7 +17,19 @@ taken from this file. Players on different versions can't play together: update 
 - **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
   runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
   the others, locked ones included.
-- **Double Plating**, a new boon: a shield right away, and you can carry two at once (never more).
+- **Boons add up**: a new pick of three every 250 m instead of one for the whole run (never inside Adam
+  Smasher's arena: the next comes once he is gone). No boon comes twice; the ones you hold are listed under
+  your wanted stars, pacts in red.
+- **New boons for everyone**: Double Plating (a shield right away, and you can carry two at once, never
+  more), Adrenaline (ultimate charges 50% faster), Scrapper (2 more eddies a drone), Second Wind (twice the
+  grace after a hit or a power-up), Magnetic Field (eddies fly in from further).
+- **New pact**: Hot Pursuit (drones pay double, snipers come twice as often).
+- **A second boon of their own for every runner**: Hollow Points (Johnny), Spare Shell (David), Trigger
+  Happy (Jinx), Nape Hunter (Mikasa), Daisy Chain (Lucy), Devil May Cry (Dante), Phase Shift (Wraith),
+  Big Boots (DirtyBastrd).
+- **A pact of their own for every runner**: Rockerboy (Johnny), Chrome Junkie (David), Loose Cannon (Jinx),
+  Gas Overload (Mikasa), Overheat (Lucy), All or Nothing (Dante), Void Hunger (Wraith), Bad Reputation
+  (DirtyBastrd). Each card says what it gives and what it costs.
 - **Snipers fire bullets**: after the sight freezes, a bullet flies in from the right edge along its row
   instead of a beam across the whole screen. Leave the row as before, or get past the bullet: Wraith can
   Blink through it.
