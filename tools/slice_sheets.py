@@ -88,16 +88,16 @@ CHARACTERS = {
         "hover": animation((0, 349, 500, 497), 12),
         "fall":  animation((0, 184, 500, 343), 1, frames=[1]),
     }),
-    # A mercenary on a shark-nosed rocket, from ChatGPT; a soft glow all around every frame
-    "jinx": ("sources/mercenary.png", (40, 6, 104, 70), {
-        "run":     animation((0, 0, 1200, 126), 12, ground=True),
-        "takeoff": animation((0, 128, 1420, 258), 16, mode="once", splits=[1140]),
-        "rise":    animation((0, 260, 1960, 390), 12),
-        "hover":   animation((0, 390, 1960, 498), 14),
-        "fall":    animation((0, 498, 1200, 594), 12),
-        "death":   animation((0, 594, 1560, 708), 10, mode="hide"),
-        "attack":  animation((0, 708, 900, 802), 16, mode="once", effects_ahead=True),
-    }, {"min_alpha": 90}),
+    # On her shark rocket, drawn on black: more frames than her first sheet
+    "jinx": ("sources/jinx.png", (44, 12, 98, 66), {
+        "run":     animation((0, 8, 1340, 100), 14, ground=True),
+        "takeoff": animation((0, 118, 1620, 236), 16, mode="once"),
+        "rise":    animation((0, 246, 1850, 364), 12),
+        "hover":   animation((0, 366, 1958, 456), 14),
+        "fall":    animation((0, 468, 1200, 568), 12),
+        "death":   animation((0, 574, 1360, 692), 10, mode="hide"),
+        "attack":  animation((0, 704, 860, 790), 16, mode="once", effects_ahead=True),
+    }, {"key_black": True}),
     "mikasa": ("sources/mikasa.png", (1140, 925, 1212, 1000), {
         "run":     animation((655, 40, 1240, 144), 12, ground=True),
         "takeoff": animation((0, 182, 640, 308), 16, mode="once"),
@@ -264,7 +264,7 @@ EXHAUST = {"mikasa": "0 240 255", "jinx": "255 40 200", "lucy": "190 70 255", "w
 # No jetpack, so no flames: carried by a headless bat dripping blood from its neck (players.cpp)
 DRIPS = {"dirtybastrd"}
 # Faces for the HUD, Doom style: (source, columns, rows) of an evenly laid grid of heads, read by game_hud.cpp
-FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6)}
+FACES = {"mikasa": ("sources/mikasa_faces.png", 9, 6), "jinx": ("sources/jinx_faces.png", 9, 6)}
 
 
 def slice_faces(source, columns, rows, out):
