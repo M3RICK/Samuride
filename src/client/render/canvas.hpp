@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include "../../common/cyberpsycho.hpp"
+#include "postfx.hpp"
 
 // Everything is drawn in a fixed 1920x1080 space, the window just scales it to fit the screen
 namespace Screen {
@@ -74,14 +75,24 @@ private:
     sf::Font fallback_font;
     static constexpr const char *PUNCTUATION = "!\"#%&'()*+,-/:;<=>?@[\\]^_`|~";
     sf::Clock clock;
+    PostFx postfx;
 
 public:
+    // How far the colours split on the next frame shown (see PostFx::present); the run sets it
+    float colour_split = 0;
+
     // Opens the window and loads the fonts
     bool open();
     // Recreates the window, covering the whole screen or not
     void setFullscreen(bool fullscreen);
 
-    sf::RenderWindow &target() { return window; }
+    // What a frame is drawn on: the window, or the picture the glow is then added to
+    sf::RenderTarget &target() { return postfx.on() ? postfx.target() : window; }
+    sf::RenderWindow &getWindow() { return window; }
+    // The finished frame goes to the window, which is left on the screen's view for what comes on top
+    void present();
+    // The frame's backdrop is drawn: it stays out of the glow
+    void sceneryDone() { if (postfx.on()) postfx.sceneryDone(); }
     void draw(const sf::Drawable &drawable, const sf::RenderStates &states = sf::RenderStates::Default);
 
     // Seconds since start, for animations; blink() flips twice a second

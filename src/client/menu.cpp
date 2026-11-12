@@ -27,6 +27,8 @@ MenuChoice Menu::run(Renderer &renderer, MenuState::Screen start)
     state.screen = start;
     state.bests = Bests::load();
     state.wallet = Wallet::load();
+    state.contracts = Contracts::load();
+    state.contracts.save();
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
@@ -347,6 +349,26 @@ void Menu::leaveOptions()
 bool Menu::handleCharacterEvent(const sf::Event &event, MenuChoice &choice)
 {
     int count = RUNNER_COUNT;
+    const auto *key = event.getIf<sf::Event::KeyPressed>();
+    bool clicked = event.is<sf::Event::MouseButtonPressed>();
+    bool on_button = clicked && boxUnderPointer(event, 1, [](int) { return MenuLayout::infoButton(); }) == 0;
+
+    // The runner's how-to: I or its button opens it, the arrows still change runner, anything else closes it
+    if (isKey(event, sf::Keyboard::Key::I) || (on_button && !state.info)) {
+        state.info = !state.info;
+        audio->play(Audio::Sfx::MenuConfirm);
+        return false;
+    }
+    if (state.info) {
+        int before = state.character;
+        if (key)
+            moveSelection(state.character, key->code, count, MenuLayout::CARD_COLUMNS);
+        if (state.character != before)
+            audio->play(Audio::Sfx::MenuMove);
+        else if (key || clicked)
+            state.info = false;
+        return false;
+    }
 
     if (isKey(event, sf::Keyboard::Key::Escape)) {
         state.error.clear();

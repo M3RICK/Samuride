@@ -18,5 +18,10 @@ Actions > New repository secret, named `ANDROID_KEYSTORE`, with the output of
 `base64 -w0 build/android/debug.keystore` as its value. Back the keystore up somewhere: without it,
 the next APK won't install over the one on the phones.
 
+The key's password is `android` unless `KEYSTORE_PASSWORD` is set when `package.sh` runs. To give it
+a real one (the key stays the same, updates still install):
+`keytool -storepasswd -keystore build/android/debug.keystore`, then update the `ANDROID_KEYSTORE`
+secret with the new file and add a second secret, `ANDROID_KEYSTORE_PASSWORD`, with the password.
+
 Installing: copy the APK to the phone and open it; Android asks once to allow installing apps from
 that source.

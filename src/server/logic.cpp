@@ -19,7 +19,7 @@ bool Server::resetMap()
     trauma_offers.clear();
     ripperdoc_waiting.clear();
     boon_offers.clear();
-    boons_given = false;
+    next_boon = BOON_DISTANCE;
     run_events.clear();
     events_announced = -1;
     projectiles.clear();
@@ -74,6 +74,7 @@ void Server::updateGameState()
 {
     switch (phase) {
         case Phase::Waiting:
+            dropSilentClients();
             if (lobbyReady())
                 startGame();
             break;
@@ -95,9 +96,23 @@ bool Server::lobbyReady() const
            std::all_of(players.begin(), players.end(), [](const auto &entry) { return entry.second.isIntroduced(); });
 }
 
+// Connected, but never said who they play: their place goes back to the lobby
+void Server::dropSilentClients()
+{
+    std::vector<int> silent;
+
+    for (auto &[client_fd, player] : players) {
+        if (!player.isIntroduced() && player.waitSilently() > INTRO_TIMEOUT * TICK_RATE)
+            silent.push_back(client_fd);
+    }
+    for (int client_fd : silent)
+        removeClient(client_fd);
+}
+
 // Everyone gets the run's map, then who plays whom
 void Server::startGame()
 {
+    paused = false;
     int player_num = 0;
     GameStart start;
     start.district = district;
@@ -166,6 +181,10 @@ void Server::updatePlayers()
     float rear_x = 1e9f;
     std::vector<int> survivors;
 
+    if (paused) {
+        sendGameState();
+        return;
+    }
     // A deadly hit asking whether to call the Trauma Team: the run waits for the answer, which is yes
     // once it is late
     if (!trauma_offers.empty()) {
@@ -218,11 +237,6 @@ void Server::updatePlayers()
     }
     for (auto &[client_fd, player] : players)
         player.setFlipped(eventAt(player.getX()) == RunEvent::Flip);
-    if (!boons_given && front >= BOON_DISTANCE) {
-        boons_given = true;
-        if (mode == GameMode::Cyberpsycho)
-            offerBoons();
-    }
     if (!slowed_after_boss && front >= BOSS_DISTANCE + BOSS_ARENA) {
         run_speed = std::max(START_SPEED, run_speed - BOSS_SPEED_DROP);
         slowed_after_boss = true;
@@ -234,6 +248,20 @@ void Server::updatePlayers()
                 notifyCollision(RIPPERDOC_OFFER, player, static_cast<int>(player.getX()), static_cast<int>(player.getY()));
             }
         }
+    }
+
+    // Boons every BOON_DISTANCE; never in Smasher's arena (the next one waits for him to be gone), nor
+    // while the Ripperdoc is open: its cards take the same keys
+    if (front >= next_boon && !boss.holds(front) && ripperdoc_waiting.empty()) {
+        next_boon = front + BOON_DISTANCE;
+        if (mode == GameMode::Cyberpsycho)
+            offerBoons();
+    }
+    // Cards just dealt: nothing else happens to the runners this tick. An eddy picked up right after the
+    // offer would close it on their screen, and the run would wait on cards they can't see.
+    if (!boon_offers.empty() || !ripperdoc_waiting.empty()) {
+        sendGameState();
+        return;
     }
 
     for (auto &[client_fd, player] : players) {
@@ -251,10 +279,9 @@ void Server::updatePlayers()
     // Wraith's Stillness: the titans, the snipers and Smasher stand still, even the sights stop following
     bool frozen = std::ranges::any_of(players, [](const auto &entry) { return entry.second.ultimate().freezes(); });
     titans.update(rear_x, frozen ? 0 : TICK_DT);
-    if (!frozen) {
-        snipers.update(TICK_DT, players);
-        boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
-    }
+    // Smasher keeps pace with the runners all the same: only his attacks stop
+    snipers.update(frozen ? 0 : TICK_DT, leader_x, players);
+    boss.update(leader_x, frozen ? 0 : TICK_DT, rng, players, game_map.getHeight());
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -281,10 +308,13 @@ void Server::updatePlayers()
         });
         bool titan_ahead = titans.any([&](const Horde::Titan &titan) { return titan.x + 3 > rear_x; });
         // The NCPD sends them faster as the wanted level climbs
-        snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players, [&](const Player &player) {
+        bool pursued = std::ranges::any_of(players, [](const auto &entry) { return entry.second.hasBoon(Boon::HotPursuit); });
+        float haste = (1 + WANTED_SNIPERS_PER_STAR * wantedStars()) * (pursued ? HOT_PURSUIT_SNIPERS : 1);
+        snipers.spawn(leader_x, TICK_DT * haste, rng, players, [&](const Player &player) {
             // Where the sight freezes and fires: room to step out of its row
             float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;
-            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + SNIPER_FIRE_TIME) + 1;
+            float flight = SNIPER_BULLET_AHEAD / (SNIPER_BULLET_SPEED + run_speed);
+            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + flight) + 1;
             return !titan_ahead && wayThrough(player, shot, [&](int x) { return x >= freeze ? WayNeed{3} : WayNeed{}; });
         });
     }
@@ -366,7 +396,7 @@ bool Server::pickUp(Player &player, int x, int y)
 // A round reach, so it grabs what you graze, not the whole column.
 void Server::attractCoins(Player &player)
 {
-    float reach = magnetReach(player.getUpgrades());
+    float reach = magnetReach(player.getUpgrades()) + (player.hasBoon(Boon::Magnet) ? MAGNET_BOON_REACH : 0);
     float left = player.getX();
     float top = player.getY();
 
@@ -408,6 +438,7 @@ void Server::sendGameState()
             .jet_active = player.isJetActive(),
             .form = player.getForm(),
             .shielded = player.hasShield(),
+            .plated = player.shieldCount() > 1,
             .sprinting = player.isSprinting(),
             .ram = player.weapon().charges(),
             .berserk = player.isBerserk(),

@@ -9,6 +9,7 @@
 #include "../server/server.hpp"
 #include "socket.hpp"
 #include "../client/wallet.hpp"
+#include "../client/contracts.hpp"
 #include "cyberpsycho.hpp"
 #include "snipers.hpp"
 #include "tuning.hpp"
@@ -22,6 +23,7 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <set>
 #include <thread>
 
 static void testPacketFraming()
@@ -67,7 +69,7 @@ static void assertRoundTrip(const T &sent, Same same)
 
 static void testMessages()
 {
-    PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
+    PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true, .plated = true,
                        .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
                        .wanted = 3, .chainsaw = true, .lunging = true, .scrap = 17};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
@@ -76,14 +78,14 @@ static void testMessages()
             auto [n, p] = entry;
             auto &q = b.at(n);
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
-                   p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
+                   p.shielded == q.shielded && p.plated == q.plated && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
                    p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
                    p.wanted == q.wanted && p.chainsaw == q.chainsaw && p.lunging == q.lunging && p.scrap == q.scrap;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59, 71}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 187, 71}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -100,8 +102,8 @@ static void testMessages()
     assertRoundTrip(std::vector<TitanState>{{TitanType::Armored, 320.25f}, {TitanType::Female, 9}}, [](auto &a, auto &b) {
         return a.size() == b.size() && a[0].type == b[0].type && a[0].x == b[0].x && a[1].type == b[1].type;
     });
-    assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
-        return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
+    assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 812.5f, 6.5f}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].phase == b[0].phase && a[0].x == b[0].x && a[0].y == b[0].y;
     });
     assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true, 0b1000000101}, [](auto &a, auto &b) {
         return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
@@ -177,9 +179,49 @@ static void testGenerator()
     }
 }
 
-// The railgun's beam hits the body from head to feet, and only along its row
+// The sniper's bullet hits the body from head to feet, only along its row, and only where it is: the sight
+// follows, freezes, then the bullet flies in from the right, and a runner past it (a Blink) is safe
 static void testSniperHit()
 {
+    assert(sniperHits(10, 6, 10, 5) && sniperHits(10.9f, 6, 10, 5) && sniperHits(9, 6, 10, 5));
+    assert(!sniperHits(11.5f, 6, 10, 5) && !sniperHits(8, 6, 10, 5) && !sniperHits(10, 4.3f, 10, 5));
+
+    std::map<int, Player> players;
+    std::mt19937 rng(1);
+    players.emplace(3, Player(3));
+    Player &runner = players.at(3);
+    runner.reset(0, 5);
+    SniperSquad squad;
+    squad.reset();
+    for (int i = 0; i < 300 && !squad.active(); i++)
+        squad.spawn(SNIPER_FIRST_DISTANCE, 0.1f, rng, players, [](const Player &) { return true; });
+    assert(squad.active());
+    auto tick = [&] { squad.update(0.01f, 100, players); };
+    while (squad.states().at(0).phase != SniperPhase::Firing) {
+        assert(!squad.hit(runner));
+        tick();
+    }
+    // Just fired, from the right edge: not on him yet, and it hangs there while the world stands still
+    float from = squad.states().at(0).x;
+    assert(from > 100 + SNIPER_BULLET_AHEAD - 1 && !squad.hit(runner));
+    squad.update(0, 100, players);
+    assert(squad.states().at(0).x == from);
+    runner.blinkTo(from - 5);
+    bool hit = false, passed = false;
+    while (squad.active()) {
+        tick();
+        hit |= squad.hit(runner);
+        // A Blink through it: behind him now
+        if (hit && !passed) {
+            runner.blinkTo(from);
+            passed = true;
+            assert(!squad.hit(runner));
+        } else {
+            assert(!passed || !squad.hit(runner));
+        }
+    }
+    assert(hit);
+
     assert(sniperHits(6.0f, 5));
     assert(sniperHits(5.0f, 5));
     assert(sniperHits(7.0f, 5));
@@ -196,6 +238,16 @@ static void testPowerUps()
     shielded.powerUp(SHIELD_TILE);
     assert(shielded.hasShield() && shielded.absorbHit() && !shielded.hasShield());
     assert(shielded.isInvincible() && !shielded.absorbHit());
+    // One at a time, two on Double Plating (one right away), never three
+    Player plated(-1);
+    plated.reset(0, 0);
+    plated.powerUp(SHIELD_TILE);
+    plated.powerUp(SHIELD_TILE);
+    assert(plated.shieldCount() == 1);
+    plated.takeBoon(Boon::Plating);
+    plated.powerUp(SHIELD_TILE);
+    assert(plated.shieldCount() == 2);
+    assert(plated.absorbHit() && plated.hasShield() && plated.absorbHit() && !plated.absorbHit());
     for (int i = 0; i < 61; i++)
         shielded.update(1 / 60.f, 10, 8);
     assert(!shielded.isInvincible());
@@ -435,7 +487,7 @@ static void testKick()
     kicker.update(0.1f, 10, 8);
     assert(kicker.canAttack());
 
-    assert(boonLook(Boon::Signature, Weapon::Kick).name == std::string("STEEL TOES"));
+    assert(boonLook(Boon::Signature, DIRTYBASTRD).name == std::string("STEEL TOES"));
     assert(!kicker.hasBoon(Boon::Signature));
     kicker.takeBoon(Boon::Signature);
     assert(kicker.hasBoon(Boon::Signature));
@@ -707,6 +759,10 @@ static void testWraithSmasher()
     assert(strike > BOSS_CANNON_TIME && strike <= BLINK_PERFECT_WINDOW + BOSS_CANNON_TIME + 0.01f);
     assert(boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW) == 0);
     assert(boss.threatens(players.at(3), 10, 0.001f) == 0);     // not that close yet
+    // Stillness (dt 0): his attack stops, but he keeps pace with the runners, still within reach
+    BossState still = boss.state();
+    boss.update(BOSS_DISTANCE + 30, 0, rng, players, 10);
+    assert(boss.state().x == still.x + 30 && boss.state().time == still.time);
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line
@@ -825,6 +881,34 @@ static void testWallet()
 // Adam Smasher: wakes up in his arena, the rocket wall leaves its gap free, the slam spares the air and
 // leaves him close by for a while,
 // he goes down at 0 health and leaves at the arena's end
+// A run counts for every contract; a finished one comes back and a new kind takes its slot
+static void testContracts()
+{
+    std::mt19937 rng(7);
+    Contracts contracts;
+    contracts.slots = {{{Contract::Distance, 400, 60, 0, -1}, {Contract::TotalDrones, 50, 60, 45, -1},
+                        {Contract::RunnerDistance, 300, 60, 0, 2}}};
+
+    // Too short, and not as Jinx: only the totals move, and the best run is remembered
+    auto finished = [](const std::array<Contract, Contracts::COUNT> &ended) {
+        return std::ranges::count_if(ended, &Contract::done);
+    };
+    assert(finished(contracts.settle({350, 20, 3, 0}, rng, 1)) == 0);
+    assert(contracts.slots[0].progress == 350 && contracts.slots[1].progress == 48 && contracts.slots[2].progress == 0);
+    assert(finished(contracts.settle({200, 20, 0, 2}, rng, 1)) == 0);
+    assert(contracts.slots[0].progress == 350 && contracts.slots[2].progress == 200);
+
+    std::array<Contract, Contracts::COUNT> ended = contracts.settle({420, 20, 2, 2}, rng, 1);
+    assert(finished(ended) == 3 && ended[0].kind == Contract::Distance && ended[1].progress == 50);
+    for (int i = 0; i < Contracts::COUNT; i++) {
+        const Contract &slot = contracts.slots[i];
+        assert(slot.goal > 0 && slot.progress == 0 && slot.reward > 0);
+        assert(slot.kind != Contract::RunnerDistance || slot.runner == 0);
+        for (int j = 0; j < i; j++)
+            assert(contracts.slots[j].kind != slot.kind);
+    }
+}
+
 static void testBoss()
 {
     std::map<int, Player> players;
@@ -933,6 +1017,20 @@ static void testServerRun()
         assert(refusal && refusal->size() == 1 && (*refusal)[0] == PROTOCOL_VERSION);
         assert(!stranger.await(MSG_GAME_START));
         Socket::close(stranger.fd);
+    }
+
+    // Someone who connects and never says who they play is shown out: the lobby isn't theirs to hold
+    {
+        TestClient mute(port);
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(6);
+        bool dropped = false;
+        while (!dropped && std::chrono::steady_clock::now() < deadline) {
+            std::vector<Socket::PollEntry> entries = {{mute.fd}};
+            if (Socket::poll(entries, 50) && (entries[0].readable || entries[0].closed))
+                dropped = !Socket::receive(mute.fd, mute.stream);
+        }
+        assert(dropped);
+        Socket::close(mute.fd);
     }
 
     // Alice, first in, hosts: her district holds even when Bob's connect comes before hers
@@ -1155,7 +1253,50 @@ static void testBoons()
         wanted.update(1, 0, 10);
     assert(wanted.wantedStars() == PRICE_ON_HEAD_FLOOR);
     // Every runner's own boon has its card
-    assert(boonLook(Boon::Signature, Weapon::Blink).name == std::string("VOID WALKER"));
+    assert(boonLook(Boon::Signature, WRAITH).name == std::string("VOID WALKER"));
+    // ... and every boon a card of its own, for every runner
+    for (int runner = 0; runner < RUNNER_COUNT; runner++) {
+        std::set<std::string> names;
+        for (int id = 1; id < BOONS_END; id++)
+            names.insert(boonLook(static_cast<Boon>(id), runner).name);
+        assert(names.size() == BOONS_END - 1 && !names.count(""));
+    }
+
+    // They add up
+    Player stacked(3);
+    stacked.setCharacter(DAVID);
+    stacked.reset(0, 0);
+    stacked.takeBoon(Boon::Adrenaline);
+    stacked.takeBoon(Boon::Plating);
+    stacked.takeBoon(Boon::Signature2);
+    assert(stacked.hasBoon(Boon::Adrenaline) && stacked.hasBoon(Boon::Plating) && !stacked.hasBoon(Boon::Scrapper));
+    assert(stacked.hasOwn(Boon::Signature2, DAVID) && !stacked.hasOwn(Boon::Signature2, JOHNNY));
+    for (int i = 0; i < 10; i++)
+        stacked.addScore(1);
+    assert(stacked.getUltimateCharge() == 15);      // Adrenaline: half as much again
+    stacked.addScore(1000);
+    stacked.spendUltimate();
+    assert(stacked.ultimatePercent() == 30);        // Spare Shell
+    // Chrome Junkie: three times the Sandevistan, the plating gone as it ends
+    stacked.takeBoon(Boon::RunnerPact);
+    stacked.powerUp(SANDEVISTAN_TILE);
+    float sprint = 0;
+    while (stacked.isSprinting() && (sprint += 0.01f) < 100)
+        stacked.update(0.01f, 0, 10);
+    assert(std::abs(sprint - sandevistanTime(stacked.getUpgrades()) * CHROME_JUNKIE_TIME) < 0.1f && !stacked.hasShield());
+
+    // Dante: never under B on Devil May Cry, a rank a kill on All or Nothing
+    Player dante(4);
+    dante.setCharacter(DANTE);
+    dante.reset(0, 0);
+    dante.takeBoon(Boon::Signature2);
+    dante.takeBoon(Boon::RunnerPact);
+    dante.update(0.01f, 0, 10);
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK);
+    dante.weapon().droneDown();
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK + 1);
+    dante.weapon().hurt();
+    assert(dante.weapon().style() == DEVIL_MAY_CRY_RANK);
 }
 
 // Over sockets: the run stops at BOON_DISTANCE with three cards, a pact last, and goes on with the one picked
@@ -1191,13 +1332,52 @@ static void testBoonPick()
     assert(runner.latest(0).x == x);
     runner.send(MSG_BOON, {3});
     assert(next(BOON_TAKEN).x == pact);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    // ... and stops again further on, with three others: never the one just taken
+    CollisionEffect second = next(BOON_OFFER);
     assert(runner.latest(0).x > x);
+    for (int card = 0; card < 3; card++)
+        assert(((second.x >> (8 * card)) & 0xFF) != pact);
 
     Socket::close(runner.fd);
     server.stop();
     loop.join();
     BOON_DISTANCE = distance;
+}
+
+// Over sockets: a runner alone freezes the run and lets it go on
+static void testPause()
+{
+    const int port = 47128;
+    ServerConfig config;
+    config.port = port;
+    config.quiet = true;
+    config.solo = true;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient runner(port);
+    runner.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 0, .district = 0, .mode = 0}));
+    auto moves = [&] {
+        float x = runner.latest(0).x;
+        for (int i = 0; i < 100; i++)
+            if (runner.latest(0).x > x)
+                return true;
+        return false;
+    };
+
+    assert(moves());
+    runner.send(MSG_PAUSE, {1});
+    // What was sent before the pause took hold
+    for (int i = 0; i < 6; i++)
+        runner.latest(0);
+    float x = runner.latest(0).x;
+    assert(runner.latest(0).x == x && runner.latest(0).x == x);
+    runner.send(MSG_PAUSE, {0});
+    assert(moves());
+
+    Socket::close(runner.fd);
+    server.stop();
+    loop.join();
 }
 
 // Events: their stretches of road, and gravity flipped in one
@@ -1265,9 +1445,11 @@ int main()
     testWayThrough();
     testBoons();
     testBoonPick();
+    testPause();
     testEvents();
     testTuning();
     testWallet();
+    testContracts();
     testUpgrades();
     testNextGoal();
     std::cout << "All tests passed" << std::endl;

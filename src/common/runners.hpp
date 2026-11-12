@@ -33,6 +33,9 @@ inline Runner RUNNERS[] = {
     {"dirtybastrd", 1500, Weapon::Kick, Ultimate::Chainsaw,   150, 1},
 };
 
+// Their ids, in that order: what a boon of their own checks
+enum RunnerId { JOHNNY, DAVID, JINX, MIKASA, LUCY, DANTE, WRAITH, DIRTYBASTRD };
+
 constexpr int RUNNER_COUNT = static_cast<int>(std::size(RUNNERS));
 
 // An unknown id (from a newer version of the game) plays as the first runner

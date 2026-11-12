@@ -95,7 +95,7 @@ SWARM_DRONES 0.35
 BLACKOUT_DARKNESS 200
 # Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)
 FLIP_GRACE 1.2
-# Boons (CYBERPSYCHO): the run stops here, in tiles, to pick one of three
+# Boons (CYBERPSYCHO): the run stops every this many tiles to pick one of three
 BOON_DISTANCE 250
 # Seconds the run waits for the pick
 BOON_TIME 10
@@ -175,10 +175,16 @@ SNIPER_MAX_INTERVAL 10
 SNIPER_TRACK_TIME 1.2
 # Seconds it stays frozen before the shot
 SNIPER_AIM_TIME 0.6
-# Seconds the railgun beam lasts
-SNIPER_FIRE_TIME 0.25
-# Half the height of the beam, in tiles
-SNIPER_BEAM_HALF 0.35
+# Seconds its bullet flies
+SNIPER_FIRE_TIME 1.2
+# Tiles ahead of the leader the bullet leaves from: the right edge of the screen
+SNIPER_BULLET_AHEAD 23
+# Tiles per second it flies at you, on top of your own pace
+SNIPER_BULLET_SPEED 30
+# Half the height of the bullet, in tiles
+SNIPER_BULLET_HALF 0.35
+# Its length, in tiles
+SNIPER_BULLET_LENGTH 1.5
 
 ## Adam Smasher, the boss
 # Tiles before his arena
@@ -225,6 +231,8 @@ BOSS_ROCKET_WARN 1.2
 BOSS_ROCKET_SPEED 22
 # Tiles of the gap in their wall
 BOSS_ROCKET_GAP 4
+# Tiles behind the leader they fly on to, off the screen
+BOSS_ROCKET_BEHIND 11
 # Seconds the slam is warned
 BOSS_SLAM_WARN 1
 # Seconds its shockwave lasts

@@ -2,6 +2,8 @@
 
 #include "game_screen.hpp"
 #include "sprites.hpp"
+#include "menu_screens.hpp"
+#include "../menu.hpp"
 #include "../audio.hpp"
 #include "../touch.hpp"
 #include "../../common/tuning.hpp"
@@ -204,13 +206,15 @@ void GameScreen::drawWanted(const PlayerState &player, int me, float y)
         star.setFillColor(lit ? ((i % 2 == 0) == red ? NEON_RED : NEON_CYAN) : sf::Color(255, 255, 255, 40));
         canvas.draw(star);
     }
-    if (stars > 0)
-        if (implant > 0)
+    if (implant > 0)
         canvas.text(IMPLANT_LOOKS[implant].name, 22, NEON_CYAN, {24, y + 2 * RADIUS + 22}, {0, 0.5f});
-    if (boon != Boon::None)
-        canvas.text(boonLook(boon, weaponOf(run.characterOf(me))).name, 22, NEON_YELLOW,
-                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22)}, {0, 0.5f});
-    canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
+    // The run's boons, one under the other, the pacts in red; smaller once there are many
+    float line = boons.size() > 4 ? 22 : 28;
+    for (size_t i = 0; i < boons.size(); i++)
+        canvas.text(boonLook(boons[i], run.characterOf(me)).name, boons.size() > 4 ? 17 : 22, isPact(boons[i]) ? NEON_RED : NEON_YELLOW,
+                    {24, y + 2 * RADIUS + (implant > 0 ? 52 : 22) + i * line}, {0, 0.5f});
+    if (stars > 0)
+        canvas.text(std::format("x{:.1f} EDDIES", 1 + WANTED_BOUNTY_PER_STAR * stars), 22, DIM_WHITE,
                     {24 + WANTED_MAX_STARS * RADIUS * 2.3f + 10, y + RADIUS}, {0, 0.5f});
 }
 
@@ -409,7 +413,7 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
 
     sf::FloatRect bounds = text.getGlobalBounds();
     float x = bounds.position.x + bounds.size.x + 26;
-    if (player.shielded) {
+    for (int plate = 0; plate < player.shielded + player.plated; plate++) {
         canvas.hexagon({x, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
         x += 34;
     }
@@ -445,7 +449,8 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
         tint.setFillColor(withAlpha(SANDEVISTAN_COLOR, 22));
         canvas.draw(tint, sf::BlendAdd);
         drawGauge("SANDEVISTAN", SANDEVISTAN_COLOR, 1 - anim.sprint_clock.getElapsedTime().asSeconds() /
-                                                       (sandevistan_time * (boon == Boon::Overclock ? 2 : 1)), y);
+                                                       (sandevistan_time * (hasBoon(Boon::Overclock) ? 2 : 1) *
+                                                        (hasBoon(Boon::RunnerPact) && run.characterOf(me) == DAVID ? CHROME_JUNKIE_TIME : 1)), y);
         y += 80;
     }
     if (player.chainsaw) {
@@ -455,7 +460,7 @@ void GameScreen::drawPowerUps(const PlayerState &player, int me)
     }
     if (player.berserk)
         drawGauge("BERSERK", BERSERK_COLOR, 1 - anim.berserk_clock.getElapsedTime().asSeconds() /
-                                                 (BERSERK_TIME * (boon == Boon::Rage ? 2 : 1)), y);
+                                                 (BERSERK_TIME * (hasBoon(Boon::Rage) ? 2 : 1)), y);
 }
 
 // Beside the saw's gauge: the scrap it would burst into if it snapped now, filling toward the cap and
@@ -500,6 +505,56 @@ void GameScreen::drawGauge(const std::string &label, sf::Color color, float left
     canvas.draw(fill);
 
     canvas.text(label, 26, color, pos + sf::Vector2f(250, 40));
+}
+
+// The keys, for who never ran HINTS_UNTIL metres in this mode: how to fly until they do, what to do with it
+// for a moment, then in CYBERPSYCHO the attack until they use it, and the ultimate for a moment
+void GameScreen::drawHints(const PlayerState &player, int me, bool cyberpsycho)
+{
+    static constexpr float READ_TIME = 5;
+    if (bests.distance(cyberpsycho) >= HINTS_UNTIL)
+        return;
+
+    bool timed_out = hint_clock.getElapsedTime().asSeconds() > READ_TIME;
+    bool done = hint_step == 0 ? player.jet_active : hint_step == 2 ? run.attack_clocks.count(me) > 0 : timed_out;
+    if (done) {
+        hint_step++;
+        hint_clock.restart();
+    }
+
+    std::string text;
+    switch (hint_step) {
+        case 0: text = Touch::ENABLED ? "HOLD THE SCREEN TO FLY, LET GO TO DROP" : std::format("HOLD [{}] TO FLY, LET GO TO DROP", jetpack_key); break;
+        case 1: text = "GRAB THE EDDIES, STAY OFF THE ZAPPERS"; break;
+        case 2: text = !cyberpsycho ? "" : Touch::ENABLED ? "ATTACK BUTTON: TAKE THE DRONES DOWN" : std::format("[{}] ATTACK: TAKE THE DRONES DOWN", attack_key); break;
+        case 3: text = !cyberpsycho ? "" : Touch::ENABLED ? "EDDIES FILL YOUR GAUGE: THEN THE ULTIMATE BUTTON" : std::format("EDDIES FILL YOUR GAUGE: THEN [{}] FIRES YOUR ULTIMATE", ultimate_key); break;
+        default: break;
+    }
+    if (text.empty())
+        return;
+
+    // On a dark plate, low in the middle: readable over any district, out of the runner's way
+    sf::Vector2f pos(Screen::WIDTH / 2, Screen::HEIGHT - 170);
+    sf::Text label = canvas.makeText(text, 40, NEON_YELLOW, pos, {0.5f, 0.5f});
+    sf::FloatRect bounds = label.getGlobalBounds();
+    sf::RectangleShape plate(bounds.size + sf::Vector2f(60, 36));
+    plate.setPosition(bounds.position - sf::Vector2f(30, 18));
+    plate.setFillColor(sf::Color(0, 0, 0, 170));
+    canvas.draw(plate);
+    canvas.draw(label);
+}
+
+// A solo run frozen with P, or by the window losing focus
+void GameScreen::drawPause()
+{
+    canvas.overlay(170);
+    canvas.glitchText("PAUSED", 130, NEON_CYAN, Screen::CENTER + sf::Vector2f(0, -80));
+    canvas.text(Touch::hint("[P] RESUME        [ESC] QUIT TO MENU", "TAP TO RESUME"), 36, sf::Color::White,
+                Screen::CENTER + sf::Vector2f(0, 60));
+    if (Touch::ENABLED) {
+        canvas.card(sf::FloatRect(Touch::MENU_BUTTON - Touch::MENU_BUTTON_SIZE / 2.f, Touch::MENU_BUTTON_SIZE), true);
+        canvas.text("MENU", 36, NEON_RED, Touch::MENU_BUTTON);
+    }
 }
 
 // "ENTERING <district>", for a moment after the scenery changes
@@ -549,36 +604,95 @@ void GameScreen::drawGameOver(GameState &state, const std::map<int, PlayerState>
 
     canvas.overlay(190);
 
-    if (solo && mine != players.end())
-        drawSoloResults(mine->second);
-    else
+    if (solo && mine != players.end()) {
+        drawSoloResults(mine->second, me);
+        drawContracts();
+    } else {
         drawVersusResults(players, state.getWinner(), me);
-
-    canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
+        canvas.text(std::format("WALLET  {} EDDIES", wallet), 28, NEON_PINK, Screen::CENTER + sf::Vector2f(0, 150));
+    }
     drawNextGoal(Screen::CENTER + sf::Vector2f(0, 192));
     if (phase_clock.getElapsedTime().asSeconds() >= PROMPT_DELAY)
         drawRematchPrompt(state, solo);
 }
 
-void GameScreen::drawSoloResults(const PlayerState &me)
+// Under the results, side by side: each contract as this run left it, gold for those it finished
+void GameScreen::drawContracts()
 {
-    sf::Vector2f center = Screen::CENTER;
-    std::string result = cyberpsycho_run
-                             ? std::format("{} M      {} DRONES      {} EDDIES", static_cast<int>(me.x), drones_down, me.score)
-                             : std::format("{} M        {} EDDIES", static_cast<int>(me.x), me.score);
+    if (!contracts_counted)
+        return;
+    for (int i = 0; i < Contracts::COUNT; i++)
+        drawContractCard(canvas, sprites, contracts_ended[i],
+                         MenuLayout::centeredBox({Screen::WIDTH / 2 + (i - 1) * 620.0f, 640}, {600, 52}));
+}
 
-    canvas.glitchText("FLATLINED", 140, NEON_RED, center + sf::Vector2f(0, -150));
-    drawDeathCause(center + sf::Vector2f(0, -55));
-    canvas.text(result, 44, sf::Color::White, center + sf::Vector2f(0, 10));
+// One figure of the run on its plate: what it counts, the figure, and under it the best or what it adds up to
+void GameScreen::drawResultTile(sf::Vector2f center, const std::string &label, const std::string &value,
+                                const std::string &note, bool record)
+{
+    static constexpr sf::Vector2f SIZE{400, 170};
 
-    if (new_record || new_drone_record)
-        canvas.glitchText(new_record && new_drone_record ? "NEW PERSONAL BESTS" : new_record ? "NEW PERSONAL BEST" : "NEW DRONE RECORD",
-                          48, NEON_YELLOW, center + sf::Vector2f(0, 95));
-    else if (cyberpsycho_run)
-        canvas.text(std::format("BEST  {} M      {} DRONES", bests.cyberpsycho, bests.drones), 32, DIM_WHITE,
-                    center + sf::Vector2f(0, 95));
-    else
-        canvas.text(std::format("BEST  {} M", bests.classic), 32, DIM_WHITE, center + sf::Vector2f(0, 95));
+    canvas.card(sf::FloatRect(center - SIZE / 2.f, SIZE), record);
+    canvas.text(label, 24, DIM_WHITE, center + sf::Vector2f(0, -58));
+    canvas.text(value, 68, record ? NEON_YELLOW : sf::Color::White, center + sf::Vector2f(0, -4));
+    canvas.text(note, 24, record ? NEON_YELLOW : DIM_WHITE, center + sf::Vector2f(0, 56));
+}
+
+// The boons picked this run, side by side under the figures, the pacts in red; a second row when they are many
+void GameScreen::drawResultBoons(int me, float y)
+{
+    static constexpr float GAP = 44, ROW = 34, WIDEST = 1500;
+    std::vector<std::vector<sf::Text>> rows(1);
+    float width = 0;
+
+    for (Boon boon : boons) {
+        // A pact is told by its red: without its "PACT: ", the name stays in the display font
+        std::string_view title = boonLook(boon, run.characterOf(me)).name;
+        if (title.starts_with("PACT: "))
+            title.remove_prefix(6);
+        sf::Text name = canvas.makeText(std::string(title), 24, isPact(boon) ? NEON_RED : NEON_YELLOW, {0, 0}, {0, 0.5f});
+        float w = name.getGlobalBounds().size.x;
+        if (!rows.back().empty() && width + GAP + w > WIDEST) {
+            rows.emplace_back();
+            width = 0;
+        }
+        width += (rows.back().empty() ? 0 : GAP) + w;
+        rows.back().push_back(std::move(name));
+    }
+    for (size_t row = 0; row < rows.size(); row++) {
+        float total = -GAP;
+        for (const sf::Text &name : rows[row])
+            total += GAP + name.getGlobalBounds().size.x;
+        float x = Screen::WIDTH / 2 - total / 2;
+        for (sf::Text &name : rows[row]) {
+            name.setPosition({x, y + row * ROW});
+            canvas.draw(name);
+            x += name.getGlobalBounds().size.x + GAP;
+        }
+    }
+}
+
+// The run on one screen: how it ended, its figures against your bests, the boons it was run with
+void GameScreen::drawSoloResults(const PlayerState &me, int number)
+{
+    float middle = Screen::WIDTH / 2;
+    int distance = static_cast<int>(me.x);
+
+    canvas.glitchText("FLATLINED", 130, NEON_RED, {middle, 150});
+    drawDeathCause({middle, 245});
+
+    std::string best = std::format("BEST  {} M", bests.distance(cyberpsycho_run));
+    std::string wallet_note = std::format("WALLET  {}", wallet);
+    if (cyberpsycho_run) {
+        drawResultTile({middle - 430, 380}, "DISTANCE", std::format("{} M", distance), new_record ? "NEW PERSONAL BEST" : best, new_record);
+        drawResultTile({middle, 380}, "DRONES DOWN", std::to_string(drones_down),
+                       new_drone_record ? "NEW PERSONAL BEST" : std::format("BEST  {}", bests.drones), new_drone_record);
+        drawResultTile({middle + 430, 380}, "EDDIES", std::to_string(me.score), wallet_note, false);
+    } else {
+        drawResultTile({middle - 215, 380}, "DISTANCE", std::format("{} M", distance), new_record ? "NEW PERSONAL BEST" : best, new_record);
+        drawResultTile({middle + 215, 380}, "EDDIES", std::to_string(me.score), wallet_note, false);
+    }
+    drawResultBoons(number, 510);
 }
 
 void GameScreen::drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me)
@@ -731,11 +845,15 @@ void GameScreen::drawBoons(int me)
 {
     std::vector<Card> cards;
     for (Boon card : boon_cards) {
-        BoonLook look = boonLook(card, weaponOf(run.characterOf(me)));
-        bool pact = static_cast<int>(card) >= FIRST_PACT && card != Boon::Signature;
-        cards.push_back({look.name, look.what, pact ? "RISKY" : card == Boon::Signature ? "YOURS ONLY" : "", true});
+        BoonLook look = boonLook(card, run.characterOf(me));
+        const char *tag = isPact(card) && isOwn(card) ? "RISKY, YOURS ONLY" : isPact(card) ? "RISKY" : isOwn(card) ? "YOURS ONLY" : "";
+        // Nothing left for that card
+        if (card == Boon::None)
+            cards.push_back({"-", "", "", false});
+        else
+            cards.push_back({look.name, look.what, tag, true});
     }
-    drawCards("PICK A BOON", NEON_YELLOW, "ONE FOR THE REST OF THE RUN, ON THE HOUSE",
+    drawCards("PICK A BOON", NEON_YELLOW, "ONE MORE FOR THE REST OF THE RUN, ON THE HOUSE",
               1 - boon_clock.getElapsedTime().asSeconds() / BOON_TIME, cards);
 }
 

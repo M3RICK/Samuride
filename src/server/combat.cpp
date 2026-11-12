@@ -80,7 +80,10 @@ void Server::fireProjectile(const Player &player, Weapon weapon, float y)
     WeaponStats stats = statsOf(weapon);
     float x = player.getX() + 0.9f;
 
-    projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, stats.radius, weapon});
+    // Hollow Points: Johnny's bullets hit wider
+    float radius = stats.radius * (weapon == Weapon::Gun && player.hasOwn(Boon::Signature2, JOHNNY) ? 2 : 1);
+
+    projectiles.push_back({player.getClientFd(), x, y + 1.0f, run_speed + stats.speed, x + PROJECTILE_RANGE, radius, weapon});
 }
 
 // The live drones in a strike's box: from the player's front to `reach` ahead, over a body whose top is at y.
@@ -258,7 +261,8 @@ bool Server::hitBoss(Player &player, int damage)
 void Server::titanDown(Player &player, float x)
 {
     player.ultimate().killed();
-    player.addScore(TITAN_BOUNTY);
+    // Nape Hunter: Mikasa is paid double
+    player.addScore(TITAN_BOUNTY * (player.hasOwn(Boon::Signature2, MIKASA) ? 2 : 1));
     notifyCollision(TITAN_KILL, player, x, game_map.getHeight() - 1);
 }
 
@@ -283,7 +287,11 @@ void Server::destroyDrone(int owner_fd, int x, int y)
         return;
 
     owner->second.ultimate().killed();
-    owner->second.addScore(wantedBounty(owner->second.weapon().droneDown(), owner->second.wantedStars()));
+    Player &killer = owner->second;
+    int bounty = wantedBounty(killer.weapon().droneDown(), killer.wantedStars()) * (killer.hasBoon(Boon::HotPursuit) ? 2 : 1);
+    bounty += (killer.hasBoon(Boon::Scrapper) ? SCRAPPER_EDDIES : 0) +
+              (killer.hasOwn(Boon::RunnerPact, DIRTYBASTRD) ? BAD_REPUTATION_EDDIES : 0);
+    killer.addScore(bounty);
     owner->second.raiseWanted();
     notifyCollision(DRONE_TILE, owner->second, x, y);
     // Booby-Trapped Drones: the zappers next to it go off like Lucy's hack

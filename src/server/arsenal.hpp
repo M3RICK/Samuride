@@ -112,7 +112,8 @@ class Hack : public RunnerWeapon {
     int ram = RAM_MAX;
     float ram_timer = RAM_RECHARGE;     // seconds before the next charge comes back
 
-    void bounce(Server &server, const Player &player, int from_x, int from_y);
+    // Returns the drone it jumped to, {-1, -1} for none
+    std::pair<int, int> bounce(Server &server, const Player &player, int from_x, int from_y);
 
 public:
     float attack(Server &server, Player &player) override;
@@ -127,12 +128,14 @@ class Rebellion : public RunnerWeapon {
     int rank = 0;
     int kills = 0;              // in a row at this rank
     float drop_timer = 0;       // seconds before the rank drops
+    int floor_rank = 0;         // never under it (Devil May Cry)
+    int kills_needed = STYLE_KILLS;     // 1 on All or Nothing
 
 public:
     float attack(Server &server, Player &player) override;
     void tick(const Player &player, float dt) override;
     int droneDown() override;
-    void hurt() override { rank = std::max(0, rank - STYLE_HIT_DROP); kills = 0; }
+    void hurt() override { rank = std::max(floor_rank, rank - STYLE_HIT_DROP); kills = 0; }
     int style() const override { return rank; }
 };
 

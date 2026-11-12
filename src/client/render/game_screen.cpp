@@ -17,7 +17,7 @@ using namespace Palette;
 GameScreen::GameScreen(Canvas &canvas, const Sprites &sprites, const Backdrops &backdrops, Audio &audio)
     : canvas(canvas), sprites(sprites), backdrops(backdrops), audio(audio),
       tiles(canvas, sprites, run), runners(canvas, sprites, run, audio, particles),
-      titans(canvas, sprites, run, audio), snipers(canvas, run, audio), smasher(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
+      titans(canvas, sprites, run, audio), snipers(canvas, sprites, run, audio), smasher(canvas, sprites, run, audio), shots(canvas, run, audio, particles),
       ultimates(canvas, sprites, run, audio, particles) {
 }
 
@@ -54,6 +54,7 @@ void GameScreen::onPhaseChange(GameState &state, Phase phase)
         audio.play(Audio::Sfx::Go);
     if (phase == Phase::Over) {
         recordSoloBests(state);
+        settleContracts(state);
         bankEddies(state);
         audio.play(Audio::Sfx::GameOver);
     }
@@ -75,6 +76,8 @@ void GameScreen::resetRun()
     heard_countdown = -1;
     drones_down = 0;
     hit_stop = 0;
+    contracts_counted = false;
+    sprint_split = 0;
     cuts.clear();
     zaps.clear();
     scrap_payouts.clear();
@@ -90,12 +93,15 @@ void GameScreen::resetRun()
     new_drone_record = false;
     bests = Bests::load();
     ultimate_key = keyName(Settings::load().ultimate_key);
+    jetpack_key = keyName(Settings::load().jetpack_key);
+    attack_key = keyName(Settings::load().attack_key);
+    hint_step = 0;
     ultimate_was_ready = false;
     spears_shown = 0;
     style_shown = 0;
     wanted_shown = 0;
     implant = 0;
-    boon = Boon::None;
+    boons.clear();
     mood = Mood::Idle;
     kill_streak = 0;
     head = head_target = 0;
@@ -127,6 +133,26 @@ void GameScreen::recordSoloBests(GameState &state)
         bests.drones = drones_down;
     if (new_record || new_drone_record)
         bests.save();
+}
+
+// A solo run counts for the contracts, and those it finishes pay their eddies. Not with a custom tuning,
+// like the records.
+void GameScreen::settleContracts(GameState &state)
+{
+    static std::mt19937 rng(std::random_device{}());
+    auto players = state.getPlayers();
+    auto mine = players.find(state.getMyPlayerNumber());
+
+    if (players.size() != 1 || mine == players.end() || Tuning::custom())
+        return;
+
+    Contracts contracts = Contracts::load();
+    contracts_ended = contracts.settle({static_cast<int>(mine->second.x), mine->second.score, drones_down,
+                                       run.characterOf(mine->first)}, rng, Wallet::load().unlocked);
+    contracts.save();
+    contracts_counted = true;
+    for (const Contract &contract : contracts_ended)
+        Wallet::earn(contract.done() ? contract.reward : 0);
 }
 
 // The run's eddies go to the wallet, to buy runners with
@@ -277,11 +303,15 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     // The world view shakes on hits and blasts, the HUD doesn't. It eases out over its last 0.15 s.
     sf::View ui_view = canvas.screenView();
     sf::View world_view = ui_view;
+    float strength = run.shake > 0 ? run.shake_strength * std::min(1.0f, run.shake / 0.15f) : 0;
     if (run.shake > 0) {
-        float strength = run.shake_strength * std::min(1.0f, run.shake / 0.15f);
         world_view.move({randf(-strength, strength), randf(-strength, strength)});
         run.shake -= dt;
     }
+    auto mine = players.find(me);
+    bool sprinting = mine != players.end() && mine->second.sprinting && phase == Phase::Running;
+    sprint_split += ((sprinting ? SPRINT_SPLIT : 0) - sprint_split) * std::min(1.0f, dt * 8);
+    canvas.colour_split = sprint_split + strength * SHAKE_SPLIT;
 
     canvas.target().setView(world_view);
     drawDistrict(state.getDistrict());
@@ -318,10 +348,16 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     smasher.draw(state.getBoss(), state.getMode() == GameMode::Cyberpsycho);
     if (players.count(me))
         drawPowerUps(players.at(me), me);
-    drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
+    // Not under a solo run's results: they say it all, and its lines would show through them
+    if (phase != Phase::Over || players.size() != 1)
+        drawHUD(players, me, state.getMode() == GameMode::Cyberpsycho);
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (phase == Phase::Running && players.size() == 1 && players.count(me) && !state.isPaused())
+        drawHints(players.at(me), me, state.getMode() == GameMode::Cyberpsycho);
+    if (state.isPaused())
+        drawPause();
     if (state.isBoonOpen() && boon_clock.getElapsedTime().asSeconds() < BOON_TIME)
         drawBoons(me);
     if (state.isRipperdocOpen() && players.count(me) && ripperdoc_clock.getElapsedTime().asSeconds() < RIPPERDOC_TIME)
@@ -400,6 +436,7 @@ void GameScreen::drawBlinkTarget(const std::map<int, PlayerState> &players, int 
 void GameScreen::drawDistrict(int district)
 {
     int current = backdrops.drawDistrict(canvas, run.view, district);
+    canvas.sceneryDone();
 
     if (current != shown_backdrop) {
         shown_backdrop = current;

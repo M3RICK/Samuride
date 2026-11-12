@@ -45,6 +45,7 @@ private:
     bool trauma_offer = false;      // the Trauma Team asks me whether to come, until I answer
     bool ripperdoc_open = false;    // the Ripperdoc waits for my pick, until something else happens to me
     bool boon_open = false;         // so do the boons
+    bool paused = false;            // I froze my solo run
     std::optional<std::chrono::steady_clock::time_point> attack_down;   // since when my attack key is down
 
 public:
@@ -90,6 +91,9 @@ public:
     bool answerTraumaOffer();
     bool isRipperdocOpen() const;
     bool isBoonOpen() const;
+    // Only a run on its way, alone, with no question open: true when it changed
+    bool setPaused(bool on);
+    bool isPaused() const;
 };
 
 #endif

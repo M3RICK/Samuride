@@ -81,19 +81,33 @@ RunEvent Server::eventOf(int index)
     return run_events[index] = event;
 }
 
-// Each runner's three cards: a general boon, another one or their own, a pact
+// Each runner's three cards: a general boon, another one or one of their own, a pact. Never one they
+// have, nor the same twice; a card stays empty (None) once nothing is left for it.
 void Server::offerBoons()
 {
-    auto roll = [&](int from, int to) { return static_cast<Boon>(std::uniform_int_distribution<int>(from, to - 1)(rng)); };
-    boon_left = BOON_TIME;
     for (auto &[client_fd, player] : players) {
-        Boon first = roll(1, FIRST_PACT);
-        Boon second = first;
-        while (second == first)
-            second = roll(1, FIRST_PACT);
+        std::array<Boon, 3> cards{};
+        auto pick = [&](int from, int to) {
+            std::vector<Boon> pool;
+            for (int id = from; id < to; id++) {
+                Boon boon = static_cast<Boon>(id);
+                // A second shield is no use to who can't hold one, and the other way round
+                bool wasted = (boon == Boon::Plating && player.hasBoon(Boon::GlassCannon)) ||
+                              (boon == Boon::GlassCannon && player.hasBoon(Boon::Plating));
+                if (!player.hasBoon(boon) && !wasted && std::ranges::find(cards, boon) == cards.end())
+                    pool.push_back(boon);
+            }
+            return pool.empty() ? Boon::None : pool[std::uniform_int_distribution<size_t>(0, pool.size() - 1)(rng)];
+        };
+        cards[0] = pick(1, FIRST_PACT);
         if (std::uniform_int_distribution<int>(0, 1)(rng))
-            second = Boon::Signature;
-        std::array<Boon, 3> cards{first, second, roll(FIRST_PACT, PACTS_END)};
+            cards[1] = pick(PACTS_END, BOONS_END);
+        if (cards[1] == Boon::None)
+            cards[1] = pick(1, FIRST_PACT);
+        cards[2] = pick(FIRST_PACT, PACTS_END);
+        if (cards == std::array<Boon, 3>{})
+            continue;
+        boon_left = BOON_TIME;
         boon_offers[client_fd] = cards;
         int ids = static_cast<int>(cards[0]) | static_cast<int>(cards[1]) << 8 | static_cast<int>(cards[2]) << 16;
         notifyCollision(BOON_OFFER, player, ids, 0);

@@ -131,10 +131,11 @@ private:
     // The Ripperdoc past Smasher: who hasn't picked yet, and how long the run still waits for them
     std::set<int> ripperdoc_waiting;
     float ripperdoc_left = 0;
-    // The boons at BOON_DISTANCE: the three cards each runner still has to pick from, and the time left
+    // The boons every BOON_DISTANCE: the three cards each runner still has to pick from, and the time left
     std::map<int, std::array<Boon, 3>> boon_offers;
     float boon_left = 0;
-    bool boons_given = false;
+    bool paused = false;        // a runner alone froze the run (MSG_PAUSE)
+    float next_boon = 0;        // where the next ones are offered, in tiles
     // Each event's kind, rolled when the map or the warning first needs it; the last one announced
     std::map<int, RunEvent> run_events;
     int events_announced = -1;
@@ -149,6 +150,8 @@ private:
     static constexpr size_t MAX_PENDING_BYTES = 1024;
     // A client this far behind on what we send (minutes of game state) isn't reading anymore
     static constexpr size_t MAX_SEND_BACKLOG = 1 << 20;
+    // A client says who it plays as soon as it connects: one still silent after this is holding a place
+    static constexpr float INTRO_TIMEOUT = 3;
 
     //===========================================================================
     // Server Initialization
@@ -206,6 +209,7 @@ private:
     //===========================================================================
 
     bool lobbyReady() const;
+    void dropSilentClients();
     void startGame();
 
     void reopenLobby();

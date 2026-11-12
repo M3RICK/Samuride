@@ -44,6 +44,7 @@ private:
     std::vector<uint8_t> stream;    // bytes received, not yet a full packet
 
     std::queue<std::vector<uint8_t>> message_queue;
+    std::vector<uint8_t> outgoing;  // bytes the socket hasn't taken yet (network thread only)
     std::mutex queue_mutex;
 
     bool connectToServer(int timeout_ms);
@@ -90,6 +91,10 @@ public:
     // The boon card picked, 1 to 3, or 0 for none
     void answerBoon(int card);
     bool boonOpen() const;
+    // Solo: freezes the run or lets it go on. False when there is nothing to pause (versus, the countdown,
+    // the results, a question open).
+    bool pause(bool on);
+    bool paused() const;
     // CYBERPSYCHO: the attack and ultimate buttons are on screen
     bool combatRun() const;
     // The run is over or the server is gone: the menu button is on screen

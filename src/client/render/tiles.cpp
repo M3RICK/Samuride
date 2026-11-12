@@ -54,24 +54,25 @@ void Tiles::draw(const std::set<std::pair<int, int>> &collected, const std::set<
     }
 }
 
-// Bobbing, spinning coin on a dark disc ringed in yellow: the pink coin alone vanishes on neon skylines
+// Bobbing, spinning eddy on a dark disc ringed in yellow: alone it vanishes on neon skylines
 void Tiles::drawCoin(int x, int y, float time)
 {
     float tile_size = run.view.tile_size;
-    sf::Vector2f size(sprites.coin.getSize());
     sf::Vector2f center = run.toScreen({x + 0.5f, y + 0.5f + std::sin(time * 4 + x) * 0.06f});
 
     canvas.halo(center, tile_size * 0.45f, withAlpha(NEON_YELLOW, 45));
     canvas.backing(center, tile_size * 0.36f, withAlpha(NEON_YELLOW, 220));
 
-    if (size.y == 0)
+    if (sprites.coin_spin.getSize().y == 0)
         return;
 
-    float scale = tile_size * 0.6f / size.y;
-    float spin = std::max(0.25f, std::abs(std::cos(time * 3 + x * 0.7f)));
-    sf::Sprite coin(sprites.coin);
-    coin.setOrigin(size / 2.f);
-    coin.setScale({scale * spin, scale});
+    // The sheet's frames are square; each eddy a little ahead of the one before it
+    int side = sprites.coin_spin.getSize().y;
+    int frame = static_cast<int>(time * 10 + x) % std::max(1u, sprites.coin_spin.getSize().x / std::max(1, side));
+    float scale = tile_size * 0.5f / side;
+    sf::Sprite coin(sprites.coin_spin, {{frame * side, 0}, {side, side}});
+    coin.setOrigin({side / 2.f, side / 2.f});
+    coin.setScale({scale, scale});
     coin.setPosition(center);
     canvas.draw(coin);
 }

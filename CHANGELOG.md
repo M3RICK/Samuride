@@ -3,6 +3,63 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.3
+
+### New
+- **Neon glow**: eddies, zappers, shots, power-ups and the HUD now bleed light around them; the scenery
+  stays as it was, so nothing gets harder to read. The screen's corners are a touch darker.
+- The colours split at the edges of the screen while you sprint on the Sandevistan, and on every hit that
+  shakes it.
+- Not on Android: phones keep the picture they had.
+- **Contracts**: three goals at a time, shown on the main menu and on the results: a distance, drones
+  down, eddies in one run, or a run as a given runner. Every solo run counts; a finished contract pays 60,
+  100 or 150 eddies and another takes its place. Not with a custom tuning, like the records.
+- **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
+  runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
+  the others, locked ones included.
+- **First runs**: until you have run 200 m in a mode, the keys are told one at a time as they come up: how to
+  fly, then in CYBERPSYCHO the attack and the ultimate.
+- **New results screen** for solo runs: distance, drones and eddies each on their own plate against your best
+  (gold on a new record), the boons you ran with, then your contracts. The run's HUD no longer shows
+  through it.
+- **Pause**: in a solo run, `P` freezes everything and `P` again resumes; `Esc` leaves to the menu, as before.
+  The run also pauses on its own when the window loses focus.
+- **New sounds**: recorded samples replace the synthesized bleeps for the guns, the explosions, the shield,
+  the Sandevistan, the Blink and the menus.
+- **Boons add up**: a new pick of three every 250 m instead of one for the whole run (never inside Adam
+  Smasher's arena: the next comes once he is gone). No boon comes twice; the ones you hold are listed under
+  your wanted stars, pacts in red.
+- **New boons for everyone**: Double Plating (a shield right away, and you can carry two at once, never
+  more), Adrenaline (ultimate charges 50% faster), Scrapper (2 more eddies a drone), Second Wind (twice the
+  grace after a hit or a power-up), Magnetic Field (eddies fly in from further).
+- **New pact**: Hot Pursuit (drones pay double, snipers come twice as often).
+- **A second boon of their own for every runner**: Hollow Points (Johnny), Spare Shell (David), Trigger
+  Happy (Jinx), Nape Hunter (Mikasa), Daisy Chain (Lucy), Devil May Cry (Dante), Phase Shift (Wraith),
+  Big Boots (DirtyBastrd).
+- **A pact of their own for every runner**: Rockerboy (Johnny), Chrome Junkie (David), Loose Cannon (Jinx),
+  Gas Overload (Mikasa), Overheat (Lucy), All or Nothing (Dante), Void Hunger (Wraith), Bad Reputation
+  (DirtyBastrd). Each card says what it gives and what it costs.
+- **Snipers fire bullets**: after the sight freezes, a bullet flies in from the right edge along its row
+  instead of a beam across the whole screen. Leave the row as before, or get past the bullet: Wraith can
+  Blink through it.
+- Eddies have a new look, a spinning coin drawn by Alex.
+- Dante flies on demon wings instead of a jetpack (a new sprite sheet from Alex); they fold away when he runs.
+
+### Fixes
+- The run no longer freezes for 10 seconds at a boon or at the Ripperdoc with no cards on screen: picking
+  up an eddy at that very moment hid them.
+- Adam Smasher's rockets fly on until they leave the screen instead of vanishing behind you.
+- Wraith's Stillness no longer leaves Smasher behind, out of the screen and out of reach: he stops
+  attacking but keeps pace with you.
+
+## v3.2.3
+
+### Fixes
+- A connection that never picks a runner no longer holds a place in the lobby: it is dropped after 3 seconds.
+- CYBERPSYCHO: your implant's name shows under the wanted stars even with no star lit, and the eddies
+  multiplier only once you have one.
+- The game no longer trusts the host's server on which titan to draw.
+
 ## v3.2.2
 
 ### Other

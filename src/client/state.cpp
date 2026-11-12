@@ -27,6 +27,7 @@ void GameState::startCountdown(int my_number, const std::map<int, int> &roster, 
     trauma_offer = false;
     ripperdoc_open = false;
     boon_open = false;
+    paused = false;
     players.clear();
     my_coins.clear();
     pending_effects.clear();
@@ -87,6 +88,7 @@ void GameState::setWinner(int player_number)
 
     winner = player_number;
     phase = Phase::Over;
+    paused = false;
     trauma_offer = false;
     ripperdoc_open = false;
     boon_open = false;
@@ -311,6 +313,24 @@ bool GameState::isBoonOpen() const
     std::lock_guard<std::mutex> lock(state_mutex);
 
     return boon_open;
+}
+
+bool GameState::setPaused(bool on)
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    bool can = phase == Phase::Running && players.size() == 1 && !trauma_offer && !ripperdoc_open && !boon_open;
+    if (on == paused || (on && !can))
+        return false;
+    paused = on;
+    return true;
+}
+
+bool GameState::isPaused() const
+{
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    return paused;
 }
 
 bool GameState::answerTraumaOffer()

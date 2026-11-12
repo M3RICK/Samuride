@@ -11,6 +11,10 @@ struct MenuState;
 struct Sprites;
 struct Character;
 struct Wallet;
+struct Contract;
+
+// A contract as a card: its goal, a bar filling up behind it, how far it is and what it pays. Gold once done.
+void drawContractCard(Canvas &canvas, const Sprites &sprites, const Contract &contract, sf::FloatRect box);
 
 class MenuScreens {
 private:
@@ -31,6 +35,7 @@ private:
     void drawCharacterCard(int index, bool selected, const Wallet &wallet, float time);
     void drawCharacterPreview(const Character &character, sf::FloatRect box, bool selected, sf::Color tint, float time);
     void drawPriceTag(int index, sf::FloatRect box, const Wallet &wallet);
+    void drawRunnerInfo(const MenuState &menu);
 
     void drawUpgrades(const MenuState &menu);
     void drawUpgradeCard(int index, bool selected, const Wallet &wallet);

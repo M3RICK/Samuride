@@ -22,13 +22,13 @@ void Player::reset(int number, float spawn_y)
     wanted_calm = 0;
     implant = 0;
     armor_timer = 0;
-    boon = Boon::None;
+    boons = 0;
     glass_carry = 0;
     flipped = false;
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
-    shield = upgrades[UPGRADE_SHIELD] > 0;
+    shields = upgrades[UPGRADE_SHIELD] > 0;
     rescued = false;
     rescue_timer = 0;
     sprint_timer = 0;
@@ -57,21 +57,28 @@ bool Player::collectCoin(int tile_x, int tile_y)
 // Every eddy earned charges the ultimate
 void Player::addScore(int points)
 {
-    if (boon == Boon::GlassCannon && points > 0) {
+    if (hasBoon(Boon::GlassCannon) && points > 0) {
         glass_carry += points * (GLASS_CANNON_EDDIES - 1);
         int extra = static_cast<int>(glass_carry);
         glass_carry -= extra;
         points += extra;
     }
     score += points;
-    ultimate_charge = std::min(ultimateCharge(character), ultimate_charge + points * (implant == 3 ? SYNAPTIC_RATE : 1));
+    float rate = (implant == 3 ? SYNAPTIC_RATE : 1) * (hasBoon(Boon::Adrenaline) ? ADRENALINE_RATE : 1) *
+                 (hasOwn(Boon::RunnerPact, JOHNNY) ? 2 : 1) * (hasOwn(Boon::RunnerPact, JINX) ? 0.5f : 1);
+    ultimate_charge = std::min<float>(ultimateCharge(character), ultimate_charge + points * rate);
 }
 
 void Player::takeBoon(Boon b)
 {
-    boon = b;
+    if (b == Boon::None)
+        return;
+    boons |= 1u << static_cast<int>(b);
     if (b == Boon::GlassCannon)
-        shield = false;
+        shields = 0;
+    // One right away, on top of the one he may carry
+    if (b == Boon::Plating)
+        shields = std::min(2, shields + 1);
     if (b == Boon::PriceOnHead)
         wanted_heat = std::max(wanted_heat, static_cast<float>(PRICE_ON_HEAD_START * WANTED_KILLS_PER_STAR));
 }
@@ -82,7 +89,7 @@ bool Player::buyImplant(int id)
         return false;
     score -= IMPLANT_PRICES[id];
     implant = id;
-    shield |= id == 1;
+    shields = std::max(shields, static_cast<int>(id == 1));
     return true;
 }
 
@@ -95,19 +102,20 @@ void Player::startShift()
 void Player::powerUp(char tile)
 {
     if (tile == SHIELD_TILE)
-        shield = true;
+        shields = std::min(hasBoon(Boon::Plating) ? 2 : 1, shields + 1);
     else if (tile == SANDEVISTAN_TILE)
-        sprint_timer = sandevistanTime(upgrades) * (boon == Boon::Overclock ? 2 : 1);
+        sprint_timer = sandevistanTime(upgrades) * (hasBoon(Boon::Overclock) ? 2 : 1) *
+                       (hasOwn(Boon::RunnerPact, DAVID) ? CHROME_JUNKIE_TIME : 1);
     else if (tile == BERSERK_TILE)
-        berserk_timer = BERSERK_TIME * (boon == Boon::Rage ? 2 : 1);
+        berserk_timer = BERSERK_TIME * (hasBoon(Boon::Rage) ? 2 : 1);
 }
 
 bool Player::absorbHit()
 {
-    if (!shield)
+    if (shields == 0)
         return false;
-    shield = false;
-    grace_timer = SHIELD_GRACE;
+    shields--;
+    grace_timer = graceOf(SHIELD_GRACE);
     runner_weapon->hurt();
     return true;
 }
@@ -154,7 +162,7 @@ void Player::updateForm(float dt)
         y_velocity = -MAX_VELOCITY;
     } else {
         form = Form::Normal;
-        grace_timer = END_GRACE;
+        grace_timer = graceOf(END_GRACE);
     }
 }
 
@@ -163,17 +171,17 @@ void Player::update(float dt, float forward_speed, float max_y)
     updateForm(dt);
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1) * (implant == 2 ? KERENZIKOV_RATE : 1));
     // Glass Cannon: no shield, from the floor or the Ripperdoc
-    if (boon == Boon::GlassCannon)
-        shield = false;
+    if (hasBoon(Boon::GlassCannon))
+        shields = 0;
     // Subdermal Armor grows the shield back
-    if (implant == 1 && !shield && (armor_timer += dt) >= ARMOR_REGEN) {
-        shield = true;
+    if (implant == 1 && shields == 0 && (armor_timer += dt) >= ARMOR_REGEN) {
+        shields = 1;
         armor_timer = 0;
     }
     grace_timer = std::max(0.0f, grace_timer - dt);
     if ((wanted_calm += dt) > WANTED_CALM_TIME)
-        wanted_heat -= WANTED_COOLING * dt * (boon == Boon::Notorious ? 0.5f : 1);
-    float floor = boon == Boon::PriceOnHead ? PRICE_ON_HEAD_FLOOR * WANTED_KILLS_PER_STAR : 0;
+        wanted_heat -= WANTED_COOLING * dt * (hasBoon(Boon::Notorious) ? 0.5f : 1);
+    float floor = hasBoon(Boon::PriceOnHead) ? PRICE_ON_HEAD_FLOOR * WANTED_KILLS_PER_STAR : 0;
     wanted_heat = std::max(floor, wanted_heat);
 
     // Standing still while the smoke rises; the titan runs on the floor. Fishbones holds Jinx still in
@@ -186,7 +194,10 @@ void Player::update(float dt, float forward_speed, float max_y)
         x += forward_speed * pace * dt;
     if (sprint_timer > 0 && (sprint_timer -= dt) <= 0) {
         sprint_timer = 0;
-        grace_timer = END_GRACE;
+        grace_timer = graceOf(END_GRACE);
+        // Chrome Junkie: it burns through the plating
+        if (hasOwn(Boon::RunnerPact, DAVID))
+            shields = 0;
     }
     berserk_timer = std::max(0.0f, berserk_timer - dt);
     if (form == Form::Titan) {
@@ -201,7 +212,8 @@ void Player::update(float dt, float forward_speed, float max_y)
     }
 
     bool thrust = jet_active && form != Form::Shifting;
-    y_velocity += (thrust ? -JET_POWER : GRAVITY) * (flipped ? -1 : 1) * agilityOf(character) * dt;
+    y_velocity += (thrust ? -JET_POWER : GRAVITY) * (flipped ? -1 : 1) * agilityOf(character) *
+                  (hasOwn(Boon::RunnerPact, MIKASA) ? GAS_OVERLOAD : 1) * dt;
     y_velocity = std::clamp(y_velocity, -MAX_VELOCITY, MAX_VELOCITY);
     y += y_velocity * dt;
 

@@ -9,6 +9,7 @@
 #include <string>
 #include "settings.hpp"
 #include "wallet.hpp"
+#include "contracts.hpp"
 
 class Renderer;
 class Audio;
@@ -30,6 +31,7 @@ struct MenuState {
     Screen screen = Screen::Main;
     int selected = 0;
     int character = 0;
+    bool info = false;      // character select: the selected runner's how-to is open
     int game_mode = 0;
     int district = 0;
     int option = 0;
@@ -40,6 +42,7 @@ struct MenuState {
     std::string error;
     Bests bests;
     Wallet wallet;
+    Contracts contracts;
 };
 
 // Shared by the menu (mouse hit tests) and the renderer (drawing)
@@ -47,13 +50,13 @@ namespace MenuLayout {
     constexpr const char *ITEMS[] = {"SOLO RUN", "HOST A RUN", "JOIN A RUN", "UPGRADES", "OPTIONS", "JACK OUT"};
     enum Item { ITEM_SOLO, ITEM_HOST, ITEM_JOIN, ITEM_UPGRADES, ITEM_OPTIONS, ITEM_QUIT, ITEM_COUNT };
     constexpr float X = 1380;
-    constexpr float Y = 410;
-    constexpr float SPACING = 80;
+    constexpr float Y = 365;
+    constexpr float SPACING = 72;
 
     // Options rows
     enum Option { OPTION_MUSIC, OPTION_SFX, OPTION_JETPACK, OPTION_ATTACK, OPTION_ULTIMATE, OPTION_FULLSCREEN, OPTION_BACK, OPTION_COUNT };
     constexpr float WIDTH = 620;
-    constexpr float HEIGHT = 80;
+    constexpr float HEIGHT = 72;
 
     // Character cards, five to a row, the next row starting under Johnny
     constexpr int CARD_COLUMNS = 5;
@@ -106,6 +109,18 @@ namespace MenuLayout {
         float x = 960 + (index % CARD_COLUMNS - (CARD_COLUMNS - 1) / 2.0f) * CARD_SPACING;
         float y = CARD_Y + (index / CARD_COLUMNS) * CARD_ROW_SPACING;
         return centeredBox({x, y}, {CARD_WIDTH, CARD_HEIGHT});
+    }
+
+    // The three contracts under the main menu's list
+    inline sf::FloatRect contractBox(int index)
+    {
+        return centeredBox({X, 842 + index * 54.0f}, {600, 48});
+    }
+
+    // Character select: opens the selected runner's how-to
+    inline sf::FloatRect infoButton()
+    {
+        return centeredBox({1700, 235}, {300, 64});
     }
 
     // Upgrades shop: one card each, four to a row, a short last row centered

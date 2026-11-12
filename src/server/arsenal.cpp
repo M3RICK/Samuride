@@ -57,19 +57,21 @@ float Gun::attack(Server &server, Player &player)
     // Double Tap: the second one flies through what the first took down
     if (player.hasBoon(Boon::Signature))
         server.fireProjectile(player, Weapon::Gun);
-    return statsOf(Weapon::Gun).cooldown;
+    // Rockerboy: Johnny's gun is slower
+    return statsOf(Weapon::Gun).cooldown * (player.hasOwn(Boon::RunnerPact, JOHNNY) ? ROCKERBOY_COOLDOWN : 1);
 }
 
 // A burst, the rest of it fired over the next ticks (act); a spray in Berserk
 float Minigun::attack(Server &server, Player &player)
 {
     server.fireProjectile(player, Weapon::Minigun);
-    if (player.isBerserk())
+    // Loose Cannon: the spray, Berserk or not
+    if (player.isBerserk() || player.hasBoon(Boon::RunnerPact))
         return MINIGUN_SPRAY_COOLDOWN;
     startBurst();
     if (player.hasBoon(Boon::Signature))
         burst_left += 2;    // Bigger Bursts
-    return statsOf(Weapon::Minigun).cooldown;
+    return statsOf(Weapon::Minigun).cooldown * (player.hasBoon(Boon::Signature2) ? TRIGGER_HAPPY : 1);
 }
 
 void Minigun::act(Server &server, Player &player)
@@ -119,9 +121,15 @@ float Hack::attack(Server &server, Player &player)
     }
 
     ram--;
+    // Overheat: the NCPD notices every hack
+    if (player.hasBoon(Boon::RunnerPact))
+        player.raiseWanted();
     if (server.isLiveDrone(x, y)) {
         server.destroyDrone(player.getClientFd(), x, y);
-        bounce(server, player, x, y);
+        auto [next_x, next_y] = bounce(server, player, x, y);
+        // Daisy Chain: and on to a second one
+        if (next_x >= 0 && player.hasBoon(Boon::Signature2))
+            bounce(server, player, next_x, next_y);
     } else {
         for (std::pair<int, int> node : zapperNodes(server.map(), x, y))
             server.switchOffZapper(node.first, node.second, HACK_TIME);
@@ -132,7 +140,7 @@ float Hack::attack(Server &server, Player &player)
 }
 
 // The nearest live drone around the one just hacked goes down too, if there is one close enough
-void Hack::bounce(Server &server, const Player &player, int from_x, int from_y)
+std::pair<int, int> Hack::bounce(Server &server, const Player &player, int from_x, int from_y)
 {
     int reach = static_cast<int>(HACK_BOUNCE_RANGE);
     std::pair<int, int> target = {-1, -1};
@@ -148,17 +156,19 @@ void Hack::bounce(Server &server, const Player &player, int from_x, int from_y)
         }
     }
     if (target.first < 0)
-        return;
+        return target;
     // Before the drone goes down: the clients draw the arc from the last drone this player took
     server.notifyCollision(HACK_BOUNCE, player, target.first, target.second);
     server.destroyDrone(player.getClientFd(), target.first, target.second);
+    return target;
 }
 
 // A charge comes back every RAM_RECHARGE, faster in Berserk
 void Hack::tick(const Player &player, float dt)
 {
-    // Overclocked Deck: twice as fast
-    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1);
+    // Overclocked Deck: twice as fast; Overheat: three times
+    float rate = (player.isBerserk() ? BERSERK_RAM_RATE : 1) * (player.hasBoon(Boon::Signature) ? 2 : 1) *
+                 (player.hasBoon(Boon::RunnerPact) ? OVERHEAT_RAM : 1);
     if (ram < RAM_MAX && (ram_timer -= dt * rate) <= 0) {
         ram++;
         ram_timer = RAM_RECHARGE;
@@ -194,7 +204,7 @@ int Rebellion::droneDown()
 {
     int bounty = static_cast<int>(std::lround(DRONE_BOUNTY * STYLE_BOUNTY[rank]));
 
-    if (++kills >= STYLE_KILLS && rank < STYLE_RANKS - 1) {
+    if (++kills >= kills_needed && rank < STYLE_RANKS - 1) {
         rank++;
         kills = 0;
     }
@@ -205,8 +215,13 @@ int Rebellion::droneDown()
 // A rank down every STYLE_DROP_TIME without a kill
 void Rebellion::tick(const Player &player, float dt)
 {
+    // Devil May Cry: never under B. All or Nothing: a rank a kill, dropping twice as fast
+    floor_rank = player.hasBoon(Boon::Signature2) ? DEVIL_MAY_CRY_RANK : 0;
+    kills_needed = player.hasBoon(Boon::RunnerPact) ? 1 : STYLE_KILLS;
+    rank = std::max(rank, floor_rank);
     // Showoff: twice as slow
-    if (rank == 0 || (drop_timer -= dt * (player.hasBoon(Boon::Signature) ? 0.5f : 1)) > 0)
+    float rate = (player.hasBoon(Boon::Signature) ? 0.5f : 1) * (player.hasBoon(Boon::RunnerPact) ? 2 : 1);
+    if (rank <= floor_rank || (drop_timer -= dt * rate) > 0)
         return;
     rank--;
     kills = 0;
@@ -242,10 +257,13 @@ float Blink::release(Server &server, Player &player)
         for (float dy : {0.3f, 1.0f, 1.7f})
             close_call |= server.isLiveZapper(x, static_cast<int>(top + dy));
 
+    int kills = 0;
     for (int x = static_cast<int>(left); x < right; x++)
         for (int y = static_cast<int>(top); y < bottom; y++)
-            if (server.isLiveDrone(x, y))
+            if (server.isLiveDrone(x, y)) {
                 server.destroyDrone(player.getClientFd(), x, y);
+                kills++;
+            }
     if (close_call) {
         player.addScore(BLINK_CLOSE_CALL_BOUNTY);
         server.notifyCollision(CLOSE_CALL, player, static_cast<int>(to_x), static_cast<int>(top));
@@ -264,6 +282,8 @@ float Blink::release(Server &server, Player &player)
     // Before he moves: the clients draw his smoke where he was
     server.announceShot(player, Weapon::Blink);
     player.blinkTo(to_x);
+    if (player.hasBoon(Boon::Signature2))
+        player.dodge(PHASE_SHIFT_TIME);
     // Through the strike that was about to land on him, and a counter-stab wherever Smasher stands
     if (strike > 0) {
         player.dodge(strike);
@@ -274,8 +294,11 @@ float Blink::release(Server &server, Player &player)
     // Stillness: the Blinks are free (and go all the way) while the world stands still
     if (player.ultimate().freezes())
         return BLINK_COOLDOWN;
-    if (charges_left-- == BLINK_CHARGES)
+    // Void Hunger: free when it killed, two charges when it didn't
+    int cost = !player.hasBoon(Boon::RunnerPact) ? 1 : kills > 0 ? 0 : 2;
+    if (cost > 0 && charges_left == BLINK_CHARGES)
         recharge_timer = BLINK_RECHARGE;
+    charges_left = std::max(0, charges_left - cost);
     return BLINK_COOLDOWN;
 }
 
@@ -327,7 +350,8 @@ void Kick::act(Server &server, Player &player)
 // Every drone in his boot's reach goes down. Steel Toes: each one flies into the drone nearest to it (launch).
 void Kick::strike(Server &server, Player &player)
 {
-    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, KICK_REACH, player.getY(), true);
+    float reach = KICK_REACH * (player.hasBoon(Boon::Signature2) ? BIG_BOOTS_REACH : 1);
+    std::vector<std::pair<int, int>> kicked = server.dronesInReach(player, reach, player.getY(), true);
     for (auto [x, y] : kicked) {
         server.destroyDrone(player.getClientFd(), x, y);
         if (player.hasBoon(Boon::Signature))

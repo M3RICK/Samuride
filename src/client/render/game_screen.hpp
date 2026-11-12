@@ -11,6 +11,7 @@
 #include "run.hpp"
 #include "../../common/boons.hpp"
 #include "../wallet.hpp"
+#include "../contracts.hpp"
 #include "particles.hpp"
 #include "tiles.hpp"
 #include "players.hpp"
@@ -68,6 +69,11 @@ private:
     static constexpr float HIT_STOP = 0.035f;   // felt, not seen: longer breaks the run's rhythm
     static constexpr float CUT_TIME = 0.25f;
     float hit_stop = 0;         // seconds of freeze left
+    // The colours split at the screen's edges (see PostFx) while you sprint on the Sandevistan, eased in
+    // and out, and with every shake, by its strength in pixels
+    static constexpr float SPRINT_SPLIT = 0.008f;
+    static constexpr float SHAKE_SPLIT = 0.0005f;
+    float sprint_split = 0;
     struct Cut {
         sf::Vector2f pos;       // in tiles
         sf::Clock age;
@@ -145,7 +151,18 @@ private:
     bool new_record = false;
     bool new_drone_record = false;
     int wallet = 0;     // eddies saved, once this run's are in
+    // Solo: what each contract slot held once this run was counted; those it finished are paid into the wallet
+    std::array<Contract, Contracts::COUNT> contracts_ended;
+    bool contracts_counted = false;
+    void settleContracts(GameState &state);
+    void drawContracts();
     std::string ultimate_key;   // its name, read from the settings at the start of each run
+    std::string jetpack_key;
+    std::string attack_key;
+    // A new player's first runs (best under HINTS_UNTIL): the keys, told one at a time as they come up
+    static constexpr int HINTS_UNTIL = 200;
+    int hint_step = 0;
+    sf::Clock hint_clock;       // since the current hint came up
     bool ultimate_was_ready = false;
     int spears_shown = 0;       // to see one thrown
     int style_shown = 0;        // your style rank last frame (Dante), to hear and see it go up
@@ -154,7 +171,8 @@ private:
     int implant = 0;            // the one bought this run, 0 none
     sf::Clock boon_clock;       // since the boons were offered
     std::array<Boon, 3> boon_cards{};
-    Boon boon = Boon::None;     // the one picked this run
+    std::vector<Boon> boons;    // picked this run, in order
+    bool hasBoon(Boon b) const { return std::ranges::find(boons, b) != boons.end(); }
     int wanted_shown = 0;       // your NCPD stars last frame, to hear the siren when one comes
     // The HUD's face reacts for a moment to what happens to you, like Doom's. In order: a mood only
     // interrupts a lesser one.
@@ -243,6 +261,8 @@ private:
     void drawRipperdoc(const PlayerState &me);
     void drawBlackout(GameState &state, const std::set<std::pair<int, int>> &destroyed, int me);
     void drawBoons(int me);
+    void drawPause();
+    void drawHints(const PlayerState &player, int me, bool cyberpsycho);
     struct Card {
         std::string name;
         std::string what;
@@ -258,7 +278,9 @@ private:
     void drawDeathCause(sf::Vector2f pos);
     void drawNextGoal(sf::Vector2f pos);
     void drawGameOver(GameState &state, const std::map<int, PlayerState> &players, int me);
-    void drawSoloResults(const PlayerState &me);
+    void drawSoloResults(const PlayerState &me, int number);
+    void drawResultTile(sf::Vector2f center, const std::string &label, const std::string &value, const std::string &note, bool record);
+    void drawResultBoons(int me, float y);
     void drawVersusResults(const std::map<int, PlayerState> &players, int winner, int me);
     void drawRematchPrompt(GameState &state, bool solo);
     void drawConnectionLost();

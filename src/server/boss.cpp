@@ -17,8 +17,8 @@ float Boss::durationOf(BossAttack attack)
 {
     switch (attack) {
         case BossAttack::Rockets:
-            // Until the wall is well past the runners
-            return BOSS_ROCKET_WARN + (BOSS_AHEAD + 3) / BOSS_ROCKET_SPEED;
+            // Until the wall has left the screen behind the runners
+            return BOSS_ROCKET_WARN + (BOSS_AHEAD + BOSS_ROCKET_BEHIND) / BOSS_ROCKET_SPEED;
         case BossAttack::Slam:
             return BOSS_SLAM_WARN + BOSS_SLAM_TIME + BOSS_SLAM_RECOVER;
         case BossAttack::Cannon:

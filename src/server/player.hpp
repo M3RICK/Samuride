@@ -36,22 +36,25 @@ private:
     int character = 0;
     int version = 0;            // PROTOCOL_VERSION it sent, 0 if none
     bool introduced = false;    // sent MSG_CONNECT: the character is the one picked
+    int silent_ticks = 0;       // ticks spent in the lobby without introducing itself
     UpgradeLevels upgrades{};   // bought in the shop, sent with MSG_CONNECT
     float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
     Form form = Form::Normal;
     float form_timer = 0;       // seconds left in the current form
-    bool shield = false;
+    int shields = 0;            // 1, or 2 on Double Plating
     bool rescued = false;       // the Trauma Team came this run
     float rescue_timer = 0;     // seconds the Trauma Team is still at work on them
     float sprint_timer = 0;     // seconds of Sandevistan left
     float berserk_timer = 0;    // seconds of Berserk left
     float grace_timer = 0;      // seconds of invincibility left after a shield broke, a sprint or a titan
-    int ultimate_charge = 0;    // eddies earned since the last ultimate, up to its runner's charge
+    float ultimate_charge = 0;  // eddies earned since the last ultimate, up to its runner's charge
     float wanted_heat = 0;      // drones down, cooling once calm (cyberpsycho.hpp)
     float wanted_calm = 0;      // seconds since the last drone down
     int implant = 0;            // bought from the Ripperdoc this run (upgrades.hpp), 0 none
     float armor_timer = 0;      // Subdermal Armor: seconds since the shield broke
-    Boon boon = Boon::None;     // picked this run (boons.hpp)
+    uint32_t boons = 0;         // picked this run, a bit each (boons.hpp)
+    // Second Wind: twice the grace
+    float graceOf(float seconds) const { return seconds * (hasBoon(Boon::SecondWind) ? 2 : 1); }
     float glass_carry = 0;      // Glass Cannon: the share of an eddy not paid yet
     bool flipped = false;       // in a gravity flip (events.hpp)
     // The runner's weapon and ultimate, and what they keep (arsenal.hpp)
@@ -89,7 +92,8 @@ public:
 
     Form getForm() const { return form; }
     bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
-    bool hasShield() const { return shield; }
+    bool hasShield() const { return shields > 0; }
+    int shieldCount() const { return shields; }
     bool isGracing() const { return grace_timer > 0; }
     bool isSprinting() const { return sprint_timer > 0; }
     bool isBerserk() const { return berserk_timer > 0; }
@@ -97,7 +101,7 @@ public:
     // Returns true when the shield took the hit
     bool absorbHit();
     // Bought, and not come yet this run
-    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued && boon != Boon::GlassCannon; }
+    bool canCallTraumaTeam() const { return upgrades[UPGRADE_TRAUMA] > 0 && !rescued && !hasBoon(Boon::GlassCannon); }
     // A deadly hit the shield didn't take: the Trauma Team picks them up, once per run. True if it came.
     bool callTraumaTeam();
     // While it works: on the floor, still, and true, the run waits
@@ -114,15 +118,23 @@ public:
     }
     // The Ripperdoc's implant, paid from the run's eddies: false if they can't afford it
     bool buyImplant(int id);
-    bool hasBoon(Boon b) const { return boon == b; }
+    bool hasBoon(Boon b) const { return boons >> static_cast<int>(b) & 1; }
+    // One of the runner's own: Signature2 and RunnerPact are something else for each
+    bool hasOwn(Boon b, int runner) const { return character == runner && hasBoon(b); }
     void takeBoon(Boon b);
-    int getUltimateCharge() const { return ultimate_charge; }
+    int getUltimateCharge() const { return static_cast<int>(ultimate_charge); }
     bool ultimateReady() const { return ultimate_charge >= ultimateCharge(character); }
     // The gauge, in percent of what this player needs
-    int ultimatePercent() const { return ultimate_charge * 100 / ultimateCharge(character); }
-    void spendUltimate() { ultimate_charge = 0; }
+    int ultimatePercent() const { return static_cast<int>(ultimate_charge * 100 / ultimateCharge(character)); }
+    // Spare Shell: David keeps a share of it
+    void spendUltimate() { ultimate_charge = hasOwn(Boon::Signature2, DAVID) ? ultimateCharge(character) * SPARE_SHELL : 0; }
     int wantedStars() const { return ::wantedStars(wanted_heat); }
-    void raiseWanted() { wanted_heat = std::min(wantedHeatCap(), wanted_heat + 1), wanted_calm = 0; }
+    // Bad Reputation: twice the heat
+    void raiseWanted()
+    {
+        wanted_heat = std::min(wantedHeatCap(), wanted_heat + (hasOwn(Boon::RunnerPact, DIRTYBASTRD) ? 2 : 1));
+        wanted_calm = 0;
+    }
     RunnerWeapon &weapon() { return *runner_weapon; }
     const RunnerWeapon &weapon() const { return *runner_weapon; }
     RunnerUltimate &ultimate() { return *runner_ultimate; }
@@ -136,6 +148,7 @@ public:
     void setUpgrades(const UpgradeLevels &levels) { upgrades = levels; }
     const UpgradeLevels &getUpgrades() const { return upgrades; }
     bool isIntroduced() const { return introduced; }
+    int waitSilently() { return ++silent_ticks; }
     void setVersion(int sent) { version = sent; }
     int getVersion() const { return version; }
 

@@ -128,14 +128,20 @@ void Client::networkLoop()
     }
 }
 
+// Sent as far as the socket takes it, the rest next time: a packet cut in half would scramble the stream
 void Client::processOutgoingMessages()
 {
-    std::lock_guard<std::mutex> lock(queue_mutex);
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
 
-    while (!message_queue.empty()) {
-        Socket::send(client_fd, message_queue.front());
-        message_queue.pop();
+        for (; !message_queue.empty(); message_queue.pop())
+            outgoing.insert(outgoing.end(), message_queue.front().begin(), message_queue.front().end());
     }
+
+    int sent = outgoing.empty() ? 0 : Socket::send(client_fd, outgoing);
+
+    if (sent > 0)
+        outgoing.erase(outgoing.begin(), outgoing.begin() + sent);
 }
 
 void Client::readIncomingData()
@@ -301,6 +307,19 @@ void Client::sendAttack(bool pressed)
 {
     game_state.holdAttack(pressed);
     sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
+}
+
+bool Client::pause(bool on)
+{
+    if (!connected || !game_state.setPaused(on))
+        return false;
+    sendToServer(Protocol::createPacket(MSG_PAUSE, {static_cast<uint8_t>(on)}));
+    return true;
+}
+
+bool Client::paused() const
+{
+    return game_state.isPaused();
 }
 
 bool Client::combatRun() const

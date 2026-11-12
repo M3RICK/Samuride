@@ -149,6 +149,7 @@ Audio::Audio()
 {
     loadMusic();
     synthesize();
+    loadSamples();
     loadLines();
 
     for (size_t i = 0; i < VOICES; i++)
@@ -279,6 +280,23 @@ void Audio::synthesize()
 
     // No envelope: it loops
     jet_buffer = toBuffer(noise(1.0f, 0.5f, 0.05f));
+}
+
+// Recorded samples (CC0, see the README) over the synthesized sounds heard the most. One that fails to load
+// keeps its synthesized sound; to change one, replace its file.
+void Audio::loadSamples()
+{
+    static const std::pair<Sfx, const char *> SAMPLES[] = {
+        {Sfx::Gun, "gun"}, {Sfx::Minigun, "minigun"}, {Sfx::Explosion, "explosion"}, {Sfx::Nuke, "nuke"},
+        {Sfx::Shield, "shield"}, {Sfx::ShieldBreak, "shield_break"}, {Sfx::Sandevistan, "sandevistan"},
+        {Sfx::Blink, "blink"}, {Sfx::MenuMove, "menu_move"}, {Sfx::MenuConfirm, "menu_confirm"},
+    };
+
+    for (const auto &[sfx, name] : SAMPLES) {
+        sf::SoundBuffer sample;
+        if (sample.loadFromFile(std::string("assets/sfx/") + name + ".ogg"))
+            buffers[sfx] = std::move(sample);
+    }
 }
 
 // One track loops in the runs, another out of them once Johnny's greeting is over

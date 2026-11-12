@@ -61,11 +61,12 @@ void Canvas::setFullscreen(bool fullscreen)
         window.create(sf::VideoMode(size), "Samuride", sf::Style::Titlebar | sf::Style::Close);
     }
     window.setFramerateLimit(60);
+    postfx.open(window.getSize());
 }
 
 void Canvas::draw(const sf::Drawable &drawable, const sf::RenderStates &states)
 {
-    window.draw(drawable, states);
+    target().draw(drawable, states);
 }
 
 float Canvas::time() const
@@ -76,6 +77,14 @@ float Canvas::time() const
 bool Canvas::blink() const
 {
     return static_cast<int>(time() * 2) % 2 == 0;
+}
+
+void Canvas::present()
+{
+    if (postfx.on())
+        postfx.present(window, colour_split);
+    colour_split = 0;
+    window.setView(screenView());
 }
 
 // Black bars keep the 16:9 picture whole on screens of another shape
@@ -114,7 +123,7 @@ sf::Text Canvas::makeText(const std::string &content, unsigned int size, sf::Col
 
 void Canvas::text(const std::string &content, unsigned int size, sf::Color color, sf::Vector2f pos, sf::Vector2f anchor)
 {
-    window.draw(makeText(content, size, color, pos, anchor));
+    target().draw(makeText(content, size, color, pos, anchor));
 }
 
 // Chromatic split, with the odd jolt
@@ -126,11 +135,11 @@ void Canvas::glitchText(const std::string &content, unsigned int size, sf::Color
     split.setOutlineThickness(0);
     split.setFillColor(withAlpha(NEON_CYAN, 170));
     split.setPosition(pos + sf::Vector2f(-offset, 0));
-    window.draw(split);
+    target().draw(split);
 
     split.setFillColor(withAlpha(NEON_RED, 170));
     split.setPosition(pos + sf::Vector2f(offset, 0));
-    window.draw(split);
+    target().draw(split);
 
     text(content, size, color, pos);
 }
@@ -144,7 +153,7 @@ void Canvas::overlay(uint8_t alpha)
     sf::RectangleShape shade({Screen::WIDTH, Screen::HEIGHT});
 
     shade.setFillColor(sf::Color(0, 0, 0, alpha));
-    window.draw(shade);
+    target().draw(shade);
 }
 
 // Dark panel used by the selection screens, outlined in yellow when selected
@@ -156,7 +165,7 @@ void Canvas::card(sf::FloatRect box, bool selected)
     panel.setFillColor(sf::Color(10, 8, 20, 235));
     panel.setOutlineColor(selected ? NEON_YELLOW : withAlpha(NEON_CYAN, 90));
     panel.setOutlineThickness(selected ? 5 : 2);
-    window.draw(panel);
+    target().draw(panel);
 }
 
 // Additive glow disc
@@ -167,7 +176,7 @@ void Canvas::halo(sf::Vector2f center, float radius, sf::Color color)
     glow.setOrigin({radius, radius});
     glow.setPosition(center);
     glow.setFillColor(color);
-    window.draw(glow, sf::BlendAdd);
+    target().draw(glow, sf::BlendAdd);
 }
 
 // A thick arc between two radii, from angle `from` to `to` in degrees, clockwise from the top
@@ -182,7 +191,7 @@ void Canvas::arc(sf::Vector2f center, float inner, float outer, float from, floa
         strip.append({center + dir * inner, color});
         strip.append({center + dir * outer, color});
     }
-    window.draw(strip);
+    target().draw(strip);
 }
 
 // Dark disc with a neon ring: keeps a pickup or an enemy readable on any background
@@ -195,7 +204,7 @@ void Canvas::backing(sf::Vector2f center, float radius, sf::Color ring)
     disc.setFillColor(sf::Color(8, 6, 16, 170));
     disc.setOutlineColor(ring);
     disc.setOutlineThickness(3);
-    window.draw(disc);
+    target().draw(disc);
 }
 
 // Outlined hexagon, turned by `angle` degrees: the shield's mark
@@ -209,7 +218,7 @@ void Canvas::hexagon(sf::Vector2f center, float radius, sf::Color color, float a
     shape.setFillColor(withAlpha(color, 50));
     shape.setOutlineColor(color);
     shape.setOutlineThickness(radius * 0.18f);
-    window.draw(shape);
+    target().draw(shape);
 }
 
 // A texture scaled to `height`, placed by its anchor (0..1 on each axis, like makeText)
@@ -233,7 +242,7 @@ void Canvas::image(const sf::Texture &texture, sf::IntRect rect, sf::Vector2f po
     sprite.setScale({scale, scale});
     sprite.setPosition(pos);
     sprite.setColor(color);
-    window.draw(sprite);
+    target().draw(sprite);
 }
 
 // One frame of a horizontal strip of `frames` frames, centred and scaled to `width`
@@ -251,7 +260,7 @@ void Canvas::stripFrame(const sf::Texture &texture, int frames, int frame, sf::V
     sprite.setOrigin(sf::Vector2f(frame_size) / 2.f);
     sprite.setScale({scale, scale});
     sprite.setPosition(center);
-    window.draw(sprite);
+    target().draw(sprite);
 }
 
 sf::Color powerUpColor(char tile)

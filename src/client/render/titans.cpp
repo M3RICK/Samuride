@@ -5,6 +5,7 @@
 #include "sprites.hpp"
 #include "run.hpp"
 #include "../audio.hpp"
+#include <algorithm>
 
 using namespace Palette;
 
@@ -34,7 +35,8 @@ void Titans::draw(const std::vector<TitanState> &titans)
 // Feet on the floor, scaled to the titan's height in tiles
 void Titans::drawTitan(const TitanState &titan, float time)
 {
-    const Character &sprite = sprites.titans[static_cast<int>(titan.type)];
+    // The type comes off the network: one we don't know draws as the last we do
+    const Character &sprite = sprites.titans[std::min<size_t>(static_cast<size_t>(titan.type), sprites.titans.size() - 1)];
     TitanStats stats = titanStats(titan.type);
 
     if (sprite.sheet.getSize().x == 0)
