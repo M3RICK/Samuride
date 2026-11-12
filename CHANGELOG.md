@@ -22,7 +22,7 @@ taken from this file. Players on different versions can't play together: update 
   instead of a beam across the whole screen. Leave the row as before, or get past the bullet: Wraith can
   Blink through it.
 - Eddies have a new look, a spinning coin drawn by Alex.
-- Dante flies on demon wings instead of a jetpack: a new sprite sheet from Alex.
+- Dante flies on demon wings instead of a jetpack (a new sprite sheet from Alex); they fold away when he runs.
 
 ### Fixes
 - Adam Smasher's rockets fly on until they leave the screen instead of vanishing behind you.

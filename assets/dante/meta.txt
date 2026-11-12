@@ -1,10 +1,10 @@
 name DANTE
 sheet sheet.png
 portrait portrait.png
-frame 192 136
-feet 117
-body 108
-run 0 12 14 loop
+frame 207 136
+feet 115
+body 103
+run 0 13 14 loop
 rise 1 9 12 loop
 hover 2 9 12 loop
 fall 3 7 8 loop
