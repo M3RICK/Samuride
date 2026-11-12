@@ -349,6 +349,8 @@ void GameScreen::drawWorld(GameState &state, const std::map<int, PlayerState> &p
     drawCountdown(phase, state.getCountdown());
     if (phase != Phase::Over)
         drawBanner();
+    if (state.isPaused())
+        drawPause();
     if (state.isBoonOpen() && boon_clock.getElapsedTime().asSeconds() < BOON_TIME)
         drawBoons(me);
     if (state.isRipperdocOpen() && players.count(me) && ripperdoc_clock.getElapsedTime().asSeconds() < RIPPERDOC_TIME)

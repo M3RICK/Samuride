@@ -1344,6 +1344,42 @@ static void testBoonPick()
     BOON_DISTANCE = distance;
 }
 
+// Over sockets: a runner alone freezes the run and lets it go on
+static void testPause()
+{
+    const int port = 47128;
+    ServerConfig config;
+    config.port = port;
+    config.quiet = true;
+    config.solo = true;
+    Server server(config);
+    assert(server.initialize());
+    std::thread loop(&Server::run, &server);
+    TestClient runner(port);
+    runner.send(MSG_CONNECT, Message::encode(ConnectRequest{.character = 0, .district = 0, .mode = 0}));
+    auto moves = [&] {
+        float x = runner.latest(0).x;
+        for (int i = 0; i < 100; i++)
+            if (runner.latest(0).x > x)
+                return true;
+        return false;
+    };
+
+    assert(moves());
+    runner.send(MSG_PAUSE, {1});
+    // What was sent before the pause took hold
+    for (int i = 0; i < 6; i++)
+        runner.latest(0);
+    float x = runner.latest(0).x;
+    assert(runner.latest(0).x == x && runner.latest(0).x == x);
+    runner.send(MSG_PAUSE, {0});
+    assert(moves());
+
+    Socket::close(runner.fd);
+    server.stop();
+    loop.join();
+}
+
 // Events: their stretches of road, and gravity flipped in one
 static void testEvents()
 {
@@ -1409,6 +1445,7 @@ int main()
     testWayThrough();
     testBoons();
     testBoonPick();
+    testPause();
     testEvents();
     testTuning();
     testWallet();

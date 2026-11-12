@@ -309,6 +309,19 @@ void Client::sendAttack(bool pressed)
     sendToServer(Protocol::createPacket(MSG_ATTACK, {static_cast<uint8_t>(pressed)}));
 }
 
+bool Client::pause(bool on)
+{
+    if (!connected || !game_state.setPaused(on))
+        return false;
+    sendToServer(Protocol::createPacket(MSG_PAUSE, {static_cast<uint8_t>(on)}));
+    return true;
+}
+
+bool Client::paused() const
+{
+    return game_state.isPaused();
+}
+
 bool Client::combatRun() const
 {
     return game_state.getMode() == GameMode::Cyberpsycho;

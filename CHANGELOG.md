@@ -17,6 +17,8 @@ taken from this file. Players on different versions can't play together: update 
 - **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
   runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
   the others, locked ones included.
+- **Pause**: in a solo run, `Esc` freezes everything and `Esc` again resumes; `Q` leaves to the menu. The run
+  also pauses on its own when the window loses focus. (`Esc` still leaves a versus run right away.)
 - **Boons add up**: a new pick of three every 250 m instead of one for the whole run (never inside Adam
   Smasher's arena: the next comes once he is gone). No boon comes twice; the ones you hold are listed under
   your wanted stars, pacts in red.

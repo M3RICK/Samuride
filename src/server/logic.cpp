@@ -112,6 +112,7 @@ void Server::dropSilentClients()
 // Everyone gets the run's map, then who plays whom
 void Server::startGame()
 {
+    paused = false;
     int player_num = 0;
     GameStart start;
     start.district = district;
@@ -180,6 +181,10 @@ void Server::updatePlayers()
     float rear_x = 1e9f;
     std::vector<int> survivors;
 
+    if (paused) {
+        sendGameState();
+        return;
+    }
     // A deadly hit asking whether to call the Trauma Team: the run waits for the answer, which is yes
     // once it is late
     if (!trauma_offers.empty()) {

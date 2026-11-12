@@ -22,7 +22,10 @@ void InputManager::processInputs()
         if (event->is<sf::Event::Closed>())
             close_requested = true;
         else if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
-            if (key->code == sf::Keyboard::Key::Escape)
+            // Escape pauses a solo run and resumes it; paused, Q leaves. Anywhere else it leaves.
+            if (key->code == sf::Keyboard::Key::Escape && !client->pause(!client->paused()))
+                back_requested = true;
+            if (key->code == sf::Keyboard::Key::Q && client->paused())
                 back_requested = true;
             // The run over: C picks another runner, M another district
             if (client->runEnded() && (key->code == sf::Keyboard::Key::C || key->code == sf::Keyboard::Key::M)) {
@@ -54,10 +57,19 @@ void InputManager::processInputs()
                 attack_key_down = false;
         } else if (event->is<sf::Event::FocusLost>()) {
             attack_key_down = false;
+            client->pause(true);
         } else if (const auto *touch = event->getIf<sf::Event::TouchBegan>()) {
             // The screen view the HUD was last drawn with, buttons included
             sf::Vector2f pos = window->mapPixelToCoords(touch->position);
             fingers[touch->finger] = pos;
+            // Paused: the menu button leaves, a tap anywhere else resumes
+            if (Touch::ENABLED && client->paused()) {
+                if (Touch::onMenuButton(pos))
+                    back_requested = true;
+                else
+                    client->pause(false);
+                continue;
+            }
             // Once a game is over, the menu button goes back, a tap anywhere else is a rematch
             if (Touch::ENABLED && client->runEnded() && Touch::onMenuButton(pos)) {
                 back_requested = true;

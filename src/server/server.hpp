@@ -134,6 +134,7 @@ private:
     // The boons every BOON_DISTANCE: the three cards each runner still has to pick from, and the time left
     std::map<int, std::array<Boon, 3>> boon_offers;
     float boon_left = 0;
+    bool paused = false;        // a runner alone froze the run (MSG_PAUSE)
     float next_boon = 0;        // where the next ones are offered, in tiles
     // Each event's kind, rolled when the map or the warning first needs it; the last one announced
     std::map<int, RunEvent> run_events;

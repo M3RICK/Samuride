@@ -222,6 +222,12 @@ bool Server::processClientMessage(int client_fd, const MessageHeader &header, co
             handleUltimate(client_fd);
             break;
 
+        case MSG_PAUSE:
+            // Alone only: nobody freezes someone else's run. Not on a question the run already waits on.
+            paused = !payload.empty() && payload[0] != 0 && players.size() == 1 && phase == Phase::Running &&
+                     trauma_offers.empty() && ripperdoc_waiting.empty() && boon_offers.empty();
+            break;
+
         case MSG_BOON:
             if (!payload.empty() && phase == Phase::Running)
                 answerBoon(client_fd, payload[0]);
