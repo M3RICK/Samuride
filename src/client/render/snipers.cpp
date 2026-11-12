@@ -1,18 +1,18 @@
-// Arasaka snipers: their laser sights across the screen, then the railgun shot.
-// ponytail: plain shapes until the sniper gets its sprite and sound
+// Arasaka snipers: their laser sights across the screen, then the bullet (Alex's sprite).
 
 #include "snipers.hpp"
 #include "canvas.hpp"
 #include "run.hpp"
+#include "sprites.hpp"
 #include "../audio.hpp"
 
 using namespace Palette;
 
-Snipers::Snipers(Canvas &canvas, Run &run, Audio &audio) : canvas(canvas), run(run), audio(audio) {
+Snipers::Snipers(Canvas &canvas, const Sprites &sprites, Run &run, Audio &audio) : canvas(canvas), sprites(sprites), run(run), audio(audio) {
 }
 
 // Tracking: a thin red line and a reticle on the right edge, following you. Aiming: the line
-// thickens and flickers, frozen. Firing: a white-hot beam with a red glow, the whole row.
+// thickens and flickers, frozen. Firing: the bullet flies along the row, a faint tracer behind it.
 void Snipers::draw(const std::vector<SniperState> &snipers)
 {
     float tile = run.view.tile_size;
@@ -23,14 +23,13 @@ void Snipers::draw(const std::vector<SniperState> &snipers)
 
         if (sniper.phase == SniperPhase::Firing) {
             now_firing++;
-            for (auto [height, color] : {std::pair{tile * SNIPER_BEAM_HALF * 4, withAlpha(NEON_RED, 90)},
-                                         std::pair{tile * SNIPER_BEAM_HALF * 2, NEON_RED},
-                                         std::pair{tile * SNIPER_BEAM_HALF, sf::Color::White}}) {
-                sf::RectangleShape beam({Screen::WIDTH, height});
-                beam.setPosition({0, y - height / 2});
-                beam.setFillColor(color);
-                canvas.draw(beam);
-            }
+            // Nose on the bullet's x, like the hitbox; the sprite is 3 frames-heights long
+            float x = run.toScreen({sniper.x, 0}).x;
+            sf::RectangleShape tracer({std::max(0.0f, Screen::WIDTH - x), 3});
+            tracer.setPosition({x, y - 1.5f});
+            tracer.setFillColor(withAlpha(NEON_RED, 70));
+            canvas.draw(tracer);
+            canvas.image(sprites.sniper_bullet, {x - tile * 0.25f, y}, tile, {0, 0.5f}, sf::Color::White);
             continue;
         }
 

@@ -39,6 +39,7 @@ struct PlayerState {
     bool jet_active = false;
     Form form = Form::Normal;
     bool shielded = false;
+    bool plated = false;        // a second shield over the first (Double Plating)
     bool sprinting = false;     // Sandevistan
     int ram = 0;                // the weapon's charges: Lucy's RAM, Wraith's Blinks
     bool berserk = false;
@@ -75,6 +76,7 @@ struct TitanState {
 // MSG_SNIPERS, one per sniper
 struct SniperState {
     SniperPhase phase;
+    float x = 0;    // its bullet's nose, in tiles, once fired
     float y;        // its line, in tiles
 };
 

@@ -32,17 +32,22 @@ void SniperSquad::spawn(float leader_x, float dt, std::mt19937 &rng, const std::
         return;
     timer = interval(rng);
     float aim = SNIPER_AIM_TIME + (target->second.hasBoon(Boon::ColdBlood) ? COLD_BLOOD_AIM : 0);
-    snipers.push_back({target->first, target->second.getY() + Player::HEIGHT / 2, 0, aim});
+    snipers.push_back({target->first, 0, target->second.getY() + Player::HEIGHT / 2, 0, aim});
 }
 
-void SniperSquad::update(float dt, const std::map<int, Player> &players)
+void SniperSquad::update(float dt, float leader_x, const std::map<int, Player> &players)
 {
+    if (dt <= 0)
+        return;
     for (Sniper &sniper : snipers) {
+        bool fired = sniper.phase() == SniperPhase::Firing;
         sniper.time += dt;
 
         auto target = players.find(sniper.target_fd);
         if (sniper.phase() == SniperPhase::Tracking && target != players.end())
             sniper.y = target->second.getY() + Player::HEIGHT / 2;
+        if (!fired && sniper.phase() == SniperPhase::Firing)
+            sniper.x = leader_x + SNIPER_BULLET_AHEAD;
     }
 
     std::erase_if(snipers, [](const Sniper &sniper) {
@@ -53,7 +58,7 @@ void SniperSquad::update(float dt, const std::map<int, Player> &players)
 bool SniperSquad::hit(const Player &player) const
 {
     return std::ranges::any_of(snipers, [&](const Sniper &sniper) {
-        return sniper.phase() == SniperPhase::Firing && sniperHits(sniper.y, player.getY());
+        return sniper.phase() == SniperPhase::Firing && sniperHits(sniper.bulletX(), sniper.y, player.getX(), player.getY());
     });
 }
 
@@ -62,6 +67,6 @@ std::vector<SniperState> SniperSquad::states() const
     std::vector<SniperState> states;
 
     for (const Sniper &sniper : snipers)
-        states.push_back({sniper.phase(), sniper.y});
+        states.push_back({sniper.phase(), sniper.bulletX(), sniper.y});
     return states;
 }

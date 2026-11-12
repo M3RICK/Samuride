@@ -411,7 +411,7 @@ void GameScreen::drawHUDLine(int player_num, const PlayerState &player, int me, 
 
     sf::FloatRect bounds = text.getGlobalBounds();
     float x = bounds.position.x + bounds.size.x + 26;
-    if (player.shielded) {
+    for (int plate = 0; plate < player.shielded + player.plated; plate++) {
         canvas.hexagon({x, bounds.getCenter().y}, 12, SHIELD_COLOR, 0);
         x += 34;
     }

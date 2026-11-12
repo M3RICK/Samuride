@@ -116,8 +116,8 @@ std::vector<uint8_t> Message::encode(const std::map<int, PlayerState> &players)
              p.ram << 5 | p.berserk << 7);
         w.u8(p.ultimate);
         w.u8(p.spears);
-        // bit 0: a second of grace, bits 1-3: Dante's style rank, bits 4-6: wanted level
-        w.u8(p.grace | p.style << 1 | p.wanted << 4);
+        // bit 0: a second of grace, bits 1-3: Dante's style rank, bits 4-6: wanted level, bit 7: second shield
+        w.u8(p.grace | p.style << 1 | p.wanted << 4 | p.plated << 7);
         // DirtyBastrd's chainsaw: bit 0 out, bit 1 lunging with it, bits 2-6 the scrap it would give
         w.u8(p.chainsaw | p.lunging << 1 | p.scrap << 2);
     }
@@ -147,6 +147,7 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::map<int, PlayerSt
         p.grace = flags2 & 1;
         p.style = (flags2 >> 1) & 7;
         p.wanted = (flags2 >> 4) & 7;
+        p.plated = flags2 & 128;
         uint8_t saw = r.u8();
         p.chainsaw = saw & 1;
         p.lunging = saw & 2;
@@ -219,13 +220,14 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::vector<TitanState
     return r.ok();
 }
 
-// [count]([phase][y, 2 bytes])...
+// [count]([phase][bullet's x, 4 bytes][y, 2 bytes])...
 std::vector<uint8_t> Message::encode(const std::vector<SniperState> &snipers)
 {
     Writer w;
     w.u8(snipers.size());
     for (const SniperState &sniper : snipers) {
         w.u8(static_cast<uint8_t>(sniper.phase));
+        w.pos32(sniper.x);
         w.pos16(sniper.y);
     }
     return w.data;
@@ -237,7 +239,8 @@ bool Message::decode(const std::vector<uint8_t> &payload, std::vector<SniperStat
     snipers.clear();
     for (int count = r.u8(); count > 0 && r.ok(); count--) {
         auto phase = static_cast<SniperPhase>(r.u8());
-        snipers.push_back({phase, r.pos16()});
+        float x = r.pos32();
+        snipers.push_back({phase, x, r.pos16()});
     }
     return r.ok();
 }

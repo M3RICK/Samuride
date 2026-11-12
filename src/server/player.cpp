@@ -28,7 +28,7 @@ void Player::reset(int number, float spawn_y)
     attack_cooldown = 0;
     form = Form::Normal;
     form_timer = 0;
-    shield = upgrades[UPGRADE_SHIELD] > 0;
+    shields = upgrades[UPGRADE_SHIELD] > 0;
     rescued = false;
     rescue_timer = 0;
     sprint_timer = 0;
@@ -71,7 +71,10 @@ void Player::takeBoon(Boon b)
 {
     boon = b;
     if (b == Boon::GlassCannon)
-        shield = false;
+        shields = 0;
+    // One right away, on top of the one he may carry
+    if (b == Boon::Plating)
+        shields = std::min(2, shields + 1);
     if (b == Boon::PriceOnHead)
         wanted_heat = std::max(wanted_heat, static_cast<float>(PRICE_ON_HEAD_START * WANTED_KILLS_PER_STAR));
 }
@@ -82,7 +85,7 @@ bool Player::buyImplant(int id)
         return false;
     score -= IMPLANT_PRICES[id];
     implant = id;
-    shield |= id == 1;
+    shields = std::max(shields, static_cast<int>(id == 1));
     return true;
 }
 
@@ -95,7 +98,7 @@ void Player::startShift()
 void Player::powerUp(char tile)
 {
     if (tile == SHIELD_TILE)
-        shield = true;
+        shields = std::min(boon == Boon::Plating ? 2 : 1, shields + 1);
     else if (tile == SANDEVISTAN_TILE)
         sprint_timer = sandevistanTime(upgrades) * (boon == Boon::Overclock ? 2 : 1);
     else if (tile == BERSERK_TILE)
@@ -104,9 +107,9 @@ void Player::powerUp(char tile)
 
 bool Player::absorbHit()
 {
-    if (!shield)
+    if (shields == 0)
         return false;
-    shield = false;
+    shields--;
     grace_timer = SHIELD_GRACE;
     runner_weapon->hurt();
     return true;
@@ -164,10 +167,10 @@ void Player::update(float dt, float forward_speed, float max_y)
     attack_cooldown = std::max(0.0f, attack_cooldown - dt * (isBerserk() ? BERSERK_ATTACK_RATE : 1) * (implant == 2 ? KERENZIKOV_RATE : 1));
     // Glass Cannon: no shield, from the floor or the Ripperdoc
     if (boon == Boon::GlassCannon)
-        shield = false;
+        shields = 0;
     // Subdermal Armor grows the shield back
-    if (implant == 1 && !shield && (armor_timer += dt) >= ARMOR_REGEN) {
-        shield = true;
+    if (implant == 1 && shields == 0 && (armor_timer += dt) >= ARMOR_REGEN) {
+        shields = 1;
         armor_timer = 0;
     }
     grace_timer = std::max(0.0f, grace_timer - dt);

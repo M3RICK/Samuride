@@ -165,8 +165,9 @@ void Players::drawPlayer(int player_num, const PlayerState &player, bool is_me)
     if (player.berserk)
         canvas.halo(feet - sf::Vector2f(0, tile_size), tile_size * (0.9f + 0.15f * std::sin(canvas.time() * 16)),
                     withAlpha(BERSERK_COLOR, 70));
-    if (player.shielded)
-        drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size);
+    // Double Plating: a second, wider plate around the first
+    for (int plate = 0; plate < player.shielded + player.plated; plate++)
+        drawShieldBubble(feet - sf::Vector2f(0, tile_size * Run::PLAYER_HEIGHT / 2), tile_size * (1 + 0.22f * plate));
     if (shocked)
         sprite.setColor(std::rand() % 2 ? NEON_CYAN : sf::Color::White);
     else if (player.grace && !down && std::fmod(canvas.time(), 0.16f) < 0.08f)

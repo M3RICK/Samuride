@@ -12,7 +12,11 @@ void Sprites::load()
     static const char *titan_dirs[TITAN_TYPES] = {"titan_female", "titan_armored"};
 
     loadTexture(poster, "assets/waiting_screen/Samuride.png");
-    loadTexture(coin, "assets/coins/coin.png");
+    // Pixel art, from Alex: the first frame of the spin is the eddy face on
+    loadTexture(coin_spin, "assets/coins/eddie.png", false);
+    if (coin.loadFromFile("assets/coins/eddie.png", false, sf::IntRect({0, 0}, sf::Vector2i(coin_spin.getSize().y, coin_spin.getSize().y))))
+        coin.setSmooth(false);
+    loadTexture(sniper_bullet, "assets/sniper/bullet.png", false);
     loadTexture(zapper, "assets/electric/zap.png");
     // Pixel art: scaled up without smoothing
     loadTexture(drone, "assets/drone/drone.png", false);

@@ -265,10 +265,9 @@ void Server::updatePlayers()
     // Wraith's Stillness: the titans, the snipers and Smasher stand still, even the sights stop following
     bool frozen = std::ranges::any_of(players, [](const auto &entry) { return entry.second.ultimate().freezes(); });
     titans.update(rear_x, frozen ? 0 : TICK_DT);
-    if (!frozen) {
-        snipers.update(TICK_DT, players);
-        boss.update(leader_x, TICK_DT, rng, players, game_map.getHeight());
-    }
+    // Smasher keeps pace with the runners all the same: only his attacks stop
+    snipers.update(frozen ? 0 : TICK_DT, leader_x, players);
+    boss.update(leader_x, frozen ? 0 : TICK_DT, rng, players, game_map.getHeight());
     // Hacked zappers come back on
     for (auto &[node, left] : hacked_zappers)
         left -= TICK_DT;
@@ -298,7 +297,8 @@ void Server::updatePlayers()
         snipers.spawn(leader_x, TICK_DT * (1 + WANTED_SNIPERS_PER_STAR * wantedStars()), rng, players, [&](const Player &player) {
             // Where the sight freezes and fires: room to step out of its row
             float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;
-            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + SNIPER_FIRE_TIME) + 1;
+            float flight = SNIPER_BULLET_AHEAD / (SNIPER_BULLET_SPEED + run_speed);
+            float shot = player.getX() + run_speed * (SNIPER_TRACK_TIME + SNIPER_AIM_TIME + flight) + 1;
             return !titan_ahead && wayThrough(player, shot, [&](int x) { return x >= freeze ? WayNeed{3} : WayNeed{}; });
         });
     }
@@ -422,6 +422,7 @@ void Server::sendGameState()
             .jet_active = player.isJetActive(),
             .form = player.getForm(),
             .shielded = player.hasShield(),
+            .plated = player.shieldCount() > 1,
             .sprinting = player.isSprinting(),
             .ram = player.weapon().charges(),
             .berserk = player.isBerserk(),

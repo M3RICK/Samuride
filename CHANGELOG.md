@@ -17,6 +17,16 @@ taken from this file. Players on different versions can't play together: update 
 - **Runner info**: on the runner select, `I` (or the RUNNER INFO button) opens a card on the selected
   runner: what their attack does, their ultimate, and what else sets them apart. The arrows flip through
   the others, locked ones included.
+- **Double Plating**, a new boon: a shield right away, and you can carry two at once (never more).
+- **Snipers fire bullets**: after the sight freezes, a bullet flies in from the right edge along its row
+  instead of a beam across the whole screen. Leave the row as before, or get past the bullet: Wraith can
+  Blink through it.
+- Eddies have a new look, a spinning coin drawn by Alex.
+
+### Fixes
+- Adam Smasher's rockets fly on until they leave the screen instead of vanishing behind you.
+- Wraith's Stillness no longer leaves Smasher behind, out of the screen and out of reach: he stops
+  attacking but keeps pace with you.
 
 ## v3.2.3
 

@@ -68,7 +68,7 @@ static void assertRoundTrip(const T &sent, Same same)
 
 static void testMessages()
 {
-    PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true,
+    PlayerState player{.x = 12.5f, .y = 3.25f, .score = 300, .jet_active = true, .form = Form::Titan, .shielded = true, .plated = true,
                        .ram = 2, .berserk = true, .ultimate = 80, .spears = 3, .grace = true, .style = 5,
                        .wanted = 3, .chainsaw = true, .lunging = true, .scrap = 17};
     std::map<int, PlayerState> players = {{1, player}, {0, {}}};
@@ -77,14 +77,14 @@ static void testMessages()
             auto [n, p] = entry;
             auto &q = b.at(n);
             return p.x == q.x && p.y == q.y && p.score == q.score && p.jet_active == q.jet_active && p.form == q.form &&
-                   p.shielded == q.shielded && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
+                   p.shielded == q.shielded && p.plated == q.plated && p.sprinting == q.sprinting && p.ram == q.ram && p.berserk == q.berserk &&
                    p.ultimate == q.ultimate && p.spears == q.spears && p.grace == q.grace && p.style == q.style &&
                    p.wanted == q.wanted && p.chainsaw == q.chainsaw && p.lunging == q.lunging && p.scrap == q.scrap;
         });
     });
     // The bytes themselves, as docs/PROTOCOL.md has them: other builds read these
     assert(Message::encode(std::map<int, PlayerState>{{1, player}}) ==
-           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 59, 71}));
+           (std::vector<uint8_t>{1, 0, 0, 0x04, 0xE2, 0x01, 0x45, 0x01, 0x2C, 0xCD, 80, 3, 187, 71}));
 
     GameStart start{.my_number = 1, .roster = {{0, 3}, {1, 5}}, .district = 2, .mode = GameMode::Cyberpsycho};
     assertRoundTrip(start, [](auto &a, auto &b) {
@@ -101,8 +101,8 @@ static void testMessages()
     assertRoundTrip(std::vector<TitanState>{{TitanType::Armored, 320.25f}, {TitanType::Female, 9}}, [](auto &a, auto &b) {
         return a.size() == b.size() && a[0].type == b[0].type && a[0].x == b[0].x && a[1].type == b[1].type;
     });
-    assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 6.5f}}, [](auto &a, auto &b) {
-        return a.size() == b.size() && a[0].phase == b[0].phase && a[0].y == b[0].y;
+    assertRoundTrip(std::vector<SniperState>{{SniperPhase::Firing, 812.5f, 6.5f}}, [](auto &a, auto &b) {
+        return a.size() == b.size() && a[0].phase == b[0].phase && a[0].x == b[0].x && a[0].y == b[0].y;
     });
     assertRoundTrip(BossState{true, 45, BossAttack::Slam, BossPhase::Recover, 512.5f, 530, 7.25f, 1.5f, true, 0b1000000101}, [](auto &a, auto &b) {
         return a.fighting == b.fighting && a.health == b.health && a.attack == b.attack && a.phase == b.phase &&
@@ -178,9 +178,49 @@ static void testGenerator()
     }
 }
 
-// The railgun's beam hits the body from head to feet, and only along its row
+// The sniper's bullet hits the body from head to feet, only along its row, and only where it is: the sight
+// follows, freezes, then the bullet flies in from the right, and a runner past it (a Blink) is safe
 static void testSniperHit()
 {
+    assert(sniperHits(10, 6, 10, 5) && sniperHits(10.9f, 6, 10, 5) && sniperHits(9, 6, 10, 5));
+    assert(!sniperHits(11.5f, 6, 10, 5) && !sniperHits(8, 6, 10, 5) && !sniperHits(10, 4.3f, 10, 5));
+
+    std::map<int, Player> players;
+    std::mt19937 rng(1);
+    players.emplace(3, Player(3));
+    Player &runner = players.at(3);
+    runner.reset(0, 5);
+    SniperSquad squad;
+    squad.reset();
+    for (int i = 0; i < 300 && !squad.active(); i++)
+        squad.spawn(SNIPER_FIRST_DISTANCE, 0.1f, rng, players, [](const Player &) { return true; });
+    assert(squad.active());
+    auto tick = [&] { squad.update(0.01f, 100, players); };
+    while (squad.states().at(0).phase != SniperPhase::Firing) {
+        assert(!squad.hit(runner));
+        tick();
+    }
+    // Just fired, from the right edge: not on him yet, and it hangs there while the world stands still
+    float from = squad.states().at(0).x;
+    assert(from > 100 + SNIPER_BULLET_AHEAD - 1 && !squad.hit(runner));
+    squad.update(0, 100, players);
+    assert(squad.states().at(0).x == from);
+    runner.blinkTo(from - 5);
+    bool hit = false, passed = false;
+    while (squad.active()) {
+        tick();
+        hit |= squad.hit(runner);
+        // A Blink through it: behind him now
+        if (hit && !passed) {
+            runner.blinkTo(from);
+            passed = true;
+            assert(!squad.hit(runner));
+        } else {
+            assert(!passed || !squad.hit(runner));
+        }
+    }
+    assert(hit);
+
     assert(sniperHits(6.0f, 5));
     assert(sniperHits(5.0f, 5));
     assert(sniperHits(7.0f, 5));
@@ -197,6 +237,16 @@ static void testPowerUps()
     shielded.powerUp(SHIELD_TILE);
     assert(shielded.hasShield() && shielded.absorbHit() && !shielded.hasShield());
     assert(shielded.isInvincible() && !shielded.absorbHit());
+    // One at a time, two on Double Plating (one right away), never three
+    Player plated(-1);
+    plated.reset(0, 0);
+    plated.powerUp(SHIELD_TILE);
+    plated.powerUp(SHIELD_TILE);
+    assert(plated.shieldCount() == 1);
+    plated.takeBoon(Boon::Plating);
+    plated.powerUp(SHIELD_TILE);
+    assert(plated.shieldCount() == 2);
+    assert(plated.absorbHit() && plated.hasShield() && plated.absorbHit() && !plated.absorbHit());
     for (int i = 0; i < 61; i++)
         shielded.update(1 / 60.f, 10, 8);
     assert(!shielded.isInvincible());
@@ -708,6 +758,10 @@ static void testWraithSmasher()
     assert(strike > BOSS_CANNON_TIME && strike <= BLINK_PERFECT_WINDOW + BOSS_CANNON_TIME + 0.01f);
     assert(boss.threatens(elsewhere, 10, BLINK_PERFECT_WINDOW) == 0);
     assert(boss.threatens(players.at(3), 10, 0.001f) == 0);     // not that close yet
+    // Stillness (dt 0): his attack stops, but he keeps pace with the runners, still within reach
+    BossState still = boss.state();
+    boss.update(BOSS_DISTANCE + 30, 0, rng, players, 10);
+    assert(boss.state().x == still.x + 30 && boss.state().time == still.time);
 }
 
 // The tuning file: the shipped one is every default (regenerate it when one changes), a good line

@@ -41,6 +41,7 @@ inline float BOSS_SANDEVISTAN_RATE = 1.3f;
 inline float BOSS_ROCKET_WARN = 1.2f;
 inline float BOSS_ROCKET_SPEED = 22;    // tiles per second, toward the runners
 inline float BOSS_ROCKET_GAP = 4;
+inline float BOSS_ROCKET_BEHIND = 11;   // tiles behind the leader the wall flies on to: off the screen's left edge
 // Ground slam: the floor glows, then he leaps and lands BOSS_SLAM_LAND tiles ahead of the leader, a
 // shockwave BOSS_SLAM_HEIGHT tiles tall running along the floor: be in the air. He then gets back up for
 // BOSS_SLAM_RECOVER seconds, close enough for the blades, and leaps back.

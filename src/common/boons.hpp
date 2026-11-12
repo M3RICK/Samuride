@@ -11,7 +11,7 @@
 
 enum class Boon : uint8_t {
     None,
-    Trapped, ColdBlood, Notorious, Jackpot, Overclock, Rage,   // general
+    Trapped, ColdBlood, Notorious, Jackpot, Overclock, Rage, Plating,  // general
     GlassCannon, PriceOnHead,                                  // pacts
     Signature,                                                 // the runner's own
 };
@@ -45,6 +45,7 @@ inline BoonLook boonLook(Boon boon, Weapon weapon)
         case Boon::Jackpot: return {"JACKPOT FEVER", "8% of the eddies are jackpots"};
         case Boon::Overclock: return {"OVERCLOCK", "Sandevistan lasts twice as long"};
         case Boon::Rage: return {"BLOODLUST", "Berserk lasts twice as long"};
+        case Boon::Plating: return {"DOUBLE PLATING", "A shield now, and you can carry two at once"};
         case Boon::GlassCannon: return {"PACT: GLASS CANNON", "Eddies x1.5, but no shield and no Trauma Team"};
         case Boon::PriceOnHead: return {"PACT: PRICE ON YOUR HEAD", "3 stars now, never fewer than 2"};
         case Boon::Signature:

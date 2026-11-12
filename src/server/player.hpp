@@ -41,7 +41,7 @@ private:
     float attack_cooldown = 0;  // seconds before the next CYBERPSYCHO attack
     Form form = Form::Normal;
     float form_timer = 0;       // seconds left in the current form
-    bool shield = false;
+    int shields = 0;            // 1, or 2 on Double Plating
     bool rescued = false;       // the Trauma Team came this run
     float rescue_timer = 0;     // seconds the Trauma Team is still at work on them
     float sprint_timer = 0;     // seconds of Sandevistan left
@@ -90,7 +90,8 @@ public:
 
     Form getForm() const { return form; }
     bool isInvincible() const { return form != Form::Normal || sprint_timer > 0 || grace_timer > 0; }
-    bool hasShield() const { return shield; }
+    bool hasShield() const { return shields > 0; }
+    int shieldCount() const { return shields; }
     bool isGracing() const { return grace_timer > 0; }
     bool isSprinting() const { return sprint_timer > 0; }
     bool isBerserk() const { return berserk_timer > 0; }

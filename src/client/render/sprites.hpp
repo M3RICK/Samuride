@@ -11,7 +11,9 @@ struct Sprites {
     static constexpr int DRONE_FRAMES = 4;
 
     sf::Texture poster;
-    sf::Texture coin;
+    sf::Texture coin;           // an eddy, face on
+    sf::Texture coin_spin;      // ... and turning, COIN_FRAMES square frames in a row
+    sf::Texture sniper_bullet;
     sf::Texture zapper;
     sf::Texture drone;          // DRONE_FRAMES frames side by side
     sf::Texture titan_face;     // on the power-up orb
