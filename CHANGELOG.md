@@ -3,6 +3,13 @@
 Each release on the [Releases page](https://github.com/M3RICK/Samuride/releases) shows its own notes,
 taken from this file. Players on different versions can't play together: update both sides.
 
+## v3.4
+
+### Changed
+- **Boons are rarer and no longer free**: a pick every 400 m instead of 250, and every boon you take speeds
+  the run up for good (+0.4 tiles a second, top speed included) and sends the snipers 10% more often.
+  Walking out with no card costs nothing.
+
 ## v3.3
 
 ### New

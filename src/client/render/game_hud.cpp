@@ -840,7 +840,7 @@ void GameScreen::drawRipperdoc(const PlayerState &me)
               1 - ripperdoc_clock.getElapsedTime().asSeconds() / RIPPERDOC_TIME, cards);
 }
 
-// At BOON_DISTANCE: three boons, free, the pact in red
+// At BOON_DISTANCE: three boons, the pact in red; each one taken speeds the run up
 void GameScreen::drawBoons(int me)
 {
     std::vector<Card> cards;
@@ -853,7 +853,7 @@ void GameScreen::drawBoons(int me)
         else
             cards.push_back({look.name, look.what, tag, true});
     }
-    drawCards("PICK A BOON", NEON_YELLOW, "ONE MORE FOR THE REST OF THE RUN, ON THE HOUSE",
+    drawCards("PICK A BOON", NEON_YELLOW, "YOURS FOR THE REST OF THE RUN, BUT EVERY BOON SPEEDS IT UP",
               1 - boon_clock.getElapsedTime().asSeconds() / BOON_TIME, cards);
 }
 

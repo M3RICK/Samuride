@@ -26,8 +26,12 @@ constexpr int BOONS_END = static_cast<int>(Boon::End);
 inline bool isPact(Boon boon) { return static_cast<int>(boon) >= FIRST_PACT && static_cast<int>(boon) < PACTS_END; }
 inline bool isOwn(Boon boon) { return boon == Boon::RunnerPact || boon == Boon::Signature || boon == Boon::Signature2; }
 
-inline float BOON_DISTANCE = 250;
+inline float BOON_DISTANCE = 400;
 inline float BOON_TIME = 10;
+// The price of power: every boon picked by anyone speeds the run up for good, its top speed too, and
+// sends the snipers more often. Walking out (no card) costs nothing.
+inline float BOON_HEAT_SPEED = 0.4f;    // tiles per second a boon
+inline float BOON_HEAT_SNIPERS = 0.1f;  // snipers that much more often a boon
 inline float COLD_BLOOD_AIM = 0.4f;     // seconds more the snipers' sight holds still before firing
 inline float JACKPOT_FEVER = 0.08f;     // added to the chance an eddy is a jackpot
 inline float GLASS_CANNON_EDDIES = 1.5f;

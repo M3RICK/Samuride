@@ -124,6 +124,11 @@ void Server::answerBoon(int client_fd, int card)
     boon_offers.erase(offer);
     Player &player = players.at(client_fd);
     player.takeBoon(boon);
+    // Nothing is free: the run speeds up for good, past its top speed too (logic.cpp)
+    if (boon != Boon::None) {
+        boons_taken++;
+        run_speed += BOON_HEAT_SPEED;
+    }
     notifyCollision(BOON_TAKEN, player, static_cast<int>(boon), 0);
 }
 

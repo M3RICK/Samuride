@@ -136,6 +136,7 @@ private:
     float boon_left = 0;
     bool paused = false;        // a runner alone froze the run (MSG_PAUSE)
     float next_boon = 0;        // where the next ones are offered, in tiles
+    int boons_taken = 0;        // by everyone this run: each speeds it up (BOON_HEAT_SPEED)
     // Each event's kind, rolled when the map or the warning first needs it; the last one announced
     std::map<int, RunEvent> run_events;
     int events_announced = -1;

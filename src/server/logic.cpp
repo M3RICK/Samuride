@@ -20,6 +20,7 @@ bool Server::resetMap()
     ripperdoc_waiting.clear();
     boon_offers.clear();
     next_boon = BOON_DISTANCE;
+    boons_taken = 0;
     run_events.clear();
     events_announced = -1;
     projectiles.clear();
@@ -226,7 +227,7 @@ void Server::updatePlayers()
     for (const auto &[client_fd, player] : players)
         front = std::max(front, player.getX());
     if (!boss.holds(front))
-        run_speed = std::min(MAX_SPEED, run_speed + ACCELERATION * TICK_DT);
+        run_speed = std::min(MAX_SPEED + BOON_HEAT_SPEED * boons_taken, run_speed + ACCELERATION * TICK_DT);
     // The next event, told to everyone EVENT_WARNING tiles before it starts
     if (front >= eventStart(events_announced + 1) - EVENT_WARNING) {
         events_announced++;
@@ -309,7 +310,8 @@ void Server::updatePlayers()
         bool titan_ahead = titans.any([&](const Horde::Titan &titan) { return titan.x + 3 > rear_x; });
         // The NCPD sends them faster as the wanted level climbs
         bool pursued = std::ranges::any_of(players, [](const auto &entry) { return entry.second.hasBoon(Boon::HotPursuit); });
-        float haste = (1 + WANTED_SNIPERS_PER_STAR * wantedStars()) * (pursued ? HOT_PURSUIT_SNIPERS : 1);
+        float haste = (1 + WANTED_SNIPERS_PER_STAR * wantedStars() + BOON_HEAT_SNIPERS * boons_taken) *
+                      (pursued ? HOT_PURSUIT_SNIPERS : 1);
         snipers.spawn(leader_x, TICK_DT * haste, rng, players, [&](const Player &player) {
             // Where the sight freezes and fires: room to step out of its row
             float freeze = player.getX() + run_speed * SNIPER_TRACK_TIME;

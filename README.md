@@ -38,7 +38,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Contracts**: three goals at a time on the main menu (a distance, drones down, eddies in one run, a run as a given runner). Every solo run counts; a finished one pays 60 to 150 eddies and another takes its place.
 - **Runner info**: on the runner select, `I` opens a card on how the selected runner plays.
 - **NCPD wanted level** (CYBERPSYCHO): every 5 drones down lights a star, up to 5. Each star pays drones 20% more but brings more drones and snipers; stop shooting and the NCPD forgets you.
-- **Boons** (CYBERPSYCHO): at 250 m, pick one of three for the rest of the run, free: a general boon, your runner's own, or a risky pact.
+- **Boons** (CYBERPSYCHO): every 400 m, pick one of three for the rest of the run: a general boon, your runner's own, or a risky pact. They add up, and every one you take speeds the run up for good.
 - **The Ripperdoc** (CYBERPSYCHO): once Adam Smasher's arena is behind, spend the run's eddies on one implant (a shield that grows back, faster attacks, a faster ultimate).
 - **Events**: at 300 m, then every 400 m past Smasher, 150 m of blackout, drone swarm or gravity flip, announced just before.
 - After a game, hit `Space` for an instant rematch, `C` to pick another runner, `M` another district.

@@ -96,9 +96,13 @@ BLACKOUT_DARKNESS 200
 # Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)
 FLIP_GRACE 1.2
 # Boons (CYBERPSYCHO): the run stops every this many tiles to pick one of three
-BOON_DISTANCE 250
+BOON_DISTANCE 400
 # Seconds the run waits for the pick
 BOON_TIME 10
+# Every boon picked speeds the run up by this many tiles per second, its top speed too
+BOON_HEAT_SPEED 0.4
+# Snipers come that much more often per boon picked
+BOON_HEAT_SNIPERS 0.1
 # Cold Blood: seconds more a sniper's sight holds still before the shot
 COLD_BLOOD_AIM 0.4
 # Jackpot Fever: added to the chance an eddy is a jackpot

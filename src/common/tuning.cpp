@@ -91,6 +91,8 @@ std::vector<Entry> &entries()
             VALUE(FLIP_GRACE, "Gravity flip: seconds of grace as it starts and as it ends (its road is the easiest)"),
             VALUE(BOON_DISTANCE, "Boons (CYBERPSYCHO): the run stops every this many tiles to pick one of three"),
             VALUE(BOON_TIME, "Seconds the run waits for the pick"),
+            VALUE(BOON_HEAT_SPEED, "Every boon picked speeds the run up by this many tiles per second, its top speed too", 0),
+            VALUE(BOON_HEAT_SNIPERS, "Snipers come that much more often per boon picked", 0),
             VALUE(COLD_BLOOD_AIM, "Cold Blood: seconds more a sniper's sight holds still before the shot"),
             VALUE(JACKPOT_FEVER, "Jackpot Fever: added to the chance an eddy is a jackpot", 0, 1),
             VALUE(GLASS_CANNON_EDDIES, "Glass Cannon pact: eddies times this, no shield, no Trauma Team", 1),

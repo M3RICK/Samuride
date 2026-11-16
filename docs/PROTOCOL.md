@@ -171,7 +171,7 @@ A 14-byte record per player, 60 times per second:
 | `n` | DirtyBastrd's chainsaw took a deadly hit (drone, titan or Adam Smasher) and snapped: 1 s of invincibility, and the column field is the scrap eddies it burst into (already in the score) |
 | `O` | A deadly hit on a player who has the Trauma Team (upgrade): the run waits up to 5 s for their `MSG_TRAUMA`, then counts it a yes. No: the hit's own death type follows |
 | `R` | CYBERPSYCHO, the leader past Smasher's arena: the Ripperdoc opens for every player, the run waits up to 10 s for their `MSG_RIPPERDOC` |
-| `B` | CYBERPSYCHO, the leader every 250 m: the boons offered to a player, x their three ids a byte each (first card lowest, 0 for an empty card; the ids are `Boon` in `src/common/boons.hpp`). Offered again every 250 m, never in Smasher's arena. The run waits up to 10 s for their `MSG_BOON` |
+| `B` | CYBERPSYCHO, the leader every 400 m (`BOON_DISTANCE`): the boons offered to a player, x their three ids a byte each (first card lowest, 0 for an empty card; the ids are `Boon` in `src/common/boons.hpp`). Offered again every 400 m, never in Smasher's arena. The run waits up to 10 s for their `MSG_BOON` |
 | `E` | An event is coming, sent to every player 60 tiles before it starts: x its kind (1 blackout, 2 drone swarm, 3 gravity flip), y its index (stretches in common/events.hpp) |
 | `G` | A player picked a boon: x its id, 0 for none |
 | `I` | A player left the Ripperdoc: x is the implant bought, 1 to 3, or 0 for none |
