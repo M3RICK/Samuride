@@ -173,11 +173,13 @@ save, restart the game: no compiling. Delete a line to get its default back.
 
 ## Crew
 
-Aymeric: started it as an Epitech project (B-NWP jetpack).
+Aymeric: wrote the first version by hand as an Epitech project (B-NWP jetpack). After that I kept it going as an experiment: people kept saying a project written with AI can't be maintained, so I tried it. Most of the code since then was written with Claude (Anthropic) as a coding assistant: I steered the architecture, reviewed every change before it went in and kept the tests passing.
 
 [CrackedOnTiti](https://github.com/CrackedOnTiti): DirtyBastrd, the eighth runner: his kick, his chainsaw and his voice.
 
 Alex ([SoulSacker](https://github.com/SoulSacker)): Adam Smasher's missiles and the eddie coins, drawn by hand.
+
+Samuride is not finished: plenty still needs polish. It moves at side-project speed, since most of my time now goes to digital forensics and security.
 
 ## License and credits
 
