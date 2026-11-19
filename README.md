@@ -11,10 +11,11 @@
 
 ---
 
-<p align="center"><img src="docs/gameplay.webp" alt="Gameplay: Mikasa and Jinx in CYBERPSYCHO" width="720px"></p>
+<p align="center"><img src="docs/hero.webp" alt="Gameplay: Dante against Adam Smasher in CYBERPSYCHO" width="720px"><br>
+<em>Dante against Adam Smasher, CYBERPSYCHO.</em></p>
 
-<p align="center"><img src="docs/versus.png" alt="Two players: Jinx and Mikasa in CYBERPSYCHO" width="720px"><br>
-<em>Two runners, one corridor: Jinx and Mikasa in CYBERPSYCHO.</em></p>
+<p align="center"><img src="docs/versus.webp" alt="Versus: Jinx flying and Mikasa running in Night City" width="720px"><br>
+<em>Versus in Night City: Jinx and Mikasa, two clients connected to one server.</em></p>
 
 ## Under the hood
 
@@ -23,6 +24,15 @@
 - **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
 - **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
 - **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+
+What the server sends right before a run, as its `-d` log prints it: four `MSG_COUNTDOWN` packets (type 8, a 1-byte payload).
+
+```
+08 00 00 01 03   countdown 3
+08 00 00 01 02   countdown 2
+08 00 00 01 01   countdown 1
+08 00 00 01 00   go
+```
 
 ## The run
 
@@ -33,6 +43,9 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each.
 - **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
 - **Eight runners**: Johnny, David, Jinx on her shark rocket, Mikasa, Lucy on her drone, Dante, Wraith and DirtyBastrd hanging from a giant headless bat, each with their own run, take-off, flight and death animations.
+- **Trauma Team**: with it in your loadout, a deadly hit freezes the run and offers a rescue. Call them and they bill half the run's eddies, or let yourself flatline.
+
+<p align="center"><img src="docs/trauma.webp" alt="Flatlining, the Trauma Team is called and picks the runner up" width="600px"></p>
 
 <details>
 <summary><b>Every mechanic</b>: power-ups, ultimates, drones, titans, shop, contracts, events</summary>
@@ -68,9 +81,7 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 
 Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
 
-<p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>
-<p align="center"><img src="docs/characters.png" alt="Character select" width="600px"></p>
-<p align="center"><img src="docs/districts.png" alt="District select" width="600px"></p>
+<p align="center"><img src="docs/screens.webp" alt="Runner select, district select, a boon pick and Adam Smasher" width="720px"></p>
 
 ## Download
 
