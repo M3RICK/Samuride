@@ -16,12 +16,27 @@
 <p align="center"><img src="docs/versus.png" alt="Two players: Jinx and Mikasa in CYBERPSYCHO" width="720px"><br>
 <em>Two runners, one corridor: Jinx and Mikasa in CYBERPSYCHO.</em></p>
 
+## Under the hood
+
+- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send their key presses (jetpack, attack, ultimate) and the cards they pick.
+- **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
+- **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
+- **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
+- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+
 ## The run
 
 You sprint forward on your own, the jetpack is the only thing you control. The corridor never ends: it is generated on the fly, faster and nastier the further you go.
 
 - **Solo**: run as far as you can. Your best distance is saved for each mode, and your most drones down in one CYBERPSYCHO run.
 - **Versus**: two runners, one corridor. First one to get zapped loses.
+- **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each.
+- **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
+- **Eight runners**: Johnny, David, Jinx on her shark rocket, Mikasa, Lucy on her drone, Dante, Wraith and DirtyBastrd hanging from a giant headless bat, each with their own run, take-off, flight and death animations.
+
+<details>
+<summary><b>Every mechanic</b>: power-ups, ultimates, drones, titans, shop, contracts, events</summary>
+
 - **Eddies** (coins) come in blocks and waves, collected per player: what your choom grabs is still there for you.
 - **Zappers** come as vertical, horizontal or diagonal beams. One touch and you flatline.
 - **Attack Titan**: grab the rare orange orb and you stop while the smoke rises, then run for 4 seconds as Eren's titan, invincible, crushing drones and titans and sweeping up the eddies, before bursting back out of the smoke.
@@ -31,9 +46,6 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Ultimates** (CYBERPSYCHO): every eddy you earn charges your gauge; a full one fires your runner's ultimate with `E`. Johnny palms his gun and a wall of fire sweeps the screen ahead, burning drones, zappers and titans. David's arm cannon drops a mini-nuke ahead that razes everything around where it lands. Lucy breaches the network: every drone on screen goes down, every zapper on screen goes off for 3 seconds. Mikasa gets 5 thunder spears, thrown one at a time with `E` again (her blade stays on the attack key), that stick in the first drone or titan and blow up in a lightning column from floor to ceiling. Jinx fires Fishbones: a big rocket razes a band of the corridor at her height, and she can fly through it. Dante calls his Doppelganger: for 8 seconds his double flies at the opposite height and repeats every attack of his. Wraith stills time: for 4 seconds the titans, the snipers and Adam Smasher stand still, and only the runners move. DirtyBastrd pulls out an invisible chainsaw ("Eat this!"): for 10 seconds it shreds the drones at his hands; `E` again lunges with it, cutting through any zapper in the way, and it takes one hit from a drone, a titan or Adam Smasher (never a zapper's or a sniper's) before snapping into scrap eddies, more the better it was used. Or he throws it with `F`: it ricochets from drone to titan to zapper ahead of him, five of them at most, then drops into its scrap, but his saw is gone. No ultimate makes you invincible.
 - In CYBERPSYCHO, **one drone in three drops a shield, a Sandevistan or a Berserk** when you shoot it down.
 - **Titans** charge along the floor past 300 m: a blinking red column warns you, then fly over them or get stomped. In CYBERPSYCHO, Mikasa can take their nape for +20, and a titan that breaks DirtyBastrd's chainsaw goes down with it.
-- **Two modes**: CLASSIC, the original run, or **CYBERPSYCHO**: Arasaka drones block the corridor and you gun them down for +5 eddies each. Johnny and David shoot, Jinx fires Pow-Pow, her minigun, in bursts of three (a steady spray in Berserk), Mikasa slices with her blades, and Lucy hacks: the first zapper in her way goes off for 2 seconds, or the first drone in her way goes down, and the hack jumps to the nearest drone within 4 tiles of it. She has 3 charges of RAM, one comes back every 3.5 seconds. Dante swings his sword on the ground and fires his guns in the air; his style rank, D to SSS, climbs with kills in a row and multiplies what each drone pays, up to 3 times. Wraith has no weapon: he blinks 4 tiles straight ahead (a diamond shows where), killing the drones he crosses; a Blink aimed into a zapper lands just past it, one through a zapper in his way pays 5 eddies; 3 charges, one back every 2 seconds. DirtyBastrd kicks the drones in front of him out of the air with his Timberlands (with a grunt, or worse, for each one).
-- **Six districts**: The Corridor; Night City, The Walls and Zaun, three panoramas from sunset to night; Worlds Collide, running through all three back to back; and Both Worlds, switching between the corridor and Worlds Collide every 250 m like day and night. The host picks.
-- **Eight runners**: Johnny, David, Jinx on her shark rocket, Mikasa, Lucy on her drone, Dante, Wraith and DirtyBastrd hanging from a giant headless bat, each with their own run, take-off, flight and death animations.
 - **Eddies are money**: every run's eddies go to your wallet. Johnny is free, then buy David (100), Jinx (250), Mikasa (500), Lucy (750), Dante (1000), Wraith (1250) and DirtyBastrd (1500), in that order. The Corridor and Night City are free; buy The Walls (150), Zaun (300), Worlds Collide (500) and Both Worlds (750) in any order. Only the host needs the district. Big savers can buy upgrades in the shop: a longer Sandevistan, a faster ultimate, an eddie magnet, a shield at the start of every run.
 - **Contracts**: three goals at a time on the main menu (a distance, drones down, eddies in one run, a run as a given runner). Every solo run counts; a finished one pays 60 to 150 eddies and another takes its place.
 - **Runner info**: on the runner select, `I` opens a card on how the selected runner plays.
@@ -43,32 +55,22 @@ You sprint forward on your own, the jetpack is the only thing you control. The c
 - **Events**: at 300 m, then every 400 m past Smasher, 150 m of blackout, drone swarm or gravity flip, announced just before.
 - After a game, hit `Space` for an instant rematch, `C` to pick another runner, `M` another district.
 
+- **Attacks** (CYBERPSYCHO): Johnny and David shoot, Jinx fires Pow-Pow, her minigun, in bursts of three (a steady spray in Berserk), Mikasa slices with her blades, and Lucy hacks: the first zapper in her way goes off for 2 seconds, or the first drone in her way goes down, and the hack jumps to the nearest drone within 4 tiles of it. She has 3 charges of RAM, one comes back every 3.5 seconds. Dante swings his sword on the ground and fires his guns in the air; his style rank, D to SSS, climbs with kills in a row and multiplies what each drone pays, up to 3 times. Wraith has no weapon: he blinks 4 tiles straight ahead (a diamond shows where), killing the drones he crosses; a Blink aimed into a zapper lands just past it, one through a zapper in his way pays 5 eddies; 3 charges, one back every 2 seconds. DirtyBastrd kicks the drones in front of him out of the air with his Timberlands (with a grunt, or worse, for each one).
+</details>
+
 | Key | Action |
 | --- | --- |
 | `Space` (hold) | Jetpack (default) |
 | `F` | Attack in CYBERPSYCHO (default) |
 | `E` | Ultimate in CYBERPSYCHO, once the gauge is full (default) |
 | `Esc` | Back to menu |
+| Arrows / mouse + `Enter` | Menu |
 
 Keys, volumes and fullscreen can be changed in **Options**; they are kept in `~/.local/share/samuride/settings`.
-| Arrows / mouse + `Enter` | Menu |
 
 <p align="center"><img src="docs/menu.png" alt="Menu" width="600px"></p>
 <p align="center"><img src="docs/characters.png" alt="Character select" width="600px"></p>
 <p align="center"><img src="docs/districts.png" alt="District select" width="600px"></p>
-
-## Tune the balance
-
-Every balance value of the game (speeds, cooldowns, bounties, power-up durations, ultimates, prices...)
-is in `assets/tuning.txt`, in the game's folder, each with a line saying what it does. Change a number,
-save, restart the game: no compiling. Delete a line to get its default back.
-
-- While a value differs from the default, the run shows **CUSTOM TUNING** under the distance, and solo
-  records aren't saved: an easier game would beat the real ones.
-- In versus, the host's file decides what happens.
-- A typo is skipped, the default stays: the console says which line.
-- Testing a balance? Send your `tuning.txt` with what you felt: it says exactly what you played.
-- Not on Android: the file is sealed in the APK.
 
 ## Download
 
@@ -97,23 +99,6 @@ cd samuride-*-linux-x86_64
 
 Windows, macOS, Linux and Android players can join each other. Over the Internet, the host must forward port 4242 on their router, or you both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use that address.
 
-## Build
-
-Linux, a C++20 compiler and **SFML 3**.
-
-```sh
-sudo pacman -S sfml      # Arch / CachyOS
-make                     # Samuride_server + Samuride
-make tests               # protocol, map streaming & generator self-checks
-```
-
-SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
-`tools/package_release.sh` builds the same self-contained archive as the Releases page, and
-`tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath),
-and `tools/package_macos.sh` builds the macOS one on a Mac.
-To publish a version, add its `## vX.Y` section to [CHANGELOG.md](CHANGELOG.md), then push the `vX.Y` tag:
-the release workflow builds the three archives and uses that section as the release description.
-
 ## Play
 
 ```sh
@@ -131,14 +116,6 @@ A dedicated server and direct connection are available too:
 
 `-c` picks the character (0 Johnny, 1 David, 2 Jinx, 3 Mikasa, 4 Lucy, 5 Dante, 6 Wraith, 7 DirtyBastrd), `-m` starts the run on a hand-made map before going procedural, `-s` is solo mode, `-d` prints debug logs (packets, inputs).
 
-## Under the hood
-
-- **Server**: single `poll()` loop with a fixed 60 Hz tick. It owns physics, collisions, scoring and map generation; clients only send their key presses (jetpack, attack, ultimate) and the cards they pick.
-- **Endless map**: generated in 40-column chunks ahead of the leader and streamed to clients as the run goes on. Patterns get denser over time, and every column always leaves room to get through.
-- **Client**: a network thread fills the game state, the main thread renders it at 60 FPS, smoothing positions between server ticks.
-- **Characters**: `tools/slice_sheets.py` turns hand-laid sprite sheets (labels, uneven spacing, trails overlapping the next frame) into aligned grids plus a `meta.txt` per character. Frames are found from the characters' bodies, every blob is assigned to its owner, and each frame is re-anchored on the feet or the body centre so animations don't wobble.
-- **Protocol**: 4-byte header (1 byte type + 3 bytes payload size), packets reassembled from the TCP stream. Full spec in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
-
 ### Hand-made maps
 
 Plain text, one character per tile, all lines the same length:
@@ -153,11 +130,41 @@ Plain text, one character per tile, all lines the same length:
 | `a` | shield |
 | `v` | Sandevistan |
 
+## Build
+
+Linux, a C++20 compiler and **SFML 3**.
+
+```sh
+sudo pacman -S sfml      # Arch / CachyOS
+make                     # Samuride_server + Samuride
+make tests               # protocol, map streaming & generator self-checks
+```
+
+SFML 3 installed somewhere else? Point the Makefile at it: `make SFML_DIR=/path/to/sfml`.
+`tools/package_release.sh` builds the same self-contained archive as the Releases page, and
+`tools/package_windows.sh` cross-compiles the Windows one with MinGW (`make TARGET=windows` underneath),
+and `tools/package_macos.sh` builds the macOS one on a Mac.
+To publish a version, add its `## vX.Y` section to [CHANGELOG.md](CHANGELOG.md), then push the `vX.Y` tag:
+the release workflow builds the three archives and uses that section as the release description.
+
+## Tune the balance
+
+Every balance value of the game (speeds, cooldowns, bounties, power-up durations, ultimates, prices...)
+is in `assets/tuning.txt`, in the game's folder, each with a line saying what it does. Change a number,
+save, restart the game: no compiling. Delete a line to get its default back.
+
+- While a value differs from the default, the run shows **CUSTOM TUNING** under the distance, and solo
+  records aren't saved: an easier game would beat the real ones.
+- In versus, the host's file decides what happens.
+- A typo is skipped, the default stays: the console says which line.
+- Testing a balance? Send your `tuning.txt` with what you felt: it says exactly what you played.
+- Not on Android: the file is sealed in the APK.
+
 ## Crew
 
-Aymeric — started as an Epitech project (B-NWP jetpack).
+Aymeric: started it as an Epitech project (B-NWP jetpack).
 
-[CrackedOnTiti](https://github.com/CrackedOnTiti) — DirtyBastrd, the eighth runner: his kick, his chainsaw and his voice.
+[CrackedOnTiti](https://github.com/CrackedOnTiti): DirtyBastrd, the eighth runner: his kick, his chainsaw and his voice.
 
 ## License and credits
 
